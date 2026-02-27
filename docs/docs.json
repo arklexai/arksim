@@ -99,5 +99,10 @@
   },
   "icons": {
     "library": "fontawesome"
+  },
+  "seo": {
+    "metatags": {
+      "canonical": "https://docs.arklex.ai/"
+    }
   }
 }
