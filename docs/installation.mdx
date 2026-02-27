@@ -1,0 +1,76 @@
+---
+description: "This guide covers different installation methods for Arksim."
+title: "Installation"
+---
+
+Choose your preferred installation method to get started with Arksim.
+
+<Tabs>
+  <Tab title="Binary">
+    The easiest way to get started is with the pre-compiled binary.
+
+    <Steps>
+      <Step title="Download the latest release">
+        <Tabs>
+          <Tab title="macOS">
+            ```shellscript
+            wget https://static.arklex.ai/simulator/arksim-1.0.0-alpha-macos-arm64.zip
+            ```
+          </Tab>
+          <Tab title="Linux">
+            ```shellscript
+            wget https://static.arklex.ai/simulator/arksim-1.0.0-alpha-linux-x64.zip
+            ```
+          </Tab>
+        </Tabs>
+      </Step>
+      <Step title="Unzip the binary">
+        <Tabs>
+          <Tab title="macOS">
+            ```shellscript
+            unzip arksim-1.0.0-alpha-macos-arm64.zip
+            ```
+          </Tab>
+          <Tab title="Linux">
+            ```shellscript
+            unzip arksim-1.0.0-alpha-linux-x64.zip
+            ```
+          </Tab>
+        </Tabs>
+      </Step>
+      <Step title="Navigate to the working directory">
+        ```shellscript
+        cd arksim-1.0.0-alpha
+        ```
+      </Step>
+    </Steps>
+    <Check>
+      You're all set! Continue to the [Quickstart guide](/quickstart) to run your first evaluation.
+    </Check>
+  </Tab>
+  <Tab title="Docker">
+    Docker provides a consistent environment across all platforms.
+
+    <Warning>
+      Docker Desktop must be installed and running on your machine.
+    </Warning>
+    <Steps>
+      <Step title="Pull the Docker image">
+        ```shellscript
+        docker pull --platform linux/amd64 \
+        	public.ecr.aws/f1v9v1i4/arklex/arksim:1.0.0-alpha
+        ```
+      </Step>
+      <Step title="Download the example files">
+        Download and unzip the [example folder](https://static.arklex.ai/simulator/arksim-1.0.0-alpha-examples.zip) for demo usage.
+
+        <Note>
+          Place the downloaded `examples/` folder in your current working directory for easier access.
+        </Note>
+      </Step>
+    </Steps>
+    <Check>
+      You're all set! Continue to the [Quickstart guide](/quickstart) to run your first evaluation.
+    </Check>
+  </Tab>
+</Tabs>

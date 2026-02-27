@@ -1,0 +1,342 @@
+---
+title: "Input Setup"
+---
+
+## Overview
+
+Configure your agent's API connection, business context, and knowledge base. These files tell the simulator how to connect to your agent and what to test.
+
+### Directory Structure
+
+Create a configuration directory with the required JSON files:
+
+```shellscript
+/path/to/input-setup-dir/
+├── agent_config.json    # API and agent configuration
+├── knowledge.json       # Business context and knowledge base
+└── data/                # (Optional) Local knowledge files
+```
+
+---
+
+## Agent Configuration
+
+The `agent_config.json` file configures how the framework connects to your conversational agent API.
+
+### Configuration Fields
+
+| Field                | Type      | Description                                                           |
+| -------------------- | --------- | --------------------------------------------------------------------- |
+| `agent_name`         | String    | Unique identifier for your agent (lowercase, no spaces)               |
+| `agent_capabilities` | List[Str] | List of specific tasks your agent should handle                       |
+| `agent_type`         | Enum      | See [API Connection Types](#api-connection-types) for supported types |
+| `agent_type_config`  | Dict      | See [API Connection Types](#api-connection-types) for required fields |
+
+### Writing Effective Agent Capabilities
+
+Describe capabilities using a **Verb + Object (+ Scope)** structure. Each capability should state a specific, observable action.
+
+**Good Examples:**
+
+- Answer feature-specific questions about products
+- Provide pricing information and generate quotes
+- Process returns and refunds for orders
+- Schedule appointments and send confirmations
+
+**Avoid:**
+
+- Be helpful
+- Answer questions
+- Handle customer requests
+
+<Note>
+  Vague descriptions don't set clear expectations or guide implementation. Be specific about what your agent can do.
+</Note>
+
+### API Connection Types
+
+The simulator supports three agent types for API connections:
+
+<Tabs>
+  <Tab title="Chat Completions">
+    **Type:** `chat_completions`
+
+    Connects to any OpenAI-compatible chat completions endpoint.
+
+    #### Features
+
+    - Standard chat completions API format
+    - Environment variable support for secrets
+    - Optional chat ID placeholder support
+
+    #### Placeholders & Variables
+
+    - `{chat_id}` - Can be included in `body.messages[*].content` and will be replaced at runtime
+    - `${ENV_VAR}` - Supported in header values for secrets
+
+    #### Basic Configuration
+
+    ```json
+    {
+      "agent_type": "chat_completions",
+      "agent_name": "chat_completions_example",
+      "agent_capabilities": [
+        "answer feature-specific queries about products"
+      ],
+      "agent_type_config": {
+        "endpoint": "http://localhost:7050/chat/completions",
+        "headers": {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer ${OPENAI_API_KEY}"
+        },
+        "body": {
+          "model": "gpt-5.1",
+          "messages": [
+            {
+              "role": "system",
+              "content": "You are being invoked by Arklex user simulator."
+            }
+          ]
+        }
+      }
+    }
+    ```
+
+    #### Configuration with Chat ID Support
+
+    ```json
+        {
+          "agent_type": "chat_completions",
+          "agent_name": "chat_completions_with_chat_id",
+          "agent_capabilities": [
+            "answer feature-specific queries about products"
+          ],
+          "agent_type_config": {
+            "endpoint": "https://localhost:7050/chat/completions",
+            "headers": {
+              "Content-Type": "application/json",
+              "Authorization": "Bearer ${OPENAI_API_KEY}"
+            },
+            "body": {
+              "model": "gpt-5.1",
+              "messages": [
+                {
+                  "role": "system",
+                  "content": "You are being invoked with chat_id:{chat_id}"
+                }
+              ]
+            }
+          }
+        }
+    ```
+
+    <Note>
+      The `{chat_id}` placeholder will be replaced with the actual chat ID during execution.
+    </Note>
+  </Tab>
+  <Tab title="A2A Protocol">
+    **Type:** `a2a`
+
+    Agent-to-Agent protocol for A2A-compatible agents.
+
+    #### Features
+
+    - Simplified endpoint configuration
+    - Optional HTTP headers support
+    - Environment variable support
+
+    #### Configuration
+
+    ```json
+    {
+      "agent_type": "a2a",
+      "agent_name": "a2a_example",
+      "agent_capabilities": [
+        "answer feature-specific queries about products"
+      ],
+      "agent_type_config": {
+        "endpoint": "http://localhost:9999",
+        "headers": {
+          "api-key": "${A2A_AUTH_TOKEN}"
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="Arklex Agents">
+    **Type:** `arklex`
+
+    For agents built using Arklex Studio.
+
+    #### Features
+
+    - Native Arklex integration
+    - Institution and bot ID-based routing
+    - Version control support
+
+    #### Configuration
+
+    ```json
+    {
+      "agent_type": "arklex",
+      "agent_name": "arklex_example",
+      "agent_capabilities": [
+        "answer feature-specific queries about products"
+      ],
+      "agent_type_config": {
+        "institution_id": "institution_1",
+        "bot_id": "bot_1",
+        "version": "v1alpha1",
+        "base_url": "https://www.arklex.ai"
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+### Environment Variable Support
+
+Both `chat_completions` and `a2a` agent types support environment variable substitution using `${ENV_VAR}` syntax.
+
+**How it works:**
+
+- At runtime, `${ENV_VAR}` patterns are replaced with environment variable values
+- If not set, it will be replaced with an empty string
+- Mix static text with variables: `"Bearer ${API_KEY}"` → `"Bearer sk-abc123..."`
+
+<Tip>
+  **Security Best Practice:** This approach keeps configuration files safe to commit while keeping credentials secure in environment variables.
+</Tip>
+
+---
+
+## Knowledge Configuration
+
+The `knowledge.json` file defines your company overview, business type, and the knowledge your agent has access to.
+
+### Configuration Fields
+
+| Field                | Type       | Description                                                                                            |
+| -------------------- | ---------- | ------------------------------------------------------------------------------------------------------ |
+| `corporate_overview` | String     | A comprehensive description of your company                                                            |
+| `business_type`      | Enum       | Either `"b2b"` or `"b2c"`                                                                              |
+| `knowledge`          | List[Dict] | Defines what information your agent has access to                                                      |
+| `user_events`        | List[Str]  | (Optional) Event descriptions that provide context for simulated conversations                         |
+| `user_goals`         | List[Str]  | (Optional) Sample customer intents that guide the simulator in generating realistic test conversations |
+
+### Knowledge Source Types
+
+The simulator supports four knowledge source types:
+
+<AccordionGroup>
+  <Accordion title="Local Files">
+    Knowledge stored locally in the `data` folder.
+
+    ```json
+    {
+    	"source": "/path/to/input-setup-dir/data",
+    	"type": "local"
+    }
+    ```
+  </Accordion>
+  <Accordion title="Web Crawling">
+    Knowledge crawled from web URLs.
+
+    ```json
+    {
+    	"source": "https://www.example.com",
+    	"type": "web"
+    }
+    ```
+  </Accordion>
+  <Accordion title="Direct Text">
+    Knowledge provided directly as text content.
+
+    ```json
+    {
+    	"source": "Direct text content about your company...",
+    	"type": "text"
+    }
+    ```
+  </Accordion>
+  <Accordion title="API Endpoint">
+    Knowledge fetched from external APIs.
+
+    ```json
+    {
+    	"source": "https://api.example.com/v1/products",
+    	"type": "api",
+    	"request_method": "GET",
+    	"request_headers": {
+    		"Content-Type": "application/json",
+            "Authorization": "Bearer ${API_KEY}"
+          },
+    	"response_content_type": "json",
+    	"response_content_path": ["data", "products"],
+    	"response_content_extract_type": "array"
+    }
+    ```
+
+    <Note>
+      Environment variables (e.g., `${API_KEY}`) are supported in request headers.
+    </Note>
+  </Accordion>
+</AccordionGroup>
+
+### Complete Example
+
+```json
+{
+  "corporate_overview": "YourCompany Inc. is a leading provider of innovative software solutions...",
+  "business_type": "b2b",
+  "knowledge": [
+    {
+      "source": "/path/to/input-setup-dir/data",
+      "type": "local"
+    },
+    {
+      "source": "https://www.example.com",
+      "type": "web"
+    },
+    {
+      "source": "Direct text content about your company...",
+      "type": "text"
+    },
+    {
+      "source": "https://api.example.com/v1/products",
+      "type": "api",
+      "request_method": "GET",
+      "request_headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer ${API_KEY}"
+      },
+      "response_content_type": "json",
+      "response_content_path": ["data", "products"],
+      "response_content_extract_type": "array"
+    }
+  ],
+  "user_events": [
+    "Recently involved in a minor car accident",
+    "Buying a second property as an investment",
+  ]
+}
+```
+
+---
+
+## Data Folder
+
+The `data` folder contains your knowledge base documents that power your agent's responses. You can freely add, remove, or update files in this folder to match your use case.
+
+### Supported File Formats
+
+| Category      | Formats                                         |
+| ------------- | ----------------------------------------------- |
+| Documents     | `.md`, `.pdf`, `.doc`, `.docx`, `.txt`, `.html` |
+| Data Files    | `.json`, `.xls`, `.xlsx`                        |
+| Presentations | `.ppt`, `.pptx`                                 |
+| Images\*      | `.png`, `.jpg`, `.jpeg`                         |
+
+<Note>
+  \*Image OCR requires `MISTRAL_API_KEY` environment variable to be set.
+</Note>

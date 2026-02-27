@@ -1,0 +1,183 @@
+---
+title: "Results"
+---
+
+## Overview
+
+After running a simulation, you'll receive detailed conversation logs, per-turn quality metrics, error analysis, and actionable code fixes to improve your agent.
+
+### Output Structure
+
+Results are saved in the `results` folder, organized by stage:
+
+```shellscript
+results/
+├── conversation/
+│   ├── conversations.json                   # Full conversation logs between user simulator and agent
+│   └── target_goals.json                    # Goals assigned to simulated users
+├── evaluation/
+│   ├── agent_performance_per_convo.csv      # Performance metrics aggregated per conversation
+│   ├── agent_performance_per_turn.csv       # Performance metrics for each turn
+│   ├── unique_errors.csv                    # Distinct errors encountered during evaluation
+│   ├── final_report.md                      # Summary report of the simulation run
+│   └── final_report.html                    # Interactive HTML report of the simulation result
+└── scenario/
+    ├── attributes.json                      # User attributes used in simulation
+    ├── cap_goal_map.json                    # Mapping of capabilities to goals
+    ├── goals.json                           # Goal definitions
+    ├── knowledges.json                      # Knowledge base entries
+    ├── profiles.json                        # User profile configurations
+    └── artifacts/
+```
+
+---
+
+## Simulated Conversation Data
+
+Complete conversation transcripts and associated metadata are stored in `conversation/conversations.json`. This file contains the full dialogue history and context for each simulated interaction.
+
+### What's Included
+
+Each conversation entry includes:
+
+- **Conversation History** — Complete turn-by-turn dialogue between the simulated user and agent
+- **System Prompts** — Instructions provided to the user simulator that guide behavior
+- **User Profiles** — Detailed persona information including attributes, demographics, and behavioral characteristics
+- **User Events** — Relevant contextual events that may influence user behavior or needs
+- **User Goals** — Specific objectives assigned to each conversation that define success criteria
+- **Knowledge Base** — FAQ-style content and domain knowledge available to the agent during the conversation
+
+---
+
+## Performance Metrics
+
+### Per-Turn Metrics
+
+Per-turn metrics evaluate the quality of each individual agent response during a conversation.
+
+#### Scoring Scale
+
+All metrics use a **1–5 scale**, where:
+
+- **1** = Poor performance
+- **5** = Excellent performance (except for verbosity score)
+
+#### Available Metrics
+
+| Metric               | Description                                                                               |
+| -------------------- | ----------------------------------------------------------------------------------------- |
+| `helpfulness_score`  | Measures how effectively the response addresses the user's needs and provides value       |
+| `coherence_score`    | Evaluates clarity, logical flow, and internal consistency of the response                 |
+| `verbosity_score`    | Assesses response length appropriateness (1 = overly verbose, 5 = appropriately succinct) |
+| `relevance_score`    | Measures how directly the response addresses the user's input without unnecessary content |
+| `faithfulness_score` | Evaluates correctness and grounding with respect to provided knowledge base               |
+
+### Per-Conversation Metrics
+
+Per-conversation metrics assess overall agent performance across complete interactions.
+
+#### Available Metrics
+
+| Field                   | Description                                                                                                                                                   |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `goal_completion_score` | Indicates whether the agent successfully completed the user's goal. Scored 0.0–1.0, where 1.0 represents full goal achievement.                               |
+| `turn_success_ratio`    | Measures consistency of agent behavior across turns. Calculated as `(total_turns - behavior_failures) / total_turns`. A ratio of 1.0 indicates zero failures. |
+| `final_score`           | Weighted combination of goal completion and turn success ratio. Formula: `0.25 × goal_completion_score + 0.75 × turn_success_ratio`.                          |
+| `status`                | Conversation status category based on final score: **Done** (`1.0`), **Partial Failure** (`≥0.6` and `<1.0`), or **Failed** (`<0.6`)                          |
+
+#### Interpreting Status
+
+| Status              | Final Score       | Meaning                                                                                  |
+| ------------------- | ----------------- | ---------------------------------------------------------------------------------------- |
+| **Done**            | `1.0`             | Agent successfully completed the user's goal with no behavior failures                   |
+| **Partial Failure** | `≥0.6` and `<1.0` | Agent had minor issues or incomplete goal completion, but the interaction was acceptable |
+| **Failed**          | `<0.6`            | Agent had significant behavior failures or did not complete the user's goal              |
+
+These metrics help you understand both the reliability of agent behavior and the effectiveness of goal achievement across different conversation scenarios.
+
+---
+
+## Error Analysis
+
+### Agent Behavior Failures
+
+When scores fall below threshold levels, the system identifies specific behavior failure categories:
+
+| Failure Category                     | Description                                                                                |
+| ------------------------------------ | ------------------------------------------------------------------------------------------ |
+| **Failure to Ask for Clarification** | Agent proceeds with assumptions instead of requesting clarification on ambiguous queries   |
+| **Repetition**                       | Agent redundantly restates the same content without adding new value                       |
+| **Disobey User Request**             | Agent response completely ignores or contradicts the user's clear request                  |
+| **Lack of Specific Information**     | Agent provides only generic or partial answers when specific details are available         |
+| **False Information**                | Agent generates hallucinated or fabricated information that contradicts the knowledge base |
+
+These failure categories help identify root causes and guide targeted improvements to agent behavior.
+
+### Unique Errors
+
+The unique errors analysis identifies and deduplicates recurring behavior failure patterns across conversations, grouping failures by root cause.
+
+#### How It Works
+
+The system analyzes behavior failures across all conversations and groups similar failures together, creating fine-grained error descriptions that capture the specific ways agents break down.
+
+#### Data Fields
+
+| Field                              | Description                                                                          |
+| ---------------------------------- | ------------------------------------------------------------------------------------ |
+| `unique_error`                     | Fine-grained description of the specific error pattern                               |
+| `agent_behaviour_failure_category` | High-level failure category (e.g., "Failure to Ask for Clarification", "Repetition") |
+| `occurrences`                      | List of conversation and turn identifiers where this error appears                   |
+
+---
+
+## Fix Recommendations
+
+### Module Fixes
+
+For each unique error identified in the evaluation, the system generates high-level fix recommendations that target specific agent framework modules. The system evaluates all potential module-level fixes and selects the most effective option with detailed reasoning.
+
+<Note>
+  Module fixes provide high-level guidance on which agent framework components should be modified. When code analysis is available, these module fixes serve as the foundation for generating specific code-level implementation suggestions.
+</Note>
+
+#### Agent Framework Modules
+
+Errors are mapped to standard agent architecture components:
+
+| Module                        | Responsibility                                      |
+| ----------------------------- | --------------------------------------------------- |
+| **Memory Module**             | Manages context, history, and knowledge retrieval   |
+| **Tools/Action Module**       | Interfaces with external APIs and services          |
+| **Planning/Reasoning Module** | Handles multi-step reasoning and task decomposition |
+| **Orchestration Module**      | Coordinates module behavior and control flow        |
+| **Generation Module**         | Produces natural language responses                 |
+
+This mapping helps identify which components need modification to resolve specific error patterns.
+
+#### Generated Outputs
+
+The module fixes analysis produces:
+
+- **Module Fixes** — Comprehensive fix suggestions for each implicated module, addressing how that component should be modified to resolve the error
+- **Best Module Fix** — The selected fix that would most effectively address the root cause of the error
+- **Best Module Fix Reasoning** — Detailed explanation of why this particular module fix was chosen over alternatives
+
+### Code Fixes
+
+When code analysis is enabled using `--code-file-path` and `--entry-function` parameters, the system generates actionable, implementation-level code fixes for each unique error. These fixes provide specific code modifications that can be directly applied to resolve identified issues.
+
+<Warning>
+  **Limitation:** Code fixes are currently available only for OpenAI SDK-based agents implemented in a single file. For other implementations, module-level fixes provide guidance on what to change, even if specific code patches cannot be generated.
+</Warning>
+
+#### Generated Outputs
+
+The code fixes analysis produces:
+
+- **Code Fixes** — All generated code-level fixes for each implicated module, showing specific implementation changes
+- **Code Fix Entry Function** — The entry point function where the fix should be applied
+- **Best Code Fix Location** — The specific function or code location where the fix is most effective
+- **Best Code Fix** — The selected best fix with precise line numbers and code modifications
+
+These code fixes build upon module-level recommendations to provide ready-to-apply implementation guidance for supported agent architectures.

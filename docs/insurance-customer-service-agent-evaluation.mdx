@@ -1,0 +1,202 @@
+---
+title: "Insurance Customer Service Agent Testing"
+---
+
+## Overview
+
+This example demonstrates how to run Arklex User Simulator with a customer service agent for an **insurance company use case**. You can follow this example to evaluate your own agent.
+
+This example includes two agent options:
+
+- **Option 1**: OpenAI agent that directly uses the OpenAI API to interact with the user simulator
+- **Option 2**: Customized in-house agent exposed through A2A Protocol or Chat Completions-compatible interface to interact with the user simulator
+
+---
+
+## Data Preparation
+
+This example already includes a `data` folder in this directory (`./examples/bank-insurance/data`). You can freely add, remove, or update knowledge files (`.md`, `.pdf`, `.doc`, etc.) in that folder to match your own use case.
+
+---
+
+## Option 1: OpenAI Agent
+
+<Steps>
+  <Step title="Rename agent configuration file">
+    Rename `agent_config_openai.json` to `agent_config.json`. If `agent_config.json` already exists, first rename the original file to another name to avoid overwriting it.
+  </Step>
+  <Step title="Configure runtime settings">
+    Configure `config.yaml` for this example (the default configuration is sufficient for this example).
+  </Step>
+  <Step title="Run the simulator">
+    Choose how you want to run the simulator:
+
+    <Tabs>
+      <Tab title="Binary">
+        **Set the environment variables**
+
+        ```bash
+        export OPENAI_API_KEY="<YOUR_OPENAI_API_KEY>"
+        ```
+
+        **Run the simulator**
+
+        From the `root` folder:
+
+        ```bash
+        ./run_arksim.sh run ./examples/bank-insurance/config.yaml
+        ```
+      </Tab>
+      <Tab title="Docker">
+        **Create environment file**
+
+        Create a `.env` file with your API key:
+
+        ```bash
+        OPENAI_API_KEY=<YOUR_OPENAI_API_KEY>
+        ```
+
+        **Run the simulator**
+
+        ```bash
+        docker run --platform linux/amd64 \
+          -v ./examples:/examples \
+          --env-file ./examples/.env \
+          -it public.ecr.aws/f1v9v1i4/arklex/arksim:1.0.0-alpha \
+          run ./examples/bank-insurance/config.yaml
+        ```
+      </Tab>
+    </Tabs>
+  </Step>
+</Steps>
+
+---
+
+## Option 2: In-house Agent
+
+In the `/examples/bank-insurance/agent_server` folder, we provide a sample RAG-based agent implemented with LangGraph that can be exposed with A2A Protocol or through Chat Completions interface.
+
+<Steps>
+  <Step title="Choose and configure agent type">
+    Choose an agent configuration and rename it to `agent_config.json` (if `agent_config.json` already exists, rename or remove it first).
+
+    - For **A2A (recommended)**: `agent_config_a2a.json` → `agent_config.json`
+    - For **Chat Completions**: `agent_config_chat_completions.json` → `agent_config.json`
+
+    <Note>
+      The agent configs support environment variable substitution using `${ENV_VAR_NAME}` syntax (for example, `${A2A_CLIENT_CREDENTIAL}` or `${OPENAI_API_KEY}`).
+    </Note>
+  </Step>
+  <Step title="Install agent dependencies">
+    Create a virtual environment (Python 3.11 recommended) and install dependencies:
+
+    ```bash
+    # Create and activate the environment
+    conda create -n bank_venv python=3.11 -y
+    conda activate bank_venv
+    
+    # Install required packages for the sample agent
+    pip install -r ./examples/bank-insurance/agent_server/requirements.txt
+    ```
+  </Step>
+  <Step title="Start the agent server">
+    Choose one of the following agent server options:
+
+    <Tabs>
+      <Tab title="A2A Agent Server">
+        This exposes an A2A-compatible agent on port `9999`.
+
+        <Warning>
+          **Note for Docker users**: If you are running the simulator with Docker, you need to change part of the endpoint in the public agent card from `localhost` to `host.docker.internal` in `./examples/bank-insurance/agent_server/a2a/server.py`.
+
+          ![A2a Docker Endpoint](/images/a2a-docker-endpoint.png)
+        </Warning>
+        ```bash
+        export OPENAI_API_KEY=<YOUR_OPENAI_API_KEY>
+        python -m examples.bank-insurance.agent_server.a2a.server
+        ```
+      </Tab>
+      <Tab title="Chat Completions Server">
+        This exposes an OpenAI Chat Completions-compatible endpoint on port `8888` at `/chat/completions`.
+
+        ```bash
+        export OPENAI_API_KEY=<YOUR_OPENAI_API_KEY>
+        python -m examples.bank-insurance.agent_server.a2a.server
+        ```
+
+        **Metadata Support**
+
+        If `enable_metadata` is set to `true` in the request body, the following metadata will be sent together with the user message:
+
+        - `chat_id`: The chat ID of the conversation
+        - `user_attributes`: The user attributes of the conversation
+        - `user_goal`: The user goal of the conversation
+        - `knowledge`: The knowledge of the conversation
+
+        **Customization**
+
+        You can adapt these servers to call your own backend agent by following the comments in `agent_server/chat_completions/server.py` (for Chat Completions) or by implementing your own A2A-compatible executor in `agent_server/a2a`.
+      </Tab>
+    </Tabs>
+  </Step>
+  <Step title="Configure runtime settings">
+    Configure `config.yaml` for this example.
+  </Step>
+  <Step title="Run the simulator">
+    <Tabs>
+      <Tab title="Binary">
+        In a new terminal:
+
+        **Set the environment variables**
+
+        ```bash
+        export OPENAI_API_KEY="<YOUR_OPENAI_API_KEY>"
+        ```
+
+        **Run the simulator**
+
+        From the `root` folder:
+
+        ```bash
+        ./run_arksim.sh run ./examples/bank-insurance/config.yaml
+        ```
+      </Tab>
+      <Tab title="Docker">
+        **Create environment file**
+
+        Create a `.env` file with your API key:
+
+        ```bash
+        OPENAI_API_KEY=<YOUR_OPENAI_API_KEY>
+        ```
+
+        **(macOS only) Update agent endpoint for Docker networking**
+
+        On macOS, Docker containers cannot access `localhost` on the host machine directly. You need to update the endpoint URL in `agent_config.json` to use `host.docker.internal` instead of `localhost`.
+
+        For example, if your `agent_config.json` contains:
+
+        ```json
+        "endpoint": "http://localhost:8080/chat/completions"
+        ```
+
+        Change it to:
+
+        ```json
+        "endpoint": "http://host.docker.internal:8080/chat/completions"
+        ```
+
+        **Run the simulator**
+
+        ```bash
+        docker run --platform linux/amd64 \
+          -v ./examples:/examples \
+          --env-file ./examples/.env \
+          --network host \
+          -it public.ecr.aws/f1v9v1i4/arklex/arksim:1.0.0-alpha \
+          run ./examples/bank-insurance/config.yaml
+        ```
+      </Tab>
+    </Tabs>
+  </Step>
+</Steps>

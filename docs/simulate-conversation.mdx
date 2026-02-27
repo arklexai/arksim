@@ -1,0 +1,78 @@
+---
+title: "Simulate Conversation"
+---
+
+## Overview
+
+Use this stage for conversation simulation only with pre-built scenarios.
+
+**When to use this:**
+
+- Running conversations with pre-built scenarios
+- Re-testing your agent after making changes without regenerating scenarios
+- Testing specific scenario sets in isolation
+
+**What it does:** Takes the generated scenarios and runs conversations with your agent, recording all exchanges.
+
+**Output:** Conversation logs are saved to `output_dir` (default: `./results/conversation/`) for evaluation.
+
+---
+
+## Running the Command
+
+<Tabs>
+  <Tab title="Binary">
+    ```bash
+    ./run_arksim.sh simulate config_simulate.yaml
+    ```
+  </Tab>
+  <Tab title="Docker">
+    ```bash
+    docker run --platform linux/amd64 \
+    	-v ./examples:/examples \
+    	--env-file .env \
+    	-it public.ecr.aws/f1v9v1i4/arklex/arksim:1.0.0-alpha \
+    	simulate config_simulate.yaml
+    ```
+  </Tab>
+</Tabs>
+
+---
+
+## Configuration File
+
+### Understanding Key Settings
+
+- **input_dir** — Points to where your scenarios live (from the build step)
+- **max_turns** — Safety limit on conversation length. Prevents runaway conversations
+- **display_time_delay** — Adds realistic pauses when viewing conversations in real-time
+
+### YAML Configuration
+
+```yaml
+# Path to agent setup directory
+agent_setup_dir: ./examples/bank-insurance
+
+# Path to scenario output directory (from build step)
+input_dir: ./results/scenario
+
+# Output directory for conversation results (default: conversation/)
+output_dir: null
+
+# Simulation settings
+num_conversations: 5                      # Number of conversations to generate/simulate
+max_turns: 5                              # Maximum turns per conversation
+simulated_user_behavior_instructions: []  # Custom instructions for simulated user behavior
+num_workers: auto                         # Number of parallel workers
+display_time_delay: false                 # Add delays between turns when displaying conversations
+
+# LLM settings
+model: gpt-5.1                            # LLM model used by Arksim (not your agent)
+provider: null                            # LLM provider (e.g., openai, azure)
+```
+
+---
+
+## Next Steps
+
+After simulation completes, proceed to the [Evaluate Conversation](./evaluate-conversation) to analyze agent performance.
