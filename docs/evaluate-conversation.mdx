@@ -1,93 +1,249 @@
 ---
-title: "Evaluate Conversation"
+title: "Evaluation"
+description: "Score your agent's responses across every conversation turn and surface failure patterns with actionable fixes."
 ---
 
-## Overview
+## What is Evaluation?
 
-Use this stage for conversation evaluation only with completed simulation results.
+Evaluation analyzes the conversation transcripts produced by simulation and scores your agent across multiple dimensions.
 
-**When to use this:**
+The **output** is a set of files summarizing your agent's performance across turns, conversations, and error types.
 
-- Re-evaluating existing conversations with different criteria
-- Generating new fix suggestions after updating your codebase
-- Analyzing agent performance against specific quality thresholds
-- Creating reports for stakeholders or CI/CD pipelines
-
-**What it does:** Analyzes completed conversations against your agent's goals, knowledge accuracy, and capabilities to produce scores and actionable feedback.
-
-**Output:** Evaluation results, scores, and optional HTML report saved to `output_dir` (default: `./results/evaluation/`).
+![Evaluation](/images/evaluation.svg)
 
 ---
 
-## Running the Command
+## What Gets Evaluated
 
-<Tabs>
-  <Tab title="Binary">
-    ```bash
-    ./run_arksim.sh evaluate config_evaluate.yaml
-    ```
-  </Tab>
-  <Tab title="Docker">
-    ```bash
-    docker run --platform linux/amd64 \
-    	-v ./examples:/examples \
-    	--env-file .env \
-    	-it public.ecr.aws/f1v9v1i4/arklex/arksim:1.0.0-alpha \
-    	evaluate config_evaluate.yaml
-    ```
-  </Tab>
-</Tabs>
+Each agent response is scored on five metrics per turn:
 
----
+| Metric           | What it measures                                       | Scale |
+| ---------------- | ------------------------------------------------------ | ----- |
+| **Helpfulness**  | How effectively the response addresses the user's need | 1–5   |
+| **Coherence**    | Logical flow and clarity of the response               | 1–5   |
+| **Relevance**    | How directly the response addresses the user's input   | 1–5   |
+| **Verbosity**    | Conciseness — penalizes unnecessarily long responses   | 1–5   |
+| **Faithfulness** | Whether the response contradicts the user's knowledge  | 1–5   |
 
-## Configuration File
+Scores range from **1 (poor)** to **5 (excellent)**, with 3–4 considered good and 4–5 excellent.
 
-### Understanding Key Settings
+At the conversation level, two additional scores are computed on a 0–1 scale:
 
-- **input_dir** — Points to conversation logs from the simulate step
-- **code_file_path** — Optional: provide your agent's source code to get specific fix suggestions
-- **entry_function** — The main function in your code where the agent logic starts
-- **generate_html_report** — Creates a visual report with scores and conversation breakdowns
-- **score_threshold** — Set a pass/fail threshold (0.0-1.0) for CI/CD integration
+- **Goal Completion**: whether the user's goal was fully addressed by the end of the conversation.
+- **Turn Success Ratio**: proportion of turns with no detected behavior failure.
 
-### YAML Configuration
-
-```yaml
-# Path to agent setup directory
-agent_setup_dir: ./examples/bank-insurance
-
-# Path to simulation output directory (from simulate step)
-input_dir: ./results/conversation
-
-# Output directory for evaluation results (default: evaluation/)
-output_dir: null
-
-# LLM settings
-model: gpt-5.1                           # LLM model used by Arksim (not your agent)
-provider: null                           # LLM provider (e.g., openai, azure)
-num_workers: auto                        # Number of parallel workers
-
-# Code fix settings (both required together)
-code_file_path: null                     # Path to code file for fix generation (requires entry_function)
-entry_function: null                     # Entry function for code fix generation (requires code_file_path)
-
-# Report settings
-generate_html_report: true               # Whether to generate an HTML report
-score_threshold: null                    # If any per-conversation final score is below this threshold, exit with non-zero code
-```
+These combine into an **Overall Agent Score** per conversation:
 
 <Note>
-  **Code Fix Requirements:** Both `code_file_path` and `entry_function` must be provided together. If only one is set, code fixes will not be generated.
+  `overall_agent_score = turn_success_ratio × 0.75 + goal_completion_score × 0.25`
+
+  Each conversation is assigned a status based on this score: `completed` (1.0), `partial_failure` (≥ 0.6), or `failed` (\< 0.6).
 </Note>
 
 ---
 
-## Next Steps
+## Behavior Failure Detection
 
-After evaluation completes, review the results in the output directory:
+Beyond numeric scores, evaluation detects the type of failure in each underperforming turn:
 
-- **CSV files** — Detailed metrics for analysis and tracking
-- **HTML report** — Interactive visualization of agent performance
-- **Fix suggestions** — Module-level and code-level recommendations (if code analysis enabled)
+| Failure type                       | Description                                              |
+| ---------------------------------- | -------------------------------------------------------- |
+| `lack of specific information`     | Generic or partial answer that omits important details   |
+| `failure to ask for clarification` | Proceeds with an assumption instead of asking the user   |
+| `disobey user request`             | Completely ignores what the user asked                   |
+| `repetition`                       | Restates previous content without adding value           |
+| `false information`                | Contradicts/fabricates information relative to knowledge |
+| `no failure`                       | No failure detected                                      |
 
-See the [Results](../getting-started/results) page for a detailed explanation of all evaluation outputs.
+Across all conversations, duplicate failures are deduplicated into a **unique errors** list with occurrence counts.
+
+---
+
+## Inputs
+
+The input to evaluation is the `conversations.json` file — the output of the [Simulation](/simulate-conversation) step. Knowledge referenced during evaluation comes from your [Scenarios](/build-scenario) file.
+
+Evaluation is configured via a YAML file:
+
+```yaml
+# Inputs
+scenario_file_path: ./examples/path/to/scenario.json
+conversation_file_path: ./examples/path/to/conversations.json
+
+# Model
+provider: openai
+model: gpt-5.1
+
+# Execution
+num_workers: auto
+score_threshold: null
+
+# Metrics
+metrics_to_run: [
+  faithfulness,
+  helpfulness,
+  coherence,
+  verbosity,
+  relevance,
+  goal_completion,
+  agent_behavior_failure
+]
+custom_metrics_file_paths: []
+
+# Output
+output_dir: ./examples/path/to/evaluation
+generate_html_report: true
+```
+
+<ResponseField name="scenario_file_path" type="string" required>
+  Path to the JSON file defining the scenario to evaluate.
+</ResponseField>
+
+<ResponseField name="conversation_file_path" type="string" required>
+  Path to the JSON file containing the simulation output conversations.
+</ResponseField>
+
+<ResponseField name="output_dir" type="string">
+  Directory where evaluation results will be stored. Defaults to `./evaluation`.
+</ResponseField>
+
+<ResponseField name="model" type="string" required>
+  LLM model to use for scoring.
+</ResponseField>
+
+<ResponseField name="provider" type="string" required>
+  LLM service provider (e.g., `open-ai`).
+</ResponseField>
+
+<ResponseField name="num_workers" type="string | int">
+  Number of parallel workers. Set to `auto` to match available CPU cores.
+</ResponseField>
+
+<ResponseField name="custom_metrics_file_paths" type="list[string]">
+  Python files defining custom metrics. Each must implement `BaseMetric`.
+</ResponseField>
+
+<ResponseField name="metrics_to_run" type="list[string]">
+  Metrics to evaluate. If empty, runs all standard and custom metrics.
+</ResponseField>
+
+<ResponseField name="generate_html_report" type="boolean">
+  Whether to produce an HTML evaluation report alongside the markdown report.
+</ResponseField>
+
+<ResponseField name="score_threshold" type="float | null">
+  Minimum acceptable score per conversation. Exits non-zero if any conversation falls below this value.
+</ResponseField>
+
+---
+
+## Running Evaluation
+
+<Steps>
+  <Step title="Install Arksim">
+    ```bash
+    pip install arksim
+    ```
+  </Step>
+  <Step title="Run evaluation">
+    <Tabs>
+      <Tab title="CLI">
+        ```bash
+        arksim evaluate config.yaml
+        ```
+      </Tab>
+      <Tab title="Python — from file">
+        ```python
+        import arksim
+        
+        evaluation_results = arksim.evaluate(
+            conversation_file_path="./conversations.json",
+            output_dir="./evaluation",
+            model="gpt-5.1",
+            provider="open-ai",
+            num_workers="auto",
+            generate_html_report=True,
+        )
+        ```
+      </Tab>
+      <Tab title="Python — from objects">
+        ```python
+        import arksim
+        from arksim.simulation_engine.entities import (
+            ConversationItem, TurnItem, SimulatedUserPrompt, SimulatedUserPromptVariables
+        )
+        
+        conversations = [
+            ConversationItem(
+                conversation_id="00de685e-f76b-4a5f-a6e5-217cad777316",
+                scenario_id="8f4c2a91-3b7e-4d5f-a9c2-6e1b4d9f2037",
+                conversation_history=[
+                    TurnItem(turn_id=0, role="sim_user", content="What documents do I need to file a claim?"),
+                    TurnItem(turn_id=0, role="assistant", content="You'll need a copy of your policy..."),
+                ],
+                sim_user_prompt=SimulatedUserPrompt(
+                    sim_user_prompt_template="You are a customer interacting with an agent...",
+                    variables=SimulatedUserPromptVariables(
+                        agent_context="XYZ Bank Insurance is a Canadian provider...",
+                        sim_user_profile="Name: Priya Sharma. Age: 32. Location: Toronto...",
+                        user_goal="Find out what documents are needed to file an auto insurance claim.",
+                        knowledge=["Typical timelines: claim setup is usually same day..."],
+                    ),
+                ),
+            )
+        ]
+        
+        evaluation_results = arksim.evaluate(
+            conversations=conversations,
+            output_dir="./results/evaluation",
+            model="gpt-5.1",
+            provider="open-ai",
+            generate_html_report=True,
+        )
+        ```
+      </Tab>
+    </Tabs>
+  </Step>
+</Steps>
+
+---
+
+## Output Files
+
+| File                                     | Description                                                                                                |
+| ---------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `conversations.json`                     | Full transcripts with scores, failure labels, and metadata for every conversation.                         |
+| `final_report.md` _(optional)_           | High-level summary with metric averages, overall assessment, and top unique errors.                        |
+| `final_report.html` _(optional)_         | Same content as `final_report.md`, rendered for easier browsing and sharing.                               |
+| `agent_performance_per_turn.csv`         | One row per turn with metric scores, reasoning, and failure labels. Useful for debugging specific moments. |
+| `agent_performance_per_conversation.csv` | One row per conversation with rolled-up scores and status. Useful for comparing conversations.             |
+| `unique_errors.csv`                      | One row per unique error type with description, category, and links back to occurrences.                   |
+
+---
+
+## Reading the Output
+
+<Expandable title="By Conversation — conversations[i]">
+  **Quick summary:**
+
+  - `overall_agent_score` — combined score for the conversation
+  - `evaluation_status` — `completed`, `partial_failure`, or `failed`
+  - `goal_completion_score` — how fully the user goal was achieved
+  - `turn_success_ratio` — proportion of successful turns
+
+  **Detailed analysis:**
+
+  - Inspect `turn_scores[]` for per-turn metric scores and reasoning
+  - Check `unique_error_ids` on each turn to trace entries in `unique_errors`
+</Expandable>
+
+<Expandable title="By Error Type — unique_errors[unique_error_id]">
+  **Understand the failure:**
+
+  - `unique_error_description` — description of the error
+  - `behavior_failure_category` — categorization of the failure pattern
+
+  **Trace occurrences:**
+
+  - `occurrences_by_conversation_id` — maps the error to specific turns and conversations
+</Expandable>
