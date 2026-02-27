@@ -1,0 +1,93 @@
+---
+title: "Evaluate Conversation"
+---
+
+## Overview
+
+Use this stage for conversation evaluation only with completed simulation results.
+
+**When to use this:**
+
+- Re-evaluating existing conversations with different criteria
+- Generating new fix suggestions after updating your codebase
+- Analyzing agent performance against specific quality thresholds
+- Creating reports for stakeholders or CI/CD pipelines
+
+**What it does:** Analyzes completed conversations against your agent's goals, knowledge accuracy, and capabilities to produce scores and actionable feedback.
+
+**Output:** Evaluation results, scores, and optional HTML report saved to `output_dir` (default: `./results/evaluation/`).
+
+---
+
+## Running the Command
+
+<Tabs>
+  <Tab title="Binary">
+    ```bash
+    ./run_arksim.sh evaluate config_evaluate.yaml
+    ```
+  </Tab>
+  <Tab title="Docker">
+    ```bash
+    docker run --platform linux/amd64 \
+    	-v ./examples:/examples \
+    	--env-file .env \
+    	-it public.ecr.aws/f1v9v1i4/arklex/arksim:1.0.0-alpha \
+    	evaluate config_evaluate.yaml
+    ```
+  </Tab>
+</Tabs>
+
+---
+
+## Configuration File
+
+### Understanding Key Settings
+
+- **input_dir** — Points to conversation logs from the simulate step
+- **code_file_path** — Optional: provide your agent's source code to get specific fix suggestions
+- **entry_function** — The main function in your code where the agent logic starts
+- **generate_html_report** — Creates a visual report with scores and conversation breakdowns
+- **score_threshold** — Set a pass/fail threshold (0.0-1.0) for CI/CD integration
+
+### YAML Configuration
+
+```yaml
+# Path to agent setup directory
+agent_setup_dir: ./examples/bank-insurance
+
+# Path to simulation output directory (from simulate step)
+input_dir: ./results/conversation
+
+# Output directory for evaluation results (default: evaluation/)
+output_dir: null
+
+# LLM settings
+model: gpt-5.1                           # LLM model used by Arksim (not your agent)
+provider: null                           # LLM provider (e.g., openai, azure)
+num_workers: auto                        # Number of parallel workers
+
+# Code fix settings (both required together)
+code_file_path: null                     # Path to code file for fix generation (requires entry_function)
+entry_function: null                     # Entry function for code fix generation (requires code_file_path)
+
+# Report settings
+generate_html_report: true               # Whether to generate an HTML report
+score_threshold: null                    # If any per-conversation final score is below this threshold, exit with non-zero code
+```
+
+<Note>
+  **Code Fix Requirements:** Both `code_file_path` and `entry_function` must be provided together. If only one is set, code fixes will not be generated.
+</Note>
+
+---
+
+## Next Steps
+
+After evaluation completes, review the results in the output directory:
+
+- **CSV files** — Detailed metrics for analysis and tracking
+- **HTML report** — Interactive visualization of agent performance
+- **Fix suggestions** — Module-level and code-level recommendations (if code analysis enabled)
+
+See the [Results](../getting-started/results) page for a detailed explanation of all evaluation outputs.

@@ -1,0 +1,99 @@
+---
+title: "Personal AI Assistant (MoltBot) Testing"
+---
+
+## Agent Testing Example - Personal AI Assistant
+
+This directory gives an example of running Arklex User Simulator CLI with a personal AI assistant agent for the **Moltbot/OpenClaw use case**. You can follow the example to evaluate your own OpenClaw agent.
+
+<Warning>
+  We recommend using a **sandbox environment** for this agent, as **real actions could take place**. Please **carefully grant access** to tools and APIs, and ensure you understand the permissions being provided.
+</Warning>
+
+### Overview
+
+Moltbot (OpenClaw) is an open-source personal AI assistant that helps users manage daily tasks, smart home devices, messaging, calendar, and files. This example demonstrates how to simulate and evaluate conversational interactions with a personal assistant agent.
+
+### Data Preparation
+
+This example includes a `data` folder with knowledge files covering:
+
+- Reminders and task management
+- Smart home device control
+- Cross-platform messaging (WhatsApp, Telegram, Slack, Discord)
+- Calendar and scheduling
+- File and document management
+- Memory and user preferences
+- Quick lookups and information retrieval
+
+You can add, remove, or update knowledge files (`.md`, `.pdf`, `.doc`, etc.) in the `data/` folder to match your use case.
+
+### OpenClaw Instance Setup
+
+Use this for production evaluation against your actual OpenClaw deployment.
+
+#### Prerequisites
+
+1. Install and configure OpenClaw: https://openclaw.ai
+2. Enable the HTTP Chat Completions endpoint in `~/.openclaw/openclaw.json`:
+
+   ```json
+   {
+     "gateway": {
+       "http": {
+         "endpoints": {
+           "chatCompletions": {
+             "enabled": true
+           }
+         }
+       }
+     }
+   }
+   ```
+
+#### Steps
+
+<Steps>
+  <Step title="Start the OpenClaw gateway">
+
+   ```bash
+   openclaw gateway --port 18789 --verbose
+   ```
+
+  </Step>
+  <Step title="Set environment variables">
+
+   ```bash
+   export OPENAI_API_KEY="<YOUR_OPENAI_API_KEY>"
+   export OPENCLAW_TOKEN="<YOUR_OPENCLAW_GATEWAY_TOKEN>"
+   ```
+
+   Find your token in `~/.openclaw/openclaw.json` under `gateway.auth.token`.
+
+  </Step>
+  <Step title="Use the local config">
+   Use the local config `agent_config.json`.
+  </Step>
+  <Step title="Run the simulator">
+
+   ```bash
+   ./run_arksim.sh run ./examples/moltbot/config.yaml
+   ```
+
+  </Step>
+</Steps>
+
+
+#### Troubleshooting
+
+**Verifying OpenClaw Connection**
+
+Test the endpoint before running the simulator:
+
+```bash
+curl -sS "http://127.0.0.1:18789/v1/chat/completions" \
+  -H "Authorization: Bearer $OPENCLAW_TOKEN" \
+  -H "Content-Type: application/json" \
+  -H "x-openclaw-agent-id: main" \
+  -d '{"model":"openclaw","messages":[{"role":"user","content":"Hello"}]}'
+```

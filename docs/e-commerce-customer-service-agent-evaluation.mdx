@@ -1,0 +1,200 @@
+---
+title: "E-commerce Customer Service Agent Testing"
+---
+
+## Overview
+
+This example demonstrates how to run Arklex User Simulator with a shopping assistant agent for an **e-commerce use case**. You can follow this example to evaluate your own agent.
+
+This example includes two agent options:
+
+- **Option 1**: OpenAI agent that directly uses the OpenAI API to interact with the user simulator
+- **Option 2**: Customized in-house agent exposed through a Chat Completions-compatible interface to interact with the user simulator
+
+---
+
+## Data Preparation
+
+This example already includes a `data` folder in this directory (`./examples/e-commerce/data`). You can freely add, remove, or update knowledge files (`.md`, `.pdf`, `.doc`, etc.) in that folder to match your own use case.
+
+---
+
+## Option 1: OpenAI Agent
+
+<Steps>
+  <Step title="Rename agent configuration file">
+    Rename `agent_config_openai.json` to `agent_config.json`. If `agent_config.json` already exists, first rename the original file to another name to avoid overwriting it.
+  </Step>
+  <Step title="Configure runtime settings">
+    Configure `config.yaml` for this example.
+  </Step>
+  <Step title="Run the simulator">
+    Choose how you want to run the simulator:
+
+    <Tabs>
+      <Tab title="Binary">
+        **Set the environment variables**
+
+        In a new terminal:
+
+        ```bash
+        export OPENAI_API_KEY="<YOUR_OPENAI_API_KEY>"
+        ```
+
+        **Run the simulator**
+
+        From the `root` folder:
+
+        ```bash
+        ./run_arksim.sh run ./examples/e-commerce/config.yaml
+        ```
+      </Tab>
+      <Tab title="Docker">
+        **Create environment file**
+
+        Create a `.env` file with your API key:
+
+        ```bash
+        OPENAI_API_KEY=<YOUR_OPENAI_API_KEY>
+        ```
+
+        **Run the simulator**
+
+        ```bash
+        docker run --platform linux/amd64 \
+          -v ./examples:/examples \
+          --env-file ./examples/.env \
+          -it public.ecr.aws/f1v9v1i4/arklex/arksim:1.0.0-alpha \
+          run /examples/e-commerce/config.yaml
+        ```
+      </Tab>
+    </Tabs>
+  </Step>
+</Steps>
+
+---
+
+## Option 2: In-house Agent
+
+<Steps>
+  <Step title="Rename agent configuration file">
+    Rename `agent_config_chat_completion.json` to `agent_config.json`. If `agent_config.json` already exists, first rename the original file to another name to avoid overwriting it.
+  </Step>
+  <Step title="Start the agent">
+    The user simulator expects agent responses in the Chat Completions format. You can either use the sample agent provided in the `./examples/e-commerce/chat_completion_server` folder, or integrate your own agent.
+
+    <Tabs>
+      <Tab title="Sample Agent">
+        In the `./examples/e-commerce/chat_completion_server` folder, we provide a RAG-based agent implemented with LangGraph in `agent_server.py`.
+
+        **Install dependencies**
+
+        Create a virtual environment (Python 3.11 recommended) and install dependencies:
+
+        ```bash
+        # Create and activate the environment
+        conda create -n ecommerce_venv python=3.11 -y
+        conda activate ecommerce_venv
+        
+        # Install required packages for the sample agent
+        pip install -r ./examples/e-commerce/chat_completion_server/requirements.txt
+        ```
+
+        **Set environment variables**
+
+        ```bash
+        export OPENAI_API_KEY=<YOUR_OPENAI_API_KEY>
+        ```
+
+        **Start the agent server**
+
+        From the root directory of the folder, start the chat completion wrapper. This starts the agent on port 8080:
+
+        ```bash
+        python -m examples.e-commerce.chat_completion_server.chat_completion_wrapper
+        ```
+
+        **Verify the server is running**
+
+        ```bash
+        lsof -i -P -n | grep 8080
+        ```
+
+        You should see output similar to:
+
+        ```bash
+        python3.11  <process_id> <username>   10u  IPv4 0x6eaae5951a5c469b      0t0  TCP 127.0.0.1:8080 (LISTEN)
+        ```
+      </Tab>
+      <Tab title="Your Own Agent">
+        If you have your own agent, wrap your agent in OpenAI chat completion request and response format. You can follow the `#TODO` comments in `chat_completion_wrapper.py` to use it.
+
+        Then, from the repository root, start the chat completion wrapper:
+
+        ```bash
+        python -m examples.e-commerce.chat_completion_server.chat_completion_wrapper
+        ```
+      </Tab>
+    </Tabs>
+  </Step>
+  <Step title="Configure runtime settings">
+    Configure `config.yaml` for this example.
+  </Step>
+  <Step title="Run the simulator">
+    <Tabs>
+      <Tab title="Binary">
+        In a new terminal:
+
+        **Set the environment variables**
+
+        ```bash
+        export OPENAI_API_KEY="<YOUR_OPENAI_API_KEY>"
+        ```
+
+        **Run the simulator**
+
+        From the `root` folder:
+
+        ```bash
+        ./run_arksim.sh run ./examples/e-commerce/config.yaml
+        ```
+      </Tab>
+      <Tab title="Docker">
+        **Create environment file**
+
+        Create a `.env` file with your API key:
+
+        ```bash
+        OPENAI_API_KEY=<YOUR_OPENAI_API_KEY>
+        ```
+
+        **(macOS only) Update agent endpoint for Docker networking**
+
+        On macOS, Docker containers cannot access `localhost` on the host machine directly. You need to update the endpoint URL in `agent_config.json` to use `host.docker.internal` instead of `localhost`.
+
+        For example, if your `agent_config.json` contains:
+
+        ```json
+        "endpoint": "http://localhost:8080/chat/completions"
+        ```
+
+        Change it to:
+
+        ```json
+        "endpoint": "http://host.docker.internal:8080/chat/completions"
+        ```
+
+        **Run the simulator**
+
+        ```bash
+        docker run --platform linux/amd64 \
+          -v ./examples:/examples \
+          --env-file ./examples/.env \
+          --network host \
+          -it public.ecr.aws/f1v9v1i4/arklex/arksim:1.0.0-alpha \
+          run ./examples/e-commerce/config.yaml
+        ```
+      </Tab>
+    </Tabs>
+  </Step>
+</Steps>

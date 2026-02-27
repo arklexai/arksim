@@ -1,0 +1,116 @@
+---
+title: "Runtime Configuration"
+---
+
+## Overview
+
+Customize your simulation by controlling conversation count, model selection, parallelism, and evaluation settings using YAML configuration files or CLI flags.
+
+<Note>
+  For step-by-step execution with individual stage configurations, see the [Advanced Usage](../advanced-usage/build-scenario) section.
+</Note>
+
+---
+
+## YAML Configuration
+
+Use YAML configuration files to run the full pipeline (scenario building, conversation simulation, and conversation evaluation).
+
+### Understanding Key Settings
+
+- **num_conversations** — How many test conversations to generate. Start with 5-10, increase for thorough testing.
+- **max_turns** — Maximum back-and-forth exchanges per conversation. 5 is typical for most use cases.
+- **num_workers** — Parallel processing threads. Higher values = faster execution but more parallel API calls. Use `auto` to default to `num_conversations`.
+- **model** — The LLM used for scenario generation and evaluation (not your agent).
+
+### Configuration File
+
+```yaml
+# Path to agent setup directory
+agent_setup_dir: ./examples/bank-insurance
+
+# Output directory for all pipeline results (default: ./results/)
+output_dir: null
+
+# --- Scenario Builder Settings ---
+user_attribute_file: null                 # Path to user attributes file
+num_conversations: 5                      # Number of conversations to generate
+num_conversations_per_persona: 1          # Conversations per persona
+oversample_ratio: 3                       # Oversample ratio for user attributes
+seed: null                                # Random seed for reproducibility
+knowledge_method: null                    # Clustering: knee, density_cp, ppr, hdbscan, meanshift, affprop, ratio
+enable_topic_modeling: true               # Use topic modeling to classify knowledge
+embedding_model: text-embedding-3-small   # Embedding model for vector operations
+
+# --- Simulation Engine Settings ---
+max_turns: 5                              # Maximum turns per conversation
+simulated_user_behavior_instructions: []  # Custom instructions for simulated user behavior
+display_time_delay: false                 # Add delays when displaying conversations
+
+# --- Evaluation Settings ---
+code_file_path: null                      # Path to code file for fix suggestions
+entry_function: null                      # Entry function for code fix generation
+generate_html_report: true                # Generate HTML report
+score_threshold: null                     # Score threshold (0.0-1.0)
+
+# --- Shared Settings ---
+provider: null                            # LLM provider: openai, azure
+model: gpt-5.1                            # LLM model to use
+temperature: 0.1                          # LLM temperature
+num_workers: auto                         # Number of parallel workers (use auto to default to num_conversations)
+```
+
+<Tip>
+  You can override any config value using command-line flags. See [CLI Flags](#cli-flags) for the complete reference.
+</Tip>
+
+---
+
+## CLI Flags
+
+Command-line flags override config file values and can be applied to both Binary and Docker runs.
+
+### Usage
+
+Use `--flag value` (or `--flag=value`). Flags are written in kebab-case (e.g., `--num-conversations`) and are mapped to YAML keys automatically.
+
+**Example (Binary):**
+
+```bash
+./run_arksim.sh run config.yaml --num-conversations 2 --max-turns 2
+```
+
+**Example (Docker):**
+
+```bash
+docker run --rm \
+  -v $(pwd)/examples:/app/examples \
+  public.ecr.aws/f1v9v1i4/arklex/arksim:1.0.0-alpha \
+  run config.yaml --num-conversations 10 --max-turns 3
+```
+
+### Available Flags
+
+| Flag                              | Applies to                     | Description                                                                                           |
+| --------------------------------- | ------------------------------ | ----------------------------------------------------------------------------------------------------- |
+| `--agent-setup-dir`               | build, simulate, evaluate, run | Path to the agent setup directory (contains `agent_config.json` and `knowledge.json`).                |
+| `--output-dir`                    | build, simulate, evaluate, run | Output directory. If omitted, a stage-specific default is used.                                       |
+| `--model`                         | build, simulate, evaluate, run | LLM model used by Arksim (scenario generation and/or evaluation; not your agent).                     |
+| `--provider`                      | build, simulate, evaluate, run | LLM provider (e.g., `openai`, `azure`).                                                               |
+| `--temperature`                   | run                            | Temperature for LLM generation (full pipeline only).                                                  |
+| `--embedding-model`               | build, run                     | Embedding model name for vector operations.                                                           |
+| `--enable-topic-modeling`         | build, run                     | Whether to enable topic modeling for knowledge.                                                       |
+| `--knowledge-method`              | build, run                     | Knowledge clustering method: `knee`, `density_cp`, `ppr`, `hdbscan`, `meanshift`, `affprop`, `ratio`. |
+| `--user-attribute-file`           | build, run                     | Path to the user attributes file.                                                                     |
+| `--oversample-ratio`              | build, run                     | Oversample ratio for user attributes generation.                                                      |
+| `--seed`                          | build, run                     | Random seed for reproducibility.                                                                      |
+| `--num-conversations`             | build, simulate, run           | Number of conversations to generate/simulate.                                                         |
+| `--num-conversations-per-persona` | build, run                     | Number of conversations per persona.                                                                  |
+| `--max-turns`                     | simulate, run                  | Maximum turns per conversation.                                                                       |
+| `--num-workers`                   | simulate, evaluate, run        | Number of parallel workers.                                                                           |
+| `--display-time-delay`            | simulate, run                  | Add delays between turns when displaying conversations.                                               |
+| `--input-dir`                     | simulate, evaluate             | Input directory (simulate: pre-built scenarios; evaluate: simulation outputs).                        |
+| `--generate-html-report`          | evaluate, run                  | Whether to generate an HTML report.                                                                   |
+| `--score-threshold`               | evaluate, run                  | If any per-conversation final score is below this threshold, exit with non-zero code.                 |
+| `--code-file-path`                | evaluate, run                  | Path to code file for fix generation (requires `--entry-function`).                                   |
+| `--entry-function`                | evaluate, run                  | Entry function for code fix generation (requires `--code-file-path`).                                 |
