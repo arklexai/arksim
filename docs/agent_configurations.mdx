@@ -1,5 +1,5 @@
 ---
-title: "Input Setup"
+title: 'Agent Configurations'
 ---
 
 ## Overview
@@ -10,14 +10,14 @@ Configure your agent's API connection, business context, and knowledge base. The
 
 Create a configuration directory with the required JSON files:
 
-```shellscript
+```shellscript  theme={null}
 /path/to/input-setup-dir/
 ├── agent_config.json    # API and agent configuration
 ├── knowledge.json       # Business context and knowledge base
 └── data/                # (Optional) Local knowledge files
 ```
 
----
+***
 
 ## Agent Configuration
 
@@ -25,12 +25,12 @@ The `agent_config.json` file configures how the framework connects to your conve
 
 ### Configuration Fields
 
-| Field                | Type      | Description                                                           |
-| -------------------- | --------- | --------------------------------------------------------------------- |
-| `agent_name`         | String    | Unique identifier for your agent (lowercase, no spaces)               |
-| `agent_capabilities` | List[Str] | List of specific tasks your agent should handle                       |
-| `agent_type`         | Enum      | See [API Connection Types](#api-connection-types) for supported types |
-| `agent_type_config`  | Dict      | See [API Connection Types](#api-connection-types) for required fields |
+| Field                | Type       | Description                                                           |
+| -------------------- | ---------- | --------------------------------------------------------------------- |
+| `agent_name`         | String     | Unique identifier for your agent (lowercase, no spaces)               |
+| `agent_capabilities` | List\[Str] | List of specific tasks your agent should handle                       |
+| `agent_type`         | Enum       | See [API Connection Types](#api-connection-types) for supported types |
+| `agent_type_config`  | Dict       | See [API Connection Types](#api-connection-types) for required fields |
 
 ### Writing Effective Agent Capabilities
 
@@ -38,16 +38,16 @@ Describe capabilities using a **Verb + Object (+ Scope)** structure. Each capabi
 
 **Good Examples:**
 
-- Answer feature-specific questions about products
-- Provide pricing information and generate quotes
-- Process returns and refunds for orders
-- Schedule appointments and send confirmations
+* Answer feature-specific questions about products
+* Provide pricing information and generate quotes
+* Process returns and refunds for orders
+* Schedule appointments and send confirmations
 
 **Avoid:**
 
-- Be helpful
-- Answer questions
-- Handle customer requests
+* Be helpful
+* Answer questions
+* Handle customer requests
 
 <Note>
   Vague descriptions don't set clear expectations or guide implementation. Be specific about what your agent can do.
@@ -65,18 +65,18 @@ The simulator supports three agent types for API connections:
 
     #### Features
 
-    - Standard chat completions API format
-    - Environment variable support for secrets
-    - Optional chat ID placeholder support
+    * Standard chat completions API format
+    * Environment variable support for secrets
+    * Optional chat ID placeholder support
 
     #### Placeholders & Variables
 
-    - `{chat_id}` - Can be included in `body.messages[*].content` and will be replaced at runtime
-    - `${ENV_VAR}` - Supported in header values for secrets
+    * `{chat_id}` - Can be included in `body.messages[*].content` and will be replaced at runtime
+    * `${ENV_VAR}` - Supported in header values for secrets
 
     #### Basic Configuration
 
-    ```json
+    ```json  theme={null}
     {
       "agent_type": "chat_completions",
       "agent_name": "chat_completions_example",
@@ -104,7 +104,7 @@ The simulator supports three agent types for API connections:
 
     #### Configuration with Chat ID Support
 
-    ```json
+    ```json  theme={null}
         {
           "agent_type": "chat_completions",
           "agent_name": "chat_completions_with_chat_id",
@@ -134,6 +134,7 @@ The simulator supports three agent types for API connections:
       The `{chat_id}` placeholder will be replaced with the actual chat ID during execution.
     </Note>
   </Tab>
+
   <Tab title="A2A Protocol">
     **Type:** `a2a`
 
@@ -141,13 +142,13 @@ The simulator supports three agent types for API connections:
 
     #### Features
 
-    - Simplified endpoint configuration
-    - Optional HTTP headers support
-    - Environment variable support
+    * Simplified endpoint configuration
+    * Optional HTTP headers support
+    * Environment variable support
 
     #### Configuration
 
-    ```json
+    ```json  theme={null}
     {
       "agent_type": "a2a",
       "agent_name": "a2a_example",
@@ -163,6 +164,7 @@ The simulator supports three agent types for API connections:
     }
     ```
   </Tab>
+
   <Tab title="Arklex Agents">
     **Type:** `arklex`
 
@@ -170,13 +172,13 @@ The simulator supports three agent types for API connections:
 
     #### Features
 
-    - Native Arklex integration
-    - Institution and bot ID-based routing
-    - Version control support
+    * Native Arklex integration
+    * Institution and bot ID-based routing
+    * Version control support
 
     #### Configuration
 
-    ```json
+    ```json  theme={null}
     {
       "agent_type": "arklex",
       "agent_name": "arklex_example",
@@ -200,15 +202,15 @@ Both `chat_completions` and `a2a` agent types support environment variable subst
 
 **How it works:**
 
-- At runtime, `${ENV_VAR}` patterns are replaced with environment variable values
-- If not set, it will be replaced with an empty string
-- Mix static text with variables: `"Bearer ${API_KEY}"` → `"Bearer sk-abc123..."`
+* At runtime, `${ENV_VAR}` patterns are replaced with environment variable values
+* If not set, it will be replaced with an empty string
+* Mix static text with variables: `"Bearer ${API_KEY}"` → `"Bearer sk-abc123..."`
 
 <Tip>
   **Security Best Practice:** This approach keeps configuration files safe to commit while keeping credentials secure in environment variables.
 </Tip>
 
----
+***
 
 ## Knowledge Configuration
 
@@ -216,13 +218,13 @@ The `knowledge.json` file defines your company overview, business type, and the 
 
 ### Configuration Fields
 
-| Field                | Type       | Description                                                                                            |
-| -------------------- | ---------- | ------------------------------------------------------------------------------------------------------ |
-| `corporate_overview` | String     | A comprehensive description of your company                                                            |
-| `business_type`      | Enum       | Either `"b2b"` or `"b2c"`                                                                              |
-| `knowledge`          | List[Dict] | Defines what information your agent has access to                                                      |
-| `user_events`        | List[Str]  | (Optional) Event descriptions that provide context for simulated conversations                         |
-| `user_goals`         | List[Str]  | (Optional) Sample customer intents that guide the simulator in generating realistic test conversations |
+| Field                | Type        | Description                                                                                            |
+| -------------------- | ----------- | ------------------------------------------------------------------------------------------------------ |
+| `corporate_overview` | String      | A comprehensive description of your company                                                            |
+| `business_type`      | Enum        | Either `"b2b"` or `"b2c"`                                                                              |
+| `knowledge`          | List\[Dict] | Defines what information your agent has access to                                                      |
+| `user_events`        | List\[Str]  | (Optional) Event descriptions that provide context for simulated conversations                         |
+| `user_goals`         | List\[Str]  | (Optional) Sample customer intents that guide the simulator in generating realistic test conversations |
 
 ### Knowledge Source Types
 
@@ -232,37 +234,40 @@ The simulator supports four knowledge source types:
   <Accordion title="Local Files">
     Knowledge stored locally in the `data` folder.
 
-    ```json
+    ```json  theme={null}
     {
     	"source": "/path/to/input-setup-dir/data",
     	"type": "local"
     }
     ```
   </Accordion>
+
   <Accordion title="Web Crawling">
     Knowledge crawled from web URLs.
 
-    ```json
+    ```json  theme={null}
     {
     	"source": "https://www.example.com",
     	"type": "web"
     }
     ```
   </Accordion>
+
   <Accordion title="Direct Text">
     Knowledge provided directly as text content.
 
-    ```json
+    ```json  theme={null}
     {
     	"source": "Direct text content about your company...",
     	"type": "text"
     }
     ```
   </Accordion>
+
   <Accordion title="API Endpoint">
     Knowledge fetched from external APIs.
 
-    ```json
+    ```json  theme={null}
     {
     	"source": "https://api.example.com/v1/products",
     	"type": "api",
@@ -285,7 +290,7 @@ The simulator supports four knowledge source types:
 
 ### Complete Example
 
-```json
+```json  theme={null}
 {
   "corporate_overview": "YourCompany Inc. is a leading provider of innovative software solutions...",
   "business_type": "b2b",
@@ -322,7 +327,7 @@ The simulator supports four knowledge source types:
 }
 ```
 
----
+***
 
 ## Data Folder
 

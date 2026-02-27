@@ -1,43 +1,148 @@
-# Mintlify Starter Kit
+# Arksim
 
-Use the starter kit to get your docs deployed and ready to customize.
+**Test and evaluate your AI agents with realistic, user-driven simulations.**
 
-Click the green **Use this template** button at the top of this repo to copy the Mintlify starter kit. The starter kit contains examples with
+Arksim lets you define who your users are, what they want, and what they know, then runs them as live multi-turn conversations against your agent. The result is structured performance data you can actually act on.
 
-- Guide pages
-- Navigation
-- Customizations
-- API reference pages
-- Use of popular components
+<img src="https://img.shields.io/badge/python-3.9+-blue.svg" alt="Python" /> <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License" /> <img src="https://img.shields.io/pypi/v/arksim.svg" alt="PyPI" />
 
-**[Follow the full quickstart guide](https://starter.mintlify.com/quickstart)**
+---
 
-## Development
+## Why Arksim?
 
-Install the [Mintlify CLI](https://www.npmjs.com/package/mint) to preview your documentation changes locally. To install, use the following command:
+Most agent testing is either manual (slow, inconsistent) or based on static Q&A pairs (shallow, unrealistic). Arksim sits in between — giving you repeatable, persona-driven simulations that behave like real users and evaluate like a structured test suite.
+
+- **Scenario-driven** — define user goals, personas, and background knowledge
+- **Multi-turn** — simulated users drive full conversations, not single prompts
+- **Structured evaluation** — every turn is scored across helpfulness, coherence, relevance, verbosity, and faithfulness
+- **Cross-conversation insights** — unique errors are deduplicated and surfaced across all conversations so you know exactly where your agent breaks down
+
+---
+
+## How It Works
 
 ```
-npm i -g mint
+Scenarios → Simulation → Evaluation
 ```
 
-Run the following command at the root of your documentation, where your `docs.json` is located:
+1. **Scenarios** — define who the simulated user is, what they want, and what they know
+2. **Simulation** — Arksim runs each scenario as a live conversation against your agent
+3. **Evaluation** — every agent response is scored per turn, with failures categorized and deduplicated across conversations
 
+---
+
+## Installation
+
+```bash
+pip install arksim
 ```
-mint dev
+
+---
+
+## Quickstart
+
+**1. Define a scenario**
+
+```json
+{
+  "schema_version": "v1",
+  "scenarios": [
+    {
+      "scenario_id": "demo-001",
+      "goal": "You want to find out whether your home insurance covers water damage from a burst pipe.",
+      "user_attribute": {
+        "customer_type": "existing customer",
+        "location": "Toronto, ON, Canada",
+        "decision_making_style": "analytical"
+      }
+    }
+  ]
+}
 ```
 
-View your local preview at `http://localhost:3000`.
+**2. Run a simulation**
 
-## Publishing changes
+```bash
+arksim simulate config.yaml
+```
 
-Install our GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app) to propagate changes from your repo to your deployment. Changes are deployed to production automatically after pushing to the default branch.
+Or in Python:
 
-## Need help?
+```python
+from arksim.simulation_engine import Simulator, SimulationParams
+from arksim.config import AgentConfig
 
-### Troubleshooting
+scenarios = Simulator.load_scenarios("scenario.json")
+agent_config = AgentConfig.load("agent_config.json")
 
-- If your dev environment isn't running: Run `mint update` to ensure you have the most recent version of the CLI.
-- If a page loads as a 404: Make sure you are running in a folder with a valid `docs.json`.
+engine = Simulator(
+    agent_config=agent_config,
+    scenarios=scenarios,
+    params=SimulationParams(num_conversations=10, max_turns=8),
+)
 
-### Resources
-- [Mintlify documentation](https://mintlify.com/docs)
+conversations = engine.simulate()
+```
+
+**3. Evaluate your agent**
+
+```bash
+arksim evaluate config.yaml
+```
+
+Or in Python:
+
+```python
+import arksim
+
+results = arksim.evaluate(
+    conversation_file_path="./conversations.json",
+    output_dir="./evaluation",
+    model="gpt-5.1",
+    provider="open-ai",
+    generate_html_report=True,
+)
+```
+
+---
+
+## Output
+
+Simulation produces `conversations.json` — full transcripts of every run.
+
+Evaluation produces:
+
+| File                                     | What's in it                                                          |
+| ---------------------------------------- | --------------------------------------------------------------------- |
+| `agent_performance_per_turn.csv`         | Per-turn metric scores, reasoning, and failure labels                 |
+| `agent_performance_per_conversation.csv` | Rolled-up scores and status per conversation                          |
+| `unique_errors.csv`                      | Deduplicated failure patterns with descriptions and occurrence traces |
+| `final_report.md` / `.html`              | High-level summary with top errors and overall assessment             |
+
+---
+
+## Documentation
+
+Full docs at [**docs.arksim**](#)— including schema references, agent compatibility, configuration options, and evaluation deep-dives.
+
+---
+
+## Contributing
+
+Contributions are welcome! Here's how to get started:
+
+```bash
+git clone https://github.com/arklexai/arksim.git
+cd arksim
+pip install -e ".[dev]"
+```
+
+Please open an issue before submitting a large PR so we can discuss the change first. For smaller fixes and improvements, PRs are welcome directly.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for full guidelines.
+
+---
+
+## License
+
+MIT — see [LICENSE](LICENSE) for details.
