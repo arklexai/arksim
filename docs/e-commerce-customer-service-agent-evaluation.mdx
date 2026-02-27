@@ -41,7 +41,7 @@ Scenarios are located at `./examples/bank-insurance/scenarios/` and can be swapp
 
 ## Example Agent 1: OpenAI API
 
-This agent calls the OpenAI API directly — no server setup required.
+This agent calls the OpenAI API directly, with no server setup required.
 
 <Steps>
   <Step title="Set your API key">
@@ -135,35 +135,37 @@ Once your server is running, point `agent_config.json` at your endpoint and run 
 ## Configuration
 
 ```yaml
-# Directory containing agent_config.json, knowledge data, and example scenarios
+# Paths / Files
 agent_setup_dir: ./examples/bank-insurance
-
-# Where all results are written
 output_dir: ./examples/bank-insurance/results
 
-# Number of conversations to simulate
+# Simulation Settings
 num_conversations: 5
-
-# Maximum turns per conversation
 max_turns: 5
+num_workers: auto
 
-# Metrics to run during evaluation
-metrics_to_run: [faithfulness, helpfulness, coherence, verbosity, relevance, goal_completion, agent_behavior_failure]
-
-# Paths to .py files defining custom metrics (must implement BaseMetric)
-custom_metrics_file_paths: []
-
-# Generate an interactive HTML report
-generate_html_report: true
-
-# LLM used to power simulation and evaluation scoring
+# Model
 model: gpt-5.1
 provider: openai
-num_workers: auto
+
+# Metrics
+metrics_to_run: [
+  faithfulness,
+  helpfulness,
+  coherence,
+  verbosity,
+  relevance,
+  goal_completion,
+  agent_behavior_failure
+]
+custom_metrics_file_paths: []
+
+# Output
+generate_html_report: true
 ```
 
 <Note>
-  `agent_setup_dir` is the root directory for the example — it contains the `agent_config.json`, the insurance knowledge base, and the pre-built scenario file used to drive the simulated users.
+  `agent_setup_dir` is the root directory for the example. It contains the `agent_config.json`, the insurance knowledge base, and the pre-built scenario file used to drive the simulated users.
 </Note>
 
 ---
