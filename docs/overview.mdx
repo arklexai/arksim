@@ -1,51 +1,58 @@
 ---
 title: "Overview"
+description: "Validate, simulate, and harden your agent systems with Arksim."
 ---
 
 ## What is Arksim!
 
-Arklex Simulator (Arksim) is an automated testing platform for AI agents. It transforms your agent configurations into comprehensive test scenarios, simulates realistic user interactions, and provides detailed performance metrics to support iterative improvement.
+Arksim is an open-source agent testing tool designed to help developers validate, simulate, and harden their agent systems. It focuses on reproducible interaction simulations to identify reliability and idempotency gaps before production deployment.
 
-![Arksim Workflow](/images/workflow-chart.svg)
+![Arksim Workflow](/images/arksim-workflow.svg)
 
----
+## Who is it for?
 
-## Core Features
+Developers looking to ensure their agents are robust, reliable, and ready for real-world interactions, without relying on manual testing.
 
-### Scenario Building
-
-Automatically generate comprehensive test scenarios based on your agent's knowledge base and capabilities. No manual test case creation required.
-
-![Scenario Building Process](/images/scenario-building.svg)
-
-### Conversation Simulation
-
-Create synthetic users that interact with your agent naturally, testing real-world conversation patterns, ambiguous queries, and challenging edge cases.
-
-![Conversation Simulation](/images/conv-simulation.svg)
-
-### Performance Evaluation
-
-Gain insights with multi-level metrics and actionable recommendations:
-
-- **Turn-level metrics**: Evaluate individual agent responses for accuracy and quality
-- **Conversation-level metrics**: Assess overall conversation flow and completion
-- **Error analysis**: Categorize and track failure patterns
-- **Improvement suggestions**: Get specific, actionable fixes for identified issues
-
-![Performance Evaluation Dashboard](/images/conv-evaluation.svg)
-
----
-
-## Getting Started
-
-Ready to start testing your AI agent? Follow our guide to begin evaluating in minutes.
+## What makes it different?
 
 <CardGroup cols={2}>
-  <Card icon="download" href="/installation" title="Installation">
-    Set up Arksim in your environment
+  <Card icon="code" title="Open-source">
+    Fully transparent and customizable, letting you extend or adapt the tool as needed.
   </Card>
+  <Card icon="flask" title="End-to-end testing">
+    Test your agent in realistic scenarios to uncover gaps in behavior or reliability before production.
+  </Card>
+  <Card icon="bolt" title="Pre-built scenarios">
+    Use predefined scenarios to quickly validate your agent and jump-start testing effectively.
+  </Card>
+  <Card icon="puzzle-piece" title="Easily extensible">
+    Integrate with existing systems and tailor the testing environment to your specific needs.
+  </Card>
+</CardGroup>
+
+## Core Capabilities
+
+### Scenarios
+
+A scenario is a test case that defines a simulated user’s attributes, goals, and prior knowledge. It provides a repeatable setup to observe your agent’s behavior across different users and intents.
+
+### Simulation
+
+Simulation turns scenarios into live, multi-turn conversations with your agent. You get full transcripts (and optional metadata) that you can critically inspect or pass to evaluation.
+
+### Evaluation
+
+Evaluation scores your agent on those conversations. You get metrics (e.g. helpfulness, faithfulness, goal completion), behavior failure labels, and a deduplicated list of unique errors to fix.
+
+## Ready to start?
+
+Quickly evaluate and improve your AI agent with Arksim using a simulation or ready-made example.
+
+<CardGroup cols={2}>
   <Card icon="rocket" href="/quickstart" title="Quickstart">
-    Run your first evaluation
+    Set up your first simulation in minutes.
+  </Card>
+  <Card icon="briefcase" href="/examples/insurance-agent" title="Insurance Agent Example">
+    Test a customer service scenario.
   </Card>
 </CardGroup>
