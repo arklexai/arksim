@@ -1,99 +1,196 @@
 ---
-title: "Personal AI Assistant (MoltBot) Testing"
+title: "Personal AI Assistant (OpenClaw)"
+description: "A walkthrough of running Arksim against an OpenClaw personal AI assistant."
 ---
 
-## Agent Testing Example - Personal AI Assistant
+## Overview
 
-This directory gives an example of running Arklex User Simulator CLI with a personal AI assistant agent for the **Moltbot/OpenClaw use case**. You can follow the example to evaluate your own OpenClaw agent.
+This example walks through running Arksim against an **OpenClaw** personal AI assistant. OpenClaw is an open-source assistant that can manage tasks, smart home devices, messaging, calendar, and files.
 
-<Warning>
-  We recommend using a **sandbox environment** for this agent, as **real actions could take place**. Please **carefully grant access** to tools and APIs, and ensure you understand the permissions being provided.
-</Warning>
+You can use this setup to simulate and evaluate conversations with your own OpenClaw deployment, or adapt it to test any personal assistant agent exposed via a Chat Completions–compatible endpoint.
 
-### Overview
+---
 
-Moltbot (OpenClaw) is an open-source personal AI assistant that helps users manage daily tasks, smart home devices, messaging, calendar, and files. This example demonstrates how to simulate and evaluate conversational interactions with a personal assistant agent.
+## Prerequisites
 
-### Data Preparation
+Before getting started, make sure you have the following:
 
-This example includes a `data` folder with knowledge files covering:
+- **OpenClaw** installed and configured — [openclaw.ai](https://openclaw.ai/)
+- **OpenClaw gateway** running with the HTTP Chat Completions endpoint enabled
+- **OpenAI API key** — used by Arksim to power the simulated user
+- **OpenClaw gateway token** — for authenticating to your OpenClaw instance
 
-- Reminders and task management
-- Smart home device control
-- Cross-platform messaging (WhatsApp, Telegram, Slack, Discord)
-- Calendar and scheduling
-- File and document management
-- Memory and user preferences
-- Quick lookups and information retrieval
+---
 
-You can add, remove, or update knowledge files (`.md`, `.pdf`, `.doc`, etc.) in the `data/` folder to match your use case.
+## Scenarios
 
-### OpenClaw Instance Setup
+The example ships with pre-built scenarios representing realistic interactions with a personal AI assistant. Each scenario defines a simulated user with a distinct persona, goal, and background knowledge drawn from OpenClaw's capabilities.
 
-Use this for production evaluation against your actual OpenClaw deployment.
+Sample goals include:
 
-#### Prerequisites
+- Creating and managing tasks and reminders
+- Controlling smart home devices
+- Scheduling and querying calendar events
+- Sending messages and managing files
 
-1. Install and configure OpenClaw: https://openclaw.ai
-2. Enable the HTTP Chat Completions endpoint in `~/.openclaw/openclaw.json`:
+Scenarios are located at `<path/to/openclaw>/results/scenario/` and can be swapped out or extended to reflect your own assistant's capabilities.
 
-   ```json
-   {
-     "gateway": {
-       "http": {
-         "endpoints": {
-           "chatCompletions": {
-             "enabled": true
-           }
-         }
-       }
-     }
-   }
-   ```
+---
 
-#### Steps
+## Setup
 
 <Steps>
+  <Step title="Enable Chat Completions in OpenClaw">
+    In `~/.openclaw/openclaw.json`, enable the HTTP Chat Completions endpoint:
+
+    ```json
+    {
+      "gateway": {
+        "http": {
+          "endpoints": {
+            "chatCompletions": {
+              "enabled": true
+            }
+          }
+        }
+      }
+    }
+    ```
+  </Step>
   <Step title="Start the OpenClaw gateway">
-
-   ```bash
-   openclaw gateway --port 18789 --verbose
-   ```
-
+    ```bash
+    openclaw gateway --port 18789 --verbose
+    ```
   </Step>
   <Step title="Set environment variables">
+    ```bash
+    export OPENAI_API_KEY="<YOUR_OPENAI_API_KEY>"
+    export OPENCLAW_TOKEN="<YOUR_OPENCLAW_GATEWAY_TOKEN>"
+    ```
 
-   ```bash
-   export OPENAI_API_KEY="<YOUR_OPENAI_API_KEY>"
-   export OPENCLAW_TOKEN="<YOUR_OPENCLAW_GATEWAY_TOKEN>"
-   ```
-
-   Find your token in `~/.openclaw/openclaw.json` under `gateway.auth.token`.
-
+    <Note>
+      Your gateway token can be found in `~/.openclaw/openclaw.json` under `gateway.auth.token`.
+    </Note>
   </Step>
-  <Step title="Use the local config">
-   Use the local config `agent_config.json`.
+  <Step title="Verify the OpenClaw connection">
+    Before running simulation, confirm the gateway is responding:
+
+    ```bash
+    curl -sS "http://127.0.0.1:18789/v1/chat/completions" \
+      -H "Authorization: Bearer $OPENCLAW_TOKEN" \
+      -H "Content-Type: application/json" \
+      -H "x-openclaw-agent-id: main" \
+      -d '{"model":"openclaw","messages":[{"role":"user","content":"Hello"}]}'
+    ```
+
+    You should receive a valid JSON response from the gateway.
   </Step>
-  <Step title="Run the simulator">
+  <Step title="Run simulation and evaluation">
+    From your project root:
 
-   ```bash
-   ./run_arksim.sh run ./examples/moltbot/config.yaml
-   ```
+    ```bash
+    arksim simulate <path/to/openclaw/config_simulate.yaml>
+    arksim evaluate <path/to/openclaw/config_evaluate.yaml>
+    ```
 
+    <Note>
+      The example `agent_config.json` points the simulator at `http://localhost:18789/v1/chat/completions` and uses `${OPENCLAW_TOKEN}` and `x-openclaw-agent-id: main` for authentication.
+    </Note>
   </Step>
 </Steps>
 
+---
 
-#### Troubleshooting
+## Configuration
 
-**Verifying OpenClaw Connection**
+This example uses two separate config files — one for simulation and one for evaluation.
 
-Test the endpoint before running the simulator:
+**Simulation**
 
-```bash
-curl -sS "http://127.0.0.1:18789/v1/chat/completions" \
-  -H "Authorization: Bearer $OPENCLAW_TOKEN" \
-  -H "Content-Type: application/json" \
-  -H "x-openclaw-agent-id: main" \
-  -d '{"model":"openclaw","messages":[{"role":"user","content":"Hello"}]}'
+```yaml
+# Directory containing agent_config.json and knowledge.json
+agent_setup_dir: <path/to/openclaw>
+
+# Directory containing pre-built scenario.json
+input_dir: <path/to/openclaw/results/scenario>
+
+output_dir: <path/to/openclaw/results/conversation>
+
+num_conversations: 5
+max_turns: 5
+
+model: gpt-5.1
+provider: openai
+num_workers: auto
 ```
+
+**Evaluation**
+
+```yaml
+agent_setup_dir: <path/to/openclaw>
+
+# Directory containing conversations.json from simulation
+input_dir: <path/to/openclaw/results/conversation>
+
+output_dir: <path/to/openclaw/results/evaluation>
+
+metrics_to_run: [
+  faithfulness,
+  helpfulness,
+  coherence,
+  verbosity,
+  relevance,
+  goal_completion,
+  agent_behavior_failure
+]
+custom_metrics_file_paths: []
+generate_html_report: true
+
+model: gpt-5.1
+provider: openai
+num_workers: auto
+```
+
+<Note>
+  For evaluation, point `input_dir` at the folder containing `conversations.json` produced by the simulation step.
+</Note>
+
+---
+
+## Output
+
+**Simulation** writes to `<path/to/openclaw/results/conversation>/`:
+
+- `conversations.json` — full transcripts of every simulated conversation
+- `target_goals.json` — the resolved goals used to drive each simulated user
+
+**Evaluation** writes to `<path/to/openclaw/results/evaluation>/`:
+
+| File                                     | Contents                                                              |
+| ---------------------------------------- | --------------------------------------------------------------------- |
+| `agent_performance_per_turn.csv`         | Per-turn metric scores, reasoning, and failure labels                 |
+| `agent_performance_per_conversation.csv` | Rolled-up scores and status per conversation                          |
+| `unique_errors.csv`                      | Deduplicated failure patterns with descriptions and occurrence traces |
+| `final_report.html`                      | Interactive report for browsing and sharing results                   |
+
+---
+
+## Example Files
+
+| File                   | Description                                                                                        |
+| ---------------------- | -------------------------------------------------------------------------------------------------- |
+| `agent_config.json`    | OpenClaw agent config — Chat Completions endpoint, headers, and token.                             |
+| `knowledge.json`       | Knowledge base and capability overview used during simulation and evaluation.                      |
+| `scenarios.json`       | Pre-built scenarios. Ensure this is in the directory set as `input_dir` before running simulation. |
+| `config_simulate.yaml` | Simulation configuration.                                                                          |
+| `config_evaluate.yaml` | Evaluation configuration.                                                                          |
+
+---
+
+## Adapting to Your Own Assistant
+
+To use this example as a starting point for your own personal assistant:
+
+1. **Knowledge** — add or edit knowledge files in your `data/` folder so scenarios reflect your assistant's actual capabilities.
+2. **Overview** — update `knowledge.json` (e.g. `corporate_overview`, capabilities list) to match your assistant.
+3. **Agent config** — adjust `agent_config.json` if your endpoint, port, or auth headers differ from the OpenClaw defaults.
