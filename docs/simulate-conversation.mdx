@@ -1,78 +1,220 @@
 ---
-title: "Simulate Conversation"
+title: "Simulation"
+description: "Run your scenarios as live conversations against your agent and collect transcripts for evaluation."
 ---
 
-## Overview
+## What is Simulation?
 
-Use this stage for conversation simulation only with pre-built scenarios.
+Simulation is the process where Arksim runs your pre-built scenarios as live conversations against your agent. Each scenario acts as a simulated user with a defined persona, goal, and prior knowledge who drives a multi-turn interaction with the agent until the user's goal is achieved or the turn limit is reached.
 
-**When to use this:**
+The **output** is a set of conversation transcripts you can inspect directly or pass into Evaluation.
 
-- Running conversations with pre-built scenarios
-- Re-testing your agent after making changes without regenerating scenarios
-- Testing specific scenario sets in isolation
-
-**What it does:** Takes the generated scenarios and runs conversations with your agent, recording all exchanges.
-
-**Output:** Conversation logs are saved to `output_dir` (default: `./results/conversation/`) for evaluation.
+![Arksim Simulation Workflow](/images/simulation.svg)
 
 ---
 
-## Running the Command
+## Inputs
 
-<Tabs>
-  <Tab title="Binary">
-    ```bash
-    ./run_arksim.sh simulate config_simulate.yaml
-    ```
-  </Tab>
-  <Tab title="Docker">
-    ```bash
-    docker run --platform linux/amd64 \
-    	-v ./examples:/examples \
-    	--env-file .env \
-    	-it public.ecr.aws/f1v9v1i4/arklex/arksim:1.0.0-alpha \
-    	simulate config_simulate.yaml
-    ```
-  </Tab>
-</Tabs>
+Before running a simulation, you need three things in place:
+
+| Input            | Description                                                                                                                                                    |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Scenarios**    | A `scenario.json` file loaded from `input_dir`. Defines user attributes, goals, knowledge, and scenario metadata. [Learn how to write scenarios →](/scenarios) |
+| **Agent config** | `agent_config.json` in your `agent_setup_dir` defines how Arksim connects to your agent and which protocol to use.                                             |
+| **Config file**  | `config.yaml` controlling simulation parameters such as number of conversations, max turns, workers, and model settings.                                       |
 
 ---
 
-## Configuration File
-
-### Understanding Key Settings
-
-- **input_dir** — Points to where your scenarios live (from the build step)
-- **max_turns** — Safety limit on conversation length. Prevents runaway conversations
-- **display_time_delay** — Adds realistic pauses when viewing conversations in real-time
-
-### YAML Configuration
+## Configuration
 
 ```yaml
-# Path to agent setup directory
+num_conversations: 5          # Number of conversations to simulate
+max_turns: 5                  # Maximum turns per conversation
+num_workers: auto             # Parallel workers ("auto" matches num_conversations)
 agent_setup_dir: ./examples/bank-insurance
-
-# Path to scenario output directory (from build step)
 input_dir: ./results/scenario
+output_dir: ./results/conversation
+model: gpt-5.1
+provider: openai
+simulated_user_behavior_instructions: []   # Optional custom instructions for user behavior
+display_time_delay: false                   # Replay conversations with time delay between turns
+```
 
-# Output directory for conversation results (default: conversation/)
-output_dir: null
+<Tip>
+  Set `num_workers: auto` to automatically parallelize across all conversations, or specify a fixed number to control load on your agent endpoint.
+</Tip>
 
-# Simulation settings
-num_conversations: 5                      # Number of conversations to generate/simulate
-max_turns: 5                              # Maximum turns per conversation
-simulated_user_behavior_instructions: []  # Custom instructions for simulated user behavior
-num_workers: auto                         # Number of parallel workers
-display_time_delay: false                 # Add delays between turns when displaying conversations
+---
 
-# LLM settings
-model: gpt-5.1                            # LLM model used by Arksim (not your agent)
-provider: null                            # LLM provider (e.g., openai, azure)
+## Agent Compatibility
+
+Arksim supports two agent protocols out of the box:
+
+| Protocol                                                                            | When to use                                                                                   |
+| ----------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| [**Chat Completions**](https://developers.openai.com/api/reference/resources/chat/) | Any agent that accepts OpenAI-compatible requests (OpenAI, Azure OpenAI, or a custom wrapper) |
+| [**A2A**](https://a2a-protocol.org/latest/)                                         | Agents exposed via the Agent-to-Agent protocol                                                |
+
+Your `agent_config.json` specifies which protocol to use and how to connect.
+
+---
+
+## Running a Simulation
+
+<Steps>
+  <Step title="Set up your config file">
+    Create a `config.yaml` file with your simulation parameters:
+
+    ```yaml
+    num_conversations: 5
+    max_turns: 5
+    num_workers: auto
+    agent_setup_dir: ./examples/bank-insurance
+    input_dir: ./results/scenario
+    output_dir: ./results/conversation
+    model: gpt-5.1
+    provider: openai
+    simulated_user_behavior_instructions: []
+    display_time_delay: false
+    ```
+  </Step>
+  <Step title="Run the simulation">
+    <Tabs>
+      <Tab title="CLI">
+        Run a simulation with the default configuration:
+
+        ```bash
+        arksim simulate config.yaml
+        ```
+
+        To specify a scenario directory explicitly:
+
+        ```bash
+        arksim simulate config.yaml --input-dir ./results/scenario
+        ```
+      </Tab>
+      <Tab title="Python">
+        ```python
+        from arksim.simulation_engine import Simulator, SimulationParams
+        from arksim.config import AgentConfig
+        
+        scenarios = Simulator.load_scenarios("examples/path/to/scenario.json")
+        agent_config = AgentConfig.load("examples/path/to/agent_config.json")
+        
+        engine = Simulator(
+        agent_config=agent_config,
+        scenarios=scenarios,
+        params=SimulationParams(num_conversations=30, max_turns=10, num_workers=10),
+        )
+        
+        conversations = engine.simulate()
+        ```
+      </Tab>
+    </Tabs>
+  </Step>
+  <Step title="Inspect your output">
+    Simulation writes a `conversations.json` file to your `output_dir`. This contains the full transcript of every conversation, ready to inspect or pass into [Evaluation](/evaluation).
+  </Step>
+</Steps>
+
+---
+
+## Output
+
+Simulation produces **one primary output file**: `conversations.json`.
+
+This file contains the full transcript of every conversation, including the complete message history, scenario ID, system prompt, user profile, goal, knowledge, user attributes, and all agent and simulated user messages.
+
+### Output Schema
+
+Describes the structure of `conversations.json`, the file produced at the end of a simulation run.
+
+<ResponseField name="schema_version" type="string" required>
+  Version of the `conversations.json` schema (e.g., `"v2"`).
+</ResponseField>
+
+<ResponseField name="generated_at" type="string" required>
+  ISO-8601 UTC timestamp of when the file was generated.
+</ResponseField>
+
+<ResponseField name="simulator_version" type="string" required>
+  Arksim package version that produced this output.
+</ResponseField>
+
+<ResponseField name="conversations" type="list[ConversationItem]" required>
+  List of conversation records. Each item represents one full simulated conversation.
+
+  <Expandable title="ConversationItem fields">
+    <ResponseField name="conversation_id" type="string" required>
+      Unique ID for this conversation.
+    </ResponseField>
+    <ResponseField name="scenario_id" type="string" required>
+      Identifier of the scenario used to generate the conversation.
+    </ResponseField>
+    <ResponseField name="conversation_history" type="list[ConversationMessage]" required>
+      Ordered list of all messages in the conversation.
+
+      - `turn_id` _(int, required)_ — Turn index (one user message + one assistant message = one turn).
+      - `message_id` _(string, required)_ — Unique message ID.
+      - `role` _(string, required)_ — Either `"sim_user"` or `"assistant"`.
+      - `content` _(string, required)_ — The message text.
+    </ResponseField>
+    <ResponseField name="sim_user_prompt" type="SimUserPrompt" required>
+      Stores the rendered prompt template and variables used to drive the simulated user. Useful for traceability and debugging.
+
+      - `sim_user_prompt_template` _(string)_ — The Jinja template used to construct the simulated user's system prompt.
+      - `variables` _(dict[string, Any])_ — Key-value map used to render the template. Includes `knowledge`, `user_goal`, `sim_user_profile`, and `agent_context`.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+---
+
+### Example Output
+
+```json
+{
+  "schema_version": "v2",
+  "generated_at": "2025-04-10T14:32:00Z",
+  "simulator_version": "1.4.2",
+  "conversations": [
+    {
+      "conversation_id": "00de685e-f76b-4a5f-a6e5-217cad777316",
+      "scenario_id": "8f4c2a91-3b7e-4d5f-a9c2-6e1b4d9f2037",
+      "conversation_history": [
+        {
+          "turn_id": 0,
+          "message_id": "3c9a7f12-6b4e-4d8a-b2f1-9e5c0a7d41e6",
+          "role": "sim_user",
+          "content": "So… this whole identity theft thing is stressing me out a bit...."
+        },
+        {
+          "turn_id": 0,
+          "message_id": "b7e2c9a4-1f6d-4c83-9a5b-2d8e7f0c4a91",
+          "role": "assistant",
+          "content": "I understand your concern about identity theft, but rest assured..."
+        }
+      ],
+      "sim_user_prompt": {
+        "sim_user_prompt_template": "You are a customer interacting with an agent through multiple turns...",
+        "variables": {
+          "agent_context": "XYZ Bank Insurance is a Canadian provider of...",
+          "sim_user_profile": "Name: Priya Sharma. Age: 32. Location: Toronto, ON...",
+          "user_goal": "You want to find out what documents are needed...",
+          "knowledge": ["Typical timelines: claim setup is usually same day..."]
+        }
+      }
+    }
+  ]
+}
 ```
 
 ---
 
 ## Next Steps
 
-After simulation completes, proceed to the [Evaluate Conversation](./evaluate-conversation) to analyze agent performance.
+Once your conversations are generated, you're ready to evaluate how well your agent performed.
+
+<Card href="/evaluate-conversation" title="Evaluation →">
+  Score your agent's responses against the simulated user's goals and knowledge.
+</Card>
