@@ -15,16 +15,15 @@
         "group": "Getting started",
         "expanded": true,
         "pages": [
-          "installation",
           "quickstart"
         ]
       },
       {
-        "group": "Guide",
+        "group": "Core Capabilities",
         "pages": [
-          "input-setup",
-          "runtime-configuration",
-          "results"
+          "build-scenario",
+          "simulate-conversation",
+          "evaluate-conversation"
         ]
       },
       {
@@ -33,14 +32,6 @@
           "insurance-customer-service-agent-evaluation",
           "e-commerce-customer-service-agent-evaluation",
           "personal-ai-assistant-molt-bot-evaluation"
-        ]
-      },
-      {
-        "group": "Advanced Usage",
-        "pages": [
-          "build-scenario",
-          "simulate-conversation",
-          "evaluate-conversation"
         ]
       },
       {
