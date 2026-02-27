@@ -1,153 +1,145 @@
 ---
 title: "Quickstart"
-description: "Get started with Arksim in minutes. This guide will help you run your first agent evaluation."
+description: "Get started with Arksim in minutes. This guide walks you through your first agent evaluation using pre-built scenarios and a config for your agent."
 ---
-
-This guide walks you through running your first evaluation using a pre-built insurance customer service agent example.
 
 ## Prerequisites
 
-Before you begin, make sure you have:
+- Python 3.10–3.13
+- An API key from a supported provider (e.g. [OpenAI](https://developers.openai.com/api/docs), [Anthropic](https://platform.claude.com/docs/en/home), or [Gemini](https://ai.google.dev/gemini-api/docs/api-key))
 
-- Completed the [Installation](/installation)
-- An OpenAI API key ([get one here](https://platform.openai.com/api-keys))
+## Installation
+
+<Steps>
+  <Step title="Install Arksim">
+    ```bash
+    pip install arksim
+    ```
+  </Step>
+  <Step title="Set your API key">
+    Set the key for the provider your config uses (e.g. OpenAI):
+
+    ```bash
+    export OPENAI_API_KEY="your-api-key"
+    ```
+
+    For other providers:
+
+    ```bash
+    export ANTHROPIC_API_KEY="your-api-key"
+    export GEMINI_API_KEY="your-api-key"
+    ```
+  </Step>
+  <Step title="Run Simulation & Evaluation">
+    You can simulate conversations with your agent and evaluate them either via the CLI or through a Python script.
+
+    <Tabs>
+      <Tab title="CLI">
+        This command simulates conversations against your agent, evaluates the generated conversations, and saves results to the specified output location.
+
+        ```bash
+        arksim simulate-evaluate <path/to/config_simulate.yaml>
+        ```
+
+        Example:
+
+        ```bash
+        arksim simulate-evaluate ./config.yaml
+        ```
+
+        Your config should define:
+
+        **Pre-built Scenario**
+
+        ```yaml
+        scenario_file_path: ./path/to/scenario/scenario.json
+        ```
+
+        Path to the `scenario.json` file used to simulate conversations.
+
+        **Agent Setup**
+
+        ```yaml
+        agent_config_file_path: ./path/to/agent/agent_config.json
+        ```
+
+        Path to your agent's configuration file.
+
+        **Simulation Output**
+
+        ```yaml
+        output_file_path: ./path/to/results/conversations.json
+        ```
+
+        Where the generated bot conversation transcripts will be saved.
+
+        **Evaluation Output**
+
+        ```yaml
+        evaluation_output_dir: ./path/to/results/evaluation/
+        ```
+
+        Directory where evaluation scores, metrics, and reports will be written.
+      </Tab>
+      <Tab title="Python">
+        You can also simulate and evaluate conversations programmatically inside your own codebase.
+
+        ```python
+        import arksim
+        from arksim.simulation_engine import Simulator, SimulationParams
+        from arksim.config import AgentConfig
+        
+        # Load scenarios (agent test cases)
+        scenarios = Simulator.load_scenarios("examples/path/to/scenario.json")
+        
+        # Load agent configuration
+        agent_config = AgentConfig.load("examples/path/to/agent_config.json")
+        
+        # Initialize simulator
+        engine = Simulator(
+            agent_config=agent_config,
+            scenarios=scenarios,
+            params=SimulationParams(
+                num_convos_per_scenario=30,
+                max_turns=10,
+                num_workers="auto",  # Automatically detects max number of workers
+            ),
+        )
+        
+        # Run simulation (generates agent conversation transcripts)
+        conversations = engine.simulate()
+        
+        # Evaluate simulated agent conversations
+        evaluation_results = arksim.evaluate(
+            scenarios=scenarios,
+            conversations=conversations,
+            output_dir="./evaluation",  # Evaluation metrics + report output
+            model="gpt-5.1",
+            provider="open-ai",
+            num_workers="auto",
+            generate_html_report=True,
+        )
+        
+        print("Simulation complete.")
+        print(f"Generated {len(conversations)} conversations.")
+        print("Evaluation results saved to ./evaluation")
+        ```
+      </Tab>
+    </Tabs>
+  </Step>
+  <Step title="View Results">
+    - **Conversations:** Open `conversations.json` in your simulation output directory for full transcripts.
+    - **Evaluation:** Open `final_report.html` or `final_report.md` and the CSV files in your evaluation output directory for metrics and failure analysis.
+
+    Use these to see how your agent performed and where it failed or could be improved.
+  </Step>
+</Steps>
 
 ---
 
-## Run Your First Evaluation
+## Next Steps
 
-<Tabs>
-  <Tab title="Binary">
-    <Steps>
-      <Step title="Set up the example agent">
-        Navigate to the insurance customer service example and configure the agent:
+Now that you've run your first simulation and evaluation, here's where to go next.
 
-        ```bash
-        cd examples/bank-insurance
-        	mv agent_config_openai.json agent_config.json
-        ```
-
-        <Info>
-          **What's included:**
-
-          - Pre-configured agent settings
-          - Sample knowledge base for scenario building and evaluation
-          - Ready-to-use runtime configuration
-          - A prompt-based agent using OpenAI's Chat Completions API
-
-          See our [Input Setup](/input-setup) guide for detailed instructions on creating customized agent configurations.
-        </Info>
-      </Step>
-      <Step title="Set your API key">
-        Export your OpenAI API key as an environment variable:
-
-        ```bash
-        export OPENAI_API_KEY=your_api_key_here
-        ```
-      </Step>
-      <Step title="Run the simulator">
-        ```bash
-        ./run_arksim.sh run ./examples/bank-insurance/config.yaml
-        ```
-
-        <Note>
-          The simulation will take a few minutes to complete. You'll see progress updates in your terminal.
-        </Note>
-      </Step>
-      <Step title="View your results">
-        Once complete, find your evaluation results in the `results/` folder:
-
-        | File                                   | Description                                                  |
-        | -------------------------------------- | ------------------------------------------------------------ |
-        | `results/evaluation/final_report.html` | Visual summary with aggregated metrics and insights          |
-        | `results/conversation/`                | Individual conversation logs with message-by-message details |
-        | `results/evaluation/`                  | Granular per-turn and per-conversation scores                |
-
-        <Check>
-          Open `final_report.html` in your browser to see your agent's performance!
-        </Check>
-      </Step>
-    </Steps>
-  </Tab>
-  <Tab title="Docker">
-    <Steps>
-      <Step title="Set up the example agent">
-        Navigate to the insurance customer service example and configure the agent:
-
-        ```bash
-        cd examples/bank-insurance
-        	mv agent_config_openai.json agent_config.json
-        ```
-
-        <Info>
-          **What's included:**
-
-          - Pre-configured agent settings
-          - Sample knowledge base for scenario building and evaluation
-          - Ready-to-use runtime configuration
-          - A prompt-based agent using OpenAI's Chat Completions API
-
-          See our [Input Setup](/input-setup) guide for detailed instructions on creating customized agent configurations.
-        </Info>
-      </Step>
-      <Step title="Set your API key">
-        Create a `.env` file in the `examples/` directory:
-
-        ```bash
-        OPENAI_API_KEY=your_api_key_here
-        ```
-      </Step>
-      <Step title="Run the simulator">
-        ```bash
-        docker run --platform linux/amd64 \
-          -v ./examples:/examples \
-          --env-file ./examples/.env \
-          -it public.ecr.aws/f1v9v1i4/arklex/arksim:1.0.0-alpha \
-          run ./examples/bank-insurance/config.yaml
-        ```
-
-        <Note>
-          The simulation will take a few minutes to complete. You'll see progress updates in your terminal.
-        </Note>
-      </Step>
-      <Step title="View your results">
-        Once complete, find your evaluation results in the `results/` folder:
-
-        | File                                   | Description                                                  |
-        | -------------------------------------- | ------------------------------------------------------------ |
-        | `results/evaluation/final_report.html` | Visual summary with aggregated metrics and insights          |
-        | `results/conversation/`                | Individual conversation logs with message-by-message details |
-        | `results/evaluation/`                  | Granular per-turn and per-conversation scores                |
-
-        <Check>
-          Open `final_report.html` in your browser to see your agent's performance!
-        </Check>
-      </Step>
-    </Steps>
-  </Tab>
-</Tabs>
-
----
-
-## Troubleshooting
-
-<AccordionGroup>
-  <Accordion title="Missing config file error">
-    The simulator looks for `agent_config.json` in the agent setup directory. Make sure you've renamed the file:
-
-    ```bash
-    mv agent_config_openai.json agent_config.json
-    ```
-  </Accordion>
-  <Accordion title="Docker can't find files">
-    Use an absolute path for the bind mount to ensure the container sees your local files:
-
-    ```bash
-    docker run --platform linux/amd64 \
-    	-v "$PWD/examples:/examples" \
-    	--env-file ./examples/.env \
-    	-it public.ecr.aws/f1v9v1i4/arklex/arksim:1.0.0-alpha \
-    	run ./examples/bank-insurance/config.yaml
-    ```
-  </Accordion>
-</AccordionGroup>
+- **Explore the core concepts:** Dive deeper into [Scenarios](/build-scenario), [Simulation](/simulate-conversation), and [Evaluation](/evaluate-conversation) to understand how each piece works and how to configure them for your agent.
+- **See more examples:** Browse examples to see Arksim in action across different agent types and use cases.
