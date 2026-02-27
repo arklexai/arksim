@@ -1,200 +1,180 @@
 ---
-title: "E-commerce Customer Service Agent Testing"
+title: "Insurance Customer Service Agent"
+description: "A complete walkthrough of running Arksim against a customer service agent for an insurance company use case."
 ---
 
 ## Overview
 
-This example demonstrates how to run Arklex User Simulator with a shopping assistant agent for an **e-commerce use case**. You can follow this example to evaluate your own agent.
+This example walks through running Arksim against a customer service agent built for an insurance company. The agent is designed to answer customer questions about insurance products and coverage — including topics like policy details, claims processes, deductibles, and coverage limits.
 
-This example includes two agent options:
-
-- **Option 1**: OpenAI agent that directly uses the OpenAI API to interact with the user simulator
-- **Option 2**: Customized in-house agent exposed through a Chat Completions-compatible interface to interact with the user simulator
+The example includes two ready-to-run agent implementations you can test against out of the box, and a guide for plugging in your own agent once you're familiar with the setup.
 
 ---
 
-## Data Preparation
+## Example Agents
 
-This example already includes a `data` folder in this directory (`./examples/e-commerce/data`). You can freely add, remove, or update knowledge files (`.md`, `.pdf`, `.doc`, etc.) in that folder to match your own use case.
+<CardGroup cols={2}>
+  <Card icon="bolt" title="Example Agent 1: OpenAI API">
+    A lightweight agent that calls the OpenAI API directly. Good for getting started quickly with minimal setup.
+  </Card>
+  <Card icon="diagram-project" title="Example Agent 2: LangGraph RAG">
+    RAG-based agent with LangGraph, backed by an insurance knowledge base; supports A2A or Chat Completions.
+  </Card>
+</CardGroup>
 
 ---
 
-## Option 1: OpenAI Agent
+## Scenarios
+
+The example ships with a set of pre-built scenarios representing realistic insurance customer interactions. Each scenario defines a simulated user with a distinct persona, goal, and background knowledge drawn from insurance product documentation.
+
+Sample goals include:
+
+- Asking detailed questions about car insurance coverage options, limits, and deductibles
+- Finding out whether a home insurance policy covers water damage from a burst pipe
+- Understanding what documents are needed to file an auto insurance claim
+- Comparing leasing vs. purchasing options for a service product
+
+Scenarios are located at `./examples/bank-insurance/scenarios/` and can be swapped out or extended to reflect your own use case.
+
+---
+
+## Example Agent 1: OpenAI API
+
+This agent calls the OpenAI API directly — no server setup required.
 
 <Steps>
-  <Step title="Rename agent configuration file">
-    Rename `agent_config_openai.json` to `agent_config.json`. If `agent_config.json` already exists, first rename the original file to another name to avoid overwriting it.
+  <Step title="Set your API key">
+    ```bash
+    export OPENAI_API_KEY="<YOUR_OPENAI_API_KEY>"
+    ```
   </Step>
-  <Step title="Configure runtime settings">
-    Configure `config.yaml` for this example.
-  </Step>
-  <Step title="Run the simulator">
-    Choose how you want to run the simulator:
-
-    <Tabs>
-      <Tab title="Binary">
-        **Set the environment variables**
-
-        In a new terminal:
-
-        ```bash
-        export OPENAI_API_KEY="<YOUR_OPENAI_API_KEY>"
-        ```
-
-        **Run the simulator**
-
-        From the `root` folder:
-
-        ```bash
-        ./run_arksim.sh run ./examples/e-commerce/config.yaml
-        ```
-      </Tab>
-      <Tab title="Docker">
-        **Create environment file**
-
-        Create a `.env` file with your API key:
-
-        ```bash
-        OPENAI_API_KEY=<YOUR_OPENAI_API_KEY>
-        ```
-
-        **Run the simulator**
-
-        ```bash
-        docker run --platform linux/amd64 \
-          -v ./examples:/examples \
-          --env-file ./examples/.env \
-          -it public.ecr.aws/f1v9v1i4/arklex/arksim:1.0.0-alpha \
-          run /examples/e-commerce/config.yaml
-        ```
-      </Tab>
-    </Tabs>
+  <Step title="Run simulation and evaluation">
+    ```bash
+    arksim simulate ./examples/bank-insurance/config.yaml
+    arksim evaluate ./examples/bank-insurance/config.yaml
+    ```
   </Step>
 </Steps>
 
 ---
 
-## Option 2: In-house Agent
+## Example Agent 2: LangGraph RAG Agent
+
+This agent is a RAG-based customer service agent built with LangGraph, backed by an insurance knowledge base. It can be exposed via either the A2A Protocol or a Chat Completions-compatible endpoint.
 
 <Steps>
-  <Step title="Rename agent configuration file">
-    Rename `agent_config_chat_completion.json` to `agent_config.json`. If `agent_config.json` already exists, first rename the original file to another name to avoid overwriting it.
-  </Step>
-  <Step title="Start the agent">
-    The user simulator expects agent responses in the Chat Completions format. You can either use the sample agent provided in the `./examples/e-commerce/chat_completion_server` folder, or integrate your own agent.
-
+  <Step title="Install agent dependencies">
     <Tabs>
-      <Tab title="Sample Agent">
-        In the `./examples/e-commerce/chat_completion_server` folder, we provide a RAG-based agent implemented with LangGraph in `agent_server.py`.
-
-        **Install dependencies**
-
-        Create a virtual environment (Python 3.11 recommended) and install dependencies:
-
+      <Tab title="uv">
         ```bash
-        # Create and activate the environment
-        conda create -n ecommerce_venv python=3.11 -y
-        conda activate ecommerce_venv
-        
-        # Install required packages for the sample agent
-        pip install -r ./examples/e-commerce/chat_completion_server/requirements.txt
+        uv venv --python 3.11
+        source .venv/bin/activate
+        pip install -r ./examples/bank-insurance/agent_server/requirements.txt
         ```
-
-        **Set environment variables**
+      </Tab>
+      <Tab title="conda">
+        ```bash
+        conda create -n bank_venv python=3.11 -y
+        conda activate bank_venv
+        pip install -r ./examples/bank-insurance/agent_server/requirements.txt
+        ```
+      </Tab>
+    </Tabs>
+  </Step>
+  <Step title="Start the agent server">
+    <Tabs>
+      <Tab title="A2A">
+        Exposes an A2A-compatible agent on port `9999`:
 
         ```bash
         export OPENAI_API_KEY=<YOUR_OPENAI_API_KEY>
-        ```
-
-        **Start the agent server**
-
-        From the root directory of the folder, start the chat completion wrapper. This starts the agent on port 8080:
-
-        ```bash
-        python -m examples.e-commerce.chat_completion_server.chat_completion_wrapper
-        ```
-
-        **Verify the server is running**
-
-        ```bash
-        lsof -i -P -n | grep 8080
-        ```
-
-        You should see output similar to:
-
-        ```bash
-        python3.11  <process_id> <username>   10u  IPv4 0x6eaae5951a5c469b      0t0  TCP 127.0.0.1:8080 (LISTEN)
+        python -m examples.bank-insurance.agent_server.a2a.server
         ```
       </Tab>
-      <Tab title="Your Own Agent">
-        If you have your own agent, wrap your agent in OpenAI chat completion request and response format. You can follow the `#TODO` comments in `chat_completion_wrapper.py` to use it.
-
-        Then, from the repository root, start the chat completion wrapper:
+      <Tab title="Chat Completions">
+        Exposes an OpenAI Chat Completions-compatible endpoint on port `8888` at `/chat/completions`:
 
         ```bash
-        python -m examples.e-commerce.chat_completion_server.chat_completion_wrapper
+        export OPENAI_API_KEY=<YOUR_OPENAI_API_KEY>
+        python -m examples.bank-insurance.agent_server.chat_completions.server
         ```
+
+        When `enable_metadata` is set to `true` in the request body, the following fields are sent alongside each user message: `chat_id`, `user_attributes`, `user_goal`, `knowledge`.
       </Tab>
     </Tabs>
   </Step>
-  <Step title="Configure runtime settings">
-    Configure `config.yaml` for this example.
-  </Step>
-  <Step title="Run the simulator">
-    <Tabs>
-      <Tab title="Binary">
-        In a new terminal:
+  <Step title="Run simulation and evaluation">
+    In a new terminal:
 
-        **Set the environment variables**
-
-        ```bash
-        export OPENAI_API_KEY="<YOUR_OPENAI_API_KEY>"
-        ```
-
-        **Run the simulator**
-
-        From the `root` folder:
-
-        ```bash
-        ./run_arksim.sh run ./examples/e-commerce/config.yaml
-        ```
-      </Tab>
-      <Tab title="Docker">
-        **Create environment file**
-
-        Create a `.env` file with your API key:
-
-        ```bash
-        OPENAI_API_KEY=<YOUR_OPENAI_API_KEY>
-        ```
-
-        **(macOS only) Update agent endpoint for Docker networking**
-
-        On macOS, Docker containers cannot access `localhost` on the host machine directly. You need to update the endpoint URL in `agent_config.json` to use `host.docker.internal` instead of `localhost`.
-
-        For example, if your `agent_config.json` contains:
-
-        ```json
-        "endpoint": "http://localhost:8080/chat/completions"
-        ```
-
-        Change it to:
-
-        ```json
-        "endpoint": "http://host.docker.internal:8080/chat/completions"
-        ```
-
-        **Run the simulator**
-
-        ```bash
-        docker run --platform linux/amd64 \
-          -v ./examples:/examples \
-          --env-file ./examples/.env \
-          --network host \
-          -it public.ecr.aws/f1v9v1i4/arklex/arksim:1.0.0-alpha \
-          run ./examples/e-commerce/config.yaml
-        ```
-      </Tab>
-    </Tabs>
+    ```bash
+    export OPENAI_API_KEY="<YOUR_OPENAI_API_KEY>"
+    arksim simulate ./examples/bank-insurance/config.yaml
+    arksim evaluate ./examples/bank-insurance/config.yaml
+    ```
   </Step>
 </Steps>
+
+---
+
+## Running with Your Own Agent
+
+To test your own backend agent against these scenarios, you have two options depending on your preferred protocol:
+
+- **Chat Completions**: follow the `#TODO` comments in `agent_server/chat_completions/server.py` to swap in your own backend logic.
+- **A2A**: implement your own A2A executor in `agent_server/a2a/`.
+
+Once your server is running, point `agent_config.json` at your endpoint and run simulation and evaluation as normal.
+
+<Tip>
+  See Agent Compatibility for a full breakdown of supported protocols and how to configure `agent_config.json`.
+</Tip>
+
+---
+
+## Configuration
+
+```yaml
+# Directory containing agent_config.json, knowledge data, and example scenarios
+agent_setup_dir: ./examples/bank-insurance
+
+# Where all results are written
+output_dir: ./examples/bank-insurance/results
+
+# Number of conversations to simulate
+num_conversations: 5
+
+# Maximum turns per conversation
+max_turns: 5
+
+# Metrics to run during evaluation
+metrics_to_run: [faithfulness, helpfulness, coherence, verbosity, relevance, goal_completion, agent_behavior_failure]
+
+# Paths to .py files defining custom metrics (must implement BaseMetric)
+custom_metrics_file_paths: []
+
+# Generate an interactive HTML report
+generate_html_report: true
+
+# LLM used to power simulation and evaluation scoring
+model: gpt-5.1
+provider: openai
+num_workers: auto
+```
+
+<Note>
+  `agent_setup_dir` is the root directory for the example — it contains the `agent_config.json`, the insurance knowledge base, and the pre-built scenario file used to drive the simulated users.
+</Note>
+
+---
+
+## Output
+
+Results are written to `./examples/bank-insurance/results/`:
+
+| File                                     | Contents                                                              |
+| ---------------------------------------- | --------------------------------------------------------------------- |
+| `agent_performance_per_turn.csv`         | Per-turn metric scores, reasoning, and failure labels                 |
+| `agent_performance_per_conversation.csv` | Rolled-up scores and status per conversation                          |
+| `unique_errors.csv`                      | Deduplicated failure patterns with descriptions and occurrence traces |
+| `final_report.html`                      | Interactive report for browsing and sharing results                   |
