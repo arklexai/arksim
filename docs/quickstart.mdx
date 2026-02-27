@@ -1,0 +1,153 @@
+---
+title: "Quickstart"
+description: "Get started with Arksim in minutes. This guide will help you run your first agent evaluation."
+---
+
+This guide walks you through running your first evaluation using a pre-built insurance customer service agent example.
+
+## Prerequisites
+
+Before you begin, make sure you have:
+
+- Completed the [Installation](/installation)
+- An OpenAI API key ([get one here](https://platform.openai.com/api-keys))
+
+---
+
+## Run Your First Evaluation
+
+<Tabs>
+  <Tab title="Binary">
+    <Steps>
+      <Step title="Set up the example agent">
+        Navigate to the insurance customer service example and configure the agent:
+
+        ```bash
+        cd examples/bank-insurance
+        	mv agent_config_openai.json agent_config.json
+        ```
+
+        <Info>
+          **What's included:**
+
+          - Pre-configured agent settings
+          - Sample knowledge base for scenario building and evaluation
+          - Ready-to-use runtime configuration
+          - A prompt-based agent using OpenAI's Chat Completions API
+
+          See our [Input Setup](/input-setup) guide for detailed instructions on creating customized agent configurations.
+        </Info>
+      </Step>
+      <Step title="Set your API key">
+        Export your OpenAI API key as an environment variable:
+
+        ```bash
+        export OPENAI_API_KEY=your_api_key_here
+        ```
+      </Step>
+      <Step title="Run the simulator">
+        ```bash
+        ./run_arksim.sh run ./examples/bank-insurance/config.yaml
+        ```
+
+        <Note>
+          The simulation will take a few minutes to complete. You'll see progress updates in your terminal.
+        </Note>
+      </Step>
+      <Step title="View your results">
+        Once complete, find your evaluation results in the `results/` folder:
+
+        | File                                   | Description                                                  |
+        | -------------------------------------- | ------------------------------------------------------------ |
+        | `results/evaluation/final_report.html` | Visual summary with aggregated metrics and insights          |
+        | `results/conversation/`                | Individual conversation logs with message-by-message details |
+        | `results/evaluation/`                  | Granular per-turn and per-conversation scores                |
+
+        <Check>
+          Open `final_report.html` in your browser to see your agent's performance!
+        </Check>
+      </Step>
+    </Steps>
+  </Tab>
+  <Tab title="Docker">
+    <Steps>
+      <Step title="Set up the example agent">
+        Navigate to the insurance customer service example and configure the agent:
+
+        ```bash
+        cd examples/bank-insurance
+        	mv agent_config_openai.json agent_config.json
+        ```
+
+        <Info>
+          **What's included:**
+
+          - Pre-configured agent settings
+          - Sample knowledge base for scenario building and evaluation
+          - Ready-to-use runtime configuration
+          - A prompt-based agent using OpenAI's Chat Completions API
+
+          See our [Input Setup](/input-setup) guide for detailed instructions on creating customized agent configurations.
+        </Info>
+      </Step>
+      <Step title="Set your API key">
+        Create a `.env` file in the `examples/` directory:
+
+        ```bash
+        OPENAI_API_KEY=your_api_key_here
+        ```
+      </Step>
+      <Step title="Run the simulator">
+        ```bash
+        docker run --platform linux/amd64 \
+          -v ./examples:/examples \
+          --env-file ./examples/.env \
+          -it public.ecr.aws/f1v9v1i4/arklex/arksim:1.0.0-alpha \
+          run ./examples/bank-insurance/config.yaml
+        ```
+
+        <Note>
+          The simulation will take a few minutes to complete. You'll see progress updates in your terminal.
+        </Note>
+      </Step>
+      <Step title="View your results">
+        Once complete, find your evaluation results in the `results/` folder:
+
+        | File                                   | Description                                                  |
+        | -------------------------------------- | ------------------------------------------------------------ |
+        | `results/evaluation/final_report.html` | Visual summary with aggregated metrics and insights          |
+        | `results/conversation/`                | Individual conversation logs with message-by-message details |
+        | `results/evaluation/`                  | Granular per-turn and per-conversation scores                |
+
+        <Check>
+          Open `final_report.html` in your browser to see your agent's performance!
+        </Check>
+      </Step>
+    </Steps>
+  </Tab>
+</Tabs>
+
+---
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Missing config file error">
+    The simulator looks for `agent_config.json` in the agent setup directory. Make sure you've renamed the file:
+
+    ```bash
+    mv agent_config_openai.json agent_config.json
+    ```
+  </Accordion>
+  <Accordion title="Docker can't find files">
+    Use an absolute path for the bind mount to ensure the container sees your local files:
+
+    ```bash
+    docker run --platform linux/amd64 \
+    	-v "$PWD/examples:/examples" \
+    	--env-file ./examples/.env \
+    	-it public.ecr.aws/f1v9v1i4/arklex/arksim:1.0.0-alpha \
+    	run ./examples/bank-insurance/config.yaml
+    ```
+  </Accordion>
+</AccordionGroup>

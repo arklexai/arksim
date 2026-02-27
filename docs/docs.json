@@ -1,0 +1,103 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "Arksim Docs",
+  "colors": {
+    "primary": "#035E7B",
+    "light": "#8EC1D6",
+    "dark": "#024E66"
+  },
+  "favicon": "/favicon.svg",
+  "navigation": {
+    "pages": [
+      "overview",
+      {
+        "group": "Getting started",
+        "expanded": true,
+        "pages": [
+          "installation",
+          "quickstart"
+        ]
+      },
+      {
+        "group": "Guide",
+        "pages": [
+          "input-setup",
+          "runtime-configuration",
+          "results"
+        ]
+      },
+      {
+        "group": "Examples",
+        "pages": [
+          "insurance-customer-service-agent-evaluation",
+          "e-commerce-customer-service-agent-evaluation",
+          "personal-ai-assistant-molt-bot-evaluation"
+        ]
+      },
+      {
+        "group": "Advanced Usage",
+        "pages": [
+          "build-scenario",
+          "simulate-conversation",
+          "evaluate-conversation"
+        ]
+      },
+      {
+        "group": "Help",
+        "pages": [
+          "contact-email"
+        ]
+      }
+    ]
+  },
+  "logo": {
+    "light": "/logo/light-mode.svg",
+    "dark": "/logo/dark-mode.svg"
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "Support",
+        "href": "mailto:support@arklex.ai"
+      }
+    ],
+    "primary": {
+      "type": "button",
+      "label": "Arklex Home",
+      "href": "https://www.arklex.ai/"
+    }
+  },
+  "contextual": {
+    "options": [
+     "copy",
+     "view",
+     "chatgpt",
+     "claude",
+     "perplexity",
+     "mcp",
+     "cursor",
+     "vscode"
+   ]
+  },
+  "fonts": {
+    "family": "DM Sans",
+    "weight": 400,
+    "heading": {
+      "family": "STIX Two Text",
+      "weight": 800
+    },
+    "body": {
+      "weight": 400
+    }
+  },
+  "footer": {
+    "socials": {
+      "linkedin": "https://www.linkedin.com/company/arklex",
+      "discord": "https://discord.gg/YNkdqAQjzA"
+    }
+  },
+  "icons": {
+    "library": "fontawesome"
+  }
+}
