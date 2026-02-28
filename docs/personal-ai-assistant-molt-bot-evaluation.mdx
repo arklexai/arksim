@@ -17,8 +17,8 @@ Before getting started, make sure you have the following:
 
 - **OpenClaw** installed and configured — [openclaw.ai](https://openclaw.ai/)
 - **OpenClaw gateway** running with the HTTP Chat Completions endpoint enabled
-- **OpenAI API key** — used by Arksim to power the simulated user
-- **OpenClaw gateway token** — for authenticating to your OpenClaw instance
+- **OpenAI API key**: used by Arksim to power the simulated user
+- **OpenClaw gateway token**: for authenticating to your OpenClaw instance
 
 ---
 
@@ -103,7 +103,7 @@ Scenarios are located at `<path/to/openclaw>/results/scenario/` and can be swapp
 
 ## Configuration
 
-This example uses two separate config files — one for simulation and one for evaluation.
+This example uses two separate config files, one for simulation and one for evaluation.
 
 **Simulation**
 
@@ -161,8 +161,8 @@ num_workers: auto
 
 **Simulation** writes to `<path/to/openclaw/results/conversation>/`:
 
-- `conversations.json` — full transcripts of every simulated conversation
-- `target_goals.json` — the resolved goals used to drive each simulated user
+- `conversations.json`: full transcripts of every simulated conversation
+- `target_goals.json`: the resolved goals used to drive each simulated user
 
 **Evaluation** writes to `<path/to/openclaw/results/evaluation>/`:
 
@@ -191,6 +191,6 @@ num_workers: auto
 
 To use this example as a starting point for your own personal assistant:
 
-1. **Knowledge** — add or edit knowledge files in your `data/` folder so scenarios reflect your assistant's actual capabilities.
-2. **Overview** — update `knowledge.json` (e.g. `corporate_overview`, capabilities list) to match your assistant.
-3. **Agent config** — adjust `agent_config.json` if your endpoint, port, or auth headers differ from the OpenClaw defaults.
+1. **Knowledge**: add or edit knowledge files in your `data/` folder so scenarios reflect your assistant's actual capabilities.
+2. **Overview**: update `knowledge.json` (e.g. `corporate_overview`, capabilities list) to match your assistant.
+3. **Agent config**: adjust `agent_config.json` if your endpoint, port, or auth headers differ from the OpenClaw defaults.
