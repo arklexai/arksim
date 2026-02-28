@@ -39,7 +39,7 @@ Scenarios are located at `<path/to/e-commerce>/results/scenario/` and can be swa
 
 ---
 
-## Example Agent 1 — OpenAI API
+## Example Agent 1: OpenAI API
 
 This agent calls the OpenAI API directly — no server setup required. The default `agent_config.json` uses the OpenAI Chat Completions API; `${OPENAI_API_KEY}` in the config is resolved at runtime.
 
@@ -59,7 +59,7 @@ This agent calls the OpenAI API directly — no server setup required. The defau
 
 ---
 
-## Example Agent 2 — LangGraph RAG Agent
+## Example Agent 2: LangGraph RAG Agent
 
 This agent is a RAG-based shopping assistant built with LangGraph, exposable via a Chat Completions–compatible endpoint on port `8080` at `/chat/completions`.
 
@@ -182,8 +182,8 @@ num_workers: auto
 
 **Simulation** writes to `<path/to/e-commerce/results/conversation>/`:
 
-- `conversations.json` — full transcripts of every simulated conversation
-- `target_goals.json` — the resolved goals used to drive each simulated user
+- `conversations.json`: full transcripts of every simulated conversation
+- `target_goals.json`: the resolved goals used to drive each simulated user
 
 **Evaluation** writes to `<path/to/e-commerce/results/evaluation>/`:
 
