@@ -17,27 +17,34 @@ The **output** is a set of conversation transcripts you can inspect directly or 
 
 Before running a simulation, you need three things in place:
 
-| Input            | Description                                                                                                                                                    |
-| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Scenarios**    | A `scenario.json` file loaded from `input_dir`. Defines user attributes, goals, knowledge, and scenario metadata. [Learn how to write scenarios →](/scenarios) |
-| **Agent config** | `agent_config.json` in your `agent_setup_dir` defines how Arksim connects to your agent and which protocol to use.                                             |
-| **Config file**  | `config.yaml` controlling simulation parameters such as number of conversations, max turns, workers, and model settings.                                       |
+| Input            | Description                                                                                                                                                         |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Scenarios**    | A `scenario.json` file loaded from `input_dir`. Defines user attributes, goals, knowledge, and scenario metadata. [Learn how to write scenarios →](/build-scenario) |
+| **Agent config** | `agent_config.json` in your `agent_setup_dir` defines how Arksim connects to your agent and which protocol to use.                                                  |
+| **Config file**  | `config.yaml` controlling simulation parameters such as number of conversations, max turns, workers, and model settings.                                            |
 
 ---
 
 ## Configuration
 
 ```yaml
+# Simulation configuration for conversations
 num_conversations: 5          # Number of conversations to simulate
 max_turns: 5                  # Maximum turns per conversation
-num_workers: auto             # Parallel workers ("auto" matches num_conversations)
+num_workers: auto             # Parallel workers 
+
+# Directories
 agent_setup_dir: ./examples/bank-insurance
 input_dir: ./results/scenario
 output_dir: ./results/conversation
+
+# Model configuration
 model: gpt-5.1
 provider: openai
-simulated_user_behavior_instructions: []   # Optional custom instructions for user behavior
-display_time_delay: false                   # Replay conversations with time delay between turns
+
+# Optional settings
+simulated_user_behavior_instructions: []   # Custom instructions for user behavior
+display_time_delay: false                  # Replay conversations with time delay
 ```
 
 <Tip>
@@ -113,7 +120,7 @@ Your `agent_config.json` specifies which protocol to use and how to connect.
     </Tabs>
   </Step>
   <Step title="Inspect your output">
-    Simulation writes a `conversations.json` file to your `output_dir`. This contains the full transcript of every conversation, ready to inspect or pass into [Evaluation](/evaluation).
+    Simulation writes a `conversations.json` file to your `output_dir`. This contains the full transcript of every conversation, ready to inspect or pass into [Evaluation](/evaluate-conversation).
   </Step>
 </Steps>
 
@@ -154,16 +161,16 @@ Describes the structure of `conversations.json`, the file produced at the end of
     <ResponseField name="conversation_history" type="list[ConversationMessage]" required>
       Ordered list of all messages in the conversation.
 
-      - `turn_id` _(int, required)_ — Turn index (one user message + one assistant message = one turn).
-      - `message_id` _(string, required)_ — Unique message ID.
-      - `role` _(string, required)_ — Either `"sim_user"` or `"assistant"`.
-      - `content` _(string, required)_ — The message text.
+      - `turn_id` _(int, required)_: Turn index (one user message + one assistant message = one turn).
+      - `message_id` _(string, required)_: Unique message ID.
+      - `role` _(string, required)_: Either `"sim_user"` or `"assistant"`.
+      - `content` _(string, required)_: The message text.
     </ResponseField>
     <ResponseField name="sim_user_prompt" type="SimUserPrompt" required>
       Stores the rendered prompt template and variables used to drive the simulated user. Useful for traceability and debugging.
 
-      - `sim_user_prompt_template` _(string)_ — The Jinja template used to construct the simulated user's system prompt.
-      - `variables` _(dict[string, Any])_ — Key-value map used to render the template. Includes `knowledge`, `user_goal`, `sim_user_profile`, and `agent_context`.
+      - `sim_user_prompt_template` _(string)_: The Jinja template used to construct the simulated user's system prompt.
+      - `variables` _(dict[string, Any])_: Key-value map used to render the template. Includes `knowledge`, `user_goal`, `sim_user_profile`, and `agent_context`.
     </ResponseField>
   </Expandable>
 </ResponseField>
