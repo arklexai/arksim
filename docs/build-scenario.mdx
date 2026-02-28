@@ -15,13 +15,13 @@ A scenario is a test case that describes who the simulated user is, what they wa
 
 Describes the user's objective, guiding their actions and decisions throughout the conversation.
 
-> "Plan a purchase of a service robot, focusing on delivery timelines and suitability for commercial use."
+> Plan a purchase of a service robot, focusing on delivery timelines and suitability for commercial use.
 
 ### User Attributes (Persona)
 
 Defines the user's characteristics, influencing their tone, communication style, and behavior.
 
-> "Alex, 26 years old, living in Chicago, works as an operations analyst at a mid-sized logistics company; analytical, detail-oriented, budget-conscious, and risk-aware."
+> Alex, 26 years old, living in Chicago, works as an operations analyst at a mid-sized logistics company; analytical, detail-oriented, budget-conscious, and risk-aware.
 
 ### Knowledge
 
@@ -40,7 +40,7 @@ Provides context that shapes the simulated user's questions and expectations. Al
 
 Arksim Scenarios let you test and evaluate your agent using realistic, profile-driven simulations of user interactions. Each scenario is built around clearly defined goals and behaviors, enabling structured performance evaluation without requiring a real-world dataset.
 
-By using synthetic users, you can run consistent and reproducible tests across a wide range of interaction types — making it easy to scale evaluations and understand how your agent performs before deploying it to real users.
+By using synthetic users, you can run consistent and reproducible tests across a wide range of interaction types, making it easy to scale evaluations and understand how your agent performs before deploying it to real users.
 
 ---
 
@@ -93,16 +93,16 @@ A scenario file is a single JSON document containing a list of scenario objects.
 
       Each `KnowledgeItem` contains:
 
-      - `content` (required) — The text content injected into the simulator prompt as the user's background knowledge.
-      - `metadata` — Freeform metadata for labeling and traceability (e.g. `title`, `source`, `doc_id`). Not used by the simulator or evaluator.
+      - `content` (required): The text content injected into the simulator prompt as the user's background knowledge.
+      - `metadata`: Freeform metadata for labeling and traceability (e.g. `title`, `source`, `doc_id`). Not used by the simulator or evaluator.
     </ResponseField>
     <ResponseField name="origin" type="dict[string, Any]">
-      Freeform metadata used to record how a scenario was generated. Not used by the simulator or evaluator — exists purely for provenance tracking.
+      Freeform metadata used to record how a scenario was generated. It is not used by the simulator or evaluator and exists purely for provenance tracking.
 
       Common fields:
 
-      - `target_agent_capability` — The agent capability this scenario was designed to evaluate.
-      - `goal_raw` — The original goal before it was adapted to the full contextual goal string.
+      - `target_agent_capability`: The agent capability this scenario was designed to evaluate.
+      - `goal_raw`: The original goal before it was adapted to the full contextual goal string.
     </ResponseField>
   </Expandable>
 </ResponseField>
@@ -116,13 +116,13 @@ A scenario file is a single JSON document containing a list of scenario objects.
     {
       "scenario_id": "123456",
       "user_id": "123456",
-      "goal": "You want to ask detailed questions about TD Insurance car coverage options in your province, including limits, deductibles, and what's actually covered.",
+      "goal": "You want to ask detailed questions about XYZ Insurance car coverage options in your province, including limits, deductibles, and what's actually covered.",
       "knowledge": [
         {
-          "content": "Car Insurance Overview: TD Insurance offers mandatory and optional coverages including third-party liability, collision, and comprehensive...",
+          "content": "Car Insurance Overview: XYZ Insurance offers mandatory and optional coverages including third-party liability, collision, and comprehensive...",
           "metadata": {
             "title": "Car Insurance Overview",
-            "source": "https://www.tdinsurance.com/products-services/auto-car-insurance",
+            "source": "https://www.xyzinsurance.com/products-services/auto-car-insurance",
             "knowledge_type": "car_insurance_overview",
             "doc_id": "car_insurance_overview_001"
           }
@@ -149,8 +149,8 @@ A scenario file is a single JSON document containing a list of scenario objects.
         "loyalty_level": "neutral"
       },
       "origin": {
-        "target_agent_capability": "Answer questions about TD Insurance products and coverage",
-        "goal_raw": "Ask question about TD bank insurance"
+        "target_agent_capability": "Answer questions about XYZ Insurance products and coverage",
+        "goal_raw": "Ask question about XYZ insurance"
       }
     }
   ]
@@ -197,11 +197,11 @@ A scenario can include multiple knowledge items by adding additional entries to 
 ```json
 "knowledge": [
   {
-    "content": "Home Insurance Basics: TD Insurance provides coverage for your dwelling, contents, and liability...",
+    "content": "Home Insurance Basics: XYZ Insurance provides coverage for your dwelling, contents, and liability...",
     "metadata": { "title": "Home Insurance Basics" }
   },
   {
-    "content": "Claims Process: To file a claim, you can call the TD Insurance claims line or use the online claims portal...",
+    "content": "Claims Process: To file a claim, you can call the XYZ Insurance claims line or use the online claims portal...",
     "metadata": { "title": "How to File a Claim" }
   }
 ]
