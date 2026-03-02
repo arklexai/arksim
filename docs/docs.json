@@ -15,6 +15,7 @@
         "group": "Getting started",
         "expanded": true,
         "pages": [
+          "installation",
           "quickstart"
         ]
       },

@@ -2,7 +2,6 @@ SKIPPED_GOOD_PERFORMANCE_REASON = (
     "All metrics passed threshold, qualitative evaluation skipped"
 )
 
-# Below are not used for now
 # Evaluation Failure Error Messages
 EVALUATION_RUN_FAILED_REASON = "All quantitative metric evaluations encountered errors, so the quantitative evaluation run did not complete."
 

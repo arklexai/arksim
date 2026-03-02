@@ -69,19 +69,14 @@ arksim simulate config.yaml
 Or in Python:
 
 ```python
-from arksim.simulation_engine import Simulator, SimulationParams
-from arksim.config import AgentConfig
+from arksim.simulation_engine import run_simulation, SimulationInput
 
-scenarios = Simulator.load_scenarios("scenario.json")
-agent_config = AgentConfig.load("agent_config.json")
-
-engine = Simulator(
-    agent_config=agent_config,
-    scenarios=scenarios,
-    params=SimulationParams(num_conversations=10, max_turns=8),
-)
-
-conversations = engine.simulate()
+results = run_simulation(SimulationInput(
+    agent_config_file_path="agent_config.json",
+    scenario_file_path="scenario.json",
+    num_conversations_per_scenario=10,
+    max_turns=8,
+))
 ```
 
 **3. Evaluate your agent**
@@ -93,15 +88,15 @@ arksim evaluate config.yaml
 Or in Python:
 
 ```python
-import arksim
+from arksim.evaluator import run_evaluation, EvaluationInput
 
-results = arksim.evaluate(
-    simulation_file_path="./conversations.json",
+results = run_evaluation(EvaluationInput(
+    simulation_file_path="./simulation.json",
     output_dir="./evaluation",
     model="gpt-5.1",
-    provider="open-ai",
+    provider="openai",
     generate_html_report=True,
-)
+))
 ```
 
 ---

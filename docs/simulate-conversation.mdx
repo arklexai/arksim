@@ -19,34 +19,35 @@ The **output** is a set of conversation transcripts you can inspect directly or 
 
 Before running a simulation, you need three things in place:
 
-| Input            | Description                                                                                                                                                         |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Scenarios**    | A `scenario.json` file loaded from `input_dir`. Defines user attributes, goals, knowledge, and scenario metadata. [Learn how to write scenarios →](/build-scenario) |
-| **Agent config** | `agent_config.json` in your `agent_setup_dir` defines how Arksim connects to your agent and which protocol to use.                                                  |
-| **Config file**  | `config.yaml` controlling simulation parameters such as number of conversations, max turns, workers, and model settings.                                            |
+| Input            | Description                                                                                                                                       |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Scenarios**    | A `scenario.json` file defining user attributes, goals, knowledge, and scenario metadata. [Learn how to write scenarios →](/build-scenario)       |
+| **Agent config** | `agent_config.json` defines how Arksim connects to your agent and which protocol to use. See [Agent configurations](/agent_configurations).       |
+| **Config file**  | `config.yaml` controlling simulation parameters such as number of conversations, max turns, workers, and model settings.                          |
 
 ---
 
 ## Configuration
 
 ```yaml
-# Simulation configuration for conversations
-num_conversations: 5          # Number of conversations to simulate
-max_turns: 5                  # Maximum turns per conversation
-num_workers: auto             # Parallel workers 
+# Agent and scenario inputs
+agent_config_file_path: ./agent_config.json
+scenario_file_path: ./scenarios.json
 
-# Directories
-agent_setup_dir: ./examples/bank-insurance
-input_dir: ./results/scenario
-output_dir: ./results/conversation
+# Simulation parameters
+num_conversations_per_scenario: 5    # Number of conversations per scenario
+max_turns: 5                         # Maximum turns per conversation
+num_workers: auto                    # Parallel workers
 
-# Model configuration
+# Output
+output_file_path: ./simulation.json
+
+# Model configuration (used for the simulated user, not your agent)
 model: gpt-5.1
 provider: openai
 
-# Optional settings
-simulated_user_behavior_instructions: []   # Custom instructions for user behavior
-display_time_delay: false                  # Replay conversations with time delay
+# Optional: custom Jinja2 template for the simulated user prompt
+# simulated_user_prompt_template: null
 ```
 
 <Tip>
@@ -75,16 +76,14 @@ Your `agent_config.json` specifies which protocol to use and how to connect.
     Create a `config.yaml` file with your simulation parameters:
 
     ```yaml
-    num_conversations: 5
+    agent_config_file_path: ./agent_config.json
+    scenario_file_path: ./scenarios.json
+    num_conversations_per_scenario: 5
     max_turns: 5
     num_workers: auto
-    agent_setup_dir: ./examples/bank-insurance
-    input_dir: ./results/scenario
-    output_dir: ./results/conversation
+    output_file_path: ./simulation.json
     model: gpt-5.1
     provider: openai
-    simulated_user_behavior_instructions: []
-    display_time_delay: false
     ```
   </Step>
   <Step title="Run the simulation">
@@ -96,27 +95,24 @@ Your `agent_config.json` specifies which protocol to use and how to connect.
         arksim simulate config.yaml
         ```
 
-        To specify a scenario directory explicitly:
+        You can override config values with CLI flags:
 
         ```bash
-        arksim simulate config.yaml --input-dir ./results/scenario
+        arksim simulate config.yaml --max-turns 10 --num-workers 4
         ```
       </Tab>
       <Tab title="Python">
         ```python
-        from arksim.simulation_engine import Simulator, SimulationParams
-        from arksim.config import AgentConfig
-        
-        scenarios = Simulator.load_scenarios("examples/path/to/scenario.json")
-        agent_config = AgentConfig.load("examples/path/to/agent_config.json")
-        
-        engine = Simulator(
-        agent_config=agent_config,
-        scenarios=scenarios,
-        params=SimulationParams(num_conversations=30, max_turns=10, num_workers=10),
-        )
-        
-        conversations = engine.simulate()
+        from arksim.simulation_engine import run_simulation, SimulationInput
+
+        simulation = run_simulation(SimulationInput(
+            agent_config_file_path="agent_config.json",
+            scenario_file_path="scenarios.json",
+            num_conversations_per_scenario=30,
+            max_turns=10,
+            num_workers=10,
+            output_file_path="./simulation.json",
+        ))
         ```
       </Tab>
     </Tabs>
@@ -139,7 +135,7 @@ This file contains the full transcript of every conversation, including the comp
 Describes the structure of `conversations.json`, the file produced at the end of a simulation run.
 
 <ResponseField name="schema_version" type="string" required>
-  Version of the `conversations.json` schema (e.g., `"v2"`).
+  Version of the `conversations.json` schema (e.g., `"v1"`).
 </ResponseField>
 
 <ResponseField name="generated_at" type="string" required>
@@ -168,10 +164,10 @@ Describes the structure of `conversations.json`, the file produced at the end of
       - `role` _(string, required)_: Either `"simulated_user"` or `"assistant"`.
       - `content` _(string, required)_: The message text.
     </ResponseField>
-    <ResponseField name="sim_user_prompt" type="SimUserPrompt" required>
+    <ResponseField name="simulated_user_prompt" type="SimulatedUserPrompt" required>
       Stores the rendered prompt template and variables used to drive the simulated user. Useful for traceability and debugging.
 
-      - `sim_user_prompt_template` _(string)_: The Jinja template used to construct the simulated user's system prompt.
+      - `simulated_user_prompt_template` _(string)_: The Jinja template used to construct the simulated user's system prompt.
       - `variables` _(dict[string, Any])_: Key-value map used to render the template. Includes `knowledge`, `user_goal`, `sim_user_profile`, and `agent_context`.
     </ResponseField>
   </Expandable>
@@ -183,9 +179,9 @@ Describes the structure of `conversations.json`, the file produced at the end of
 
 ```json
 {
-  "schema_version": "v2",
+  "schema_version": "v1",
   "generated_at": "2025-04-10T14:32:00Z",
-  "simulator_version": "1.4.2",
+  "simulator_version": "v1",
   "conversations": [
     {
       "conversation_id": "00de685e-f76b-4a5f-a6e5-217cad777316",
@@ -195,7 +191,7 @@ Describes the structure of `conversations.json`, the file produced at the end of
           "turn_id": 0,
           "message_id": "3c9a7f12-6b4e-4d8a-b2f1-9e5c0a7d41e6",
           "role": "simulated_user",
-          "content": "So… this whole identity theft thing is stressing me out a bit...."
+          "content": "So this whole identity theft thing is stressing me out a bit...."
         },
         {
           "turn_id": 0,
@@ -204,8 +200,8 @@ Describes the structure of `conversations.json`, the file produced at the end of
           "content": "I understand your concern about identity theft, but rest assured..."
         }
       ],
-      "sim_user_prompt": {
-        "sim_user_prompt_template": "You are a customer interacting with an agent through multiple turns...",
+      "simulated_user_prompt": {
+        "simulated_user_prompt_template": "You are a customer interacting with an agent through multiple turns...",
         "variables": {
           "agent_context": "XYZ Bank Insurance is a Canadian provider of...",
           "sim_user_profile": "Name: Priya Sharma. Age: 32. Location: Toronto, ON...",
