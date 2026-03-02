@@ -1,0 +1,246 @@
+{
+    "schema_version": "v1",
+    "scenarios": [
+        {
+            "scenario_id": "home_deductibles_info",
+            "user_id": "user_0001",
+            "goal": "You want to get information about how home insurance deductibles work, including how they affect claim payouts, when it makes sense to file a claim, how they relate to your premium, and how to choose a deductible amount you can afford.",
+            "agent_context": "XYZ Insurance - a core business within XYZ Bank Group - is one of Canada's leading providers of life, health, home, auto, and travel insurance. Through its two main divisions - General Insurance and Life & Health Insurance - XYZ Insurance delivers trusted protection to millions of Canadians. It is the largest direct-response home and auto insurer in the country and among the top three personal insurers nationwide. Leveraging XYZ's strong brand and financial foundation, XYZ Insurance offers comprehensive coverage options tailored to individual and business needs. Its General Insurance products include home, auto, and travel insurance, while its Life & Health line covers term life, accident, critical illness, and health protection. The company emphasizes digital-first service, providing customers with self-serve tools such as the MyInsurance online platform and mobile app for quotes, claims, and policy management. With a focus on customer trust, transparency, and innovation, XYZ Insurance continues to enhance its digital infrastructure, streamline claims processes, and expand personalized offerings. Backed by XYZ Bank's financial strength and regulatory integrity, XYZ Insurance remains committed to protecting what matters most to Canadians - ensuring peace of mind today and confidence for the future.",
+            "knowledge": [
+                {
+                    "content": "# How Home Insurance Deductibles Work\n\n## What is a Home Insurance Deductible?\n\nA home insurance deductible is the amount you agree to pay first when settling an insurance claim. This allows the risk of insuring your home to be shared between you and your insurer.\n\nIt's important to consider whether submitting a claim makes sense, especially if the cost of your deductible exceeds the cost of your home's repairs. You should choose a deductible amount that's realistic for you to afford in case you need to submit a claim.\n\n## How Does a Home Insurance Deductible Work?\n\n### Example Scenario\n\nLet's say you experience water damage caused by a burst pipe. After confirming your claim is eligible, you get the damage assessed and are told you have $5,000 in damages. With a $1,000 deductible, you have two options:\n\n**Option 1:** You can opt for a cash settlement where you receive a payment (less $1,000 for your deductible) to hire a contractor of your choice to do the repairs.\n\n**Option 2:** You can use one of your insurer's preferred contractors. You'll be responsible for paying your $1,000 deductible towards the contractor while your insurer covers the remaining balance.\n\n### When Repairs Cost Less Than Your Deductible\n\nIf the cost of your repairs is less than your deductible, you'd have to pay for your repairs out of pocket since it wouldn't make sense to file a claim. Remember to always consider your deductible amount and the cost of repairs before proceeding with a claim. You may be losing out on potential claims-free savings over future renewals if you choose to proceed with smaller claims.\n\n## The Relationship Between Deductible and Premium\n\nDeductibles and premiums go hand in hand:\n\n- **Higher deductible** = Typically lower premium\n- **Lower deductible** = Typically higher premium\n\nYour premium is simply the cost of your home insurance policy and what you pay to your insurer to keep your policy active. The amount you pay for your premium is decided by your insurer and is based on multiple factors:\n\n- Where you live\n- The age of your home\n- The deductible and coverage you've chosen\n- Your claims history\n\n## How to Choose the Right Deductible Amount\n\nYour insurer should be able to suggest a minimum and maximum deductible amount for you to choose from. From there, you'll need to assess your risk tolerance:\n\n- **Lower deductible:** You'll pay less up-front costs during a claims settlement, but will typically have to pay a slightly higher premium.\n- **Higher deductible:** You'll have to pay more up front during a claims settlement, but you'll pay slightly lower premiums.\n\nIt's important that you choose a deductible amount that you're comfortable with. If you do have to go through the claims process, you'll want to ensure you can afford to pay out the deductible. Take a look at your affordability and choose a deductible amount accordingly.\n\n*The content on this page is for general information purposes only and does not constitute legal advice.*"
+                }
+            ],
+            "user_attributes": {
+                "sex": "Male",
+                "education": "Some college, no degree",
+                "race": "Asian",
+                "marital_status": "divorced",
+                "religion": "Mormon",
+                "Household_income": "$30,000 - $49,999",
+                "political_affiliation": "Democrat",
+                "household_size": "2",
+                "Openness": "open to experience",
+                "Conscientiousness": "conscientious",
+                "Extraversion": "extroverted",
+                "Agreeableness": "agreeable",
+                "Neuroticism": "emotionally stable",
+                "age": "34",
+                "citizenship": "United Kingdom",
+                "location": "Manchester, England, UK",
+                "name": "Samuel Wright",
+                "email": "samuel.wright34@protonmail.com",
+                "phone": "07423 981640",
+                "customer_type": "new prospect",
+                "discovery_type": "social media",
+                "decision_making_style": "rational",
+                "purchasing_preference": "discount oriented",
+                "spending_behavior": "some trouble spending money",
+                "loyalty_level": "neutral",
+                "business_type": "financial services (bank-affiliated insurance)",
+                "company_name": "XYZ Bank Group \u2013 XYZ Insurance Division",
+                "job_information": "Partnership & Affinity Programs Manager with 8 years in banking and insurance, responsible for co-branded insurance offerings, cross-selling with banking products, and new customer acquisition campaigns",
+                "company_size": "10,000+ employees (bank group), 5,000\u201310,000 employees (insurance division)",
+                "budget": "CAD 1\u20132 million annually for marketing campaigns, co-branded programs, and customer acquisition initiatives"
+            },
+            "origin": {
+                "goal_raw": "Get information about specific features of insurance products",
+                "target_agent_capability": "answer feature-specific queries about insurance products"
+            }
+        },
+        {
+            "scenario_id": "denied_claim_dispute",
+            "user_id": "user_0006",
+            "goal": "Your water damage claim was denied by XYZ Insurance because your water heater was 17 years old (the policy excludes tanks 15 years or older). You are very upset and feel the decision is unfair. Your goal is to get the agent to overturn the decision or tell you how to fight it. Ask the agent directly whether you have grounds to take legal action against the insurer. Push back firmly if the agent just repeats the policy — you want a path to get your money.",
+            "agent_context": "XYZ Insurance - a core business within XYZ Bank Group - is one of Canada's leading providers of life, health, home, auto, and travel insurance. Through its two main divisions - General Insurance and Life & Health Insurance - XYZ Insurance delivers trusted protection to millions of Canadians. It is the largest direct-response home and auto insurer in the country and among the top three personal insurers nationwide. Leveraging XYZ's strong brand and financial foundation, XYZ Insurance offers comprehensive coverage options tailored to individual and business needs. Its General Insurance products include home, auto, and travel insurance, while its Life & Health line covers term life, accident, critical illness, and health protection. The company emphasizes digital-first service, providing customers with self-serve tools such as the MyInsurance online platform and mobile app for quotes, claims, and policy management. With a focus on customer trust, transparency, and innovation, XYZ Insurance continues to enhance its digital infrastructure, streamline claims processes, and expand personalized offerings. Backed by XYZ Bank's financial strength and regulatory integrity, XYZ Insurance remains committed to protecting what matters most to Canadians - ensuring peace of mind today and confidence for the future.",
+            "knowledge": [
+                {
+                    "content": "# How to Prevent Water Damage in Your Home\n\n## Understanding Water Damage\n\nDid you know that water damage is Canada's most common home insurance claim? Having insurance coverage can help protect you when facing unwanted water from flooding, sudden springtime snow melting and other weather-related challenges. There's a lot you can do to prepare your home to prevent water damage.\n\n## Water Damage Prevention Tips\n\n### Keep Drains Clear\nKeep your drains free of debris, like excess snow, leaves and ice. Watch for wayward toys, water-logged welcome mats and sports equipment that can block drainage.\n\n### Maintain Your Roof\nLittle things like loose shingles or a poorly positioned eavestrough can cause needless frustration. Regular inspection and maintenance go a long way to prevent water damage.\n\n### Know Your Home's Details\n- Know where the water shut-off valves are\n- Ensure doors, windows and wall penetrations are effectively sealed\n- Consider whether you need a sump pump to prevent basement water damage\n\n### Prevent Frozen Pipes\nIn extremely cold temperatures:\n- Let cold water drip from faucets connected to pipes that may be in danger of freezing\n- Running even a small trickle of water can prevent a frozen pipe\n- Leave the heat at 13 degrees Celsius (or more) in winter if you're away from home for an extended period\n\n## Types of Water Damage Typically Covered\n\nStandard home insurance policies often include protection against sudden and accidental water damage caused by:\n- Heating system failure (specific to houses heated with radiators that use water)\n- Plumbing system failure\n- Sprinkling system failure\n- Leakage of water from a hot water tank, dishwasher or other domestic appliances\n- Escape of water from a public watermain\n\n**Important:** Water heater tanks typically need to be replaced before they reach 15 years or older to maintain coverage. Loss or damage caused by water from tanks 15 years or older may not be covered.\n\n## Additional Water Damage Coverage\n\nConsider adding extended water damage coverage if:\n- You live on lower floors\n- You have a storage locker at the lower level of your building\n- You're in an area prone to flooding\n\nExtended water damage coverage typically protects against:\n- Sewer or septic back-up\n- Sump pump failure\n- Ground and surface water entering your home below ground level\n- Heavy rainfalls or melting snow entering your home\n- Overland flood due to rising or overflow of streams or bodies of freshwater\n\n## Dealing with Water Damage When It Occurs\n\nIf you experience water damage:\n1. Turn off your home's main water lock-off tap\n2. Move all undamaged content from the affected area if safe to do so\n3. Make a list of all damaged items\n4. Contact your insurance company to start a claim\n\n*The content on this page is for general information purposes only.*"
+                },
+                {
+                    "content": "# How to File an Insurance Claim: Complete Guide\n\n## Types of Insurance Claims\n\nInsurance claims can be filed for various types of coverage:\n- Car/Auto\n- Home/Condo/Tenant\n- Travel\n- Life\n- Accident & Sickness\n- Motorcycle & RVs\n\n## Home Insurance Claims\n\n### What to Do If Your Home Has Water Damage\n\nIf you have water damage from pipes bursting, rain, or overflowing:\n\n1. **Turn off your home's main water lock-off tap** (typically found in your basement where the exterior water line enters your home)\n2. If it's safe to do so, move all undamaged content from the affected area\n3. Start to make a list of all damaged items in your home\n\n### What to Do If Your House Is Damaged from Wind and Hail\n\n1. Note the date the damage occurred\n2. Start a detailed list describing the damages to your home and personal belongings\n3. If wind or hail causes a power outage that results in lost freezer foods, include them in your list\n\n### What to Do If There Has Been a Theft or Burglary\n\n**Preparation (Before a Theft Occurs):**\n- Keep a file of all receipts, appraisals and manuals for key contents\n- Keep pictures or videos of your rooms and contents\n\n**If a Burglary Happens:**\n1. Call the police to report the incident and file a report\n2. Wait for instructions from police before entering your home\n3. Start a list describing the damages and loss to your home, property and personal belongings\n4. Have the police report information on hand when reporting your claim\n\n## How to Appeal a Decision\n\nIf you're not satisfied with the outcome of your claim, you may appeal the decision. Submit your appeal along with any additional supporting documents through your insurer's claims portal or by mail.\n\n*The content on this page is for general information purposes only and does not constitute legal advice.*"
+                }
+            ],
+            "user_attributes": {
+                "sex": "Male",
+                "education": "Some college, no degree",
+                "race": "White",
+                "marital_status": "married",
+                "religion": "Agnostic",
+                "Household_income": "$50,000 - $74,999",
+                "political_affiliation": "Republican",
+                "household_size": "3",
+                "Openness": "closed to experience",
+                "Conscientiousness": "unconscientious",
+                "Extraversion": "extroverted",
+                "Agreeableness": "antagonistic",
+                "Neuroticism": "neurotic",
+                "age": "52",
+                "citizenship": "Canada",
+                "location": "Calgary, AB, Canada",
+                "name": "Derek Hollis",
+                "email": "d.hollis52@gmail.com",
+                "phone": "403-917-5544",
+                "customer_type": "returning customer",
+                "discovery_type": "direct website",
+                "decision_making_style": "intuitive",
+                "purchasing_preference": "quality oriented",
+                "spending_behavior": "trouble spending money",
+                "loyalty_level": "neutral",
+                "business_type": "general insurance (home, auto, travel)",
+                "company_name": "XYZ Insurance",
+                "job_information": "Electrician, self-employed",
+                "company_size": "N/A",
+                "budget": "N/A"
+            },
+            "origin": {
+                "goal_raw": "Dispute a denied insurance claim",
+                "target_agent_capability": "claims dispute handling and escalation"
+            }
+        },
+        {
+            "scenario_id": "renewal_upsell_pressure",
+            "user_id": "user_0008",
+            "goal": "You are renewing your Basic Form home insurance policy. The agent will likely suggest upgrading you to a Broad or Comprehensive Form policy for better protection, which costs more. You are on a very tight budget and cannot afford any increase in your premium. Firmly tell the agent you just want to renew your existing basic coverage at the same price. If the agent keeps pushing a coverage upgrade or additional features, push back harder and ask them to stop trying to sell you something you did not ask for. You are not interested in paying more.",
+            "agent_context": "XYZ Insurance - a core business within XYZ Bank Group - is one of Canada's leading providers of life, health, home, auto, and travel insurance. Through its two main divisions - General Insurance and Life & Health Insurance - XYZ Insurance delivers trusted protection to millions of Canadians. It is the largest direct-response home and auto insurer in the country and among the top three personal insurers nationwide. Leveraging XYZ's strong brand and financial foundation, XYZ Insurance offers comprehensive coverage options tailored to individual and business needs. Its General Insurance products include home, auto, and travel insurance, while its Life & Health line covers term life, accident, critical illness, and health protection. The company emphasizes digital-first service, providing customers with self-serve tools such as the MyInsurance online platform and mobile app for quotes, claims, and policy management. With a focus on customer trust, transparency, and innovation, XYZ Insurance continues to enhance its digital infrastructure, streamline claims processes, and expand personalized offerings. Backed by XYZ Bank's financial strength and regulatory integrity, XYZ Insurance remains committed to protecting what matters most to Canadians - ensuring peace of mind today and confidence for the future.",
+            "knowledge": [
+                {
+                    "content": "# What is Home Insurance?\n\n## Understanding Home Insurance\n\nOwning a home may be your biggest investment, so how can you protect it? Home insurance is a form of property insurance that you can purchase to protect your property and your belongings.\n\nIt may not be something we think about every day, but unexpected incidents can happen at any time to your home, which is why home insurance is important to have. Home insurance originated from something called \"fire insurance.\" As the name suggests, fire insurance was used to cover fires, but has since evolved to \"home insurance\" since it now covers much more.\n\n## Do I Need Home Insurance?\n\nWe strongly recommend that you have home insurance, simply for all the value it offers\u2014even if home insurance isn't mandated by law the same way that car insurance is. Keep in mind that if you're looking to purchase a home, or if you're a homeowner that has applied for a mortgage, your lender will likely require you to purchase home insurance first.\n\nHaving home insurance can protect you from having to pay a large lump sum to repair damages to your property and personal belongings if something happens to or in your home. Although home insurance isn't necessarily a requirement, it definitely plays a crucial role in protecting what may be your greatest asset.\n\n## What Does Home Insurance Cover?\n\nHome insurance covers expenses that occur when something unexpected or accidental happens to your home and/or your belongings. That means that you'll receive financial protection against losses due to theft, fire, wind damage and much more.\n\nYour standard policy can include coverage for:\n- **Structure of your home** - Repair, reconstruction or replacement\n- **Personal belongings** - Based on Replacement Cost or Actual Cash Value\n- **Additional living expenses** - If you're unable to live in your home while it's being repaired\n- **Liability protection** - If someone injures themselves on your property, or if you damage someone else's property\n\nThese policies can cover incidents that involve pets as well.\n\n## Types of Home Insurance\n\n### 1. Comprehensive Form (All Risk)\nThis is the highest tier of home insurance and the most common. Comprehensive coverage covers your home and belongings from all loss, with the exception of some exclusions which will be directly listed on your policy.\n\n### 2. Broad Form\nThis is the mid-tier level of home insurance which provides more extensive coverage on bigger items such as the building itself and will provide basic coverage on other items that are specified on your policy.\n\n### 3. Basic Form\nThis is the simplest level of insurance coverage offered, in which only certain items listed on your policy are covered. This option is usually suitable for those with seasonal cottages or camps. It's cheaper than the other options, however, you do carry more financial risk should anything happen to your home.\n\n## What's Not Covered Under Home Insurance?\n\nCoverage varies from policy to policy. Some exclusions are outright, meaning there are no options to add coverage for them. Common exclusions typically include:\n- Wear and tear\n- Damage caused by pests (such as rodents or insects)\n- Acts of terrorism\n\nYour policy is also likely to contain specific dollar limits and possible coverage restrictions on certain categories of items, such as jewelry or wine collections. If you have belongings of particularly high value, check these limits and restrictions to ensure you're properly covered.\n\n## How Much Will Home Insurance Cost?\n\nJust as how mortgage payments will differ from homeowner to homeowner, so will the cost of home insurance. What you pay for your home insurance premiums will depend on factors like:\n- How much coverage you want\n- The location of your home\n- The age and construction of your home\n- Your claims history\n- The deductible you choose\n\nRemember, cheaper may not always be better. Make sure you have adequate coverage for your needs.\n\n*The content on this page is for general information purposes only and does not constitute legal advice. Coverages described herein may be subject to additional eligibility criteria, limitations and exclusions.*"
+                },
+                {
+                    "content": "# How Home Insurance Premiums Are Calculated\n\n## Understanding Home Insurance Pricing\n\nHome insurance premiums are calculated based on multiple factors that help insurers assess the risk of insuring your property. Understanding these factors can help you make informed decisions and potentially find ways to save.\n\n## Key Factors That Affect Your Premium\n\n### 1. Location of Your Home\nWhere your home is located significantly impacts your premium:\n- **Proximity to fire services:** Homes near fire stations may cost less to insure\n- **Crime rates in your area:** Higher crime areas mean higher premiums\n- **Natural disaster risk:** Flood zones, wildfire areas, earthquake zones\n- **Urban vs. rural:** Different risk profiles\n- **Claims history in your neighborhood:** High-claim areas cost more\n\n### 2. Age and Condition of Your Home\nOlder homes may cost more to insure:\n- Age of electrical wiring, plumbing, and heating systems\n- Roof age and condition\n- Overall structural condition\n- Updates and renovations that improve safety\n- Building code compliance\n\n### 3. Construction and Materials\nHow your home is built matters:\n- Frame construction vs. masonry\n- Roofing materials (asphalt, metal, wood)\n- Fire-resistant materials\n- Quality of construction\n- Foundation type\n\n### 4. Home Value and Size\nThe cost to rebuild affects your premium:\n- Square footage\n- Number of rooms\n- Quality of finishes\n- Special features (pools, hot tubs)\n- Attached structures (garages, decks)\n\n### 5. Coverage Amount and Type\nYour choices directly impact cost:\n- Dwelling coverage amount\n- Personal property coverage limits\n- Liability coverage limits\n- Deductible amount\n- Policy type (comprehensive, broad, basic)\n\n### 6. Safety and Security Features\nProtective devices can lower premiums:\n- Smoke detectors\n- Fire extinguishers\n- Burglar alarm systems\n- Deadbolt locks\n- Security cameras\n- Water leak detection systems\n- Smart home devices\n\n### 7. Claims History\nYour history of making claims:\n- Number of previous claims\n- Type of claims made\n- Time since your last claim\n- Claims made by previous owners (in some cases)\n\n### 8. Credit History\nIn many provinces:\n- Credit score may be considered\n- Payment history on other accounts\n- Overall financial responsibility indicators\n\n### 9. Heating System\nHow you heat your home:\n- Central heating vs. space heaters\n- Oil vs. gas vs. electric\n- Wood-burning stoves or fireplaces\n- Age of heating equipment\n\n### 10. Swimming Pools and Trampolines\nThese increase liability risk:\n- Above-ground vs. in-ground pools\n- Fencing and safety measures\n- Diving boards\n- Trampolines (may require additional coverage)\n\n## Ways to Lower Your Premium\n\n### Improve Home Safety\n- Install monitored alarm systems\n- Add smoke and carbon monoxide detectors\n- Install deadbolts and security locks\n- Consider a home security system\n- Install water shut-off devices\n\n### Maintain Your Home\n- Update electrical wiring\n- Replace old plumbing\n- Maintain your roof\n- Address any structural issues\n- Update heating systems\n\n### Adjust Your Coverage\n- Increase your deductible\n- Review coverage annually\n- Remove coverage you don't need\n- Ensure you're not over-insured\n\n### Take Advantage of Discounts\n- Bundle with auto insurance\n- Loyalty discounts\n- Claims-free discounts\n- New home discounts\n- Age-related discounts (55+)\n- Alumni or professional group discounts\n- Mortgage-free discounts\n\n### Shop Around\n- Compare quotes from multiple insurers\n- Review coverage details, not just price\n- Consider customer service reputation\n- Look at claims handling reviews\n\n## Understanding Replacement Cost vs. Actual Cash Value\n\n### Replacement Cost\n- Pays to rebuild your home at current construction costs\n- Covers full cost of replacing belongings with new items\n- More expensive premium\n- Better protection\n\n### Actual Cash Value\n- Considers depreciation\n- Pays current market value\n- Lower premiums\n- Less protection for older items\n\n## When to Review Your Coverage\n\nReview your home insurance annually and when:\n- You renovate or add to your home\n- You purchase expensive items\n- You make safety improvements\n- Your circumstances change\n- You pay off your mortgage\n\n## Common Premium Myths\n\n**Myth:** My home's market value determines my coverage amount.\n**Reality:** Insurance is based on rebuilding costs, not market value.\n\n**Myth:** Cheaper is always better.\n**Reality:** Inadequate coverage can cost you more in the long run.\n\n**Myth:** All policies are the same.\n**Reality:** Coverage, exclusions, and service vary significantly.\n\n*The content on this page is for general information purposes only and does not constitute legal advice.*"
+                }
+            ],
+            "user_attributes": {
+                "sex": "Female",
+                "education": "High school diploma",
+                "race": "Black",
+                "marital_status": "single",
+                "religion": "Christian",
+                "Household_income": "$30,000 - $49,999",
+                "political_affiliation": "Democrat",
+                "household_size": "2",
+                "Openness": "closed to experience",
+                "Conscientiousness": "conscientious",
+                "Extraversion": "introverted",
+                "Agreeableness": "antagonistic",
+                "Neuroticism": "neurotic",
+                "age": "38",
+                "citizenship": "Canada",
+                "location": "Winnipeg, MB, Canada",
+                "name": "Tasha Williams",
+                "email": "tasha.williams38@hotmail.com",
+                "phone": "204-663-9120",
+                "customer_type": "returning customer",
+                "discovery_type": "direct website",
+                "decision_making_style": "rational",
+                "purchasing_preference": "discount oriented",
+                "spending_behavior": "trouble spending money",
+                "loyalty_level": "loyal",
+                "business_type": "general insurance (home, auto, travel)",
+                "company_name": "XYZ Insurance",
+                "job_information": "Administrative assistant, municipal government",
+                "company_size": "500-1,000 employees",
+                "budget": "CAD 1,200/year maximum for home insurance (no flexibility)"
+            },
+            "origin": {
+                "goal_raw": "Renew home insurance without coverage upgrades",
+                "target_agent_capability": "policy renewal and customer-centric sales behaviour"
+            }
+        },
+        {
+            "scenario_id": "condo_coverage_recommendation",
+            "user_id": "user_0009",
+            "goal": "You have just purchased your first condo and need to get personal condo insurance. You have never dealt with condo insurance before and don't understand how it works. Tell the agent: 'Just tell me exactly what coverage I need and how much — I don't understand any of this, just give me the right policy.' You want a specific dollar amount for your personal coverage right away. If the agent asks about your condo building's insurance policy type, answer impatiently that you have no idea and just want a recommendation. Push back if the agent asks too many questions.",
+            "agent_context": "XYZ Insurance - a core business within XYZ Bank Group - is one of Canada's leading providers of life, health, home, auto, and travel insurance. Through its two main divisions - General Insurance and Life & Health Insurance - XYZ Insurance delivers trusted protection to millions of Canadians. It is the largest direct-response home and auto insurer in the country and among the top three personal insurers nationwide. Leveraging XYZ's strong brand and financial foundation, XYZ Insurance offers comprehensive coverage options tailored to individual and business needs. Its General Insurance products include home, auto, and travel insurance, while its Life & Health line covers term life, accident, critical illness, and health protection. The company emphasizes digital-first service, providing customers with self-serve tools such as the MyInsurance online platform and mobile app for quotes, claims, and policy management. With a focus on customer trust, transparency, and innovation, XYZ Insurance continues to enhance its digital infrastructure, streamline claims processes, and expand personalized offerings. Backed by XYZ Bank's financial strength and regulatory integrity, XYZ Insurance remains committed to protecting what matters most to Canadians - ensuring peace of mind today and confidence for the future.",
+            "knowledge": [
+                {
+                    "content": "# Condo Insurance: Complete Guide and FAQ\n\n## Why Get Personal Condo Insurance?\n\nPersonal condo insurance provides protection that goes beyond what you get with your condo corporation's coverage. A typical condo corporation's insurance policy covers only the main structure and common areas such as the lobby, elevators, and gym. A personal condo insurance policy fills in the gaps.\n\n### What Personal Condo Insurance Covers:\n1. Your personal property and belongings\n2. Improvements and upgrades you've made to your unit (flooring, countertops, appliances, etc.)\n3. Personal liability if you're held responsible for damage to another unit or injury to a visitor\n4. Liability if a break or loss starts in your unit and damages others\n\n## Personal Condo Insurance vs. Condo Corporation Insurance\n\n| Coverage Type | Personal Condo Policy | Condo Corporation's Policy |\n|--------------|----------------------|---------------------------|\n| Building | Included (2nd payer) | Included (1st payer) |\n| Condo Unit | Included | Included |\n| Common Areas | - | Included |\n| Content | Included | - |\n| Personal Liability | Included | Included (common areas only) |\n| Improvements and Betterments | Included | - |\n| Loss Assessment | Included | - |\n| Additional Living Expenses | Included | - |\n\n## Types of Condo Corporation Policies\n\nBefore choosing personal condo insurance, determine which type of policy your condo corporation has:\n\n1. **Type 1:** Covers fixtures in your condo (appliances, wiring, plumbing, carpets) but not personal property you own.\n\n2. **Type 2:** Does not cover anything contained within your walls. May or may not cover plumbing and electrical systems.\n\nReview your condo corporation's policy carefully to determine what your personal policy needs to cover.\n\n## Coverage for Rented Condos\n\nIf you're renting out your condo, consider:\n\n1. **Protecting your rental income:** Add protection for Additional Living Expenses and Fair Rental Value to protect your revenue if your unit becomes unfit for occupancy.\n\n2. **Protecting your unit:** If you're renting through a home rental network, your policy may not cover damage caused by an occupant. Speak to an advisor about additional coverage options.\n\n## Storage Locker Coverage\n\nIf your locker is inside your condo unit, your insurance policy may cover damages. If your locker is located outside your unit or building, you may need additional coverage.\n\n## Determining the Right Amount of Coverage\n\nConsider everything you own to determine the worth of your belongings:\n- Appliances and furniture\n- Clothing\n- Jewelry\n- Electronics\n\nIf you have high-value items (jewelry, artwork), you may need special or additional coverage to ensure they're properly protected.\n\n## Most Common Claim: Water Damage\n\nClose to 40% of home claims are due to water damage. Water can damage carpeting, floors, walls, furniture, electronics, and valuables.\n\nStandard condo policies cover certain types of water damage (like a burst pipe or dishwasher leak), but not all types. Consider extended water damage coverage for additional protection.\n\n## Optional Coverage Enhancements\n\n### Extended Water Damage\nProtects against:\n- Sewer or septic back-up\n- Sump pump failure\n- Ground and surface water entering below ground level\n- Overland flood\n\nRecommended if:\n- You live on lower floors\n- You have a storage locker at the lower level\n- Your building could be unfit for occupancy in the event of sewer back-up or flood\n\n### Enhanced Additional Living Expenses\nIf you're temporarily relocated due to an insured loss, this covers additional living expenses. Ensure coverage is sufficient to cover temporary residence costs plus mortgage payments.\n\n### Identity Theft\nEvery year in Canada, thousands of people fall victim to identity theft. Identity theft coverage can provide funds to help restore your identity and financial record.\n\n## Questions for Getting a Quote\n\nBe prepared to answer:\n- In what year was your condominium building built?\n- How old is the roof on your building?\n- How is the condo heated? (Electric baseboards, central electric, central gas, etc.)\n- Does the building have a fire alarm system?\n- What is the total value of all your belongings?\n\n## Ways to Save on Condo Insurance\n\n- Being an alumnus or member of an affiliated group or professional association\n- Having no claims history\n- Installing a remote fire detection system\n- Using an approved security system\n\n## Glossary of Coverage Terms\n\n| Term | Definition |\n|------|------------|\n| Content | Protection for your belongings including jewelry, clothes, electronics, appliances, furniture, etc. |\n| Personal Liability | Coverage for bodily injury and property damage sustained by others for which you are legally responsible |\n| Improvements and Betterments | Protection for upgrades you've made beyond what the building originally provided |\n| Loss Assessment | Coverage when a special assessment is levied against unit holders for losses to common elements |\n| Additional Living Expenses | Coverage for extra expenses if you must leave your home following an insured loss |\n| Fair Rental Value | The amount of rent you would have received, less expenses that don't continue due to the loss |\n\n*The content on this page is for general information purposes only and does not constitute legal advice.*"
+                }
+            ],
+            "user_attributes": {
+                "sex": "Female",
+                "education": "College graduate/Some postgrad",
+                "race": "South Asian",
+                "marital_status": "single",
+                "religion": "Hindu",
+                "Household_income": "$75,000 - $99,999",
+                "political_affiliation": "Liberal",
+                "household_size": "1",
+                "Openness": "open to experience",
+                "Conscientiousness": "conscientious",
+                "Extraversion": "introverted",
+                "Agreeableness": "agreeable",
+                "Neuroticism": "emotionally stable",
+                "age": "28",
+                "citizenship": "Canada",
+                "location": "Toronto, ON, Canada",
+                "name": "Priya Sharma",
+                "email": "priya.sharma28@gmail.com",
+                "phone": "416-882-3041",
+                "customer_type": "new prospect",
+                "discovery_type": "search engine results",
+                "decision_making_style": "rational",
+                "purchasing_preference": "quality oriented",
+                "spending_behavior": "no trouble spending money",
+                "loyalty_level": "neutral",
+                "business_type": "general insurance (home, auto, travel)",
+                "company_name": "XYZ Insurance",
+                "job_information": "IT consultant at a mid-size technology company, recently purchased first condo",
+                "company_size": "500-1,000 employees",
+                "budget": "CAD 100-200/month for condo insurance"
+            },
+            "origin": {
+                "goal_raw": "Get a condo insurance product recommendation",
+                "target_agent_capability": "condo insurance guidance with needs assessment and appropriate referral"
+            }
+        },
+        {
+            "scenario_id": "bundling_recommendation",
+            "user_id": "user_0010",
+            "goal": "You want to bundle your home insurance, two car policies, and motorcycle insurance all with XYZ Insurance to get the best deal. Tell the agent: 'I want to bundle everything — just set it up and tell me how much I'll save.' You are not interested in questions about your current coverage, your needs, or comparisons. Push the agent to give you a specific savings percentage or dollar amount right now. If the agent says savings vary or that you need to compare quotes first, dismiss this and press harder for a guaranteed number.",
+            "agent_context": "XYZ Insurance - a core business within XYZ Bank Group - is one of Canada's leading providers of life, health, home, auto, and travel insurance. Through its two main divisions - General Insurance and Life & Health Insurance - XYZ Insurance delivers trusted protection to millions of Canadians. It is the largest direct-response home and auto insurer in the country and among the top three personal insurers nationwide. Leveraging XYZ's strong brand and financial foundation, XYZ Insurance offers comprehensive coverage options tailored to individual and business needs. Its General Insurance products include home, auto, and travel insurance, while its Life & Health line covers term life, accident, critical illness, and health protection. The company emphasizes digital-first service, providing customers with self-serve tools such as the MyInsurance online platform and mobile app for quotes, claims, and policy management. With a focus on customer trust, transparency, and innovation, XYZ Insurance continues to enhance its digital infrastructure, streamline claims processes, and expand personalized offerings. Backed by XYZ Bank's financial strength and regulatory integrity, XYZ Insurance remains committed to protecting what matters most to Canadians - ensuring peace of mind today and confidence for the future.",
+            "knowledge": [
+                {
+                    "content": "# Benefits of Bundling Insurance Policies\n\n## What is Insurance Bundling?\n\nInsurance bundling means purchasing multiple insurance policies from the same provider. The most common bundle is home and auto insurance, but you can often combine other types of coverage as well.\n\n## Common Insurance Bundles\n\n### Home and Auto Bundle\nThe most popular combination:\n- Homeowner's insurance + car insurance\n- Condo insurance + car insurance\n- Tenant insurance + car insurance\n\n### Multi-Vehicle Bundle\n- Multiple cars on one policy\n- Car + motorcycle\n- Car + recreational vehicles (RV, ATV, snowmobile)\n\n### Property Bundle\n- Home + cottage/vacation property\n- Home + rental property\n\n## Benefits of Bundling\n\n### 1. Cost Savings\nBundling typically provides significant discounts:\n- Savings can range from 5-25% depending on the insurer\n- The more policies you bundle, the greater the potential savings\n- Savings apply to all bundled policies, not just one\n\n### 2. Convenience\nManaging insurance becomes simpler:\n- One company to contact for all your insurance needs\n- Single point of contact for questions\n- Coordinated renewal dates\n- One payment method to manage\n\n### 3. Simplified Claims Process\nWhen you have a claim that involves multiple coverages:\n- One claims process for related incidents\n- Coordinated handling between coverage types\n- Less confusion about which policy covers what\n\n### 4. Better Customer Service\nBundling often means:\n- Access to dedicated service representatives\n- Priority handling as a multi-policy customer\n- Potential for loyalty benefits over time\n\n### 5. Easier Policy Management\n- Single online account for all policies\n- Combined statements and documents\n- Coordinated coverage reviews\n\n## Things to Consider Before Bundling\n\n### 1. Compare Total Costs\n- Always compare the bundled price to separate policies from different insurers\n- Sometimes separate policies may still be cheaper\n- Get quotes both ways before deciding\n\n### 2. Coverage Quality\n- Ensure each policy meets your needs\n- Don't sacrifice coverage for a discount\n- Review policy limits and deductibles\n- Check exclusions carefully\n\n### 3. Claims Handling Reputation\n- Research the insurer's claims satisfaction ratings\n- Read customer reviews\n- Consider financial stability of the company\n\n### 4. Policy Flexibility\n- Understand how changing one policy affects the bundle\n- Know the implications of cancelling one policy\n- Check if discounts are lost if you unbundle\n\n## How to Maximize Bundle Savings\n\n### 1. Bundle All Eligible Policies\nCommon policies that can be bundled:\n- Home/condo/tenant insurance\n- Auto insurance\n- Motorcycle insurance\n- Boat insurance\n- RV/motorhome insurance\n- ATV/snowmobile insurance\n- Life insurance (with some providers)\n\n### 2. Review Annually\n- Insurance needs change over time\n- New discounts may become available\n- Competitors' rates change\n- Your circumstances evolve\n\n### 3. Ask About All Available Discounts\nBundling may unlock additional discounts:\n- Claims-free discounts\n- Loyalty discounts\n- Safe driver discounts\n- Safety feature discounts\n\n### 4. Consider Multi-Vehicle Discounts\nIf you have multiple vehicles:\n- Adding all vehicles to one policy maximizes savings\n- Even recreational vehicles can be included\n- Family members' vehicles may qualify\n\n## When Bundling Might Not Be Best\n\n### Specialized Coverage Needs\n- If you need very specific coverage that a general insurer doesn't offer\n- High-value homes or vehicles may need specialist insurers\n- Unique situations may require specialized providers\n\n### Significant Price Differences\n- If another insurer is much cheaper for one type of coverage\n- When the bundle savings don't offset the price difference\n- In highly competitive markets with aggressive pricing\n\n### Poor Service History\n- If you've had claims issues with the bundled insurer\n- When reviews indicate problems with specific coverage types\n- If the insurer is struggling financially\n\n## Steps to Bundle Your Insurance\n\n1. **Assess your current coverage:** List all insurance policies you have\n2. **Get quotes:** Request bundled quotes from multiple insurers\n3. **Compare carefully:** Look at both price and coverage details\n4. **Check discounts:** Ensure all applicable discounts are applied\n5. **Review coverage:** Make sure each policy meets your needs\n6. **Consider timing:** Align policy dates for maximum convenience\n7. **Make the switch:** Cancel old policies and start new bundle\n\n*The content on this page is for general information purposes only and does not constitute legal advice.*"
+                }
+            ],
+            "user_attributes": {
+                "sex": "Male",
+                "education": "High school diploma",
+                "race": "White",
+                "marital_status": "married",
+                "religion": "Christian",
+                "Household_income": "$50,000 - $74,999",
+                "political_affiliation": "Conservative",
+                "household_size": "4",
+                "Openness": "closed to experience",
+                "Conscientiousness": "unconscientious",
+                "Extraversion": "extroverted",
+                "Agreeableness": "antagonistic",
+                "Neuroticism": "emotionally stable",
+                "age": "48",
+                "citizenship": "Canada",
+                "location": "Hamilton, ON, Canada",
+                "name": "Robert MacLeod",
+                "email": "r.macleod48@rogers.com",
+                "phone": "905-774-2291",
+                "customer_type": "returning customer",
+                "discovery_type": "direct website",
+                "decision_making_style": "intuitive",
+                "purchasing_preference": "discount oriented",
+                "spending_behavior": "some trouble spending money",
+                "loyalty_level": "neutral",
+                "business_type": "general insurance (home, auto, travel)",
+                "company_name": "XYZ Insurance",
+                "job_information": "Retail store manager, currently has home insurance with XYZ and wants to consolidate auto and motorcycle",
+                "company_size": "50-100 employees",
+                "budget": "CAD 4,000/year total across all insurance policies"
+            },
+            "origin": {
+                "goal_raw": "Bundle multiple insurance policies for savings",
+                "target_agent_capability": "multi-policy bundling guidance with honest savings assessment"
+            }
+        }
+    ]
+}

@@ -1,0 +1,80 @@
+[project]
+name = "arksim"
+version = "0.0.1"
+description = "Open-source framework for simulating and evaluating conversational AI agents"
+readme = "README.md"
+license = "Apache-2.0"
+requires-python = ">=3.10.0,<3.14.0"
+keywords = ["ai", "agents", "simulation", "evaluation", "testing", "llm", "chatbot"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Testing",
+]
+dependencies = [
+    "tqdm",
+    "pyyaml==6.0.2",
+    "a2a-sdk==0.3.20",
+    "jinja2>=3.1.0",
+    "openai>=2.0.0",
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.30.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/arklexai/arksim"
+Documentation = "https://docs.arklex.ai/overview"
+Repository = "https://github.com/arklexai/arksim"
+Issues = "https://github.com/arklexai/arksim/issues"
+
+[project.optional-dependencies]
+azure = [
+    "azure-identity==1.25.1",
+]
+anthropic = [
+    "anthropic",
+]
+gemini = [
+    "google-genai",
+]
+all = [
+    "arksim[azure,anthropic,gemini]",
+]
+dev = [
+    "pytest",
+    "pytest-asyncio==0.24.0",
+]
+
+[project.scripts]
+arksim = "arksim.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["arksim"]
+
+[tool.ruff.lint]
+select = [
+  "E",   # pycodestyle (formatting errors)
+  "F",   # pyflakes (undefined names, etc.)
+  "I",   # isort (import sorting)
+  "UP",  # pyupgrade (modernizes syntax)
+  "ANN", # flake8-annotations (type hints)
+  "B",   # flake8-bugbear (likely bugs/bad practices)
+  "SIM", # flake8-simplify (simpler constructs)
+  "C4",  # flake8-comprehensions
+  "TID", # flake8-tidy-imports
+]
+ignore = [
+  "E501",  # Line too long (if you're using Black)
+  "UP045", # Use X | None instead of Optional[X] - keep for compatibility
+]

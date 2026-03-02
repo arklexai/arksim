@@ -1,0 +1,20 @@
+{
+    "agent_type": "chat_completions",
+    "agent_name": "bank-insurance",
+    "api_config": {
+        "endpoint": "http://localhost:8080/chat/completions",
+        "headers": {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer ${AGENT_API_KEY}"
+        },
+        "body": {
+            "messages": [
+                {
+                    "role": "system",
+                    "content": "You are being invoked by arklex user simulator chat_id:{chat_id}"
+                }
+            ],
+            "enable_metadata": false
+        }
+    }
+}
