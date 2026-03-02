@@ -40,7 +40,7 @@ from ..agent_core import Agent  # noqa: TID252
 # Note: Adjust the payload structure and response parsing to match your agent's API.
 # =============================================================================
 
-MY_API_KEY = os.getenv("MY_API_KEY", "1234567890")
+MY_API_KEY = os.getenv("MY_API_KEY", "")
 app = FastAPI(title="Chat Completion Wrapper")
 
 

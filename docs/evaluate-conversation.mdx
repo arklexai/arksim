@@ -70,7 +70,7 @@ Evaluation is configured via a YAML file:
 ```yaml
 # Inputs
 scenario_file_path: ./examples/path/to/scenario.json
-conversation_file_path: ./examples/path/to/conversations.json
+simulation_file_path: ./examples/path/to/conversations.json
 
 # Model
 provider: openai
@@ -101,7 +101,7 @@ generate_html_report: true
   Path to the JSON file defining the scenario to evaluate.
 </ResponseField>
 
-<ResponseField name="conversation_file_path" type="string" required>
+<ResponseField name="simulation_file_path" type="string" required>
   Path to the JSON file containing the simulation output conversations.
 </ResponseField>
 
@@ -159,7 +159,7 @@ generate_html_report: true
         import arksim
         
         evaluation_results = arksim.evaluate(
-            conversation_file_path="./conversations.json",
+            simulation_file_path="./conversations.json",
             output_dir="./evaluation",
             model="gpt-5.1",
             provider="open-ai",

@@ -20,7 +20,6 @@
 
 ---
 
-<!-- TODO: Replace with actual 30-second demo recording -->
 <p align="center">
   <em>Demo video coming soon</em>
 </p>
