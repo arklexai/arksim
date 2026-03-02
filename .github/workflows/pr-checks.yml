@@ -5,6 +5,9 @@ on:
     types: [opened, edited, synchronize, reopened, labeled, unlabeled]
     branches: [main]
 
+permissions:
+  pull-requests: read
+
 jobs:
   title:
     name: PR title
