@@ -1,7 +1,6 @@
 """Arksim: open-source agent simulation and evaluation toolkit."""
 
 import importlib
-from typing import Any
 
 __version__ = "0.0.1"
 
@@ -43,7 +42,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
 }
 
 
-def __getattr__(name: str) -> Any:
+def __getattr__(name: str) -> object:
     if name in _LAZY_IMPORTS:
         module_path, attr = _LAZY_IMPORTS[name]
         module = importlib.import_module(module_path, __package__)
