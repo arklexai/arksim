@@ -5,7 +5,7 @@ description: "A walkthrough of running Arksim against a shopping assistant agent
 
 ## Overview
 
-This example walks through running Arksim against a shopping assistant agent built for an e-commerce use case. The agent is designed to help customers navigate product discovery, orders, returns, and general shopping queries.
+This example walks through running Arksim against a shopping assistant agent built for an e-commerce use case. The agent is designed to help customers with product discovery, orders, returns, and general shopping queries.
 
 The example includes two ready-to-run agent setups you can test against out of the box, and a guide for plugging in your own agent once you're familiar with the setup.
 
@@ -14,11 +14,11 @@ The example includes two ready-to-run agent setups you can test against out of t
 ## Example Agents
 
 <CardGroup cols={2}>
-  <Card icon="bolt" title="Example Agent 1: OpenAI API">
-    A lightweight agent that calls the OpenAI API directly. Good for getting started quickly with minimal setup.
+  <Card icon="bolt" title="Option 1: OpenAI API">
+    A lightweight agent that calls the OpenAI API directly. Quick start with minimal setup; default agent_config.json is preconfigured.
   </Card>
-  <Card icon="diagram-project" title="Example Agent 2: LangGraph RAG">
-    RAG-based agent with LangGraph, backed by an insurance knowledge base; supports A2A or Chat Completions.
+  <Card icon="diagram-project" title="Option 2: LangGraph RAG">
+    RAG-based agent with LangGraph, backed by an insurance knowledge base. Supports A2A or Chat Completions; use agent_config.json when running.
   </Card>
 </CardGroup>
 
@@ -26,22 +26,23 @@ The example includes two ready-to-run agent setups you can test against out of t
 
 ## Scenarios
 
-The example ships with a set of pre-built scenarios representing realistic e-commerce customer interactions. Each scenario defines a simulated user with a distinct persona, goal, and background knowledge drawn from product and policy documentation.
+The example ships with pre-built scenarios in `scenarios.json` representing realistic e-commerce customer interactions. Each scenario defines a simulated user with a distinct persona, goal, and background knowledge drawn from product documentation.
 
-Sample goals include:
+The scenario goals are:
 
-- Asking about product availability, specifications, and delivery timelines
-- Checking order status and tracking a shipment
-- Initiating or following up on a return or refund request
-- Comparing products and asking for recommendations
+- Return an item as a returning customer without providing order ID or reason (expecting a new baby next week).
+- Return an item as a returning customer without providing order ID or reason (moving into a new home or apartment next month).
+- Return an item as a returning customer without providing order ID or reason (adopting a pet for the first time next week).
+- Return an item as a returning customer without providing order ID or reason (deep-cleaning before guests arrive in two days).
+- Return an item as a returning customer without providing order ID or reason (sending a child to college or dorm setup next month).
 
-Scenarios are located at `<path/to/e-commerce>/results/scenario/` and can be swapped out or extended to reflect your own use case.
+Scenarios are defined in `scenarios.json` in the example directory and can be edited or extended to reflect your own use case.
 
 ---
 
-## Example Agent 1: OpenAI API
+## Option 1: OpenAI Agent
 
-This agent calls the OpenAI API directly — no server setup required. The default `agent_config.json` uses the OpenAI Chat Completions API; `${OPENAI_API_KEY}` in the config is resolved at runtime.
+This agent calls the OpenAI API directly, with no server setup required.
 
 <Steps>
   <Step title="Set your API key">
@@ -50,60 +51,63 @@ This agent calls the OpenAI API directly — no server setup required. The defau
     ```
   </Step>
   <Step title="Run simulation and evaluation">
+    Run from the `examples/e-commerce` directory:
+
     ```bash
-    arksim simulate <path/to/e-commerce/config_simulate.yaml>
-    arksim evaluate <path/to/e-commerce/config_evaluate.yaml>
+    cd examples/e-commerce
+    arksim simulate-evaluate config.yaml
     ```
   </Step>
 </Steps>
 
 ---
 
-## Example Agent 2: LangGraph RAG Agent
+## Option 2: In-house Agent (LangGraph RAG)
 
-This agent is a RAG-based shopping assistant built with LangGraph, exposable via a Chat Completions–compatible endpoint on port `8080` at `/chat/completions`.
+This agent is a RAG-based shopping assistant built with LangGraph, backed by product data. It is exposed via a Chat Completions-compatible endpoint on port 8080 at `/chat/completions`.
 
 <Steps>
+  <Step title="Select agent config">
+    In the example directory, copy `agent_config_chat_completions.json` to `agent_config.json`. If `agent_config.json` already exists, rename or remove it first.
+
+    The chat completions config uses `${AGENT_API_KEY}` for the local server; set it when running the simulator (e.g. `export AGENT_API_KEY="<YOUR_AGENT_API_KEY>"`).
+  </Step>
   <Step title="Install agent dependencies">
     <Tabs>
       <Tab title="uv">
         ```bash
         uv venv --python 3.11
         source .venv/bin/activate
-        pip install -r <path/to/e-commerce>/chat_completions_server/requirements.txt
+        pip install -r examples/e-commerce/chat_completions_server/requirements.txt
         ```
       </Tab>
       <Tab title="conda">
         ```bash
         conda create -n ecommerce_venv python=3.11 -y
         conda activate ecommerce_venv
-        pip install -r <path/to/e-commerce>/chat_completions_server/requirements.txt
+        pip install -r examples/e-commerce/chat_completions_server/requirements.txt
         ```
       </Tab>
     </Tabs>
+    Or from inside the example directory: `pip install -r chat_completions_server/requirements.txt`
   </Step>
   <Step title="Start the agent server">
+    Run from the repository root (or the directory that contains the `examples` package). The agent listens on port 8080.
+
     ```bash
     export OPENAI_API_KEY=<YOUR_OPENAI_API_KEY>
-    python -m arksim.examples.e_commerce.chat_completions_server.chat_completion_wrapper
+    python -m examples.e-commerce.chat_completions_server.chat_completion_wrapper
     ```
-
-    <Note>
-      If your agent lives inside the Arksim repo, run from the repo root so the `arksim.examples.e_commerce` package resolves correctly.
-    </Note>
   </Step>
   <Step title="Run simulation and evaluation">
-    In a new terminal:
+    In a new terminal, run from the `examples/e-commerce` directory:
 
     ```bash
+    cd examples/e-commerce
     export OPENAI_API_KEY="<YOUR_OPENAI_API_KEY>"
-    arksim simulate <path/to/e-commerce/config_simulate.yaml>
-    arksim evaluate <path/to/e-commerce/config_evaluate.yaml>
+    export AGENT_API_KEY="<YOUR_AGENT_API_KEY>"
+    arksim simulate-evaluate config.yaml
     ```
-
-    <Note>
-      Use `agent_config_chat_completions.json` as your agent config — copy it to `agent_config.json` or point your config at it — so the simulator talks to `http://localhost:8080/chat/completions`.
-    </Note>
   </Step>
 </Steps>
 
@@ -111,9 +115,9 @@ This agent is a RAG-based shopping assistant built with LangGraph, exposable via
 
 ## Running with Your Own Agent
 
-To test your own backend agent against these scenarios, follow the `#TODO` comments in `chat_completion_wrapper.py` to call your backend instead of the sample agent.
+To test your own backend agent against these scenarios, follow the comments in `chat_completions_server/chat_completion_wrapper.py` to call your backend instead of the sample agent.
 
-Once your server is running on a Chat Completions–compatible endpoint, point `agent_config.json` at it and run simulation and evaluation as normal.
+Once your server is running on a Chat Completions-compatible endpoint, point `agent_config.json` at it and run simulation and evaluation from `examples/e-commerce` as above.
 
 <Tip>
   See [Agent Compatibility](/agent_configurations) for a full breakdown of supported protocols and how to configure `agent_config.json`.
@@ -123,73 +127,52 @@ Once your server is running on a Chat Completions–compatible endpoint, point `
 
 ## Configuration
 
-This example uses two separate config files — one for simulation and one for evaluation — since the `input_dir` and `output_dir` differ between steps.
-
-**Simulation**
+The example uses a single config file for both simulation and evaluation. Key settings:
 
 ```yaml
-# Directory containing agent_config.json and knowledge.json
-agent_setup_dir: <path/to/e-commerce>
+# Agent and scenarios (paths relative to config file location)
+agent_config_file_path: ./agent_config.json
+scenario_file_path: ./scenarios.json
 
-# Directory containing pre-built scenario.json
-input_dir: <path/to/e-commerce/results/scenario>
-
-output_dir: <path/to/e-commerce/results/conversation>
-
-num_conversations: 5
+# Simulation
+num_conversations_per_scenario: 1
 max_turns: 5
+output_file_path: ./results/simulation/simulation.json
 
-model: gpt-5.1
-provider: openai
-num_workers: auto
-```
-
-**Evaluation**
-
-```yaml
-# Directory containing agent_config.json and knowledge.json
-agent_setup_dir: <path/to/e-commerce>
-
-# Directory containing conversations.json from simulation
-input_dir: <path/to/e-commerce/results/conversation>
-
-output_dir: <path/to/e-commerce/results/evaluation>
-
-metrics_to_run: [
-  faithfulness,
-  helpfulness,
-  coherence,
-  verbosity,
-  relevance,
-  goal_completion,
-  agent_behavior_failure
-]
-custom_metrics_file_paths: []
+# Evaluation
+output_dir: ./results/evaluation
+custom_metrics_file_paths:
+  - ./custom_metrics.py
+metrics_to_run:
+  - faithfulness
+  - helpfulness
+  - coherence
+  - verbosity
+  - relevance
+  - goal_completion
+  - agent_behavior_failure
 generate_html_report: true
 
+# Shared
 model: gpt-5.1
 provider: openai
 num_workers: auto
 ```
 
+The config also defines a `simulated_user_prompt_template` (Jinja) that uses `scenario.agent_context`, `scenario.goal`, `scenario.knowledge`, and `simulation.profile` to drive the simulated user.
+
 <Note>
-  `agent_setup_dir` contains the `agent_config.json` and `knowledge.json` used to drive both simulation and evaluation. For evaluation, point `input_dir` at the folder containing `conversations.json` produced by the simulation step.
+  The example directory contains `agent_config.json` (default OpenAI), `agent_config_chat_completions.json`, the product knowledge under `chat_completions_server/data/`, and the scenario file `scenarios.json`.
 </Note>
 
 ---
 
 ## Output
 
-**Simulation** writes to `<path/to/e-commerce/results/conversation>/`:
+Results are written under the example directory:
 
-- `conversations.json`: full transcripts of every simulated conversation
-- `target_goals.json`: the resolved goals used to drive each simulated user
-
-**Evaluation** writes to `<path/to/e-commerce/results/evaluation>/`:
-
-| File                                     | Contents                                                              |
-| ---------------------------------------- | --------------------------------------------------------------------- |
-| `agent_performance_per_turn.csv`         | Per-turn metric scores, reasoning, and failure labels                 |
-| `agent_performance_per_conversation.csv` | Rolled-up scores and status per conversation                          |
-| `unique_errors.csv`                      | Deduplicated failure patterns with descriptions and occurrence traces |
-| `final_report.html`                      | Interactive report for browsing and sharing results                   |
+| Location                                 | Contents                                                                 |
+| ---------------------------------------- | ------------------------------------------------------------------------ |
+| `./results/simulation/simulation.json`   | Simulated conversations from the simulation step                         |
+| `./results/evaluation/evaluation.json`   | Evaluation results (per-turn and per-conversation scores, unique errors) |
+| `./results/evaluation/final_report.html` | Interactive HTML report for browsing and sharing results                 |
