@@ -15,7 +15,7 @@ from a2a.client.middleware import ClientCallContext
 from a2a.types import TransportProtocol
 from a2a.utils.message import get_message_text
 
-API_KEY = "1234567890"
+API_KEY = os.environ.get("A2A_API_KEY", "")
 
 
 class EnvOrConfigCredentialService(CredentialService):

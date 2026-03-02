@@ -20,13 +20,6 @@
 
 ---
 
-<!-- TODO: Replace with actual 30-second demo recording -->
-<p align="center">
-  <em>Demo video coming soon</em>
-</p>
-
----
-
 ## What is Arksim?
 
 Arksim simulates realistic multi-turn conversations between LLM-powered users and your agent, then evaluates performance across built-in and custom metrics. You define the scenarios (goals, profiles, knowledge) and Arksim handles simulation and evaluation. Works with any agent that exposes a Chat Completions API or A2A protocol endpoint.
