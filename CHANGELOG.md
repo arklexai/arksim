@@ -5,6 +5,11 @@ All notable changes to Arksim will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+<!-- Add your changes here under the appropriate heading. -->
+<!-- Use: Added, Changed, Deprecated, Removed, Fixed, Security -->
+
 ## [0.0.1] - 2026-03-02
 
 ### Added
@@ -19,4 +24,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - OpenAI, Anthropic, Google Gemini, and Azure OpenAI provider support
 - HTML report generation for evaluation results
 
+[Unreleased]: https://github.com/arklexai/arksim/compare/v0.0.1...HEAD
 [0.0.1]: https://github.com/arklexai/arksim/releases/tag/v0.0.1
