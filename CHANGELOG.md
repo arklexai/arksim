@@ -10,6 +10,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- Add your changes here under the appropriate heading. -->
 <!-- Use: Added, Changed, Deprecated, Removed, Fixed, Security -->
 
+### Added
+
+- Dependabot for automated pip and GitHub Actions dependency updates
+- Pre-commit hooks with ruff, trailing whitespace, end-of-file, YAML, and changelog checks
+- `py.typed` marker for PEP 561 type checking support
+- Top-level lazy exports (`from arksim import run_simulation, Evaluator, ...`)
+- `.editorconfig` for consistent editor settings
+- `Makefile` with common dev commands
+- Issue template chooser linking to docs and discussions
+- Documentation and Changelog checklist in PR template
+
 ## [0.0.1] - 2026-03-02
 
 ### Added
