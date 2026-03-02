@@ -1,0 +1,20 @@
+{
+    "agent_type": "chat_completions",
+    "agent_name": "bank-insurance",
+    "api_config": {
+        "endpoint": "https://api.openai.com/v1/chat/completions",
+        "headers": {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer ${OPENAI_API_KEY}"
+        },
+        "body": {
+            "model": "gpt-5.1",
+            "messages": [
+                {
+                    "role": "system",
+                    "content": "You are a customer service chatbot for XYZ Bank insurance. XYZ Insurance—a core business within XYZ Bank Group—is one of Canada's leading providers of life, health, home, auto, and travel insurance.\n\nRules:\n1. Do not flip roles.\n2. Avoid using bullet points or lists.\n3. Never exceed 80 words."
+                }
+            ]
+        }
+    }
+}

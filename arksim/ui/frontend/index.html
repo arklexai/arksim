@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arksim</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.9/dist/cdn.min.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            primary: { DEFAULT: '#035E7B', dark: '#024a62' },
+            secondary: { DEFAULT: '#8EC1D6' },
+          }
+        }
+      }
+    }
+  </script>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+  <style>
+    :root {
+      --surface: #ffffff; --surface-alt: #f9fafb; --surface-hover: #f3f4f6;
+      --surface-muted: #f3f4f6; --border: #e5e7eb; --border-input: #d1d5db;
+      --text-1: #111827; --text-2: #1f2937; --text-3: #4b5563;
+      --text-4: #6b7280; --text-5: #9ca3af;
+    }
+    .dark {
+      --surface: #27272a; --surface-alt: #18181b; --surface-hover: #3f3f46;
+      --surface-muted: #3f3f46; --border: #3f3f46; --border-input: #52525b;
+      --text-1: #f4f4f5; --text-2: #e4e4e7; --text-3: #d4d4d8;
+      --text-4: #a1a1aa; --text-5: #71717a;
+    }
+    [x-cloak] { display: none !important; }
+    .log-line { font-family: 'Menlo', 'Monaco', 'Courier New', monospace; font-size: 12px; line-height: 1.5; }
+    .material-icons-outlined { font-size: inherit; vertical-align: middle; }
+    /* Theme utilities */
+    .t-body { background: var(--surface-alt); color: var(--text-1); }
+    .t-surface { background: var(--surface); }
+    .t-border { border-color: var(--border); }
+    .t-input { background: var(--surface); border-color: var(--border-input); color: var(--text-1); }
+    .t-input:focus { border-color: #035E7B; outline: none; box-shadow: 0 0 0 1px #035E7B; }
+    .t-heading { color: var(--text-2); }
+    .t-label { color: var(--text-3); }
+    .t-caption { color: var(--text-4); }
+    .t-muted { color: var(--text-5); }
+    .t-hover:hover { background: var(--surface-hover); }
+    .t-muted-bg { background: var(--surface-muted); }
+    .t-code { background: var(--surface-muted); }
+    /* Tooltip */
+    .tip { position: relative; cursor: help; }
+    .tip::after {
+      content: attr(data-tip); position: absolute; bottom: calc(100% + 6px); left: 50%;
+      transform: translateX(-50%); white-space: nowrap; max-width: 260px; white-space: normal;
+      font-size: 12px; line-height: 1.4; font-weight: 400;
+      padding: 6px 10px; border-radius: 6px;
+      background: var(--text-1); color: var(--surface);
+      pointer-events: none; opacity: 0; transition: opacity 0.15s;
+      z-index: 50;
+    }
+    .tip:hover::after { opacity: 1; }
+  </style>
+</head>
+<body class="t-body">
+<div x-data="arksim()" x-init="init()" class="flex h-screen" x-cloak>
+
+  <!-- ═══ Sidebar ═══ -->
+  <aside class="w-60 t-surface border-r t-border flex flex-col shrink-0">
+    <div class="h-14 flex items-center px-5 border-b t-border">
+      <span class="font-bold text-lg" :style="'color:' + (darkMode ? '#8EC1D6' : '#035E7B')">Arksim</span>
+    </div>
+
+    <div class="px-3 pt-4 pb-2">
+      <span class="text-[11px] font-semibold t-muted uppercase tracking-wider px-2">Workflow</span>
+    </div>
+
+    <nav class="flex-1 px-3 space-y-0.5">
+      <template x-for="item in navItems" :key="item.id">
+        <button
+          @click="navigate(item.id)"
+          :disabled="isRunning && activePage !== item.id"
+          :class="[
+            'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all duration-200',
+            activePage === item.id
+              ? 'shadow-sm'
+              : isRunning && activePage !== item.id
+                ? 't-muted cursor-not-allowed'
+                : 't-hover'
+          ]"
+          :style="activePage === item.id
+              ? (darkMode
+                ? 'background-color: #0e3848; color: #8EC1D6'
+                : 'background-color: #E4F0F5; color: #035E7B')
+              : 'color: var(--text-2)'"
+        >
+          <!-- Step number circle -->
+          <span
+            class="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
+            :class="activePage === item.id
+              ? 'bg-white/40'
+              : stepStatus(item.id) === 'done'
+                ? 'bg-green-100 text-green-700'
+                : stepStatus(item.id) === 'failed' || stepStatus(item.id) === 'cancelled'
+                  ? 'bg-red-100 text-red-700'
+                  : stepStatus(item.id) === 'running'
+                    ? 'bg-yellow-100 text-yellow-700 animate-pulse'
+                    : 't-muted-bg t-caption'"
+            x-text="stepStatus(item.id) === 'done' ? '✓' : (stepStatus(item.id) === 'failed' || stepStatus(item.id) === 'cancelled') ? '!' : item.step"
+          ></span>
+          <div class="flex-1 min-w-0">
+            <div class="text-sm font-medium" x-text="item.label"></div>
+            <div class="text-xs opacity-70" x-text="item.caption"></div>
+          </div>
+          <span x-show="item.pro && stepStatus(item.id) === 'idle'" class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-700">PRO</span>
+        </button>
+      </template>
+    </nav>
+
+    <!-- Config Selector -->
+    <div class="border-t t-border p-3">
+      <span class="text-[11px] font-semibold t-muted uppercase tracking-wider px-2">Config</span>
+      <select
+        x-show="configs.length > 0"
+        x-model="selectedConfig"
+        @change="_applyConfig(selectedConfig)"
+        class="mt-1 w-full text-sm border t-input rounded-lg px-2 py-1.5"
+      >
+        <option value="">Select a config...</option>
+        <template x-for="c in configs" :key="c.path">
+          <option :value="c.path" x-text="c.relative"></option>
+        </template>
+      </select>
+      <button
+        @click="browseForConfig()"
+        class="mt-1.5 w-full flex items-center justify-center gap-1.5 px-2 py-1.5 text-xs border t-border rounded-lg t-hover t-caption"
+      ><span class="material-icons-outlined text-sm">folder_open</span> Browse for config</button>
+    </div>
+
+    <!-- Dark Mode Toggle -->
+    <div class="border-t t-border px-4 py-3">
+      <button @click="toggleDark()" class="w-full flex items-center gap-2.5 group">
+        <span class="material-icons-outlined text-base t-caption" x-text="darkMode ? 'dark_mode' : 'light_mode'"></span>
+        <span class="text-sm t-label flex-1 text-left">Dark mode</span>
+        <span
+          class="relative inline-flex h-5 w-9 shrink-0 rounded-full transition-colors duration-200 cursor-pointer"
+          :class="darkMode ? 'bg-primary' : 'bg-gray-300'"
+        >
+          <span
+            class="inline-block h-4 w-4 rounded-full bg-white shadow transform transition-transform duration-200 mt-0.5"
+            :class="darkMode ? 'translate-x-4 ml-0.5' : 'translate-x-0 ml-0.5'"
+          ></span>
+        </span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ═══ Main Area ═══ -->
+  <div class="flex-1 flex flex-col min-w-0">
+    <!-- Content -->
+    <main class="flex-1 overflow-y-auto p-6 lg:p-8">
+      <div class="max-w-4xl mx-auto">
+
+        <!-- ════════════════════════════════════════════ -->
+        <!-- SIMULATE PAGE                               -->
+        <!-- ════════════════════════════════════════════ -->
+        <div x-show="activePage === 'simulate'">
+          <p class="text-xs font-semibold t-muted uppercase tracking-wider mb-1">Step 1</p>
+          <h1 class="text-2xl font-bold mb-1" :style="'color:' + _navColor('simulate')">Simulate</h1>
+          <p class="t-caption text-sm mb-1">Generate simulated conversations between virtual users and your agent.</p>
+          <p x-show="!scenarioFilePath" class="text-xs t-muted mb-6">Need scenarios? Use <button @click="navigate('build')" class="underline font-medium" style="color: #035E7B">Build</button> to generate them, or provide your own scenario.json below.</p>
+          <p x-show="scenarioFilePath" class="mb-6"></p>
+
+          <!-- Agent & Model -->
+          <div class="t-surface rounded-xl border t-border p-5 mb-4">
+            <h2 class="font-semibold t-heading mb-3">Agent & Model</h2>
+            <label class="block text-sm font-medium t-label mb-1">Agent config file</label>
+            <div class="flex gap-2 mb-3">
+              <input type="text" x-model="agentConfigFilePath" class="flex-1 border t-input rounded-lg px-3 py-2 text-sm" placeholder="/path/to/agent_config.json">
+              <button @click="browseFor('agentConfigFilePath')" class="px-3 py-2 border t-border rounded-lg t-hover text-sm" title="Browse"><span class="material-icons-outlined text-base">folder_open</span></button>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-sm font-medium t-label mb-1">Provider</label>
+                <select x-show="providers.includes(provider)" x-model="provider" @change="if (provider === '__custom__') { provider = ''; $nextTick(() => $refs.simProviderCustom.focus()); } else { const ms = modelsForProvider(provider); if (!ms.includes(model)) model = ms[0] || model; }" class="w-full border t-input rounded-lg px-3 py-2 text-sm">
+                  <option value="openai">openai</option>
+                  <option value="claude">claude</option>
+                  <option value="gemini">gemini</option>
+                  <option value="__custom__">Custom...</option>
+                </select>
+                <div x-show="!providers.includes(provider)" class="flex gap-1">
+                  <input x-ref="simProviderCustom" type="text" x-model="provider" class="flex-1 border t-input rounded-lg px-3 py-2 text-sm" placeholder="e.g. custom-provider">
+                  <button @click="provider = _defaults.provider; const ms = modelsForProvider(provider); if (!ms.includes(model)) model = ms[0];" class="px-2 py-2 border t-border rounded-lg t-hover text-xs t-caption" title="Back to dropdown">&times;</button>
+                </div>
+              </div>
+              <div>
+                <label class="block text-sm font-medium t-label mb-1">Model</label>
+                <select x-show="isKnownModel(model)" x-model="model" @change="if (model === '__custom__') { model = ''; $nextTick(() => $refs.simModelCustom.focus()); } else { const p = providerForModel(model); if (p) provider = p; }" class="w-full border t-input rounded-lg px-3 py-2 text-sm">
+                  <option value="gpt-5.1" :hidden="provider !== 'openai'">gpt-5.1</option>
+                  <option value="gpt-4.1" :hidden="provider !== 'openai'">gpt-4.1</option>
+                  <option value="gpt-4.1-mini" :hidden="provider !== 'openai'">gpt-4.1-mini</option>
+                  <option value="o3" :hidden="provider !== 'openai'">o3</option>
+                  <option value="o4-mini" :hidden="provider !== 'openai'">o4-mini</option>
+                  <option value="claude-sonnet-4-20250514" :hidden="provider !== 'claude'">claude-sonnet-4-20250514</option>
+                  <option value="claude-haiku-4-5-20251001" :hidden="provider !== 'claude'">claude-haiku-4-5-20251001</option>
+                  <option value="gemini-2.5-flash" :hidden="provider !== 'gemini'">gemini-2.5-flash</option>
+                  <option value="gemini-2.5-pro" :hidden="provider !== 'gemini'">gemini-2.5-pro</option>
+                  <option value="__custom__">Custom...</option>
+                </select>
+                <div x-show="!isKnownModel(model)" class="flex gap-1">
+                  <input x-ref="simModelCustom" type="text" x-model="model" class="flex-1 border t-input rounded-lg px-3 py-2 text-sm" placeholder="e.g. my-custom-model">
+                  <button @click="model = _defaults.model; provider = _defaults.provider;" class="px-2 py-2 border t-border rounded-lg t-hover text-xs t-caption" title="Back to dropdown">&times;</button>
+                </div>
+              </div>
+            </div>
+            <div x-show="envHint(provider)" class="mt-2 text-xs t-muted">
+              <span class="material-icons-outlined text-xs align-middle">vpn_key</span>
+              Requires env: <code class="t-code px-1 rounded" x-text="envHint(provider)"></code>
+            </div>
+          </div>
+
+          <!-- Parameters -->
+          <div class="t-surface rounded-xl border t-border p-5 mb-4">
+            <h2 class="font-semibold t-heading mb-3">Parameters</h2>
+            <div class="grid grid-cols-3 gap-3">
+              <div>
+                <label class="block text-sm font-medium t-label mb-1">Conversations <span class="tip" data-tip="Number of simulated conversations to generate"><svg class="w-3.5 h-3.5 inline-block align-middle" style="color: var(--text-5)" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"/></svg></span></label>
+                <input type="number" x-model.number="numConversations" min="1" placeholder="3" @blur="if (!numConversations) numConversations = _defaults.numConversations" class="w-full border t-input rounded-lg px-3 py-2 text-sm">
+              </div>
+              <div>
+                <label class="block text-sm font-medium t-label mb-1">Max turns <span class="tip" data-tip="Maximum number of back-and-forth turns per conversation"><svg class="w-3.5 h-3.5 inline-block align-middle" style="color: var(--text-5)" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"/></svg></span></label>
+                <input type="number" x-model.number="maxTurns" min="1" placeholder="5" @blur="if (!maxTurns) maxTurns = _defaults.maxTurns" class="w-full border t-input rounded-lg px-3 py-2 text-sm">
+              </div>
+              <div>
+                <label class="block text-sm font-medium t-label mb-1">Workers <span class="tip" data-tip="Number of parallel workers (auto = number of CPU cores)"><svg class="w-3.5 h-3.5 inline-block align-middle" style="color: var(--text-5)" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"/></svg></span></label>
+                <input type="text" x-model="numWorkers" placeholder="auto" @blur="if (!numWorkers) numWorkers = _defaults.numWorkers" class="w-full border t-input rounded-lg px-3 py-2 text-sm">
+              </div>
+            </div>
+          </div>
+
+          <!-- Scenario Input -->
+          <div class="t-surface rounded-xl border t-border p-5 mb-4">
+            <h2 class="font-semibold t-heading mb-3">Scenario Input</h2>
+            <label class="block text-sm font-medium t-label mb-1">Scenario file</label>
+            <div class="flex gap-2">
+              <input type="text" x-model="scenarioFilePath" class="flex-1 border t-input rounded-lg px-3 py-2 text-sm" placeholder="/path/to/scenario.json">
+              <button @click="browseForScenario()" class="px-3 py-2 border t-border rounded-lg t-hover text-sm"><span class="material-icons-outlined text-base">folder_open</span></button>
+            </div>
+            <p x-show="scenarioFilePath" class="text-xs t-caption mt-1">Directory: <span x-text="scenarioFilePath.substring(0, scenarioFilePath.lastIndexOf('/'))"></span></p>
+          </div>
+
+          <!-- Run -->
+          <div class="t-surface rounded-xl border t-border p-5 mb-4">
+            <h2 class="font-semibold t-heading mb-3">Run</h2>
+            <div class="flex items-center gap-3 mb-3">
+              <span class="text-sm font-medium t-label">Status:</span>
+              <span :class="['px-2.5 py-0.5 rounded-full text-xs font-medium', statusBadge(simStatus)]" x-text="simStatus"></span>
+              <span x-show="simError" class="text-xs text-red-600" x-text="simError"></span>
+            </div>
+
+            <!-- Progress (when running) -->
+            <div x-show="simStatus === 'running'" class="mb-3">
+              <div class="w-full rounded-full h-2" style="background: var(--surface-muted)">
+                <div class="bg-primary h-2 rounded-full transition-all" :class="simProgress === 0 ? 'animate-pulse' : ''" :style="'width: ' + (simProgress || 5) + '%'"></div>
+              </div>
+              <div x-show="simProgress > 0" class="text-xs t-caption mt-1" x-text="simProgress >= 95 ? 'Finalizing...' : simProgress + '% complete'"></div>
+            </div>
+
+            <!-- Logs -->
+            <div class="mb-3">
+              <button @click="showLogs = !showLogs" class="text-sm t-caption hover:opacity-80 flex items-center gap-1">
+                <span class="material-icons-outlined text-sm" x-text="showLogs ? 'expand_more' : 'chevron_right'"></span>
+                <span x-text="showLogs ? 'Hide Logs' : 'Show Logs'"></span>
+                <span class="text-xs t-muted" x-text="'(' + logs.length + ')'"></span>
+              </button>
+              <div x-show="showLogs" x-transition class="mt-2">
+                <div id="log-container" class="bg-gray-900 text-gray-300 rounded-lg p-3 h-64 overflow-y-auto">
+                  <template x-for="(log, i) in logs" :key="i">
+                    <div class="log-line" :class="{'text-red-400': log.level === 'ERROR', 'text-yellow-400': log.level === 'WARNING'}" x-text="log.message"></div>
+                  </template>
+                  <div x-show="logs.length === 0" class="text-gray-500 text-sm">No logs yet.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="flex items-center gap-3">
+            <button
+              @click="startSimulation()"
+              :disabled="simStatus === 'running'"
+              :class="simStatus === 'running' ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-90'"
+              class="px-5 py-2.5 bg-primary text-white rounded-lg font-medium text-sm transition-opacity"
+            >
+              <span class="inline-flex items-center gap-1">
+                <span class="material-icons-outlined text-base" x-text="simStatus === 'done' ? 'replay' : simStatus === 'running' ? 'hourglass_top' : 'play_arrow'"></span>
+                <span x-text="simStatus === 'done' ? 'Restart Simulation' : simStatus === 'running' ? 'Running...' : 'Start Simulation'"></span>
+              </span>
+            </button>
+            <button
+              x-show="simStatus === 'running'"
+              @click="cancelSimulation()"
+              class="px-5 py-2.5 bg-red-600 text-white rounded-lg font-medium text-sm hover:bg-red-700 transition-colors"
+            ><span class="inline-flex items-center gap-1"><span class="material-icons-outlined text-base">stop</span> Cancel</span></button>
+            <button
+              @click="saveConfig(selectedConfig)"
+              class="px-5 py-2.5 border t-border rounded-lg font-medium text-sm t-hover transition-colors" style="color: var(--text-2)"
+            ><span class="material-icons-outlined text-sm">save</span> Save Config</button>
+            <button
+              @click="saveConfigAs()"
+              class="px-5 py-2.5 border t-border rounded-lg font-medium text-sm t-hover transition-colors" style="color: var(--text-2)"
+            >Save As...</button>
+            <button
+              x-show="simStatus === 'done'"
+              @click="navigate('evaluate')"
+              class="px-5 py-2.5 bg-green-600 text-white rounded-lg font-medium text-sm hover:bg-green-700 transition-colors"
+            >Continue to Evaluate →</button>
+          </div>
+        </div>
+
+        <!-- ════════════════════════════════════════════ -->
+        <!-- EVALUATE PAGE                               -->
+        <!-- ════════════════════════════════════════════ -->
+        <div x-show="activePage === 'evaluate'">
+          <p class="text-xs font-semibold t-muted uppercase tracking-wider mb-1">Step 2</p>
+          <h1 class="text-2xl font-bold mb-1" :style="'color:' + _navColor('evaluate')">Evaluate</h1>
+          <p class="t-caption text-sm mb-6">Score simulated conversations on goal completion, helpfulness, and coherence.</p>
+
+          <!-- Model -->
+          <div class="t-surface rounded-xl border t-border p-5 mb-4">
+            <h2 class="font-semibold t-heading mb-3">Model</h2>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-sm font-medium t-label mb-1">Provider</label>
+                <select x-show="providers.includes(evalProvider)" x-model="evalProvider" @change="if (evalProvider === '__custom__') { evalProvider = ''; $nextTick(() => $refs.evalProviderCustom.focus()); } else { const ms = modelsForProvider(evalProvider); if (!ms.includes(evalModel)) evalModel = ms[0] || evalModel; }" class="w-full border t-input rounded-lg px-3 py-2 text-sm">
+                  <option value="openai">openai</option>
+                  <option value="claude">claude</option>
+                  <option value="gemini">gemini</option>
+                  <option value="__custom__">Custom...</option>
+                </select>
+                <div x-show="!providers.includes(evalProvider)" class="flex gap-1">
+                  <input x-ref="evalProviderCustom" type="text" x-model="evalProvider" class="flex-1 border t-input rounded-lg px-3 py-2 text-sm" placeholder="e.g. custom-provider">
+                  <button @click="evalProvider = _defaults.provider; const ms = modelsForProvider(evalProvider); if (!ms.includes(evalModel)) evalModel = ms[0];" class="px-2 py-2 border t-border rounded-lg t-hover text-xs t-caption" title="Back to dropdown">&times;</button>
+                </div>
+              </div>
+              <div>
+                <label class="block text-sm font-medium t-label mb-1">Model</label>
+                <select x-show="isKnownModel(evalModel)" x-model="evalModel" @change="if (evalModel === '__custom__') { evalModel = ''; $nextTick(() => $refs.evalModelCustom.focus()); } else { const p = providerForModel(evalModel); if (p) evalProvider = p; }" class="w-full border t-input rounded-lg px-3 py-2 text-sm">
+                  <option value="gpt-5.1" :hidden="evalProvider !== 'openai'">gpt-5.1</option>
+                  <option value="gpt-4.1" :hidden="evalProvider !== 'openai'">gpt-4.1</option>
+                  <option value="gpt-4.1-mini" :hidden="evalProvider !== 'openai'">gpt-4.1-mini</option>
+                  <option value="o3" :hidden="evalProvider !== 'openai'">o3</option>
+                  <option value="o4-mini" :hidden="evalProvider !== 'openai'">o4-mini</option>
+                  <option value="claude-sonnet-4-20250514" :hidden="evalProvider !== 'claude'">claude-sonnet-4-20250514</option>
+                  <option value="claude-haiku-4-5-20251001" :hidden="evalProvider !== 'claude'">claude-haiku-4-5-20251001</option>
+                  <option value="gemini-2.5-flash" :hidden="evalProvider !== 'gemini'">gemini-2.5-flash</option>
+                  <option value="gemini-2.5-pro" :hidden="evalProvider !== 'gemini'">gemini-2.5-pro</option>
+                  <option value="__custom__">Custom...</option>
+                </select>
+                <div x-show="!isKnownModel(evalModel)" class="flex gap-1">
+                  <input x-ref="evalModelCustom" type="text" x-model="evalModel" class="flex-1 border t-input rounded-lg px-3 py-2 text-sm" placeholder="e.g. my-custom-model">
+                  <button @click="evalModel = _defaults.model; evalProvider = _defaults.provider;" class="px-2 py-2 border t-border rounded-lg t-hover text-xs t-caption" title="Back to dropdown">&times;</button>
+                </div>
+              </div>
+            </div>
+            <div x-show="envHint(evalProvider)" class="mt-2 text-xs t-muted">
+              <span class="material-icons-outlined text-xs align-middle">vpn_key</span>
+              Requires env: <code class="t-code px-1 rounded" x-text="envHint(evalProvider)"></code>
+            </div>
+          </div>
+
+          <!-- Input Source -->
+          <div class="t-surface rounded-xl border t-border p-5 mb-4">
+            <h2 class="font-semibold t-heading mb-3">Input Source</h2>
+            <div class="flex gap-2 mb-3">
+              <button @click="evalInputSource = 'auto'" :class="evalInputSource === 'auto' ? 'bg-primary text-white' : 't-muted-bg'" class="px-4 py-1.5 rounded-lg text-sm font-medium transition-colors" :style="evalInputSource !== 'auto' ? 'color: var(--text-2)' : ''">From Simulate</button>
+              <button @click="evalInputSource = 'custom'" :class="evalInputSource === 'custom' ? 'bg-primary text-white' : 't-muted-bg'" class="px-4 py-1.5 rounded-lg text-sm font-medium transition-colors" :style="evalInputSource !== 'custom' ? 'color: var(--text-2)' : ''">Load from Disk</button>
+            </div>
+            <div x-show="evalInputSource === 'auto'" class="text-sm t-caption">
+              <span x-show="simOutputDir" x-text="'Using: ' + simOutputDir"></span>
+              <span x-show="!simOutputDir">Run Simulate first, or switch to Load from Disk.</span>
+            </div>
+            <div x-show="evalInputSource === 'custom'" class="flex gap-2">
+              <input type="text" x-model="evalSimulationFilePath" class="flex-1 border t-input rounded-lg px-3 py-2 text-sm" placeholder="/path/to/simulation/simulation.json">
+              <button @click="browseFor('evalSimulationFilePath')" class="px-3 py-2 border t-border rounded-lg t-hover text-sm"><span class="material-icons-outlined text-base">folder_open</span></button>
+            </div>
+          </div>
+
+          <!-- Configuration -->
+          <div class="t-surface rounded-xl border t-border p-5 mb-4">
+            <h2 class="font-semibold t-heading mb-3">Configuration</h2>
+            <div class="grid grid-cols-3 gap-3">
+              <div>
+                <label class="block text-sm font-medium t-label mb-1">Workers <span class="tip" data-tip="Number of parallel workers for evaluation (auto = number of CPU cores)"><svg class="w-3.5 h-3.5 inline-block align-middle" style="color: var(--text-5)" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"/></svg></span></label>
+                <input type="text" x-model="evalNumWorkers" class="w-full border t-input rounded-lg px-3 py-2 text-sm" placeholder="auto" @blur="if (!evalNumWorkers) evalNumWorkers = _defaults.evalNumWorkers">
+              </div>
+              <div>
+                <label class="block text-sm font-medium t-label mb-1">Score threshold <span class="tip" data-tip="Minimum score (0.0-1.0) for a conversation to be considered passing"><svg class="w-3.5 h-3.5 inline-block align-middle" style="color: var(--text-5)" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"/></svg></span></label>
+                <input type="text" x-model="scoreThreshold" class="w-full border t-input rounded-lg px-3 py-2 text-sm" placeholder="0.0 - 1.0">
+              </div>
+              <div>
+                <label class="block text-sm font-medium t-label mb-1">HTML report <span class="tip" data-tip="Generate a detailed HTML report with conversation breakdowns"><svg class="w-3.5 h-3.5 inline-block align-middle" style="color: var(--text-5)" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"/></svg></span></label>
+                <div class="flex items-center h-[38px] border rounded-lg px-3" style="border-color: var(--border-input); background: var(--surface)">
+                  <label class="flex items-center gap-2 text-sm cursor-pointer" style="color: var(--text-2)">
+                    <input type="checkbox" x-model="generateHtmlReport" class="rounded">
+                    Generate
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Run -->
+          <div class="t-surface rounded-xl border t-border p-5 mb-4">
+            <h2 class="font-semibold t-heading mb-3">Run</h2>
+            <div class="flex items-center gap-3 mb-3">
+              <span class="text-sm font-medium t-label">Status:</span>
+              <span :class="['px-2.5 py-0.5 rounded-full text-xs font-medium', statusBadge(evalStatus)]" x-text="evalStatus"></span>
+              <span x-show="evalError" class="text-xs text-red-600" x-text="evalError"></span>
+            </div>
+            <div x-show="evalStatus === 'running'" class="mb-3">
+              <div class="w-full rounded-full h-2" style="background: var(--surface-muted)">
+                <div class="bg-primary h-2 rounded-full transition-all" :class="evalProgress === 0 ? 'animate-pulse' : ''" :style="'width: ' + (evalProgress || 5) + '%'"></div>
+              </div>
+              <div x-show="evalProgress > 0" class="text-xs t-caption mt-1" x-text="evalProgress >= 95 ? 'Finalizing...' : evalProgress + '% complete'"></div>
+            </div>
+            <div class="mb-3">
+              <button @click="showLogs = !showLogs" class="text-sm t-caption hover:opacity-80 flex items-center gap-1">
+                <span class="material-icons-outlined text-sm" x-text="showLogs ? 'expand_more' : 'chevron_right'"></span>
+                <span x-text="showLogs ? 'Hide Logs' : 'Show Logs'"></span>
+                <span class="text-xs t-muted" x-text="'(' + logs.length + ')'"></span>
+              </button>
+              <div x-show="showLogs" x-transition class="mt-2">
+                <div id="log-container" class="bg-gray-900 text-gray-300 rounded-lg p-3 h-64 overflow-y-auto">
+                  <template x-for="(log, i) in logs" :key="i">
+                    <div class="log-line" :class="{'text-red-400': log.level === 'ERROR', 'text-yellow-400': log.level === 'WARNING'}" x-text="log.message"></div>
+                  </template>
+                  <div x-show="logs.length === 0" class="text-gray-500 text-sm">No logs yet.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="flex items-center gap-3">
+            <button
+              @click="startEvaluation()"
+              :disabled="evalStatus === 'running'"
+              :class="evalStatus === 'running' ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-90'"
+              class="px-5 py-2.5 bg-primary text-white rounded-lg font-medium text-sm transition-opacity"
+            >
+              <span class="inline-flex items-center gap-1">
+                <span class="material-icons-outlined text-base" x-text="evalStatus === 'done' ? 'replay' : evalStatus === 'running' ? 'hourglass_top' : 'fact_check'"></span>
+                <span x-text="evalStatus === 'done' ? 'Restart Evaluation' : evalStatus === 'running' ? 'Running...' : 'Start Evaluation'"></span>
+              </span>
+            </button>
+            <button
+              x-show="evalStatus === 'running'"
+              @click="cancelEvaluation()"
+              class="px-5 py-2.5 bg-red-600 text-white rounded-lg font-medium text-sm hover:bg-red-700 transition-colors"
+            ><span class="inline-flex items-center gap-1"><span class="material-icons-outlined text-base">stop</span> Cancel</span></button>
+            <button
+              @click="saveEvalConfig()"
+              class="px-5 py-2.5 border t-border rounded-lg font-medium text-sm t-hover transition-colors" style="color: var(--text-2)"
+            ><span class="material-icons-outlined text-sm">save</span> Save Config</button>
+            <button
+              @click="saveEvalConfigAs()"
+              class="px-5 py-2.5 border t-border rounded-lg font-medium text-sm t-hover transition-colors" style="color: var(--text-2)"
+            >Save As...</button>
+            <button
+              x-show="evalStatus === 'done'"
+              @click="navigate('results')"
+              class="px-5 py-2.5 bg-green-600 text-white rounded-lg font-medium text-sm hover:bg-green-700 transition-colors"
+            >Continue to Results →</button>
+          </div>
+        </div>
+
+        <!-- ════════════════════════════════════════════ -->
+        <!-- RESULTS PAGE                                -->
+        <!-- ════════════════════════════════════════════ -->
+        <div x-show="activePage === 'results'">
+          <p class="text-xs font-semibold t-muted uppercase tracking-wider mb-1">Step 3</p>
+          <h1 class="text-2xl font-bold mb-1" :style="'color:' + _navColor('results')">Results</h1>
+          <p class="t-caption text-sm mb-6">Review evaluation scores and the full HTML report.</p>
+
+          <!-- Input Source -->
+          <div class="t-surface rounded-xl border t-border p-5 mb-4">
+            <h2 class="font-semibold t-heading mb-3">Input Source</h2>
+            <div class="flex gap-2 mb-3">
+              <button @click="resultsInputSource = 'auto'" :class="resultsInputSource === 'auto' ? 'bg-primary text-white' : 't-muted-bg'" class="px-4 py-1.5 rounded-lg text-sm font-medium transition-colors" :style="resultsInputSource !== 'auto' ? 'color: var(--text-2)' : ''">From Evaluate</button>
+              <button @click="resultsInputSource = 'custom'" :class="resultsInputSource === 'custom' ? 'bg-primary text-white' : 't-muted-bg'" class="px-4 py-1.5 rounded-lg text-sm font-medium transition-colors" :style="resultsInputSource !== 'custom' ? 'color: var(--text-2)' : ''">Load from Disk</button>
+            </div>
+            <div x-show="resultsInputSource === 'auto'" class="text-sm t-caption">
+              <span x-show="evalOutputDir" x-text="'Using: ' + evalOutputDir"></span>
+              <span x-show="!evalOutputDir">Run Evaluate first, or switch to Load from Disk.</span>
+            </div>
+            <div x-show="resultsInputSource === 'custom'" class="flex gap-2">
+              <input type="text" x-model="resultsInputDir" class="flex-1 border t-input rounded-lg px-3 py-2 text-sm" placeholder="/path/to/evaluation">
+              <button @click="browseFor('resultsInputDir')" class="px-3 py-2 border t-border rounded-lg t-hover text-sm"><span class="material-icons-outlined text-base">folder_open</span></button>
+            </div>
+          </div>
+
+          <!-- Metric Cards -->
+          <div x-show="resultMetrics" class="grid grid-cols-4 gap-4 mb-4">
+            <div class="t-surface rounded-xl border t-border p-4">
+              <div class="text-xs font-medium t-caption mb-1">Overall Score</div>
+              <div class="text-2xl font-bold text-primary" x-text="resultMetrics?.overall"></div>
+            </div>
+            <div class="t-surface rounded-xl border t-border p-4">
+              <div class="text-xs font-medium t-caption mb-1">Pass Rate</div>
+              <div class="text-2xl font-bold text-green-600" x-text="resultMetrics?.passRate"></div>
+            </div>
+            <div class="t-surface rounded-xl border t-border p-4">
+              <div class="text-xs font-medium t-caption mb-1">Avg Turns</div>
+              <div class="text-2xl font-bold t-heading" x-text="resultMetrics?.avgTurns"></div>
+            </div>
+            <div class="t-surface rounded-xl border t-border p-4">
+              <div class="text-xs font-medium t-caption mb-1">Conversations</div>
+              <div class="text-2xl font-bold t-heading" x-text="resultMetrics?.total"></div>
+            </div>
+          </div>
+
+          <!-- Output Files -->
+          <div x-show="resultMetrics" class="t-surface rounded-xl border t-border p-5 mb-4">
+            <h2 class="font-semibold t-heading mb-3">Output Files</h2>
+            <p class="text-sm t-caption mb-3">Click a file to open it. All files are saved in the output directory.</p>
+            <div class="grid grid-cols-1 gap-2">
+              <template x-for="f in _outputFiles" :key="f.name">
+                <a
+                  :href="resultFileUrl(f.name)"
+                  target="_blank"
+                  class="flex items-start gap-2.5 px-3 py-2 rounded-lg t-muted-bg t-hover cursor-pointer transition-colors no-underline"
+                >
+                  <span class="material-icons-outlined text-base t-caption mt-0.5" x-text="f.icon"></span>
+                  <div class="flex-1 min-w-0">
+                    <span class="text-sm font-medium t-heading" x-text="f.name"></span>
+                    <div class="text-xs t-caption" x-text="f.desc"></div>
+                  </div>
+                  <span class="material-icons-outlined text-sm t-muted mt-0.5">open_in_new</span>
+                </a>
+              </template>
+            </div>
+            <div x-show="evalOutputDir || resultsInputDir" class="mt-3 flex items-center gap-1.5 text-xs t-caption">
+              <span class="material-icons-outlined text-sm">folder</span>
+              <span class="font-mono" x-text="resultsInputSource === 'auto' ? evalOutputDir : resultsInputDir"></span>
+            </div>
+          </div>
+
+          <!-- Scores Table -->
+          <div x-show="evalResults?.agent_convo_metrics?.length > 0" class="t-surface rounded-xl border t-border p-5 mb-4">
+            <h2 class="font-semibold t-heading mb-3">Conversation Scores</h2>
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead>
+                  <tr class="border-b t-border">
+                    <th class="text-left py-2 px-3 font-medium t-label">Conversation</th>
+                    <th class="text-left py-2 px-3 font-medium t-label">Goal Completion</th>
+                    <th class="text-left py-2 px-3 font-medium t-label">Final Score</th>
+                    <th class="text-left py-2 px-3 font-medium t-label">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <template x-for="(c, idx) in evalResults.agent_convo_metrics" :key="c.chat_id">
+                    <tr class="border-b t-border t-hover">
+                      <td class="py-2 px-3">
+                        <div class="text-sm" x-text="'Conversation ' + (idx + 1)"></div>
+                        <div class="font-mono text-xs t-caption" x-text="c.chat_id"></div>
+                      </td>
+                      <td class="py-2 px-3" x-text="c.goal_completion_score.toFixed(2)"></td>
+                      <td class="py-2 px-3 font-semibold" x-text="c.final_score.toFixed(2)"></td>
+                      <td class="py-2 px-3">
+                        <span :class="['px-2 py-0.5 rounded-full text-xs font-medium',
+                          statusBadge(c.status === 'Done' ? 'done' : c.status === 'Failed' ? 'failed' : 'running')]" x-text="c.status"></span>
+                      </td>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- HTML Report -->
+          <div x-show="reportUrl" class="t-surface rounded-xl border t-border p-5 mb-4">
+            <div class="flex items-center justify-between">
+              <div>
+                <h2 class="font-semibold t-heading">HTML Report</h2>
+                <p class="text-sm t-caption mt-1">The full report is best viewed in its own tab.</p>
+              </div>
+              <a :href="reportUrl" target="_blank" class="inline-flex items-center gap-1.5 px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary-dark transition-colors shrink-0">
+                <span class="material-icons-outlined text-base">open_in_new</span>
+                View Full Report
+              </a>
+            </div>
+          </div>
+
+          <!-- Empty State -->
+          <div x-show="!resultMetrics && !reportUrl" class="t-surface rounded-xl border t-border p-12 text-center">
+            <span class="material-icons-outlined text-5xl" style="color: var(--text-5)">bar_chart</span>
+            <div class="text-lg font-semibold t-muted mb-1">No results yet</div>
+            <div class="text-sm t-muted">Run Simulate then Evaluate to generate results, or switch to Load from Disk.</div>
+          </div>
+
+          <button @click="refreshResults()" class="mt-4 px-4 py-2 border t-border rounded-lg text-sm t-hover transition-colors inline-flex items-center gap-1" style="color: var(--text-2)"><span class="material-icons-outlined text-base">refresh</span> Refresh Results</button>
+        </div>
+
+        <!-- ════════════════════════════════════════════ -->
+        <!-- BUILD PAGE                                  -->
+        <!-- ════════════════════════════════════════════ -->
+        <div x-show="activePage === 'build'">
+          <p class="text-xs font-semibold t-muted uppercase tracking-wider mb-1">Step 0</p>
+          <h1 class="text-2xl font-bold mb-1" :style="'color:' + _navColor('build')">Build Scenarios</h1>
+          <p class="t-caption text-sm mb-6">Create test scenarios that define how simulated users interact with your agent.</p>
+
+          <!-- Auto-generate (Pro) -->
+          <div class="t-surface rounded-xl border t-border p-5 mb-4 flex items-center gap-4">
+            <span class="material-icons-outlined text-3xl text-amber-500 shrink-0">auto_awesome</span>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 mb-0.5">
+                <span class="font-semibold t-heading">Auto-generate Scenarios</span>
+                <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-700">PRO</span>
+              </div>
+              <p class="text-sm t-caption">Automatically generate realistic test scenarios from your agent's knowledge base.</p>
+            </div>
+            <a href="https://arklex.ai" target="_blank" class="shrink-0 px-4 py-2 bg-amber-500 text-white rounded-lg font-medium text-sm hover:bg-amber-600 transition-colors">
+              Learn More →
+            </a>
+          </div>
+
+          <!-- Load existing -->
+          <div class="t-surface rounded-xl border t-border p-5 mb-4">
+            <h2 class="font-semibold t-heading mb-3">Load Existing</h2>
+            <div class="flex gap-2">
+              <input type="text" x-model="scenarioFilePath" @input="scenarioFileValid = false" @blur="validateScenarioFile()" @keydown.enter="loadScenarioFile()" class="flex-1 border t-input rounded-lg px-3 py-2 text-sm" placeholder="/path/to/scenario.json">
+              <button @click="browseForScenario()" class="px-3 py-2 border t-border rounded-lg t-hover text-sm"><span class="material-icons-outlined text-base">folder_open</span></button>
+            </div>
+          </div>
+
+          <!-- Scenario items -->
+          <div class="t-surface rounded-xl border t-border p-5 mb-4">
+            <div class="flex items-center justify-between mb-3">
+              <h2 class="font-semibold t-heading">Scenarios <span class="text-sm font-normal t-caption" x-text="'(' + scenarios.length + ')'"></span></h2>
+              <button @click="addScenario()" class="inline-flex items-center gap-1 px-3 py-1.5 bg-primary text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">
+                <span class="material-icons-outlined text-base">add</span> Add Scenario
+              </button>
+            </div>
+
+            <div x-show="scenarios.length === 0" class="py-8 text-center">
+              <span class="material-icons-outlined text-4xl" style="color: var(--text-5)">note_add</span>
+              <div class="text-sm t-muted mt-2">No scenarios yet. Add one manually or load an existing file.</div>
+            </div>
+
+            <div class="space-y-3">
+              <template x-for="(sc, idx) in scenarios" :key="idx">
+                <div class="border t-border rounded-lg p-4">
+                  <div class="flex items-center justify-between mb-3">
+                    <span class="text-sm font-semibold t-heading" x-text="'Scenario ' + (idx + 1)"></span>
+                    <button @click="removeScenario(idx)" class="text-red-400 hover:text-red-600 transition-colors" title="Remove">
+                      <span class="material-icons-outlined text-base">delete</span>
+                    </button>
+                  </div>
+
+                  <label class="block text-sm font-medium t-label mb-1">Goal</label>
+                  <input type="text" x-model="sc.goal" @input="scenarioDirty = true" class="w-full border t-input rounded-lg px-3 py-2 text-sm mb-3" placeholder="What should the simulated user try to accomplish?">
+
+                  <label class="block text-sm font-medium t-label mb-1">Knowledge <span class="font-normal t-caption">(context the simulated user has)</span></label>
+                  <textarea x-model="sc._knowledgeText" @input="scenarioDirty = true" rows="2" class="w-full border t-input rounded-lg px-3 py-2 text-sm mb-3" placeholder="Background information the user knows about..."></textarea>
+
+                  <div class="grid grid-cols-3 gap-3">
+                    <div>
+                      <label class="block text-sm font-medium t-label mb-1">Name</label>
+                      <input type="text" x-model="sc.user_attributes.name" @input="scenarioDirty = true" class="w-full border t-input rounded-lg px-3 py-2 text-sm" placeholder="Alex">
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium t-label mb-1">Age</label>
+                      <input type="number" x-model.number="sc.user_attributes.age" @input="scenarioDirty = true" class="w-full border t-input rounded-lg px-3 py-2 text-sm" placeholder="30">
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium t-label mb-1">Occupation</label>
+                      <input type="text" x-model="sc.user_attributes.occupation" @input="scenarioDirty = true" class="w-full border t-input rounded-lg px-3 py-2 text-sm" placeholder="Engineer">
+                    </div>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </div>
+
+          <!-- Save -->
+          <div class="flex items-center gap-3 mb-6">
+            <button
+              @click="saveScenarioFile()"
+              :disabled="scenarios.length === 0 || !scenarioDirty"
+              class="px-5 py-2.5 bg-primary text-white rounded-lg font-medium text-sm hover:opacity-90 transition-opacity disabled:opacity-50"
+            >
+              <span class="inline-flex items-center gap-1">
+                <span class="material-icons-outlined text-base" x-text="scenarioDirty ? 'save' : 'check_circle'"></span>
+                <span x-text="scenarioDirty ? 'Save ' + (scenarioFilePath ? scenarioFilePath.split('/').pop() : 'scenario.json') : 'Saved'"></span>
+              </span>
+            </button>
+            <button
+              @click="saveScenarioFileAs()"
+              :disabled="scenarios.length === 0"
+              class="px-4 py-2.5 border t-border rounded-lg font-medium text-sm t-hover disabled:opacity-50"
+            >Save As...</button>
+            <button
+              x-show="scenarios.length > 0 || scenarioFileValid"
+              @click="buildDone = true; navigate('simulate')"
+              class="px-5 py-2.5 bg-green-600 text-white rounded-lg font-medium text-sm hover:bg-green-700 transition-colors"
+            >Continue to Simulate →</button>
+          </div>
+
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- ═══ Browser Modal (Directory or File) ═══ -->
+  <div x-show="showBrowser" x-cloak class="fixed inset-0 z-50 flex items-center justify-center bg-black/40" @keydown.escape.window="browserCancel()">
+    <div @click.outside="browserCancel()" class="t-surface rounded-xl shadow-2xl w-[640px] max-h-[80vh] flex flex-col">
+      <div class="p-4 border-b t-border">
+        <h3 class="font-semibold t-heading" x-text="browserMode === 'file' ? 'Select File' : 'Select Directory'"></h3>
+        <p class="text-xs t-caption font-mono mt-1 break-all" x-text="browserPath"></p>
+      </div>
+      <div class="flex-1 overflow-y-auto p-2 min-h-[300px]">
+        <!-- Parent -->
+        <button
+          x-show="browserParent"
+          @click="_browseDir(browserParent)"
+          class="w-full flex items-center gap-2 px-3 py-2 t-hover rounded-lg text-left text-sm"
+        >
+          <span class="material-icons-outlined text-base t-caption">folder_open</span>
+          <span class="font-semibold">..</span>
+        </button>
+        <!-- Entries -->
+        <template x-for="entry in browserEntries" :key="entry.path">
+          <button
+            @dblclick="browserDblClick(entry)"
+            @click="entry.type === 'directory' ? _browseDir(entry.path) : (browserMode === 'file' && browserSelectFile(entry.path))"
+            class="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left text-sm t-hover"
+          >
+            <span class="material-icons-outlined text-base" :class="entry.type === 'directory' ? 't-caption' : 't-muted'" x-text="entry.type === 'directory' ? 'folder' : 'description'"></span>
+            <span :class="entry.type === 'directory' ? 'font-semibold' : 't-caption'" x-text="entry.name"></span>
+          </button>
+        </template>
+      </div>
+      <div class="p-4 border-t t-border flex justify-end gap-2">
+        <button @click="browserCancel()" class="px-4 py-2 border t-border rounded-lg text-sm t-hover">Cancel</button>
+        <button x-show="browserMode === 'directory'" @click="browserSelect()" class="px-4 py-2 bg-primary text-white rounded-lg text-sm hover:bg-primary-dark">Select This Directory</button>
+        <span x-show="browserMode === 'file'" class="text-xs t-muted self-center">Click a file to select it</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+<script src="app.js"></script>
+</body>
+</html>
