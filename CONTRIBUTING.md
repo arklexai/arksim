@@ -68,8 +68,10 @@ Keep the subject line under 72 characters, use lowercase, imperative mood.
 1. Make sure all tests pass and linting is clean
 2. **Use the same format for your PR title** as commit messages (`<component>: <verb> <description>`, max 72 characters). CI enforces this since squash merge uses the PR title as the commit message.
 3. Write a clear PR description explaining what changed and why
-4. Link any related issues
-5. Keep PRs focused on a single change
+4. **Update the changelog**: Add an entry under `## [Unreleased]` in `CHANGELOG.md` describing your change. Use the appropriate heading (`Added`, `Changed`, `Fixed`, `Removed`, etc.). If your change is purely internal with no user-facing impact, note that in the PR instead.
+5. **Update docs if needed**: If your PR changes behavior, config options, CLI commands, or the Python API, update the relevant files in `docs/` to match.
+6. Link any related issues
+7. Keep PRs focused on a single change
 
 ## Reporting Issues
 

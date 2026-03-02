@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation
+    url: https://docs.arklex.ai/overview
+    about: Check the docs before opening an issue.
+  - name: Discussions
+    url: https://github.com/arklexai/arksim/discussions
+    about: Ask questions and share ideas.
