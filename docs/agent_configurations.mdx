@@ -4,18 +4,15 @@ title: "Agent Configurations"
 
 ## Overview
 
-Configure your agent's API connection and business context. These files tell arksim how to connect to your agent and what context to use when simulating conversations.
+Configure your agent's API connection. The `agent_config.json` file tells arksim how to connect to your agent API. Scenarios (goals, user profiles, and any scenario-specific knowledge) are defined separately in `scenarios.json` and referenced from your run config (e.g. `config.yaml`).
 
-### Directory Structure
+### What you need
 
-Create a configuration directory with the required JSON files:
+In your example or project directory you need at least:
 
-```shellscript
-/path/to/agent-setup-dir/
-├── agent_config.json    # API and agent configuration
-├── knowledge.json       # Business context (e.g. corporate overview)
-└── data/                # (Optional) Local knowledge files
-```
+- **`agent_config.json`** – API and agent configuration (endpoint, headers, body, agent type). Described below.
+
+Your run configuration (e.g. `config.yaml`) points to this file via `agent_config_file_path` and to your scenarios via `scenario_file_path`. See the [quickstart](/quickstart) and example docs for full setup.
 
 ---
 
@@ -25,33 +22,11 @@ The `agent_config.json` file configures how arksim connects to your conversation
 
 ### Configuration Fields
 
-| Field                | Type      | Required | Description                                                                            |
-| -------------------- | --------- | -------- | -------------------------------------------------------------------------------------- |
-| `agent_name`         | String    | Yes      | Unique identifier for your agent (e.g. lowercase, no spaces)                           |
-| `agent_type`         | String    | Yes      | One of `chat_completions` or `a2a`. See [API Connection Types](#api-connection-types). |
-| `api_config`         | Object    | Yes      | Connection details. See [API Connection Types](#api-connection-types).                 |
-| `agent_capabilities` | List[Str] | No       | Optional list of tasks your agent can handle (for context/docs)                        |
-
-### Writing Effective Agent Capabilities
-
-When you use `agent_capabilities`, describe capabilities with a **Verb + Object (+ Scope)** structure. Each capability should state a specific, observable action.
-
-**Good examples:**
-
-- Answer feature-specific questions about products
-- Provide pricing information and generate quotes
-- Process returns and refunds for orders
-- Schedule appointments and send confirmations
-
-**Avoid:**
-
-- Be helpful
-- Answer questions
-- Handle customer requests
-
-<Note>
-  Vague descriptions don't set clear expectations. Be specific about what your agent can do.
-</Note>
+| Field        | Type   | Required | Description                                                                            |
+| ------------ | ------ | -------- | -------------------------------------------------------------------------------------- |
+| `agent_name` | String | Yes      | Unique identifier for your agent (e.g. lowercase, no spaces)                           |
+| `agent_type` | String | Yes      | One of `chat_completions` or `a2a`. See [API Connection Types](#api-connection-types). |
+| `api_config` | Object | Yes      | Connection details. See [API Connection Types](#api-connection-types).                 |
 
 ### API Connection Types
 
@@ -80,9 +55,6 @@ arksim supports two agent types for API connections:
     {
       "agent_type": "chat_completions",
       "agent_name": "chat_completions_example",
-      "agent_capabilities": [
-        "answer feature-specific queries about products"
-      ],
       "api_config": {
         "endpoint": "http://localhost:7050/chat/completions",
         "headers": {
@@ -108,9 +80,6 @@ arksim supports two agent types for API connections:
     {
       "agent_type": "chat_completions",
       "agent_name": "chat_completions_with_chat_id",
-      "agent_capabilities": [
-        "answer feature-specific queries about products"
-      ],
       "api_config": {
         "endpoint": "http://localhost:7050/chat/completions",
         "headers": {
@@ -141,8 +110,8 @@ arksim supports two agent types for API connections:
 
     #### Required fields
 
-    - `endpoint` – A2A agent server URL
-    - `headers` – Optional HTTP headers (e.g. for auth)
+    - `endpoint`: A2A agent server URL
+    - `headers`: Optional HTTP headers (e.g. for auth)
 
     #### Example
 
@@ -150,9 +119,6 @@ arksim supports two agent types for API connections:
     {
       "agent_type": "a2a",
       "agent_name": "a2a_example",
-      "agent_capabilities": [
-        "answer feature-specific queries about products"
-      ],
       "api_config": {
         "endpoint": "http://localhost:9999",
         "headers": {
@@ -177,65 +143,3 @@ Both `chat_completions` and `a2a` support environment variable substitution usin
 <Tip>
   **Security:** Keep credentials in environment variables and out of committed config files.
 </Tip>
-
----
-
-## Knowledge Configuration
-
-The `knowledge.json` file defines business context used by arksim when building simulated user prompts (e.g. company overview).
-
-### Configuration fields
-
-| Field                | Type       | Description                                                                  |
-| -------------------- | ---------- | ---------------------------------------------------------------------------- |
-| `corporate_overview` | String     | A short description of your company/product used as context for simulation   |
-| `knowledge`          | List[Dict] | Optional. Defines knowledge sources (e.g. local `data/` folder) for examples |
-
-`corporate_overview` is used by the simulator when generating the simulated user’s system prompt so conversations are grounded in your business context.
-
-### Local knowledge (optional)
-
-You can point to a local folder of documents (e.g. for examples or future tooling):
-
-```json
-{
-  "corporate_overview": "YourCompany Inc. is a leading provider of software solutions...",
-  "knowledge": [
-    {
-      "source": "/path/to/agent-setup-dir/data",
-      "type": "local"
-    }
-  ]
-}
-```
-
-<Note>
-  In open-source arksim, scenario building is not included. Pre-built scenarios already contain the knowledge used during simulation. The `knowledge` array in `knowledge.json` is optional and may be used by examples or custom scripts.
-</Note>
-
-### Minimal example
-
-```json
-{
-  "corporate_overview": "YourCompany Inc. is a leading provider of innovative software solutions. We help businesses automate workflows and improve customer engagement."
-}
-```
-
----
-
-## Data folder
-
-The optional `data` folder holds knowledge documents (e.g. for your own agent or examples). You can add, remove, or update files to match your use case.
-
-### Supported file formats
-
-| Category      | Formats                                         |
-| ------------- | ----------------------------------------------- |
-| Documents     | `.md`, `.pdf`, `.doc`, `.docx`, `.txt`, `.html` |
-| Data files    | `.json`, `.xls`, `.xlsx`                        |
-| Presentations | `.ppt`, `.pptx`                                 |
-| Images\*      | `.png`, `.jpg`, `.jpeg`                         |
-
-<Note>
-  \*Image OCR may require additional environment configuration (e.g. `MISTRAL_API_KEY`) depending on your setup.
-</Note>
