@@ -165,7 +165,7 @@ Describes the structure of `conversations.json`, the file produced at the end of
 
       - `turn_id` _(int, required)_: Turn index (one user message + one assistant message = one turn).
       - `message_id` _(string, required)_: Unique message ID.
-      - `role` _(string, required)_: Either `"sim_user"` or `"assistant"`.
+      - `role` _(string, required)_: Either `"simulated_user"` or `"assistant"`.
       - `content` _(string, required)_: The message text.
     </ResponseField>
     <ResponseField name="sim_user_prompt" type="SimUserPrompt" required>
@@ -194,7 +194,7 @@ Describes the structure of `conversations.json`, the file produced at the end of
         {
           "turn_id": 0,
           "message_id": "3c9a7f12-6b4e-4d8a-b2f1-9e5c0a7d41e6",
-          "role": "sim_user",
+          "role": "simulated_user",
           "content": "So… this whole identity theft thing is stressing me out a bit...."
         },
         {
