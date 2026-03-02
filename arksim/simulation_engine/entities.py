@@ -20,7 +20,7 @@ class SimulationInput(BaseModel):
     """Input configuration for the simulation engine module."""
 
     agent_config_file_path: str = Field(
-        default="./examples/bank-insurance/agent_config.json",
+        default="./agent_config.json",
         description="Path to the agent API configuration file",
     )
     scenario_file_path: str | None = Field(
@@ -41,7 +41,7 @@ class SimulationInput(BaseModel):
         ),
     )
     output_file_path: str = Field(
-        default="./examples/bank-insurance/results/simulation/simulation.json",
+        default="./simulation.json",
         description="Output file path for simulation results",
     )
     simulated_user_prompt_template: str | None = Field(
