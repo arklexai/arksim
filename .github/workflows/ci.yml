@@ -18,7 +18,7 @@ jobs:
       - name: Pre-commit checks
         run: |
           pip install pre-commit
-          pre-commit run --all-files
+          SKIP=changelog-reminder pre-commit run --all-files
       - name: Lint
         run: |
           pip install ruff
