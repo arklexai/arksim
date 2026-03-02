@@ -24,6 +24,7 @@
           "build-scenario",
           "simulate-conversation",
           "evaluate-conversation",
+          "agent_configurations",
           "schema-reference"
         ]
       },
