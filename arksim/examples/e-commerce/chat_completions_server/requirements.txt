@@ -1,0 +1,14 @@
+fastapi==0.120.3
+httpx==0.28.1
+uvicorn==0.38.0
+langgraph>=0.3.18
+langchain-openai>=0.1.0
+langchain_community
+langchain_core
+networkx==3.5
+beautifulsoup4==4.14.2
+mistralai==1.9.11
+selenium==4.38.0
+webdriver-manager==4.0.2
+faiss-cpu==1.12.0
+unstructured[md,docx,pptx]>=0.18.13

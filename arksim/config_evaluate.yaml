@@ -1,0 +1,56 @@
+# Evaluation Configuration File
+# Configuration for 'arksim evaluate' command
+
+# Path to the scenarios file
+scenario_file_path: ./examples/bank-insurance/scenarios.json
+
+# Path to the simulation output file path:
+simulation_file_path: ./examples/bank-insurance/results/simulation/simulation.json
+
+# Output directory for evaluation results
+output_dir: ./examples/bank-insurance/results/evaluation
+
+# LLM model
+model: gpt-5.1
+
+# LLM provider
+provider: openai
+
+# Number of workers for parallel processing. "auto" uses all
+# available threads; on large runs this can trigger LLM rate
+# limits — set an explicit integer to cap concurrency.
+num_workers: auto
+
+# Provide paths to Python files that define your custom metrics.
+# Your custom metrics should subclass QuantitativeMetric or QualitativeMetric
+# (from arksim.evaluator import QuantitativeMetric, QualitativeMetric)
+# - The file must be a `.py` script.
+# - The evaluator must be able to import it (the path should be
+#   resolvable from your working directory / PYTHONPATH when
+#   running `arksim evaluate`).
+#
+custom_metrics_file_paths: []
+
+# Provide the built-in metrics to be run during evaluation.
+# If empty, all built-in metrics run. Custom metrics defined in
+# custom_metrics_file_paths always run regardless of this list.
+# Example: metrics_to_run:
+#   [faithfulness, helpfulness, coherence, verbosity, relevance,
+#    goal_completion, agent_behavior_failure]
+metrics_to_run:
+  - faithfulness
+  - helpfulness
+  - coherence
+  - verbosity
+  - relevance
+  - goal_completion
+  - agent_behavior_failure
+
+# Generate HTML report
+generate_html_report: true
+
+# Score threshold for per-conversation final scores (0.0 to 1.0)
+# If any conversation's final score is below this threshold,
+# exit with non-zero code.
+# Set to null to disable threshold checking
+score_threshold: null
