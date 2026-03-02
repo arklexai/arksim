@@ -1,7 +1,8 @@
 from a2a.server.agent_execution import AgentExecutor, RequestContext
 from a2a.server.events import EventQueue
 from a2a.utils import new_agent_text_message
-from agent_core import Agent
+
+from ..core.agent import Agent  # noqa: TID252
 
 
 class BankInsuranceAgentExecutor(AgentExecutor):

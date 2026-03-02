@@ -113,7 +113,7 @@ Create an `agent_config.json` pointing to your agent. Arksim supports two protoc
   "agent_type": "chat_completions",
   "agent_name": "my-agent",
   "api_config": {
-    "endpoint": "http://localhost:8080/chat/completions",
+    "endpoint": "http://localhost:8888/chat/completions",
     "headers": {
       "Content-Type": "application/json",
       "Authorization": "Bearer ${AGENT_API_KEY}"
