@@ -35,7 +35,7 @@ description: "Get started with Arksim in minutes. This guide walks you through y
 
     <Tabs>
       <Tab title="CLI">
-        This command simulates conversations against your agent, evaluates the generated conversations, and saves results to the specified output location.
+        This command simulates conversations against your agent, evaluates them, and saves results to the specified output location.
 
         ```bash
         arksim simulate-evaluate <path/to/config_simulate.yaml>
@@ -71,7 +71,7 @@ description: "Get started with Arksim in minutes. This guide walks you through y
         output_file_path: ./path/to/results/conversations.json
         ```
 
-        Where the generated bot conversation transcripts will be saved.
+        Where the simulated conversation transcripts will be saved.
 
         **Evaluation Output**
 
@@ -106,7 +106,7 @@ description: "Get started with Arksim in minutes. This guide walks you through y
             ),
         )
         
-        # Run simulation (generates agent conversation transcripts)
+        # Run simulation
         conversations = engine.simulate()
         
         # Evaluate simulated agent conversations
@@ -121,7 +121,7 @@ description: "Get started with Arksim in minutes. This guide walks you through y
         )
         
         print("Simulation complete.")
-        print(f"Generated {len(conversations)} conversations.")
+        print(f"Simulated {len(conversations)} conversations.")
         print("Evaluation results saved to ./evaluation")
         ```
       </Tab>

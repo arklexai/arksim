@@ -18,10 +18,10 @@ Use YAML configuration files to run the full pipeline (scenario building, conver
 
 ### Understanding Key Settings
 
-- **num_conversations** — How many test conversations to generate. Start with 5-10, increase for thorough testing.
+- **num_conversations** — How many test conversations to simulate. Start with 5-10, increase for thorough testing.
 - **max_turns** — Maximum back-and-forth exchanges per conversation. 5 is typical for most use cases.
 - **num_workers** — Parallel processing threads. Higher values = faster execution but more parallel API calls. Use `auto` to default to `num_conversations`.
-- **model** — The LLM used for scenario generation and evaluation (not your agent).
+- **model** — The LLM used for simulation and evaluation (not your agent).
 
 ### Configuration File
 
@@ -34,7 +34,7 @@ output_dir: null
 
 # --- Scenario Builder Settings ---
 user_attribute_file: null                 # Path to user attributes file
-num_conversations: 5                      # Number of conversations to generate
+num_conversations: 5                      # Number of conversations to simulate
 num_conversations_per_persona: 1          # Conversations per persona
 oversample_ratio: 3                       # Oversample ratio for user attributes
 seed: null                                # Random seed for reproducibility
@@ -95,7 +95,7 @@ docker run --rm \
 | --------------------------------- | ------------------------------ | ----------------------------------------------------------------------------------------------------- |
 | `--agent-setup-dir`               | build, simulate, evaluate, run | Path to the agent setup directory (contains `agent_config.json` and `knowledge.json`).                |
 | `--output-dir`                    | build, simulate, evaluate, run | Output directory. If omitted, a stage-specific default is used.                                       |
-| `--model`                         | build, simulate, evaluate, run | LLM model used by Arksim (scenario generation and/or evaluation; not your agent).                     |
+| `--model`                         | build, simulate, evaluate, run | LLM model used by Arksim (simulation and/or evaluation; not your agent).                              |
 | `--provider`                      | build, simulate, evaluate, run | LLM provider (e.g., `openai`, `azure`).                                                               |
 | `--temperature`                   | run                            | Temperature for LLM generation (full pipeline only).                                                  |
 | `--embedding-model`               | build, run                     | Embedding model name for vector operations.                                                           |
@@ -104,7 +104,7 @@ docker run --rm \
 | `--user-attribute-file`           | build, run                     | Path to the user attributes file.                                                                     |
 | `--oversample-ratio`              | build, run                     | Oversample ratio for user attributes generation.                                                      |
 | `--seed`                          | build, run                     | Random seed for reproducibility.                                                                      |
-| `--num-conversations`             | build, simulate, run           | Number of conversations to generate/simulate.                                                         |
+| `--num-conversations`             | build, simulate, run           | Number of conversations to simulate.                                                                  |
 | `--num-conversations-per-persona` | build, run                     | Number of conversations per persona.                                                                  |
 | `--max-turns`                     | simulate, run                  | Maximum turns per conversation.                                                                       |
 | `--num-workers`                   | simulate, evaluate, run        | Number of parallel workers.                                                                           |
