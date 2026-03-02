@@ -23,7 +23,8 @@
         "pages": [
           "build-scenario",
           "simulate-conversation",
-          "evaluate-conversation"
+          "evaluate-conversation",
+          "schema-reference"
         ]
       },
       {
