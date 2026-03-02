@@ -90,7 +90,7 @@ class FaissRetriever:
         distances, indices = self.index.search(vec, k)
 
         results: list[dict[str, Any]] = []
-        for dist, idx in zip(distances[0], indices[0]):
+        for dist, idx in zip(distances[0], indices[0], strict=False):
             if 0 <= idx < len(self.documents):
                 doc = self.documents[idx]
                 results.append(

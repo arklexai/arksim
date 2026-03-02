@@ -3,7 +3,7 @@ import os
 from fastapi import FastAPI, Header, HTTPException
 from pydantic import BaseModel
 
-from ..core.agent import Agent
+from ..core.agent import Agent  # noqa: TID252
 
 # =============================================================================
 # USING YOUR OWN AGENT ENDPOINT
