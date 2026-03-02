@@ -1,6 +1,12 @@
 import json
+import sys
 from pathlib import Path
-from typing import Any, Self
+from typing import Any
+
+if sys.version_info >= (3, 11):
+    from typing import Self
+else:
+    from typing_extensions import Self
 
 from pydantic import BaseModel, Field, model_validator
 
