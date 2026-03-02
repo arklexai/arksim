@@ -4,7 +4,7 @@
 
 Arksim lets you define who your users are, what they want, and what they know, then runs them as live multi-turn conversations against your agent. The result is structured performance data you can actually act on.
 
-<img src="https://img.shields.io/badge/python-3.9+-blue.svg" alt="Python" /> <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License" /> <img src="https://img.shields.io/pypi/v/arksim.svg" alt="PyPI" />
+<img src="https://img.shields.io/badge/python-3.10+-blue.svg" alt="Python" /> <img src="https://img.shields.io/badge/license-Apache--2.0-blue.svg" alt="License" /> <img src="https://img.shields.io/pypi/v/arksim.svg" alt="PyPI" />
 
 ---
 
@@ -96,7 +96,7 @@ Or in Python:
 import arksim
 
 results = arksim.evaluate(
-    conversation_file_path="./conversations.json",
+    simulation_file_path="./conversations.json",
     output_dir="./evaluation",
     model="gpt-5.1",
     provider="open-ai",
@@ -123,7 +123,7 @@ Evaluation produces:
 
 ## Documentation
 
-Full docs at [**docs.arksim**](#)— including schema references, agent compatibility, configuration options, and evaluation deep-dives.
+Full docs at [**docs.arklex.ai**](https://docs.arklex.ai/overview) including schema references, agent compatibility, configuration options, and evaluation deep-dives.
 
 ---
 
@@ -145,4 +145,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for full guidelines.
 
 ## License
 
-MIT — see [LICENSE](LICENSE) for details.
+Apache-2.0 — see [LICENSE](LICENSE) for details.

@@ -1,3 +1,5 @@
+import os
+
 import uvicorn
 from a2a.server.apps import A2AStarletteApplication
 from a2a.server.request_handlers import DefaultRequestHandler
@@ -23,7 +25,7 @@ from .agent_executor import (
     BankInsuranceAgentExecutor,  # type: ignore[import-untyped]
 )
 
-API_KEY = "1234567890"
+API_KEY = os.environ.get("A2A_API_KEY", "")
 PUBLIC_PATHS = {
     "/.well-known/agent.json",
     "/.well-known/agent-card.json",
