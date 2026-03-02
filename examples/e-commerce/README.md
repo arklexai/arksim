@@ -57,7 +57,7 @@ Steps to run:
      export OPENAI_API_KEY=<YOUR_OPENAI_API_KEY>
      ```
 
-   - From the repository root, start the chat completions server. This starts the agent on port 8080:
+   - From the repository root, start the chat completions server. This starts the agent on port 8888:
 
      ```bash
      cd ../../../
@@ -66,11 +66,11 @@ Steps to run:
 
    - Verify the servers are running:
      ```bash
-     lsof -i -P -n | grep 8080
+     lsof -i -P -n | grep 8888
      ```
      You should see output similar to:
      ```bash
-     python3.11  <process_id> <username>   10u  IPv4 0x6eaae5951a5c469b      0t0  TCP 127.0.0.1:8080 (LISTEN)
+     python3.11  <process_id> <username>   10u  IPv4 0x6eaae5951a5c469b      0t0  TCP 127.0.0.1:8888 (LISTEN)
      ```
 
    **2.2 Your own agent**

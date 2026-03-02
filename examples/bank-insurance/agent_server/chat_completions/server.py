@@ -17,7 +17,7 @@ from ..core.agent import Agent  # noqa: TID252
 # 3. Replace the code between --- AGENT CHAT LOGIC STARTS HERE --- and
 #    --- AGENT CHAT LOGIC ENDS HERE --- with:
 #
-#    AGENT_ENDPOINT = "<YOUR_AGENT_ENDPOINT>"  # e.g., "http://localhost:8080/chat"
+#    AGENT_ENDPOINT = "<YOUR_AGENT_ENDPOINT>"  # e.g., "http://localhost:8888/chat"
 #
 #    payload = {
 #        "id": chat_id,
@@ -115,4 +115,4 @@ async def chat_completions(
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run(app, host="0.0.0.0", port=8080)
+    uvicorn.run(app, host="0.0.0.0", port=8888)
