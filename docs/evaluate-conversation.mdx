@@ -114,7 +114,7 @@ generate_html_report: true
 </ResponseField>
 
 <ResponseField name="provider" type="string" required>
-  LLM service provider (e.g., `open-ai`).
+  LLM service provider (e.g., `openai`).
 </ResponseField>
 
 <ResponseField name="num_workers" type="string | int">
@@ -122,7 +122,7 @@ generate_html_report: true
 </ResponseField>
 
 <ResponseField name="custom_metrics_file_paths" type="list[string]">
-  Python files defining custom metrics. Each must implement `BaseMetric`.
+  Python files defining custom metrics. Each must subclass `QuantitativeMetric` or `QualitativeMetric`.
 </ResponseField>
 
 <ResponseField name="metrics_to_run" type="list[string]">
@@ -156,51 +156,58 @@ generate_html_report: true
       </Tab>
       <Tab title="Python — from file">
         ```python
-        import arksim
-        
-        evaluation_results = arksim.evaluate(
-            simulation_file_path="./conversations.json",
+        from arksim.evaluator import run_evaluation, EvaluationInput
+
+        evaluation = run_evaluation(EvaluationInput(
+            simulation_file_path="./simulation.json",
+            scenario_file_path="./scenarios.json",
             output_dir="./evaluation",
             model="gpt-5.1",
-            provider="open-ai",
+            provider="openai",
             num_workers="auto",
             generate_html_report=True,
-        )
+        ))
         ```
       </Tab>
       <Tab title="Python — from objects">
         ```python
-        import arksim
         from arksim.simulation_engine.entities import (
-            ConversationItem, TurnItem, SimulatedUserPrompt, SimulatedUserPromptVariables
+            Simulation, Conversation, Message, SimulatedUserPrompt
         )
-        
-        conversations = [
-            ConversationItem(
-                conversation_id="00de685e-f76b-4a5f-a6e5-217cad777316",
-                scenario_id="8f4c2a91-3b7e-4d5f-a9c2-6e1b4d9f2037",
-                conversation_history=[
-                    TurnItem(turn_id=0, role="simulated_user", content="What documents do I need to file a claim?"),
-                    TurnItem(turn_id=0, role="assistant", content="You'll need a copy of your policy..."),
-                ],
-                sim_user_prompt=SimulatedUserPrompt(
-                    sim_user_prompt_template="You are a customer interacting with an agent...",
-                    variables=SimulatedUserPromptVariables(
-                        agent_context="XYZ Bank Insurance is a Canadian provider...",
-                        sim_user_profile="Name: Priya Sharma. Age: 32. Location: Toronto...",
-                        user_goal="Find out what documents are needed to file an auto insurance claim.",
-                        knowledge=["Typical timelines: claim setup is usually same day..."],
+        from arksim.evaluator import run_evaluation, EvaluationInput
+
+        simulation = Simulation(
+            schema_version="v1",
+            simulator_version="v1",
+            conversations=[
+                Conversation(
+                    conversation_id="00de685e-f76b-4a5f-a6e5-217cad777316",
+                    scenario_id="8f4c2a91-3b7e-4d5f-a9c2-6e1b4d9f2037",
+                    conversation_history=[
+                        Message(turn_id=0, role="simulated_user", content="What documents do I need to file a claim?"),
+                        Message(turn_id=0, role="assistant", content="You'll need a copy of your policy..."),
+                    ],
+                    simulated_user_prompt=SimulatedUserPrompt(
+                        simulated_user_prompt_template="You are a customer interacting with an agent...",
+                        variables={
+                            "agent_context": "XYZ Bank Insurance is a Canadian provider...",
+                            "sim_user_profile": "Name: Priya Sharma. Age: 32. Location: Toronto...",
+                            "user_goal": "Find out what documents are needed to file an auto insurance claim.",
+                            "knowledge": ["Typical timelines: claim setup is usually same day..."],
+                        },
                     ),
-                ),
-            )
-        ]
-        
-        evaluation_results = arksim.evaluate(
-            conversations=conversations,
-            output_dir="./results/evaluation",
-            model="gpt-5.1",
-            provider="open-ai",
-            generate_html_report=True,
+                )
+            ],
+        )
+
+        evaluation = run_evaluation(
+            EvaluationInput(
+                output_dir="./evaluation",
+                model="gpt-5.1",
+                provider="openai",
+                generate_html_report=True,
+            ),
+            simulation=simulation,
         )
         ```
       </Tab>

@@ -20,9 +20,10 @@ classifiers = [
     "Topic :: Software Development :: Testing",
 ]
 dependencies = [
+    "pydantic>=2.0",
     "tqdm",
-    "pyyaml==6.0.2",
-    "a2a-sdk==0.3.20",
+    "pyyaml>=6.0",
+    "a2a-sdk>=0.3.20",
     "jinja2>=3.1.0",
     "openai>=2.0.0",
     "fastapi>=0.115.0",
@@ -37,7 +38,7 @@ Issues = "https://github.com/arklexai/arksim/issues"
 
 [project.optional-dependencies]
 azure = [
-    "azure-identity==1.25.1",
+    "azure-identity>=1.20.0",
 ]
 anthropic = [
     "anthropic",
@@ -50,7 +51,7 @@ all = [
 ]
 dev = [
     "pytest",
-    "pytest-asyncio==0.24.0",
+    "pytest-asyncio>=0.24.0",
 ]
 
 [project.scripts]

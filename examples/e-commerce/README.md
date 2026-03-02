@@ -46,7 +46,7 @@ Steps to run:
 
    **2.1 Run the Sample Agent**
 
-   In the `./examples/e-commerce/chat_completions_server` folder, we provide a RAG-based agent implemented with LangGraph in `agent_server.py`. Follow the steps below to start the agent:
+   In the `./examples/e-commerce/chat_completions_server` folder, we provide a RAG-based agent implemented with LangGraph in `agent.py`. Follow the steps below to start the agent:
    - Create a virtual environment (Python 3.11 recommended) and install dependencies:
      1. Create and activate the environment:
         ```bash
@@ -65,11 +65,10 @@ Steps to run:
      export OPENAI_API_KEY=<YOUR_OPENAI_API_KEY>
      ```
 
-   - From the repository root, start the chat completion wrapper. This starts the agent on port 8080:
+   - Start the chat completion wrapper. This starts the agent on port 8080:
 
      ```bash
-     cd ../../../
-     python -m examples.e-commerce.chat_completions_server.chat_completion_wrapper
+     python chat_completion_wrapper.py
      ```
 
    - Verify the servers are running:

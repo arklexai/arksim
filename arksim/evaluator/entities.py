@@ -39,11 +39,11 @@ class EvaluationInput(BaseModel):
         description="Path to the scenario file",
     )
     simulation_file_path: str | None = Field(
-        default="./examples/bank-insurance/results/simulation/simulation.json",
+        default="./simulation.json",
         description="Path to the simulation output file",
     )
     output_dir: str | None = Field(
-        default="./examples/bank-insurance/results/evaluation",
+        default="./evaluation",
         description="Output directory for evaluation results",
     )
     model: str = Field(default=DEFAULT_MODEL, description="LLM model for evaluation")
@@ -120,9 +120,6 @@ class ConvoItem(BaseModel):
     profile: str
     user_goal: str
     turns: int
-
-
-# --- New output entity types ---
 
 
 class TurnEvaluation(BaseModel):

@@ -85,43 +85,32 @@ description: "Get started with Arksim in minutes. This guide walks you through y
         You can also simulate and evaluate conversations programmatically inside your own codebase.
 
         ```python
-        import arksim
-        from arksim.simulation_engine import Simulator, SimulationParams
-        from arksim.config import AgentConfig
-        
-        # Load scenarios (agent test cases)
-        scenarios = Simulator.load_scenarios("examples/path/to/scenario.json")
-        
-        # Load agent configuration
-        agent_config = AgentConfig.load("examples/path/to/agent_config.json")
-        
-        # Initialize simulator
-        engine = Simulator(
-            agent_config=agent_config,
-            scenarios=scenarios,
-            params=SimulationParams(
-                num_convos_per_scenario=30,
-                max_turns=10,
-                num_workers="auto",  # Automatically detects max number of workers
-            ),
-        )
-        
+        from arksim.simulation_engine import run_simulation, SimulationInput
+        from arksim.evaluator import run_evaluation, EvaluationInput
+
         # Run simulation
-        conversations = engine.simulate()
-        
+        simulation = run_simulation(SimulationInput(
+            agent_config_file_path="examples/path/to/agent_config.json",
+            scenario_file_path="examples/path/to/scenario.json",
+            num_conversations_per_scenario=30,
+            max_turns=10,
+            num_workers="auto",
+            output_file_path="./simulation.json",
+        ))
+
         # Evaluate simulated agent conversations
-        evaluation_results = arksim.evaluate(
-            scenarios=scenarios,
-            conversations=conversations,
-            output_dir="./evaluation",  # Evaluation metrics + report output
+        evaluation = run_evaluation(EvaluationInput(
+            simulation_file_path="./simulation.json",
+            scenario_file_path="examples/path/to/scenario.json",
+            output_dir="./evaluation",
             model="gpt-5.1",
-            provider="open-ai",
+            provider="openai",
             num_workers="auto",
             generate_html_report=True,
-        )
-        
-        print("Simulation complete.")
-        print(f"Simulated {len(conversations)} conversations.")
+        ))
+
+        print("Simulation and evaluation complete.")
+        print(f"Simulated {len(simulation.conversations)} conversations.")
         print("Evaluation results saved to ./evaluation")
         ```
       </Tab>

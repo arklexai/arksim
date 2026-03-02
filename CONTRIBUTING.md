@@ -66,9 +66,10 @@ Keep the subject line under 72 characters, use lowercase, imperative mood.
 ## Submitting a Pull Request
 
 1. Make sure all tests pass and linting is clean
-2. Write a clear PR description explaining what changed and why
-3. Link any related issues
-4. Keep PRs focused on a single change
+2. **Use the same format for your PR title** as commit messages (`<component>: <verb> <description>`, max 72 characters). CI enforces this since squash merge uses the PR title as the commit message.
+3. Write a clear PR description explaining what changed and why
+4. Link any related issues
+5. Keep PRs focused on a single change
 
 ## Reporting Issues
 

@@ -1,76 +1,55 @@
 ---
-description: "This guide covers different installation methods for Arksim."
+description: "Install Arksim and get ready to simulate and evaluate your AI agents."
 title: "Installation"
 ---
 
-Choose your preferred installation method to get started with Arksim.
+## Requirements
 
-<Tabs>
-  <Tab title="Binary">
-    The easiest way to get started is with the pre-compiled binary.
+- Python 3.10 or later (up to 3.13)
+- An API key from a supported LLM provider ([OpenAI](https://developers.openai.com/api/docs), [Anthropic](https://platform.claude.com/docs/en/home), [Gemini](https://ai.google.dev/gemini-api/docs/api-key), or Azure OpenAI)
 
-    <Steps>
-      <Step title="Download the latest release">
-        <Tabs>
-          <Tab title="macOS">
-            ```shellscript
-            wget https://static.arklex.ai/simulator/arksim-1.0.0-alpha-macos-arm64.zip
-            ```
-          </Tab>
-          <Tab title="Linux">
-            ```shellscript
-            wget https://static.arklex.ai/simulator/arksim-1.0.0-alpha-linux-x64.zip
-            ```
-          </Tab>
-        </Tabs>
-      </Step>
-      <Step title="Unzip the binary">
-        <Tabs>
-          <Tab title="macOS">
-            ```shellscript
-            unzip arksim-1.0.0-alpha-macos-arm64.zip
-            ```
-          </Tab>
-          <Tab title="Linux">
-            ```shellscript
-            unzip arksim-1.0.0-alpha-linux-x64.zip
-            ```
-          </Tab>
-        </Tabs>
-      </Step>
-      <Step title="Navigate to the working directory">
-        ```shellscript
-        cd arksim-1.0.0-alpha
-        ```
-      </Step>
-    </Steps>
-    <Check>
-      You're all set! Continue to the [Quickstart guide](/quickstart) to run your first evaluation.
-    </Check>
-  </Tab>
-  <Tab title="Docker">
-    Docker provides a consistent environment across all platforms.
+## Install from PyPI
 
-    <Warning>
-      Docker Desktop must be installed and running on your machine.
-    </Warning>
-    <Steps>
-      <Step title="Pull the Docker image">
-        ```shellscript
-        docker pull --platform linux/amd64 \
-        	public.ecr.aws/f1v9v1i4/arklex/arksim:1.0.0-alpha
-        ```
-      </Step>
-      <Step title="Download the example files">
-        Download and unzip the [example folder](https://static.arklex.ai/simulator/arksim-1.0.0-alpha-examples.zip) for demo usage.
+```bash
+pip install arksim
+```
 
-        <Note>
-          Place the downloaded `examples/` folder in your current working directory for easier access.
-        </Note>
-      </Step>
-    </Steps>
-    <Check>
-      You're all set! Continue to the [Quickstart guide](/quickstart) to run your first evaluation.
-    </Check>
-  </Tab>
-</Tabs>
+### Optional provider extras
+
+Arksim uses OpenAI by default. To use other providers, install the corresponding extra:
+
+```bash
+# Azure OpenAI
+pip install arksim[azure]
+
+# Anthropic (Claude)
+pip install arksim[anthropic]
+
+# Google Gemini
+pip install arksim[gemini]
+
+# All providers
+pip install arksim[all]
+```
+
+## Install from source
+
+```bash
+git clone https://github.com/arklexai/arksim.git
+cd arksim
+pip install -e ".[dev]"
+```
+
+This installs in editable mode with test dependencies (`pytest`, `pytest-asyncio`).
+
+## Verify installation
+
+```bash
+arksim --help
+```
+
+You should see the available commands: `simulate`, `evaluate`, `simulate-evaluate`, `show-prompts`, and `ui`.
+
+<Check>
+  You're all set! Continue to the [Quickstart guide](/quickstart) to run your first simulation.
+</Check>
