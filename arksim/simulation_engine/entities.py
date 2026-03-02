@@ -1,8 +1,14 @@
 from __future__ import annotations
 
+import sys
 import uuid
 from datetime import datetime, timezone
-from typing import Any, Literal, Self
+from typing import Any, Literal
+
+if sys.version_info >= (3, 11):
+    from typing import Self
+else:
+    from typing_extensions import Self
 
 from pydantic import BaseModel, Field, ValidationInfo, model_validator
 
