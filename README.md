@@ -1,1 +1,283 @@
-# arksim
+<p align="center">
+  <h1 align="center">Arksim</h1>
+  <p align="center">
+    Open-source framework for simulating and evaluating conversational AI agents
+  </p>
+  <p align="center">
+    <a href="https://pypi.org/project/arksim/"><img alt="PyPI" src="https://img.shields.io/pypi/v/arksim.svg"></a>
+    <a href="https://www.python.org/downloads/"><img alt="Python" src="https://img.shields.io/pypi/pyversions/arksim.svg"></a>
+    <a href="https://github.com/arklexai/arksim/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/badge/license-Apache--2.0-blue.svg"></a>
+    <a href="https://docs.arklex.ai/overview"><img alt="Docs" src="https://img.shields.io/badge/docs-arklex.ai-brightgreen.svg"></a>
+    <a href="https://github.com/arklexai/arksim/stargazers"><img alt="GitHub Stars" src="https://img.shields.io/github/stars/arklexai/arksim.svg?style=social"></a>
+    <a href="https://github.com/arklexai/arksim/issues"><img alt="GitHub Issues" src="https://img.shields.io/github/issues/arklexai/arksim.svg"></a>
+    <a href="https://github.com/arklexai/arksim/pulls"><img alt="PRs Welcome" src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg"></a>
+  </p>
+  <p align="center">
+    <a href="https://docs.arklex.ai/overview">Documentation</a> · <a href="arksim/examples/">Examples</a> · <a href="https://github.com/arklexai/arksim/issues">Report a Bug</a>
+  </p>
+</p>
+
+---
+
+<!-- TODO: Replace with actual 30-second demo recording -->
+<p align="center">
+  <em>Demo video coming soon</em>
+</p>
+
+---
+
+## What is Arksim?
+
+Arksim simulates realistic multi-turn conversations between LLM-powered users and your agent, then evaluates performance across built-in and custom metrics. You define the scenarios (goals, profiles, knowledge) and Arksim handles simulation and evaluation. Works with any agent that exposes a Chat Completions API or A2A protocol endpoint.
+
+```
+┌──────────────┐     ┌──────────────┐     ┌──────────────┐     ┌──────────────┐
+│  Scenarios   │     │  Simulation  │     │  Evaluation  │     │   Reports    │
+│  (goals,     │ --> │  (multi-turn │ --> │  (LLM-as-    │ --> │  (HTML,      │
+│   profiles)  │     │   convos)    │     │   judge)     │     │   JSON)      │
+└──────────────┘     └──────────────┘     └──────────────┘     └──────────────┘
+```
+
+### Why Arksim?
+
+- **Realistic simulations**: LLM-powered users with distinct profiles, goals, and personality traits
+- **Comprehensive evaluation**: 7 built-in metrics covering helpfulness, coherence, faithfulness, goal completion, and more
+- **Custom metrics**: Define your own quantitative and qualitative metrics with full access to conversation context
+- **Error detection**: Automatically categorize agent failures (false information, disobeying requests, repetition) with severity levels
+- **Protocol-agnostic**: Works with Chat Completions API, A2A protocol, or any HTTP endpoint
+- **Multi-provider**: Use OpenAI, Azure OpenAI, Anthropic Claude, or Google Gemini as the evaluation LLM
+- **Parallel execution**: Configurable concurrency for both simulation and evaluation
+- **Visual reports**: Interactive HTML reports with score breakdowns, error analysis, and full conversation viewer
+
+## Quickstart
+
+### Install
+
+```bash
+pip install arksim
+```
+
+For additional LLM providers:
+
+```bash
+pip install arksim[all]        # All providers
+pip install arksim[azure]      # Azure OpenAI only
+pip install arksim[anthropic]  # Anthropic Claude only
+pip install arksim[gemini]     # Google Gemini only
+```
+
+### Set up credentials
+
+```bash
+export OPENAI_API_KEY="your-key"
+```
+
+### Create a config
+
+```yaml
+# config.yaml
+agent_config_file_path: ./agent_config.json
+scenario_file_path: ./scenarios.json
+model: gpt-5.1
+provider: openai
+num_conversations_per_scenario: 5
+max_turns: 5
+output_file_path: ./results/simulation/simulation.json
+output_dir: ./results/evaluation
+generate_html_report: true
+```
+
+### Run
+
+```bash
+# Simulate conversations, then evaluate
+arksim simulate-evaluate config.yaml
+
+# Or run each step separately
+arksim simulate config.yaml
+arksim evaluate config.yaml
+```
+
+### View results
+
+Open the generated HTML report in `./results/evaluation/`, or launch the web UI:
+
+```bash
+arksim ui
+```
+
+## Agent Configuration
+
+Create an `agent_config.json` pointing to your agent. Arksim supports two protocols:
+
+### Chat Completions API
+
+```json
+{
+  "agent_type": "chat_completions",
+  "agent_name": "my-agent",
+  "api_config": {
+    "endpoint": "http://localhost:8080/chat/completions",
+    "headers": {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer ${AGENT_API_KEY}"
+    },
+    "body": {
+      "messages": [
+        { "role": "system", "content": "You are a helpful assistant." }
+      ]
+    }
+  }
+}
+```
+
+### A2A (Agent-to-Agent) Protocol
+
+```json
+{
+  "agent_type": "a2a",
+  "agent_name": "my-agent",
+  "api_config": {
+    "endpoint": "http://localhost:9000/agent"
+  }
+}
+```
+
+Environment variables in headers are resolved at runtime using `${VAR_NAME}` syntax.
+
+## Evaluation Metrics
+
+### Built-in metrics
+
+| Metric | Type | Scale | What it measures |
+|--------|------|-------|------------------|
+| Helpfulness | Quantitative | 1-5 | How effectively the agent addresses user needs |
+| Coherence | Quantitative | 1-5 | Logical flow and consistency of responses |
+| Relevance | Quantitative | 1-5 | How on-topic the agent's responses are |
+| Faithfulness | Quantitative | 1-5 | Accuracy against provided knowledge (penalizes contradictions only) |
+| Verbosity | Quantitative | 1-5 | Whether response length is appropriate |
+| Goal Completion | Quantitative | 0/1 | Whether the user's stated goal was achieved |
+| Agent Behavior Failure | Qualitative | Category | Classifies errors: false information, disobeying requests, repetition, lack of specificity, failure to clarify |
+
+### Custom metrics
+
+Define your own metrics by extending `BaseMetric`:
+
+```python
+from arksim.evaluator.base_metric import BaseMetric, ScoreInput, ScoreResult
+
+class ToneMetric(BaseMetric):
+    def __init__(self):
+        super().__init__(
+            name="tone_appropriateness",
+            score_range=(1, 5),
+            description="Evaluates whether the agent uses an appropriate tone",
+        )
+
+    def score(self, score_input: ScoreInput) -> ScoreResult:
+        # Access: score_input.chat_history, score_input.knowledge,
+        #         score_input.user_goal, score_input.profile
+        return ScoreResult(
+            name=self.name,
+            value=4.0,
+            reason="Agent maintained professional tone throughout",
+        )
+```
+
+Add to your config:
+
+```yaml
+custom_metrics_file_paths:
+  - ./my_metrics.py
+```
+
+See the [bank-insurance example](arksim/examples/bank-insurance/custom_metrics.py) for a full implementation with LLM-as-judge custom metrics.
+
+## Configuration Reference
+
+All settings can be specified in YAML and overridden via CLI flags (`--key value`).
+
+### Simulation settings
+
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `agent_config_file_path` | string | required | Path to agent config JSON |
+| `scenario_file_path` | string | required | Path to scenarios JSON |
+| `model` | string | `gpt-5.1` | LLM model for simulated users |
+| `provider` | string | `openai` | LLM provider: `openai`, `azure`, `claude`, `gemini` |
+| `num_conversations_per_scenario` | int | `5` | Conversations to generate per scenario |
+| `max_turns` | int | `5` | Maximum turns per conversation |
+| `num_workers` | int/string | `auto` | Parallel workers |
+| `output_file_path` | string | `./simulation.json` | Where to save simulation results |
+| `simulated_user_prompt_template` | string | null | Custom Jinja2 template for simulated user prompt |
+
+### Evaluation settings
+
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `simulation_file_path` | string | required | Path to simulation output |
+| `output_dir` | string | required | Directory for evaluation results |
+| `model` | string | `gpt-5.1` | LLM model for evaluation |
+| `provider` | string | `openai` | LLM provider |
+| `metrics_to_run` | list | all metrics | Which metrics to run |
+| `custom_metrics_file_paths` | list | `[]` | Paths to custom metric files |
+| `generate_html_report` | bool | `true` | Generate an HTML report |
+| `score_threshold` | float | null | Fail (exit 1) if any conversation scores below this |
+| `num_workers` | int/string | `auto` | Parallel workers |
+
+## CLI Reference
+
+```
+arksim simulate <config.yaml>           Run agent simulations
+arksim evaluate <config.yaml>           Evaluate simulation results
+arksim simulate-evaluate <config.yaml>  Simulate then evaluate
+arksim show-prompts [--category NAME]   Display evaluation prompts
+arksim ui [--port PORT]                 Launch web UI (default: 8080)
+```
+
+Any config setting can be passed as a CLI flag:
+
+```bash
+arksim simulate config.yaml --max-turns 10 --num-workers 4 --verbose
+arksim evaluate config.yaml --score-threshold 0.7
+```
+
+## Web UI
+
+```bash
+arksim ui
+```
+
+Opens a local web app at `http://localhost:8080` where you can browse config files, run simulations with live log streaming, launch evaluations, and view interactive HTML reports.
+
+> **Note:** Provider credentials (e.g. `OPENAI_API_KEY`) must be set as environment variables before launching.
+
+## Examples
+
+| Example | Description |
+|---------|-------------|
+| [bank-insurance](arksim/examples/bank-insurance/) | Financial services agent with custom compliance metrics, adversarial scenarios, and a Chat Completions server |
+| [e-commerce](arksim/examples/e-commerce/) | E-commerce product recommendation agent with custom metrics |
+| [openclaw](arksim/examples/openclaw/) | Integration with the OpenClaw agent framework |
+
+## Development
+
+```bash
+git clone https://github.com/arklexai/arksim.git
+cd arksim
+pip install -e ".[dev]"
+pytest tests/
+```
+
+Linting and formatting:
+
+```bash
+ruff check .
+ruff format .
+```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+## License
+
+Apache-2.0. See [LICENSE](LICENSE).

@@ -1,0 +1,10 @@
+{
+    "agent_type": "a2a",
+    "agent_name": "bank-insurance",
+    "api_config": {
+        "endpoint": "http://localhost:9999",
+        "headers": {
+            "api-key": "1234567890"
+        }
+    }
+}
