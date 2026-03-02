@@ -9,6 +9,7 @@ updates:
     open-pull-requests-limit: 10
     labels:
       - dependencies
+      - skip-changelog
     commit-message:
       prefix: "deps"
 
@@ -21,5 +22,6 @@ updates:
     labels:
       - dependencies
       - ci
+      - skip-changelog
     commit-message:
       prefix: "ci"
