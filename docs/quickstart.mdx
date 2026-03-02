@@ -8,7 +8,7 @@ description: "Get started with Arksim in minutes. This guide walks you through y
 - Python 3.10–3.13
 - An API key from a supported provider (e.g. [OpenAI](https://developers.openai.com/api/docs), [Anthropic](https://platform.claude.com/docs/en/home), or [Gemini](https://ai.google.dev/gemini-api/docs/api-key))
 
-## Installation
+## Get started
 
 <Steps>
   <Step title="Install Arksim">
@@ -31,7 +31,7 @@ description: "Get started with Arksim in minutes. This guide walks you through y
     ```
   </Step>
   <Step title="Run Simulation & Evaluation">
-    You can simulate conversations with your agent and evaluate them either via the CLI or through a Python script.
+    You can simulate conversations with your agent and evaluate them via the CLI, Python, or the web UI.
 
     <Tabs>
       <Tab title="CLI">
@@ -124,6 +124,19 @@ description: "Get started with Arksim in minutes. This guide walks you through y
         print(f"Simulated {len(conversations)} conversations.")
         print("Evaluation results saved to ./evaluation")
         ```
+      </Tab>
+      <Tab title="UI">
+        Run simulation and evaluation from your browser with the arksim web UI.
+
+        ```bash
+        arksim ui
+        ```
+
+        Your browser opens at [**http://localhost:8080**](http://localhost:8080). 
+
+        <Tip>
+          Set your API key in the environment before starting `arksim ui` (e.g. `OPENAI_API_KEY`).
+        </Tip>
       </Tab>
     </Tabs>
   </Step>
