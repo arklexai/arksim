@@ -5,7 +5,7 @@ description: "A walkthrough of running Arksim against a customer service agent f
 
 ## Overview
 
-This example walks through running Arksim against a customer service agent built for an insurance company. The agent is designed to answer customer questions about insurance products and coverage, including topics like policy details, claims processes, deductibles, and coverage limits.
+This example walks through running Arksim against a customer service agent built for an insurance company (XYZ Insurance, part of XYZ Bank Group). The agent is designed to answer customer questions about insurance products and coverage, including topics like policy details, claims processes, deductibles, and coverage limits.
 
 The example includes two ready-to-run agent implementations you can test against out of the box, and a guide for plugging in your own agent once you're familiar with the setup.
 
@@ -18,7 +18,7 @@ The example includes two ready-to-run agent implementations you can test against
     A lightweight agent that calls the OpenAI API directly. Good for getting started quickly with minimal setup.
   </Card>
   <Card icon="diagram-project" title="Example Agent 2: LangGraph RAG">
-    RAG-based agent with LangGraph, backed by an insurance knowledge base; supports A2A or Chat Completions.
+    RAG-based agent with LangGraph, backed by an insurance knowledge base; supports A2A and Chat Completions.
   </Card>
 </CardGroup>
 
@@ -26,20 +26,19 @@ The example includes two ready-to-run agent implementations you can test against
 
 ## Scenarios
 
-The example ships with a set of pre-built scenarios representing realistic insurance customer interactions. Each scenario defines a simulated user with a distinct persona, goal, and background knowledge drawn from insurance product documentation.
+The example ships with a set of pre-built scenarios in `scenarios.json` representing realistic insurance customer interactions. Each scenario defines a simulated user with a distinct persona, goal, and background knowledge drawn from insurance product documentation in `agent_server/data/`.
 
 Sample goals include:
 
-- Asking detailed questions about car insurance coverage options, limits, and deductibles
-- Finding out whether a home insurance policy covers water damage from a burst pipe
-- Understanding what documents are needed to file an auto insurance claim
-- Comparing leasing vs. purchasing options for a service product
+- Getting information about how home insurance deductibles work, including claim payouts and choosing a deductible
+- Disputing a denied water damage claim (e.g. water heater age exclusion) and seeking a path to appeal or legal options
+- Other feature-specific and claims-related queries grounded in the included knowledge base
 
-Scenarios are located at `./examples/bank-insurance/scenarios/` and can be swapped out or extended to reflect your own use case.
+Scenarios are defined in `scenarios.json` in the example directory and can be edited or extended to reflect your own use case.
 
 ---
 
-## Example Agent 1: OpenAI API
+## Option 1: OpenAI Agent
 
 This agent calls the OpenAI API directly, with no server setup required.
 
@@ -50,50 +49,68 @@ This agent calls the OpenAI API directly, with no server setup required.
     ```
   </Step>
   <Step title="Run simulation and evaluation">
+    From the `arksim/examples/bank-insurance` directory:
+
     ```bash
-    arksim simulate ./examples/bank-insurance/config.yaml
-    arksim evaluate ./examples/bank-insurance/config.yaml
+    arksim simulate-evaluate config.yaml
+    ```
+
+    Or from the repository root, pass the path to the example config:
+
+    ```bash
+    arksim simulate-evaluate arksim/examples/bank-insurance/config.yaml
     ```
   </Step>
 </Steps>
 
 ---
 
-## Example Agent 2: LangGraph RAG Agent
+## Option 2: In-house Agent (LangGraph RAG)
 
 This agent is a RAG-based customer service agent built with LangGraph, backed by an insurance knowledge base. It can be exposed via either the A2A Protocol or a Chat Completions-compatible endpoint.
 
 <Steps>
+  <Step title="Select agent config">
+    In the example directory, use the agent config for your chosen interface. If `agent_config.json` already exists, rename or remove it first.
+
+    - **A2A:** Copy `agent_config_a2a.json` to `agent_config.json`
+    - **Chat Completions:** Copy `agent_config_chat_completions.json` to `agent_config.json`
+
+    Agent configs support environment variable substitution (e.g. `${OPENAI_API_KEY}`).
+  </Step>
   <Step title="Install agent dependencies">
     <Tabs>
       <Tab title="uv">
         ```bash
         uv venv --python 3.11
         source .venv/bin/activate
-        pip install -r ./examples/bank-insurance/agent_server/requirements.txt
+        pip install -r arksim/examples/bank-insurance/agent_server/requirements.txt
         ```
       </Tab>
       <Tab title="conda">
         ```bash
         conda create -n bank_venv python=3.11 -y
         conda activate bank_venv
-        pip install -r ./examples/bank-insurance/agent_server/requirements.txt
+        pip install -r arksim/examples/bank-insurance/agent_server/requirements.txt
         ```
       </Tab>
     </Tabs>
+    Or from inside the example directory: `pip install -r agent_server/requirements.txt`
   </Step>
   <Step title="Start the agent server">
     <Tabs>
       <Tab title="A2A">
-        Exposes an A2A-compatible agent on port `9999`:
+        Exposes an A2A-compatible agent on port `9999`. Run from the repository root:
 
         ```bash
         export OPENAI_API_KEY=<YOUR_OPENAI_API_KEY>
         python -m examples.bank-insurance.agent_server.a2a.server
         ```
+
+        Run from the repository root (or the directory that contains the `examples` package). If your layout differs, use the module path that resolves to `agent_server/a2a/server.py` under the bank-insurance example.
       </Tab>
       <Tab title="Chat Completions">
-        Exposes an OpenAI Chat Completions-compatible endpoint on port `8888` at `/chat/completions`:
+        Exposes an OpenAI Chat Completions-compatible endpoint on port `8080` at `/chat/completions`. Run from the repository root:
 
         ```bash
         export OPENAI_API_KEY=<YOUR_OPENAI_API_KEY>
@@ -105,12 +122,17 @@ This agent is a RAG-based customer service agent built with LangGraph, backed by
     </Tabs>
   </Step>
   <Step title="Run simulation and evaluation">
-    In a new terminal:
+    In a new terminal, from the example directory:
 
     ```bash
     export OPENAI_API_KEY="<YOUR_OPENAI_API_KEY>"
-    arksim simulate ./examples/bank-insurance/config.yaml
-    arksim evaluate ./examples/bank-insurance/config.yaml
+    arksim simulate-evaluate config.yaml
+    ```
+
+    Or from the repository root:
+
+    ```bash
+    arksim simulate-evaluate arksim/examples/bank-insurance/config.yaml
     ```
   </Step>
 </Steps>
@@ -119,12 +141,12 @@ This agent is a RAG-based customer service agent built with LangGraph, backed by
 
 ## Running with Your Own Agent
 
-To test your own backend agent against these scenarios, you have two options depending on your preferred protocol:
+To test your own backend agent against these scenarios:
 
-- **Chat Completions**: follow the `#TODO` comments in `agent_server/chat_completions/server.py` to swap in your own backend logic.
-- **A2A**: implement your own A2A executor in `agent_server/a2a/`.
+- **Chat Completions:** Follow the comments in `agent_server/chat_completions/server.py` to swap in your own backend logic or point to your endpoint.
+- **A2A:** Implement your own A2A executor in `agent_server/a2a/`.
 
-Once your server is running, point `agent_config.json` at your endpoint and run simulation and evaluation as normal.
+Ensure `agent_config.json` points to your endpoint (or use the appropriate pre-made config as a template). Then run simulation and evaluation as above.
 
 <Tip>
   See [Agent Compatibility](/agent_configurations) for a full breakdown of supported protocols and how to configure `agent_config.json`.
@@ -134,49 +156,51 @@ Once your server is running, point `agent_config.json` at your endpoint and run 
 
 ## Configuration
 
+The example uses a single config file for both simulation and evaluation. Key settings:
+
 ```yaml
-# Paths / Files
-agent_setup_dir: ./examples/bank-insurance
-output_dir: ./examples/bank-insurance/results
+# Agent and scenarios (paths relative to config file location)
+agent_config_file_path: ./agent_config.json
+scenario_file_path: ./scenarios.json
 
-# Simulation Settings
-num_conversations: 5
+# Simulation
+num_conversations_per_scenario: 1
 max_turns: 5
-num_workers: auto
+output_file_path: ./results/simulation/simulation.json
 
-# Model
+# Evaluation
+output_dir: ./results/evaluation
+custom_metrics_file_paths:
+  - ./custom_metrics.py
+metrics_to_run:
+  - faithfulness
+  - helpfulness
+  - coherence
+  - relevance
+  - goal_completion
+  - agent_behavior_failure
+generate_html_report: true
+
+# Shared
 model: gpt-5.1
 provider: openai
-
-# Metrics
-metrics_to_run: [
-  faithfulness,
-  helpfulness,
-  coherence,
-  verbosity,
-  relevance,
-  goal_completion,
-  agent_behavior_failure
-]
-custom_metrics_file_paths: []
-
-# Output
-generate_html_report: true
+num_workers: auto
 ```
 
+The config also defines a `simulated_user_prompt_template` (Jinja) that uses `scenario.agent_context`, `scenario.goal`, `scenario.knowledge`, and `simulation.profile` to drive the simulated user.
+
 <Note>
-  `agent_setup_dir` is the root directory for the example. It contains the `agent_config.json`, the insurance knowledge base, and the pre-built scenario file used to drive the simulated users.
+  The example directory contains `agent_config.json` (default OpenAI), `agent_config_a2a.json`, and `agent_config_chat_completions.json`, the insurance knowledge base under `agent_server/data/`, and the scenario file `scenarios.json`.
 </Note>
 
 ---
 
 ## Output
 
-Results are written to `./examples/bank-insurance/results/`:
+Results are written under the example directory:
 
-| File                                     | Contents                                                              |
-| ---------------------------------------- | --------------------------------------------------------------------- |
-| `agent_performance_per_turn.csv`         | Per-turn metric scores, reasoning, and failure labels                 |
-| `agent_performance_per_conversation.csv` | Rolled-up scores and status per conversation                          |
-| `unique_errors.csv`                      | Deduplicated failure patterns with descriptions and occurrence traces |
-| `final_report.html`                      | Interactive report for browsing and sharing results                   |
+| Location                                 | Contents                                                                 |
+| ---------------------------------------- | ------------------------------------------------------------------------ |
+| `./results/simulation/simulation.json`   | Simulated conversations from the simulation step                         |
+| `./results/evaluation/evaluation.json`   | Evaluation results (per-turn and per-conversation scores, unique errors) |
+| `./results/evaluation/final_report.html` | Interactive HTML report for browsing and sharing results                 |
