@@ -15,6 +15,10 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
+      - name: Pre-commit checks
+        run: |
+          pip install pre-commit
+          pre-commit run --all-files
       - name: Lint
         run: |
           pip install ruff
