@@ -14,11 +14,11 @@ The example includes two ready-to-run agent implementations you can test against
 ## Example Agents
 
 <CardGroup cols={2}>
-  <Card icon="bolt" title="Example Agent 1: OpenAI API">
-    A lightweight agent that calls the OpenAI API directly. Good for getting started quickly with minimal setup.
+  <Card icon="bolt" title="Option 1: OpenAI API">
+    A lightweight agent that calls the OpenAI API directly. Quick start with minimal setup; default agent_config.json is preconfigured.
   </Card>
-  <Card icon="diagram-project" title="Example Agent 2: LangGraph RAG">
-    RAG-based agent with LangGraph, backed by an insurance knowledge base; supports A2A and Chat Completions.
+  <Card icon="diagram-project" title="Option 2: LangGraph RAG">
+    RAG-based agent with LangGraph, backed by an insurance knowledge base. Supports A2A or Chat Completions; use agent_config.json when running.
   </Card>
 </CardGroup>
 
@@ -28,11 +28,13 @@ The example includes two ready-to-run agent implementations you can test against
 
 The example ships with a set of pre-built scenarios in `scenarios.json` representing realistic insurance customer interactions. Each scenario defines a simulated user with a distinct persona, goal, and background knowledge drawn from insurance product documentation in `agent_server/data/`.
 
-Sample goals include:
+The scenario goals are:
 
-- Getting information about how home insurance deductibles work, including claim payouts and choosing a deductible
-- Disputing a denied water damage claim (e.g. water heater age exclusion) and seeking a path to appeal or legal options
-- Other feature-specific and claims-related queries grounded in the included knowledge base
+- Learn how home insurance deductibles work, when to file a claim, and how they affect your premium and payout.
+- Get a denied water damage claim (water heater 17 years old; policy excludes tanks 15+) overturned or learn how to fight it, including legal options; push back if the agent only repeats the policy.
+- Renew Basic Form home insurance at the same price; push back if the agent upsells Broad or Comprehensive Form or extra features.
+- Get a clear recommendation and dollar amount for personal condo insurance as a first-time buyer, without lengthy needs questions.
+- Bundle home, two cars, and motorcycle with XYZ and get a specific savings number; resist needs questions or comparisons.
 
 Scenarios are defined in `scenarios.json` in the example directory and can be edited or extended to reflect your own use case.
 
@@ -49,16 +51,11 @@ This agent calls the OpenAI API directly, with no server setup required.
     ```
   </Step>
   <Step title="Run simulation and evaluation">
-    From the `arksim/examples/bank-insurance` directory:
+    Run from the `examples/bank-insurance` directory:
 
     ```bash
+    cd examples/bank-insurance
     arksim simulate-evaluate config.yaml
-    ```
-
-    Or from the repository root, pass the path to the example config:
-
-    ```bash
-    arksim simulate-evaluate arksim/examples/bank-insurance/config.yaml
     ```
   </Step>
 </Steps>
@@ -122,17 +119,12 @@ This agent is a RAG-based customer service agent built with LangGraph, backed by
     </Tabs>
   </Step>
   <Step title="Run simulation and evaluation">
-    In a new terminal, from the example directory:
+    In a new terminal, run from the `examples/bank-insurance` directory:
 
     ```bash
+    cd examples/bank-insurance
     export OPENAI_API_KEY="<YOUR_OPENAI_API_KEY>"
     arksim simulate-evaluate config.yaml
-    ```
-
-    Or from the repository root:
-
-    ```bash
-    arksim simulate-evaluate arksim/examples/bank-insurance/config.yaml
     ```
   </Step>
 </Steps>
