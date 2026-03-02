@@ -5,35 +5,36 @@ description: "A walkthrough of running Arksim against an OpenClaw personal AI as
 
 ## Overview
 
-This example walks through running Arksim against an **OpenClaw** personal AI assistant. OpenClaw is an open-source assistant that can manage tasks, smart home devices, messaging, calendar, and files.
+This example walks through running Arksim against an **OpenClaw** personal AI assistant. OpenClaw is an open-source assistant that runs on your own hardware and can manage tasks, smart home devices, messaging, calendar, and files.
 
-You can use this setup to simulate and evaluate conversations with your own OpenClaw deployment, or adapt it to test any personal assistant agent exposed via a Chat Completions–compatible endpoint.
+You use this setup to simulate and evaluate conversations against your own OpenClaw deployment. The agent is exposed via a Chat Completions-compatible endpoint; the example `agent_config.json` is already configured for the OpenClaw gateway.
 
 ---
 
 ## Prerequisites
 
-Before getting started, make sure you have the following:
+Before getting started:
 
-- **OpenClaw** installed and configured — [openclaw.ai](https://openclaw.ai/)
+- **OpenClaw** installed and configured: [openclaw.ai](https://openclaw.ai/)
 - **OpenClaw gateway** running with the HTTP Chat Completions endpoint enabled
 - **OpenAI API key**: used by Arksim to power the simulated user
-- **OpenClaw gateway token**: for authenticating to your OpenClaw instance
+- **OpenClaw gateway token**: for authenticating to your OpenClaw instance (see `~/.openclaw/openclaw.json` under `gateway.auth.token`)
 
 ---
 
 ## Scenarios
 
-The example ships with pre-built scenarios representing realistic interactions with a personal AI assistant. Each scenario defines a simulated user with a distinct persona, goal, and background knowledge drawn from OpenClaw's capabilities.
+The example ships with pre-built scenarios in `scenarios.json` representing realistic interactions with a personal AI assistant. Each scenario defines a simulated user with a distinct persona, goal, and background knowledge (files, smart home setup, contacts, tasks, etc.).
 
-Sample goals include:
+The scenario goals are:
 
-- Creating and managing tasks and reminders
-- Controlling smart home devices
-- Scheduling and querying calendar events
-- Sending messages and managing files
+- Manage reminders and to-do lists for files and storage (cleanup Downloads, cloud folders, storage alerts, important documents).
+- Control and automate smart home devices and scenes (lights, thermostat, blinds, locks, scenes like Good Morning, Movie Night, Leaving Home, Goodnight).
+- Send and manage messages across WhatsApp, iMessage, Slack, email, and Telegram using contacts and recent conversations.
+- Manage calendar and schedule (e.g. call dentist to confirm appointment, schedule car maintenance, recurring reminders, upcoming tasks).
+- Organize files and documents across local folders and cloud storage (cleanup Downloads, duplicate photos, Trash, important items and shared folders).
 
-Scenarios are located at `<path/to/openclaw>/results/scenario/` and can be swapped out or extended to reflect your own assistant's capabilities.
+Scenarios are defined in `scenarios.json` in the example directory and can be edited or extended to reflect your assistant's capabilities.
 
 ---
 
@@ -68,9 +69,7 @@ Scenarios are located at `<path/to/openclaw>/results/scenario/` and can be swapp
     export OPENCLAW_TOKEN="<YOUR_OPENCLAW_GATEWAY_TOKEN>"
     ```
 
-    <Note>
-      Your gateway token can be found in `~/.openclaw/openclaw.json` under `gateway.auth.token`.
-    </Note>
+    Your gateway token is in `~/.openclaw/openclaw.json` under `gateway.auth.token`.
   </Step>
   <Step title="Verify the OpenClaw connection">
     Before running simulation, confirm the gateway is responding:
@@ -86,16 +85,14 @@ Scenarios are located at `<path/to/openclaw>/results/scenario/` and can be swapp
     You should receive a valid JSON response from the gateway.
   </Step>
   <Step title="Run simulation and evaluation">
-    From your project root:
+    Run from the `examples/openclaw` directory:
 
     ```bash
-    arksim simulate <path/to/openclaw/config_simulate.yaml>
-    arksim evaluate <path/to/openclaw/config_evaluate.yaml>
+    cd examples/openclaw
+    arksim simulate-evaluate config.yaml
     ```
 
-    <Note>
-      The example `agent_config.json` points the simulator at `http://localhost:18789/v1/chat/completions` and uses `${OPENCLAW_TOKEN}` and `x-openclaw-agent-id: main` for authentication.
-    </Note>
+    The example `agent_config.json` points at `http://localhost:18789/v1/chat/completions` and uses `Authorization: Bearer ${OPENCLAW_TOKEN}` and `x-openclaw-agent-id: main`.
   </Step>
 </Steps>
 
@@ -103,87 +100,65 @@ Scenarios are located at `<path/to/openclaw>/results/scenario/` and can be swapp
 
 ## Configuration
 
-This example uses two separate config files, one for simulation and one for evaluation.
-
-**Simulation**
+The example uses a single config file for both simulation and evaluation. Key settings:
 
 ```yaml
-# Directory containing agent_config.json and knowledge.json
-agent_setup_dir: <path/to/openclaw>
+# Agent and scenarios (paths relative to config file location)
+agent_config_file_path: ./agent_config.json
+scenario_file_path: ./scenarios.json
 
-# Directory containing pre-built scenario.json
-input_dir: <path/to/openclaw/results/scenario>
-
-output_dir: <path/to/openclaw/results/conversation>
-
-num_conversations: 5
+# Simulation
+num_conversations_per_scenario: 1
 max_turns: 5
+output_file_path: ./results/simulation/simulation.json
 
-model: gpt-5.1
-provider: openai
-num_workers: auto
-```
-
-**Evaluation**
-
-```yaml
-agent_setup_dir: <path/to/openclaw>
-
-# Directory containing conversations.json from simulation
-input_dir: <path/to/openclaw/results/conversation>
-
-output_dir: <path/to/openclaw/results/evaluation>
-
-metrics_to_run: [
-  faithfulness,
-  helpfulness,
-  coherence,
-  verbosity,
-  relevance,
-  goal_completion,
-  agent_behavior_failure
-]
+# Evaluation
+output_dir: ./results/evaluation
 custom_metrics_file_paths: []
+
+metrics_to_run:
+  - faithfulness
+  - helpfulness
+  - coherence
+  - verbosity
+  - relevance
+  - goal_completion
+  - agent_behavior_failure
 generate_html_report: true
 
+# Shared
 model: gpt-5.1
 provider: openai
 num_workers: auto
 ```
 
+The config also defines a `simulated_user_prompt_template` (Jinja) that uses `scenario.agent_context`, `scenario.goal`, `scenario.knowledge`, and `simulation.profile` to drive the simulated user.
+
 <Note>
-  For evaluation, point `input_dir` at the folder containing `conversations.json` produced by the simulation step.
+  The example directory contains `config.yaml`, `scenarios.json`, and `agent_config.json`. There are no separate simulate or evaluate config files.
 </Note>
 
 ---
 
 ## Output
 
-**Simulation** writes to `<path/to/openclaw/results/conversation>/`:
+Results are written under the example directory:
 
-- `conversations.json`: full transcripts of every simulated conversation
-- `target_goals.json`: the resolved goals used to drive each simulated user
-
-**Evaluation** writes to `<path/to/openclaw/results/evaluation>/`:
-
-| File                                     | Contents                                                              |
-| ---------------------------------------- | --------------------------------------------------------------------- |
-| `agent_performance_per_turn.csv`         | Per-turn metric scores, reasoning, and failure labels                 |
-| `agent_performance_per_conversation.csv` | Rolled-up scores and status per conversation                          |
-| `unique_errors.csv`                      | Deduplicated failure patterns with descriptions and occurrence traces |
-| `final_report.html`                      | Interactive report for browsing and sharing results                   |
+| Location | Contents |
+| -------- | -------- |
+| `./results/simulation/simulation.json` | Simulated conversations from the simulation step |
+| `./results/evaluation/evaluation.json` | Evaluation results (per-turn and per-conversation scores, unique errors) |
+| `./results/evaluation/final_report.html` | Interactive HTML report for browsing and sharing results |
 
 ---
 
 ## Example Files
 
-| File                   | Description                                                                                        |
-| ---------------------- | -------------------------------------------------------------------------------------------------- |
-| `agent_config.json`    | OpenClaw agent config — Chat Completions endpoint, headers, and token.                             |
-| `knowledge.json`       | Knowledge base and capability overview used during simulation and evaluation.                      |
-| `scenarios.json`       | Pre-built scenarios. Ensure this is in the directory set as `input_dir` before running simulation. |
-| `config_simulate.yaml` | Simulation configuration.                                                                          |
-| `config_evaluate.yaml` | Evaluation configuration.                                                                          |
+| File | Description |
+| -------- | -------- |
+| `config.yaml` | Simulate and evaluate configuration (single pipeline). |
+| `scenarios.json` | Pre-built scenarios for the personal assistant. |
+| `agent_config.json` | OpenClaw agent config: Chat Completions endpoint, port 18789, `${OPENCLAW_TOKEN}`, and `x-openclaw-agent-id: main`. |
 
 ---
 
@@ -191,6 +166,9 @@ num_workers: auto
 
 To use this example as a starting point for your own personal assistant:
 
-1. **Knowledge**: add or edit knowledge files in your `data/` folder so scenarios reflect your assistant's actual capabilities.
-2. **Overview**: update `knowledge.json` (e.g. `corporate_overview`, capabilities list) to match your assistant.
-3. **Agent config**: adjust `agent_config.json` if your endpoint, port, or auth headers differ from the OpenClaw defaults.
+1. **Scenarios**: Edit or add scenarios in `scenarios.json` so goals and knowledge reflect your assistant's capabilities.
+2. **Agent config**: If your endpoint, port, or auth headers differ from the OpenClaw defaults, update `agent_config.json` accordingly.
+
+<Tip>
+  See [Agent Compatibility](/agent_configurations) for supported protocols and how to configure `agent_config.json`.
+</Tip>
