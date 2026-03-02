@@ -148,22 +148,82 @@ Ensure `agent_config.json` points to your endpoint (or use the appropriate pre-m
 
 ## Configuration
 
-The example uses a single config file for both simulation and evaluation. Key settings:
+
+The example uses a single config file for both simulation and evaluation. The config matches `examples/bank-insurance/config.yaml`:
 
 ```yaml
-# Agent and scenarios (paths relative to config file location)
+# SIMULATION SETTINGS
+
+# Path to agent api configuration file
 agent_config_file_path: ./agent_config.json
+
+# Path to the scenarios file
 scenario_file_path: ./scenarios.json
 
-# Simulation
+# Number of conversations per scenario to generate
 num_conversations_per_scenario: 1
+
+# Maximum turns per conversation
 max_turns: 5
+
+# Output file path for simulation results
 output_file_path: ./results/simulation/simulation.json
 
-# Evaluation
+# Simulated user system prompt: one Jinja template, rendered per scenario.
+# Variables are fetched from scenario.json (the input file):
+#   - scenario.agent_context: context about the agent
+#   - scenario.goal: the user's goal
+#   - scenario.knowledge: list of knowledge items (optional)
+#   - simulation.profile: the simulated user's profile
+# Single knowledge -> inline in prompt; multiple -> via user message.
+simulated_user_prompt_template: |
+  You are a user interacting with an agent through multiple turns.
+  The agent is supplied by the following conversation context:
+  {{ scenario.agent_context }}
+
+  Your profile is:
+  {{ simulation.profile }}
+
+  You have the following goal when interacting with this agent:
+  {{ scenario.goal }}
+
+  {% if scenario.knowledge and scenario.knowledge|length == 1 %}
+  Here is the content that you might be interested in and might have questions about:
+  {{ scenario.knowledge[0].content }}
+
+  {% elif scenario.knowledge and scenario.knowledge|length > 1 %}
+  You will receive reference knowledge in a user message immediately before each of your replies; use it when relevant to achieve your goal.
+  {% endif %}
+
+  Rules:
+  - Do not give away all the instruction at once. Only provide the information necessary for the current step.
+  - Do not hallucinate information that is not provided in the instruction.
+  - If the instruction goal is satisfied, generate '###STOP###' as a standalone message without anything else.
+  - Do not repeat the exact instruction in the conversation.
+  - Avoid using bullet points or lists.
+  - Keep responses brief and under 50 words.
+  - Do not flip the roles.
+
+  {% if scenario.knowledge and scenario.knowledge|length > 1 %}
+  - Ask only one question per turn.
+  {% endif %}
+
+# EVALUATION SETTINGS
+
+# Output directory for evaluation results
 output_dir: ./results/evaluation
+
+# Provide paths to Python files that define your custom metrics.
+# Custom quantitative metrics should subclass QuantitativeMetric
+# and implement score(); qualitative metrics should subclass
+# QualitativeMetric and implement evaluate().
+# (from arksim.evaluator import QuantitativeMetric, QualitativeMetric)
 custom_metrics_file_paths:
   - ./custom_metrics.py
+
+# Provide the built-in metrics to be run during evaluation.
+# If empty, all built-in metrics run. Custom metrics defined in
+# custom_metrics_file_paths always run regardless of this list.
 metrics_to_run:
   - faithfulness
   - helpfulness
@@ -171,11 +231,27 @@ metrics_to_run:
   - relevance
   - goal_completion
   - agent_behavior_failure
+
+# Generate HTML report
 generate_html_report: true
 
-# Shared
+# Score threshold for per-conversation final scores (0.0 to 1.0)
+# If any conversation's final score is below this threshold,
+# exit with non-zero code.
+# Set to null to disable threshold checking
+score_threshold: null
+
+# SHARED SETTINGS
+
+# LLM model
 model: gpt-5.1
+
+# LLM provider
 provider: openai
+
+# Number of workers for parallel processing. "auto" uses all
+# available threads; on large runs this can trigger LLM rate
+# limits — set an explicit integer to cap concurrency.
 num_workers: auto
 ```
 
