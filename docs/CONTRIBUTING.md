@@ -3,6 +3,8 @@ title: "Contributing"
 description: "How to contribute to Arksim: bugs, features, pull requests, and code style."
 ---
 
+### Contributing
+
 ## Getting Started
 
 - **Local development:** Follow the Developer Install section in the README to set up a Python 3.10–3.13 environment and install Arksim in editable mode.
