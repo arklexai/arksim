@@ -7,7 +7,7 @@
                 "content": "Hello, I need help with your product pricing."
             },
             {
-                "role": "assistant", 
+                "role": "assistant",
                 "content": ""
             }
         ],
@@ -60,7 +60,7 @@
                 "content": ""
             },
             {
-                "role": "user", 
+                "role": "user",
                 "content": "Can you help me with that?"
             },
             {

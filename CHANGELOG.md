@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- Add your changes here under the appropriate heading. -->
 <!-- Use: Added, Changed, Deprecated, Removed, Fixed, Security -->
 
+### Fixed
+
+- Trailing whitespace and missing EOF newlines across 81 files (docs, examples, tests, source)
+
 ### Changed
 
 - CI restructured: separate Lint job, test matrix on Python 3.10 through 3.13, PR checks (title, description, changelog) in one job
