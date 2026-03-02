@@ -12,7 +12,7 @@ If you discover a security vulnerability in Arksim, please report it responsibly
 
 **Do not open a public issue.**
 
-Instead, email **security@arklex.ai** with:
+Instead, email **support@arklex.ai** with:
 
 - A description of the vulnerability
 - Steps to reproduce
