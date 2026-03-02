@@ -78,9 +78,7 @@ def browse_directory(
     ]
 
     parent_path = resolved.parent
-    if parent_path != resolved and (
-        parent_path == root or root in parent_path.parents
-    ):
+    if parent_path != resolved and (parent_path == root or root in parent_path.parents):
         parent = str(parent_path)
     else:
         parent = None

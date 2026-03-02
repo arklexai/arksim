@@ -65,8 +65,7 @@ class SimulationInput(BaseModel):
         skip = info.context and info.context.get("skip_input_dir_validation")
         if not skip and not self.agent_config and not self.agent_config_file_path:
             raise ValueError(
-                "Either inline agent_config or "
-                "agent_config_file_path must be provided."
+                "Either inline agent_config or agent_config_file_path must be provided."
             )
 
         return self

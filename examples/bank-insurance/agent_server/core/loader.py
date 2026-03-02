@@ -8,6 +8,7 @@ ensuring consistent processing and storage of loaded content.
 """
 
 import base64
+import contextlib
 import json
 import logging
 import os
@@ -220,7 +221,9 @@ class Loader:
             successful_docs = [doc for doc in docs if not doc.is_error]
 
         if len(successful_docs) == 0:
-            logger.warning("All web crawling failed, creating mock content from URLs...")
+            logger.warning(
+                "All web crawling failed, creating mock content from URLs..."
+            )
             docs = self._create_mock_content_from_urls(url_objects)
             successful_docs = [doc for doc in docs if not doc.is_error]
 
@@ -277,7 +280,9 @@ class Loader:
         except Exception as e:
             logger.error(f"Failed to install ChromeDriver: {e}")
             return [
-                self._create_error_doc(url_obj, f"ChromeDriver installation failed: {e}")
+                self._create_error_doc(
+                    url_obj, f"ChromeDriver installation failed: {e}"
+                )
                 for url_obj in url_objects
             ]
 
@@ -301,7 +306,9 @@ class Loader:
                     time.sleep(3)
 
                     if time.time() - url_start_time > max_time_per_url:
-                        logger.warning(f"URL {url_obj.source} taking too long, skipping")
+                        logger.warning(
+                            f"URL {url_obj.source} taking too long, skipping"
+                        )
                         raise Exception("URL load timeout")
 
                     html = driver.page_source
@@ -341,10 +348,8 @@ class Loader:
 
                 except Exception as err:
                     if driver:
-                        try:
+                        with contextlib.suppress(Exception):
                             driver.quit()
-                        except Exception:
-                            pass
 
                     if retry_attempt == max_retries - 1:
                         error_msg = str(err)
@@ -357,9 +362,13 @@ class Loader:
                             "timeout",
                         ]
                         if any(e in error_msg.lower() for e in expected_errors):
-                            logger.debug(f"Expected error crawling {url_obj.source}: {error_msg}")
+                            logger.debug(
+                                f"Expected error crawling {url_obj.source}: {error_msg}"
+                            )
                         else:
-                            logger.error(f"Error crawling {url_obj.source}: {error_msg}")
+                            logger.error(
+                                f"Error crawling {url_obj.source}: {error_msg}"
+                            )
                         docs.append(self._create_error_doc(url_obj, str(err)))
                         failed_crawls += 1
                     else:
@@ -466,7 +475,11 @@ class Loader:
                 content = f"Resources and information for {domain}. This page provides additional materials, updates, news, and educational content related to the company's products and services."
             elif "solutions" in url.lower() or "products" in url.lower():
                 content = f"Solutions and products offered by {domain}. This page showcases the company's offerings and services."
-            elif "faq" in url.lower() or "help" in url.lower() or "support" in url.lower():
+            elif (
+                "faq" in url.lower()
+                or "help" in url.lower()
+                or "support" in url.lower()
+            ):
                 content = f"Help and support for {domain}. This page answers frequently asked questions and provides customer support resources."
             else:
                 content = f"Welcome to {domain}. This is the {page_type} page providing information about the company's products and services."
@@ -537,7 +550,9 @@ class Loader:
                     urls_to_visit.extend(new_urls)
                     urls_to_visit = list(set(urls_to_visit))
                     if new_urls:
-                        logger.info(f"Found {len(new_urls)} new URLs from {current_url}")
+                        logger.info(
+                            f"Found {len(new_urls)} new URLs from {current_url}"
+                        )
                 except Exception as e:
                     logger.error(f"Error discovering URLs from {current_url}: {e}")
                     continue
@@ -573,7 +588,9 @@ class Loader:
                         if self._check_url(full_url, base_url):
                             new_urls.append(full_url)
                     except Exception as err:
-                        logger.error(f"Fail to process sub-url {link.get('href')}: {err}")
+                        logger.error(
+                            f"Fail to process sub-url {link.get('href')}: {err}"
+                        )
             else:
                 logger.error(
                     f"Failed to retrieve page {curr_url}, status code: {response.status_code}"
@@ -709,15 +726,11 @@ class Loader:
                 )
 
             elif file_type == "pdf":
-                logger.info(
-                    "MISTRAL_API_KEY not set; using pypdf for PDF extraction."
-                )
+                logger.info("MISTRAL_API_KEY not set; using pypdf for PDF extraction.")
                 from pypdf import PdfReader
 
                 reader = PdfReader(str(file_path))
-                doc_text = "\n".join(
-                    page.extract_text() or "" for page in reader.pages
-                )
+                doc_text = "\n".join(page.extract_text() or "" for page in reader.pages)
 
             elif file_type in ("doc", "docx"):
                 from docx import Document as DocxDocument
@@ -728,7 +741,9 @@ class Loader:
             elif file_type in ("xlsx", "xls"):
                 import openpyxl
 
-                wb = openpyxl.load_workbook(str(file_path), read_only=True, data_only=True)
+                wb = openpyxl.load_workbook(
+                    str(file_path), read_only=True, data_only=True
+                )
                 rows: list[str] = []
                 for ws in wb.worksheets:
                     for row in ws.iter_rows(values_only=True):
@@ -807,9 +822,7 @@ class Loader:
         docs: list[CrawledObject] = []
         for doc_obj in doc_objs:
             if doc_obj.is_error or doc_obj.content is None:
-                logger.debug(
-                    f"Skipping {doc_obj.source}: error or no content"
-                )
+                logger.debug(f"Skipping {doc_obj.source}: error or no content")
                 continue
             if doc_obj.is_chunk:
                 logger.debug(f"Skipping {doc_obj.source}: already chunked")
