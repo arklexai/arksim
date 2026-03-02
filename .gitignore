@@ -8,6 +8,10 @@ dist/
 build/
 *.whl
 
+# Environment variables
+.env
+.env.*
+
 # Virtual environments
 .venv/
 venv/
