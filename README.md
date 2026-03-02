@@ -14,7 +14,7 @@
     <a href="https://github.com/arklexai/arksim/pulls"><img alt="PRs Welcome" src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg"></a>
   </p>
   <p align="center">
-    <a href="https://docs.arklex.ai/overview">Documentation</a> · <a href="arksim/examples/">Examples</a> · <a href="https://github.com/arklexai/arksim/issues">Report a Bug</a>
+    <a href="https://docs.arklex.ai/overview">Documentation</a> · <a href="examples/">Examples</a> · <a href="https://github.com/arklexai/arksim/issues">Report a Bug</a>
   </p>
 </p>
 
@@ -31,13 +31,9 @@
 
 Arksim simulates realistic multi-turn conversations between LLM-powered users and your agent, then evaluates performance across built-in and custom metrics. You define the scenarios (goals, profiles, knowledge) and Arksim handles simulation and evaluation. Works with any agent that exposes a Chat Completions API or A2A protocol endpoint.
 
-```
-┌──────────────┐     ┌──────────────┐     ┌──────────────┐     ┌──────────────┐
-│  Scenarios   │     │  Simulation  │     │  Evaluation  │     │   Reports    │
-│  (goals,     │ --> │  (multi-turn │ --> │  (LLM-as-    │ --> │  (HTML,      │
-│   profiles)  │     │   convos)    │     │   judge)     │     │   JSON)      │
-└──────────────┘     └──────────────┘     └──────────────┘     └──────────────┘
-```
+<p align="center">
+  <img src="docs/assets/arksim-flow.svg" alt="Arksim flow: Scenarios → Simulation → Evaluation → Reports" width="100%">
+</p>
 
 ### Why Arksim?
 
@@ -162,26 +158,48 @@ Environment variables in headers are resolved at runtime using `${VAR_NAME}` syn
 
 ### Custom metrics
 
-Define your own metrics by extending `BaseMetric`:
+Define quantitative metrics (numeric scores) by subclassing `QuantitativeMetric`:
 
 ```python
-from arksim.evaluator.base_metric import BaseMetric, ScoreInput, ScoreResult
+from arksim.evaluator import QuantitativeMetric, QuantResult, ScoreInput
 
-class ToneMetric(BaseMetric):
+class ToneMetric(QuantitativeMetric):
     def __init__(self):
         super().__init__(
             name="tone_appropriateness",
-            score_range=(1, 5),
+            score_range=(0, 5),
             description="Evaluates whether the agent uses an appropriate tone",
         )
 
-    def score(self, score_input: ScoreInput) -> ScoreResult:
+    def score(self, score_input: ScoreInput) -> QuantResult:
         # Access: score_input.chat_history, score_input.knowledge,
         #         score_input.user_goal, score_input.profile
-        return ScoreResult(
+        return QuantResult(
             name=self.name,
             value=4.0,
             reason="Agent maintained professional tone throughout",
+        )
+```
+
+Define qualitative metrics (categorical labels) by subclassing `QualitativeMetric`:
+
+```python
+from arksim.evaluator import QualitativeMetric, QualResult, ScoreInput
+
+class SafetyCheckMetric(QualitativeMetric):
+    def __init__(self):
+        super().__init__(
+            name="safety_check",
+            description="Flags whether the agent produced unsafe content",
+        )
+
+    def evaluate(self, score_input: ScoreInput) -> QualResult:
+        # Access: score_input.chat_history, score_input.knowledge,
+        #         score_input.user_goal, score_input.profile
+        return QualResult(
+            name=self.name,
+            value="safe",  # categorical label
+            reason="No unsafe content detected",
         )
 ```
 
@@ -192,7 +210,7 @@ custom_metrics_file_paths:
   - ./my_metrics.py
 ```
 
-See the [bank-insurance example](arksim/examples/bank-insurance/custom_metrics.py) for a full implementation with LLM-as-judge custom metrics.
+See the [bank-insurance example](examples/bank-insurance/custom_metrics.py) for a full implementation with LLM-as-judge custom metrics.
 
 ## Configuration Reference
 
@@ -257,9 +275,9 @@ Opens a local web app at `http://localhost:8080` where you can browse config fil
 
 | Example | Description |
 |---------|-------------|
-| [bank-insurance](arksim/examples/bank-insurance/) | Financial services agent with custom compliance metrics, adversarial scenarios, and a Chat Completions server |
-| [e-commerce](arksim/examples/e-commerce/) | E-commerce product recommendation agent with custom metrics |
-| [openclaw](arksim/examples/openclaw/) | Integration with the OpenClaw agent framework |
+| [bank-insurance](examples/bank-insurance/) | Financial services agent with custom compliance metrics, adversarial scenarios, and a Chat Completions server |
+| [e-commerce](examples/e-commerce/) | E-commerce product recommendation agent with custom metrics |
+| [openclaw](examples/openclaw/) | Integration with the OpenClaw agent framework |
 
 ## Development
 
