@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- Add your changes here under the appropriate heading. -->
 <!-- Use: Added, Changed, Deprecated, Removed, Fixed, Security -->
 
+### Changed
+
+- CI reduced from 7 GitHub Actions jobs to 3 per PR (Python 3.10, 3.13, PR checks)
+
 ### Added
 
 - Dependabot for automated pip and GitHub Actions dependency updates
