@@ -53,6 +53,11 @@
       {
         "label": "Support",
         "href": "mailto:support@arklex.ai"
+      },
+      {
+        "label": "",
+        "href": "https://github.com/arklexai/arksim",
+        "icon": "github"
       }
     ],
     "primary": {
@@ -87,7 +92,8 @@
   "footer": {
     "socials": {
       "linkedin": "https://www.linkedin.com/company/arklex",
-      "discord": "https://discord.gg/YNkdqAQjzA"
+      "discord": "https://discord.gg/YNkdqAQjzA",
+      "github": "https://github.com/arklexai/arksim"
     }
   },
   "icons": {
