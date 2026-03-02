@@ -7,7 +7,7 @@ description: "A walkthrough of running Arksim against an OpenClaw personal AI as
 
 This example walks through running Arksim against an **OpenClaw** personal AI assistant. OpenClaw is an open-source assistant that runs on your own hardware and can manage tasks, smart home devices, messaging, calendar, and files.
 
-You use this setup to simulate and evaluate conversations against your own OpenClaw deployment. The agent is exposed via a Chat Completions-compatible endpoint; the example `agent_config.json` is already configured for the OpenClaw gateway.
+You use this setup to simulate and evaluate conversations against your own OpenClaw deployment. The agent is exposed via a Chat Completions-compatible endpoint; the example `config.yaml` is already configured for the OpenClaw gateway.
 
 ---
 
@@ -92,7 +92,7 @@ Scenarios are defined in `scenarios.json` in the example directory and can be ed
     arksim simulate-evaluate config.yaml
     ```
 
-    The example `agent_config.json` points at `http://localhost:18789/v1/chat/completions` and uses `Authorization: Bearer ${OPENCLAW_TOKEN}` and `x-openclaw-agent-id: main`.
+    The `config.yaml` has the `agent_config` pointed at `http://localhost:18789/v1/chat/completions` with `Authorization: Bearer ${OPENCLAW_TOKEN}` and `x-openclaw-agent-id: main`.
   </Step>
 </Steps>
 
@@ -100,11 +100,24 @@ Scenarios are defined in `scenarios.json` in the example directory and can be ed
 
 ## Configuration
 
-The example uses a single config file for both simulation and evaluation. Key settings:
+The example uses a single config file for both simulation and evaluation. Agent configuration is specified inline under the `agent_config` key:
 
 ```yaml
-# Agent and scenarios (paths relative to config file location)
-agent_config_file_path: ./agent_config.json
+agent_config:
+  agent_type: chat_completions
+  agent_name: openclaw
+  api_config:
+    endpoint: http://localhost:18789/v1/chat/completions
+    headers:
+      Content-Type: application/json
+      Authorization: "Bearer ${OPENCLAW_TOKEN}"
+      x-openclaw-agent-id: main
+    body:
+      model: openclaw
+      messages:
+        - role: system
+          content: "You are a helpful personal assistant."
+
 scenario_file_path: ./scenarios.json
 
 # Simulation
@@ -135,7 +148,7 @@ num_workers: auto
 The config also defines a `simulated_user_prompt_template` (Jinja) that uses `scenario.agent_context`, `scenario.goal`, `scenario.knowledge`, and `simulation.profile` to drive the simulated user.
 
 <Note>
-  The example directory contains `config.yaml`, `scenarios.json`, and `agent_config.json`. There are no separate simulate or evaluate config files.
+  The example directory contains `config.yaml` and `scenarios.json`. There are no separate simulate or evaluate config files.
 </Note>
 
 ---
@@ -156,9 +169,8 @@ Results are written under the example directory:
 
 | File | Description |
 | -------- | -------- |
-| `config.yaml` | Simulate and evaluate configuration (single pipeline). |
+| `config.yaml` | Simulate and evaluate configuration with inline OpenClaw agent config. |
 | `scenarios.json` | Pre-built scenarios for the personal assistant. |
-| `agent_config.json` | OpenClaw agent config: Chat Completions endpoint, port 18789, `${OPENCLAW_TOKEN}`, and `x-openclaw-agent-id: main`. |
 
 ---
 
@@ -167,8 +179,8 @@ Results are written under the example directory:
 To use this example as a starting point for your own personal assistant:
 
 1. **Scenarios**: Edit or add scenarios in `scenarios.json` so goals and knowledge reflect your assistant's capabilities.
-2. **Agent config**: If your endpoint, port, or auth headers differ from the OpenClaw defaults, update `agent_config.json` accordingly.
+2. **Agent config**: If your endpoint, port, or auth headers differ from the OpenClaw defaults, update the `agent_config` section in `config.yaml` accordingly.
 
 <Tip>
-  See [Agent Compatibility](/agent_configurations) for supported protocols and how to configure `agent_config.json`.
+  See [Agent Compatibility](/agent_configurations) for supported protocols and how to configure agent connections.
 </Tip>

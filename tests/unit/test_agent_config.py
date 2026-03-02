@@ -168,7 +168,7 @@ class TestAgentConfig:
             AgentConfig(
                 agent_type="unsupported",
                 agent_name="test",
-                agent_capabilities=[],
+
                 api_config={},
             )
 
@@ -183,7 +183,7 @@ class TestAgentConfig:
         config_data = {
             "agent_type": "a2a",
             "agent_name": "test",
-            "agent_capabilities": [],
+
             "api_config": {
                 "endpoint": "https://api.example.com/agent",
             },

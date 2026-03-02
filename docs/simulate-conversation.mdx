@@ -22,7 +22,7 @@ Before running a simulation, you need three things in place:
 | Input            | Description                                                                                                                                       |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Scenarios**    | A `scenario.json` file defining user attributes, goals, knowledge, and scenario metadata. [Learn how to write scenarios →](/build-scenario)       |
-| **Agent config** | `agent_config.json` defines how Arksim connects to your agent and which protocol to use. See [Agent configurations](/agent_configurations).       |
+| **Agent config** | The `agent_config` section in your config YAML defines how Arksim connects to your agent and which protocol to use. See [Agent configurations](/agent_configurations). |
 | **Config file**  | `config.yaml` controlling simulation parameters such as number of conversations, max turns, workers, and model settings.                          |
 
 ---
@@ -30,8 +30,22 @@ Before running a simulation, you need three things in place:
 ## Configuration
 
 ```yaml
-# Agent and scenario inputs
-agent_config_file_path: ./agent_config.json
+# Agent configuration
+agent_config:
+  agent_type: chat_completions
+  agent_name: my-agent
+  api_config:
+    endpoint: https://api.openai.com/v1/chat/completions
+    headers:
+      Content-Type: application/json
+      Authorization: "Bearer ${OPENAI_API_KEY}"
+    body:
+      model: gpt-5.1
+      messages:
+        - role: system
+          content: "You are a helpful assistant."
+
+# Scenario input
 scenario_file_path: ./scenarios.json
 
 # Simulation parameters
@@ -65,7 +79,7 @@ Arksim supports two agent protocols out of the box:
 | [**Chat Completions**](https://developers.openai.com/api/reference/resources/chat/) | Any agent that accepts OpenAI-compatible requests (OpenAI, Azure OpenAI, or a custom wrapper) |
 | [**A2A**](https://a2a-protocol.org/latest/)                                         | Agents exposed via the Agent-to-Agent protocol                                                |
 
-Your `agent_config.json` specifies which protocol to use and how to connect.
+The `agent_config` section in your config YAML specifies which protocol to use and how to connect.
 
 ---
 
@@ -73,10 +87,23 @@ Your `agent_config.json` specifies which protocol to use and how to connect.
 
 <Steps>
   <Step title="Set up your config file">
-    Create a `config.yaml` file with your simulation parameters:
+    Create a `config.yaml` file with your agent config and simulation parameters:
 
     ```yaml
-    agent_config_file_path: ./agent_config.json
+    agent_config:
+      agent_type: chat_completions
+      agent_name: my-agent
+      api_config:
+        endpoint: https://api.openai.com/v1/chat/completions
+        headers:
+          Content-Type: application/json
+          Authorization: "Bearer ${OPENAI_API_KEY}"
+        body:
+          model: gpt-5.1
+          messages:
+            - role: system
+              content: "You are a helpful assistant."
+
     scenario_file_path: ./scenarios.json
     num_conversations_per_scenario: 5
     max_turns: 5
@@ -104,9 +131,28 @@ Your `agent_config.json` specifies which protocol to use and how to connect.
       <Tab title="Python">
         ```python
         from arksim.simulation_engine import run_simulation, SimulationInput
+        from arksim.config import AgentConfig
+
+        agent_config = AgentConfig(
+            agent_type="chat_completions",
+            agent_name="my-agent",
+            api_config={
+                "endpoint": "https://api.openai.com/v1/chat/completions",
+                "headers": {
+                    "Content-Type": "application/json",
+                    "Authorization": "Bearer ${OPENAI_API_KEY}",
+                },
+                "body": {
+                    "model": "gpt-5.1",
+                    "messages": [
+                        {"role": "system", "content": "You are a helpful assistant."}
+                    ],
+                },
+            },
+        )
 
         simulation = run_simulation(SimulationInput(
-            agent_config_file_path="agent_config.json",
+            agent_config=agent_config,
             scenario_file_path="scenarios.json",
             num_conversations_per_scenario=30,
             max_turns=10,
