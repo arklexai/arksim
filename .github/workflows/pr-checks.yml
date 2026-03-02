@@ -1,0 +1,81 @@
+name: PR checks
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+    branches: [main]
+
+jobs:
+  title:
+    name: PR title
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate PR title format
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = context.payload.pull_request.title;
+
+            if (title.length > 72) {
+              core.setFailed(
+                `PR title is ${title.length} characters (max 72).\n` +
+                `Title: "${title}"`
+              );
+              return;
+            }
+
+            // Format: <component>: <verb> <description>
+            const pattern = /^[a-z][a-z0-9_-]*: [a-z]+ .+$/;
+            if (!pattern.test(title)) {
+              core.setFailed(
+                `PR title does not match the required format.\n\n` +
+                `Expected: <component>: <verb> <description>\n` +
+                `  - component: lowercase, may contain digits, hyphens, underscores\n` +
+                `  - verb: lowercase imperative (add, fix, update, remove, ...)\n` +
+                `  - description: free text\n\n` +
+                `Examples:\n` +
+                `  arksim: add retry logic to evaluator\n` +
+                `  simulator: fix config loading for empty fields\n` +
+                `  ci: update python version in workflow\n\n` +
+                `Got: "${title}"`
+              );
+            }
+
+  body:
+    name: PR description
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate PR description has content
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = context.payload.pull_request.body || '';
+
+            // Strip HTML comments
+            let cleaned = body.replace(/<!--[\s\S]*?-->/g, '');
+
+            // Strip markdown headers (lines starting with #)
+            cleaned = cleaned.replace(/^#+\s.*$/gm, '');
+
+            // Strip empty checklist items (unchecked boxes with no real text)
+            cleaned = cleaned.replace(/^- \[ \]\s*$/gm, '');
+
+            // Strip template checklist items that are just tool commands
+            cleaned = cleaned.replace(/^- \[ \] `[^`]+`\s*(passes)?\s*$/gm, '');
+
+            // Strip blank "Closes #" lines
+            cleaned = cleaned.replace(/^Closes\s+#\s*$/gm, '');
+
+            // Strip lone list dashes (empty bullet points)
+            cleaned = cleaned.replace(/^-\s*$/gm, '');
+
+            // Collapse whitespace
+            cleaned = cleaned.replace(/\s+/g, ' ').trim();
+
+            if (cleaned.length < 20) {
+              core.setFailed(
+                `PR description is too short (${cleaned.length} characters of real content, minimum 20).\n\n` +
+                `Please fill out the PR template with a meaningful summary and description.\n` +
+                `Template headers, comments, and empty checkboxes do not count.`
+              );
+            }
