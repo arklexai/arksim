@@ -22,7 +22,7 @@ from starlette.middleware.authentication import AuthenticationMiddleware
 from starlette.requests import HTTPConnection
 
 from .agent_executor import (
-    BankInsuranceAgentExecutor,  # type: ignore[import-untyped]
+    BankInsuranceAgentExecutor,
 )
 
 API_KEY = os.environ.get("A2A_API_KEY", "")
@@ -70,7 +70,7 @@ if __name__ == "__main__":
             "A RAG-powered Insurance and banking customer service agent that "
             "provides concise, accurate answers based on internal documentation."
         ),
-        url="http://localhost:9999/",
+        url=os.getenv("A2A_SERVER_URL", "http://localhost:9999/"),
         version="1.0.0",
         default_input_modes=["text"],
         default_output_modes=["text"],

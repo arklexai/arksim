@@ -3,7 +3,7 @@ import os
 from fastapi import FastAPI, Header, HTTPException
 from pydantic import BaseModel
 
-from .agent import Agent
+from ..core.agent import Agent
 
 # =============================================================================
 # USING YOUR OWN AGENT ENDPOINT

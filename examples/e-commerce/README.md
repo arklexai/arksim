@@ -42,11 +42,11 @@ Steps to run:
 
 2. Start the agent:
 
-   The user simulator expects agent responses in the Chat Completions format. You can either use the sample agent provided in the `./examples/e-commerce/chat_completions_server` folder, or integrate your own agent.
+   The user simulator expects agent responses in the Chat Completions format. You can either use the sample agent provided in the `./examples/e-commerce/agent_server` folder, or integrate your own agent.
 
    **2.1 Run the Sample Agent**
 
-   In the `./examples/e-commerce/chat_completions_server` folder, we provide a RAG-based agent implemented with LangGraph in `agent.py`. Follow the steps below to start the agent:
+   In the `./examples/e-commerce/chat_completions_server` folder, we provide a RAG-based agent implemented with OpenAI Agents SDK. Follow the steps below to start the agent:
    - Create a virtual environment (Python 3.11 recommended) and install dependencies:
      1. Create and activate the environment:
         ```bash
@@ -55,7 +55,7 @@ Steps to run:
         ```
      2. Navigate to the sample agent directory and install requirements:
         ```bash
-        cd examples/e-commerce/chat_completions_server
+        cd examples/e-commerce/agent_server
         pip install -r requirements.txt
         ```
 
@@ -65,10 +65,11 @@ Steps to run:
      export OPENAI_API_KEY=<YOUR_OPENAI_API_KEY>
      ```
 
-   - Start the chat completion wrapper. This starts the agent on port 8080:
+   - From the repository root, start the chat completions server. This starts the agent on port 8080:
 
      ```bash
-     python chat_completion_wrapper.py
+     cd ../../../
+     python -m examples.e-commerce.agent_server.chat_completions.server
      ```
 
    - Verify the servers are running:
@@ -81,10 +82,10 @@ Steps to run:
      ```
 
    **2.2 Your own agent**
-   - If you have your own agent, wrap your agent in OPENAI chat completion request and response format. You can follow the `#TODO` comments in `chat_completion_wrapper.py` to use it.
-   - Then, from the repository root, start the chat completion wrapper:
+   - If you have your own agent, wrap your agent in OPENAI chat completion request and response format. You can follow the `#TODO` comments in `agent_server/chat_completions/server.py` to use it.
+   - Then, from the repository root, start the chat completions server:
      ```bash
-     python -m examples.e-commerce.chat_completions_server.chat_completion_wrapper
+     python -m examples.e-commerce.agent_server.chat_completions.server
      ```
 
 3. Review `config.yaml` for this example.
