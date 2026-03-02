@@ -37,6 +37,11 @@ htmlcov/
 .DS_Store
 Thumbs.db
 
+# Index and vector store files
+index/
+*.pkl
+*.faiss
+
 # Simulation/evaluation outputs
 conversation*/
 evaluation*/

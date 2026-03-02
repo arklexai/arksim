@@ -3,13 +3,13 @@ import os
 from fastapi import FastAPI, Header, HTTPException
 from pydantic import BaseModel
 
-from ..agent_core import Agent  # noqa: TID252
+from ..core.agent import Agent  # noqa: TID252
 
 # =============================================================================
 # USING YOUR OWN AGENT ENDPOINT
 # =============================================================================
 #
-# This example uses a LangGraph-based agent defined in agent.py. To connect
+# To connect
 # your own agent running at an external endpoint instead:
 #
 # 1. Remove the `from .agent import Agent` import above
@@ -17,7 +17,7 @@ from ..agent_core import Agent  # noqa: TID252
 # 3. Replace the code between --- AGENT CHAT LOGIC STARTS HERE --- and
 #    --- AGENT CHAT LOGIC ENDS HERE --- with:
 #
-#    AGENT_ENDPOINT = "<YOUR_AGENT_ENDPOINT>"  # e.g., "http://localhost:8080/chat"
+#    AGENT_ENDPOINT = "<YOUR_AGENT_ENDPOINT>"  # e.g., "http://localhost:8888/chat"
 #
 #    payload = {
 #        "id": chat_id,
@@ -40,11 +40,10 @@ from ..agent_core import Agent  # noqa: TID252
 # Note: Adjust the payload structure and response parsing to match your agent's API.
 # =============================================================================
 
-MY_API_KEY = os.getenv("MY_API_KEY", "")
+AGENT_API_KEY = os.environ.get("AGENT_API_KEY", "")
 app = FastAPI(title="Chat Completion Wrapper")
 
 
-# OpenAI request body
 class ChatCompletionRequestMessage(BaseModel):
     role: str
     content: str
@@ -52,7 +51,6 @@ class ChatCompletionRequestMessage(BaseModel):
 
 class ChatCompletionRequest(BaseModel):
     messages: list[ChatCompletionRequestMessage]
-    metadata: dict | None = None
 
 
 class ChatCompletionResponse(BaseModel):
@@ -64,28 +62,34 @@ _agent_cache: dict[str, Agent] = {}
 
 
 @app.post("/chat/completions")
-async def chat_completions(  # noqa: ANN201
+async def chat_completions(
     request: ChatCompletionRequest, authorization: str | None = Header(None)
-):
+) -> ChatCompletionResponse:
     # Authorization Check
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Missing Bearer token")
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Missing Authorization header")
 
-    token = authorization.split(" ")[1]
-    if token != MY_API_KEY:
+    token = authorization.split(" ")
+    if len(token) != 2:
+        raise HTTPException(status_code=401, detail="Invalid Authorization header")
+    if token[1] != AGENT_API_KEY:
         raise HTTPException(status_code=403, detail="Invalid API token")
 
-    # Get the chat id from the request
-    chat_id = request.messages[0].content.split("chat_id:")[1].split(" ")[0]
+    # Get the chat id from the system message injected by the simulator
+    try:
+        chat_id = request.messages[0].content.split("chat_id:")[1].split(" ")[0]
+    except IndexError:
+        raise HTTPException(status_code=400, detail="Chat ID is required") from None
     if not chat_id:
-        # If chat_id is not provided, we cannot make the chat request
         raise HTTPException(status_code=400, detail="Chat ID is required")
 
     # Find the last user message from the messages which contins the simulator query
     try:
         last_user_msg = next(m for m in reversed(request.messages) if m.role == "user")
     except StopIteration:
-        raise HTTPException(status_code=400, detail="No user message found in request.")  # noqa: B904
+        raise HTTPException(
+            status_code=400, detail="No user message found in request."
+        ) from None
 
     # --- AGENT CHAT LOGIC STARTS HERE ---
     # Get or create agent instance for this chat_id
@@ -111,4 +115,4 @@ async def chat_completions(  # noqa: ANN201
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run(app, host="0.0.0.0", port=8080)
+    uvicorn.run(app, host="0.0.0.0", port=8888)
