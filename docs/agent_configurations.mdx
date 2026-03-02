@@ -1,61 +1,61 @@
 ---
-title: 'Agent Configurations'
+title: "Agent Configurations"
 ---
 
 ## Overview
 
-Configure your agent's API connection, business context, and knowledge base. These files tell the simulator how to connect to your agent and what to test.
+Configure your agent's API connection and business context. These files tell arksim how to connect to your agent and what context to use when simulating conversations.
 
 ### Directory Structure
 
 Create a configuration directory with the required JSON files:
 
-```shellscript  theme={null}
-/path/to/input-setup-dir/
+```shellscript
+/path/to/agent-setup-dir/
 ├── agent_config.json    # API and agent configuration
-├── knowledge.json       # Business context and knowledge base
+├── knowledge.json       # Business context (e.g. corporate overview)
 └── data/                # (Optional) Local knowledge files
 ```
 
-***
+---
 
 ## Agent Configuration
 
-The `agent_config.json` file configures how the framework connects to your conversational agent API.
+The `agent_config.json` file configures how arksim connects to your conversational agent API.
 
 ### Configuration Fields
 
-| Field                | Type       | Description                                                           |
-| -------------------- | ---------- | --------------------------------------------------------------------- |
-| `agent_name`         | String     | Unique identifier for your agent (lowercase, no spaces)               |
-| `agent_capabilities` | List\[Str] | List of specific tasks your agent should handle                       |
-| `agent_type`         | Enum       | See [API Connection Types](#api-connection-types) for supported types |
-| `agent_type_config`  | Dict       | See [API Connection Types](#api-connection-types) for required fields |
+| Field                | Type      | Required | Description                                                                            |
+| -------------------- | --------- | -------- | -------------------------------------------------------------------------------------- |
+| `agent_name`         | String    | Yes      | Unique identifier for your agent (e.g. lowercase, no spaces)                           |
+| `agent_type`         | String    | Yes      | One of `chat_completions` or `a2a`. See [API Connection Types](#api-connection-types). |
+| `api_config`         | Object    | Yes      | Connection details. See [API Connection Types](#api-connection-types).                 |
+| `agent_capabilities` | List[Str] | No       | Optional list of tasks your agent can handle (for context/docs)                        |
 
 ### Writing Effective Agent Capabilities
 
-Describe capabilities using a **Verb + Object (+ Scope)** structure. Each capability should state a specific, observable action.
+When you use `agent_capabilities`, describe capabilities with a **Verb + Object (+ Scope)** structure. Each capability should state a specific, observable action.
 
-**Good Examples:**
+**Good examples:**
 
-* Answer feature-specific questions about products
-* Provide pricing information and generate quotes
-* Process returns and refunds for orders
-* Schedule appointments and send confirmations
+- Answer feature-specific questions about products
+- Provide pricing information and generate quotes
+- Process returns and refunds for orders
+- Schedule appointments and send confirmations
 
 **Avoid:**
 
-* Be helpful
-* Answer questions
-* Handle customer requests
+- Be helpful
+- Answer questions
+- Handle customer requests
 
 <Note>
-  Vague descriptions don't set clear expectations or guide implementation. Be specific about what your agent can do.
+  Vague descriptions don't set clear expectations. Be specific about what your agent can do.
 </Note>
 
 ### API Connection Types
 
-The simulator supports three agent types for API connections:
+arksim supports two agent types for API connections:
 
 <Tabs>
   <Tab title="Chat Completions">
@@ -63,27 +63,27 @@ The simulator supports three agent types for API connections:
 
     Connects to any OpenAI-compatible chat completions endpoint.
 
-    #### Features
+    #### Required fields
 
-    * Standard chat completions API format
-    * Environment variable support for secrets
-    * Optional chat ID placeholder support
+    - `endpoint`: URL of the chat completions API
+    - `headers`: HTTP headers (e.g. `Content-Type`, `Authorization`)
+    - `body`: Request body; must include a `messages` array
 
-    #### Placeholders & Variables
+    #### Placeholders and variables
 
-    * `{chat_id}` - Can be included in `body.messages[*].content` and will be replaced at runtime
-    * `${ENV_VAR}` - Supported in header values for secrets
+    - `{chat_id}`: Can be included in `body.messages[*].content`; replaced at runtime
+    - `${ENV_VAR}`: Supported in header values for secrets
 
-    #### Basic Configuration
+    #### Example
 
-    ```json  theme={null}
+    ```json
     {
       "agent_type": "chat_completions",
       "agent_name": "chat_completions_example",
       "agent_capabilities": [
         "answer feature-specific queries about products"
       ],
-      "agent_type_config": {
+      "api_config": {
         "endpoint": "http://localhost:7050/chat/completions",
         "headers": {
           "Content-Type": "application/json",
@@ -94,7 +94,7 @@ The simulator supports three agent types for API connections:
           "messages": [
             {
               "role": "system",
-              "content": "You are being invoked by Arklex user simulator."
+              "content": "You are being invoked by arksim user simulator."
             }
           ]
         }
@@ -102,60 +102,58 @@ The simulator supports three agent types for API connections:
     }
     ```
 
-    #### Configuration with Chat ID Support
+    #### Example with Chat ID
 
-    ```json  theme={null}
-        {
-          "agent_type": "chat_completions",
-          "agent_name": "chat_completions_with_chat_id",
-          "agent_capabilities": [
-            "answer feature-specific queries about products"
-          ],
-          "agent_type_config": {
-            "endpoint": "https://localhost:7050/chat/completions",
-            "headers": {
-              "Content-Type": "application/json",
-              "Authorization": "Bearer ${OPENAI_API_KEY}"
-            },
-            "body": {
-              "model": "gpt-5.1",
-              "messages": [
-                {
-                  "role": "system",
-                  "content": "You are being invoked with chat_id:{chat_id}"
-                }
-              ]
+    ```json
+    {
+      "agent_type": "chat_completions",
+      "agent_name": "chat_completions_with_chat_id",
+      "agent_capabilities": [
+        "answer feature-specific queries about products"
+      ],
+      "api_config": {
+        "endpoint": "http://localhost:7050/chat/completions",
+        "headers": {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer ${OPENAI_API_KEY}"
+        },
+        "body": {
+          "model": "gpt-5.1",
+          "messages": [
+            {
+              "role": "system",
+              "content": "You are being invoked with chat_id:{chat_id}"
             }
-          }
+          ]
         }
+      }
+    }
     ```
 
     <Note>
-      The `{chat_id}` placeholder will be replaced with the actual chat ID during execution.
+      The `{chat_id}` placeholder is replaced with the actual chat ID during execution.
     </Note>
   </Tab>
-
   <Tab title="A2A Protocol">
     **Type:** `a2a`
 
-    Agent-to-Agent protocol for A2A-compatible agents.
+    For agents that speak the Agent-to-Agent (A2A) protocol.
 
-    #### Features
+    #### Required fields
 
-    * Simplified endpoint configuration
-    * Optional HTTP headers support
-    * Environment variable support
+    - `endpoint` – A2A agent server URL
+    - `headers` – Optional HTTP headers (e.g. for auth)
 
-    #### Configuration
+    #### Example
 
-    ```json  theme={null}
+    ```json
     {
       "agent_type": "a2a",
       "agent_name": "a2a_example",
       "agent_capabilities": [
         "answer feature-specific queries about products"
       ],
-      "agent_type_config": {
+      "api_config": {
         "endpoint": "http://localhost:9999",
         "headers": {
           "api-key": "${A2A_AUTH_TOKEN}"
@@ -164,184 +162,80 @@ The simulator supports three agent types for API connections:
     }
     ```
   </Tab>
-
-  <Tab title="Arklex Agents">
-    **Type:** `arklex`
-
-    For agents built using Arklex Studio.
-
-    #### Features
-
-    * Native Arklex integration
-    * Institution and bot ID-based routing
-    * Version control support
-
-    #### Configuration
-
-    ```json  theme={null}
-    {
-      "agent_type": "arklex",
-      "agent_name": "arklex_example",
-      "agent_capabilities": [
-        "answer feature-specific queries about products"
-      ],
-      "agent_type_config": {
-        "institution_id": "institution_1",
-        "bot_id": "bot_1",
-        "version": "v1alpha1",
-        "base_url": "https://www.arklex.ai"
-      }
-    }
-    ```
-  </Tab>
 </Tabs>
 
-### Environment Variable Support
+### Environment variable support
 
-Both `chat_completions` and `a2a` agent types support environment variable substitution using `${ENV_VAR}` syntax.
+Both `chat_completions` and `a2a` support environment variable substitution using `${ENV_VAR}` in header values (and, for chat completions, in the endpoint URL where applicable).
 
 **How it works:**
 
-* At runtime, `${ENV_VAR}` patterns are replaced with environment variable values
-* If not set, it will be replaced with an empty string
-* Mix static text with variables: `"Bearer ${API_KEY}"` → `"Bearer sk-abc123..."`
+- At runtime, `${ENV_VAR}` is replaced with the value of that environment variable
+- If the variable is not set, it is replaced with an empty string
+- You can mix static text with variables, e.g. `"Bearer ${API_KEY}"` → `"Bearer sk-abc123..."`
 
 <Tip>
-  **Security Best Practice:** This approach keeps configuration files safe to commit while keeping credentials secure in environment variables.
+  **Security:** Keep credentials in environment variables and out of committed config files.
 </Tip>
 
-***
+---
 
 ## Knowledge Configuration
 
-The `knowledge.json` file defines your company overview, business type, and the knowledge your agent has access to.
+The `knowledge.json` file defines business context used by arksim when building simulated user prompts (e.g. company overview).
 
-### Configuration Fields
+### Configuration fields
 
-| Field                | Type        | Description                                                                                            |
-| -------------------- | ----------- | ------------------------------------------------------------------------------------------------------ |
-| `corporate_overview` | String      | A comprehensive description of your company                                                            |
-| `business_type`      | Enum        | Either `"b2b"` or `"b2c"`                                                                              |
-| `knowledge`          | List\[Dict] | Defines what information your agent has access to                                                      |
-| `user_events`        | List\[Str]  | (Optional) Event descriptions that provide context for simulated conversations                         |
-| `user_goals`         | List\[Str]  | (Optional) Sample customer intents that guide the simulator in creating realistic test conversations   |
+| Field                | Type       | Description                                                                  |
+| -------------------- | ---------- | ---------------------------------------------------------------------------- |
+| `corporate_overview` | String     | A short description of your company/product used as context for simulation   |
+| `knowledge`          | List[Dict] | Optional. Defines knowledge sources (e.g. local `data/` folder) for examples |
 
-### Knowledge Source Types
+`corporate_overview` is used by the simulator when generating the simulated user’s system prompt so conversations are grounded in your business context.
 
-The simulator supports four knowledge source types:
+### Local knowledge (optional)
 
-<AccordionGroup>
-  <Accordion title="Local Files">
-    Knowledge stored locally in the `data` folder.
+You can point to a local folder of documents (e.g. for examples or future tooling):
 
-    ```json  theme={null}
-    {
-    	"source": "/path/to/input-setup-dir/data",
-    	"type": "local"
-    }
-    ```
-  </Accordion>
-
-  <Accordion title="Web Crawling">
-    Knowledge crawled from web URLs.
-
-    ```json  theme={null}
-    {
-    	"source": "https://www.example.com",
-    	"type": "web"
-    }
-    ```
-  </Accordion>
-
-  <Accordion title="Direct Text">
-    Knowledge provided directly as text content.
-
-    ```json  theme={null}
-    {
-    	"source": "Direct text content about your company...",
-    	"type": "text"
-    }
-    ```
-  </Accordion>
-
-  <Accordion title="API Endpoint">
-    Knowledge fetched from external APIs.
-
-    ```json  theme={null}
-    {
-    	"source": "https://api.example.com/v1/products",
-    	"type": "api",
-    	"request_method": "GET",
-    	"request_headers": {
-    		"Content-Type": "application/json",
-            "Authorization": "Bearer ${API_KEY}"
-          },
-    	"response_content_type": "json",
-    	"response_content_path": ["data", "products"],
-    	"response_content_extract_type": "array"
-    }
-    ```
-
-    <Note>
-      Environment variables (e.g., `${API_KEY}`) are supported in request headers.
-    </Note>
-  </Accordion>
-</AccordionGroup>
-
-### Complete Example
-
-```json  theme={null}
+```json
 {
-  "corporate_overview": "YourCompany Inc. is a leading provider of innovative software solutions...",
-  "business_type": "b2b",
+  "corporate_overview": "YourCompany Inc. is a leading provider of software solutions...",
   "knowledge": [
     {
-      "source": "/path/to/input-setup-dir/data",
+      "source": "/path/to/agent-setup-dir/data",
       "type": "local"
-    },
-    {
-      "source": "https://www.example.com",
-      "type": "web"
-    },
-    {
-      "source": "Direct text content about your company...",
-      "type": "text"
-    },
-    {
-      "source": "https://api.example.com/v1/products",
-      "type": "api",
-      "request_method": "GET",
-      "request_headers": {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer ${API_KEY}"
-      },
-      "response_content_type": "json",
-      "response_content_path": ["data", "products"],
-      "response_content_extract_type": "array"
     }
-  ],
-  "user_events": [
-    "Recently involved in a minor car accident",
-    "Buying a second property as an investment",
   ]
 }
 ```
 
-***
+<Note>
+  In open-source arksim, scenario building is not included. Pre-built scenarios already contain the knowledge used during simulation. The `knowledge` array in `knowledge.json` is optional and may be used by examples or custom scripts.
+</Note>
 
-## Data Folder
+### Minimal example
 
-The `data` folder contains your knowledge base documents that power your agent's responses. You can freely add, remove, or update files in this folder to match your use case.
+```json
+{
+  "corporate_overview": "YourCompany Inc. is a leading provider of innovative software solutions. We help businesses automate workflows and improve customer engagement."
+}
+```
 
-### Supported File Formats
+---
+
+## Data folder
+
+The optional `data` folder holds knowledge documents (e.g. for your own agent or examples). You can add, remove, or update files to match your use case.
+
+### Supported file formats
 
 | Category      | Formats                                         |
 | ------------- | ----------------------------------------------- |
 | Documents     | `.md`, `.pdf`, `.doc`, `.docx`, `.txt`, `.html` |
-| Data Files    | `.json`, `.xls`, `.xlsx`                        |
+| Data files    | `.json`, `.xls`, `.xlsx`                        |
 | Presentations | `.ppt`, `.pptx`                                 |
 | Images\*      | `.png`, `.jpg`, `.jpeg`                         |
 
 <Note>
-  \*Image OCR requires `MISTRAL_API_KEY` environment variable to be set.
+  \*Image OCR may require additional environment configuration (e.g. `MISTRAL_API_KEY`) depending on your setup.
 </Note>
