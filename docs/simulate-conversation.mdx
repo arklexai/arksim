@@ -158,7 +158,7 @@ Describes the structure of `conversations.json`, the file produced at the end of
       Unique ID for this conversation.
     </ResponseField>
     <ResponseField name="scenario_id" type="string" required>
-      Identifier of the scenario used to generate the conversation.
+      Identifier of the scenario used for this conversation.
     </ResponseField>
     <ResponseField name="conversation_history" type="list[ConversationMessage]" required>
       Ordered list of all messages in the conversation.
@@ -222,7 +222,7 @@ Describes the structure of `conversations.json`, the file produced at the end of
 
 ## Next Steps
 
-Once your conversations are generated, you're ready to evaluate how well your agent performed.
+Once your conversations are simulated, you're ready to evaluate how well your agent performed.
 
 <Card href="/evaluate-conversation" title="Evaluation →">
   Score your agent's responses against the simulated user's goals and knowledge.
