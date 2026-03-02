@@ -4,15 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simulator Report</title>
-    
+
     <!-- PapaParse for CSV parsing -->
-    
+
     <!-- Marked.js for Markdown parsing -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    
+
     <!-- Material Icons from Google Fonts -->
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    
+
     <style>
         * {
             margin: 0;
@@ -100,7 +100,7 @@
             align-items: center;
             justify-content: center;
         }
-        
+
         .metric-icon.material-icons {
             font-size: 48px;
             line-height: 1;
@@ -878,7 +878,7 @@
             display: inline-flex;
             align-items: center;
         }
-        
+
         .message-expand-icon.material-icons {
             font-size: 14px;
             line-height: 1;
@@ -992,7 +992,7 @@
         .unique-errors-section {
             margin-top: 40px;
         }
-        
+
         .error-card {
             background: white;
             border: 1px solid #d9d9d9;
@@ -1224,7 +1224,7 @@
             display: inline-flex;
             align-items: center;
         }
-        
+
         .arrow-icon.material-icons {
             font-size: 24px;
             line-height: 1;
@@ -1356,7 +1356,7 @@
         </div>
 
         <div class="section-title">Metrics</div>
-        
+
         <div class="metrics-grid">
             <div class="metric-card">
                 <div class="metric-icon material-icons">forum</div>
@@ -1607,7 +1607,7 @@
         function renderUniqueErrors() {
             const container = document.getElementById('uniqueErrorsList');
             const section = document.getElementById('uniqueErrorsSection');
-            
+
             if (!uniqueErrorsData || uniqueErrorsData.length === 0) {
                 section.style.display = 'none';
                 return;
@@ -1711,9 +1711,9 @@
 
                 const card = document.createElement('div');
                 card.className = 'error-card';
-                
+
                 const occurrenceText = count === 1 ? '1 Occurrence' : `${count} Occurrences`;
-                
+
                 const sev = (error.severity || 'medium').toLowerCase();
                 const sevClass = 'severity-' + sev;
 
@@ -1731,7 +1731,7 @@
                     ${conversationsHtml}
                     ${snippetsHtml}
                 `;
-                
+
                 container.appendChild(card);
             });
 
@@ -1757,7 +1757,7 @@
         function toggleUniqueErrors() {
             const content = document.getElementById('uniqueErrorsContent');
             const arrow = document.getElementById('uniqueErrorsArrow');
-            
+
             content.classList.toggle('collapsed');
             arrow.classList.toggle('collapsed');
         }
@@ -1776,10 +1776,10 @@
             sortedConvos.forEach((row, index) => {
                 const tr = document.createElement('tr');
                 tr.onclick = () => openModal(row.chat_id);
-                
+
                 // Extract chat_id number (e.g., "conv_0" -> "0")
                 const chatIdNum = row.chat_id.replace('conv_', '');
-                
+
                 // Clean status and determine status class
                 const cleanedStatus = cleanStatus(row.status) || '';
                 const status = cleanedStatus.toLowerCase();
@@ -1787,7 +1787,7 @@
                 if (status === 'success' || status === 'done') {
                     statusClass = 'done';
                 }
-                
+
                 tr.innerHTML = `
                     <td><span class="chat-id">${chatLabel(row.chat_id)}</span></td>
                     <td style="position:relative">
@@ -1802,7 +1802,7 @@
                         </span>
                     </td>
                 `;
-                
+
                 tbody.appendChild(tr);
             });
         }
@@ -1836,7 +1836,7 @@
         function openModal(chatId) {
             // Extract the numeric ID from chat_id (e.g., "conv_0" -> 0)
             const numericId = parseInt(chatId.replace('conv_', ''));
-            
+
             // Find conversation in simulate_data by id
             // Try to match by numeric ID (convert conversation_id to number if it's a string)
             // Also try to match by string ID directly (in case conversation_id is "conv_0" format)
@@ -1852,7 +1852,7 @@
                 }
                 return false;
             });
-            
+
             if (!conversation) {
                 console.error('Conversation not found:', chatId, numericId);
                 console.error('Available conversation IDs:', simulateData.map(conv => conv.conversation_id));
@@ -1955,7 +1955,7 @@
                 const isUser = message.role === 'simulated_user' || message.role === 'user';
                 const avatar = isUser ? '👤' : '🤖';
                 const label = isUser ? 'User' : 'Agent';
-                
+
                 // Parse markdown content
                 let parsedContent = message.content;
                 if (typeof marked !== 'undefined') {
@@ -1966,11 +1966,11 @@
                         parsedContent = message.content;
                     }
                 }
-                
+
                 // For agent messages, add expandable UI
                 let expandBtnHtml = '';
                 let extraInfoHtml = '';
-                
+
                 if (!isUser) {
                     // Find corresponding per_turn data for this agent message
                     const currentTurnId = agentTurnIndex;
@@ -2077,7 +2077,7 @@
                     // Increment agent turn index for next agent message
                     agentTurnIndex++;
                 }
-                
+
                 modalContent += `
                     <div class="message-wrapper ${message.role === 'simulated_user' ? 'user' : message.role}">
                         <div class="message-container">
@@ -2097,7 +2097,7 @@
 
             modalBody.innerHTML = modalContent;
             modal.classList.add('show');
-            
+
             // Reset scroll position to top
             const modalContentElement = modal.querySelector('.modal-content');
             if (modalContentElement) {
@@ -2151,7 +2151,7 @@
         // Initialize report data
         function initializeReport() {
             const data = EMBEDDED_FINAL_REPORT;
-            
+
             // Update title
             document.getElementById('reportTitle').textContent = 'Simulator Report';
 
@@ -2162,7 +2162,7 @@
             // Update performance metrics
             const performanceGrid = document.getElementById('performanceGrid');
             const metrics = data.performance_metrics;
-            
+
             // Metric definitions (built-in + custom merged)
             const metricDefinitions = {
                 'helpfulness': 'How effectively the response addresses the user\'s needs (1=Poor, 5=Excellent)',
@@ -2435,4 +2435,3 @@
     </script>
 </body>
 </html>
-

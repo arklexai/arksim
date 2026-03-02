@@ -25,5 +25,5 @@ Maximum load weight per shelf
 More details
 ## Warranty
 
-Warranty information  
+Warranty information
 Please be aware that the warranty terms on items offered for sale by third party Marketplace sellers may differ from those displayed in this section (if any). To confirm warranty terms on an item offered for sale by a third party Marketplace seller, please use the 'Contact seller' feature on the third party Marketplace seller's information page and request the item's warranty terms prior to purchase.

@@ -50,7 +50,7 @@ FIND_MATCHED_ATTRIBUTE_PROMPT = """Given the following goal, please find the mos
 
 For example:
 ########################################################
-1. 
+1.
 Goal: update account settings
 Full attributes:
 user_info: {{'name': 'Jordan', 'email': 'jordan@example.com', 'account_type': 'premium', 'preferences': {{'notifications': true, 'theme': 'dark'}}}}
@@ -65,7 +65,7 @@ Return:
 }}
 
 ########################################################
-2. 
+2.
 Goal: get help with an error
 Full attributes:
 user_info: {{'name': 'Sam', 'email': 'sam@example.com'}}
@@ -82,7 +82,7 @@ Return:
 
 ########################################################
 Goal: {goal}
-Full attributes: 
+Full attributes:
 {user_profile}
 
 Return:
@@ -95,7 +95,7 @@ Rules:
 - Start with "You are <name> who is <personality traits>."
 - Must incorporate this attribute: {label}
 - Output only the profile text, no labels or prefixes.
-- Response in second person. 
+- Response in second person.
 - Start the profile with "You are <name> who is <TRAIT 1, ..., TRAIT 5>.”, where [TRAIT 1, ..., TRAIT 5] represents the assigned Big Five personality."
 - No other prefix, such as Profile: or Customer Profile: is needed.
 
@@ -111,7 +111,7 @@ Profile:
 ATTR_TO_PROFILE_WO_LABEL = """Convert the following list user attributes in to a text description of a customer profile for the agent context.
 
 Rules:
-- Response in second person. 
+- Response in second person.
 - Start the profile with "You are <name> who is <TRAIT 1, ..., TRAIT 5>.”, where [TRAIT 1, ..., TRAIT 5] represents the assigned Big Five personality."
 - No other prefix, such as Profile: or Customer Profile: is needed.
 
