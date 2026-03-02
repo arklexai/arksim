@@ -19,13 +19,7 @@ max_turns: 5
 # Output file path for simulation results
 output_file_path: ./results/simulation/simulation.json
 
-# Simulated user system prompt: one Jinja template, rendered per scenario.
-# Variables are fetched from scenario.json (the input file):
-#   - scenario.agent_context: context about the agent
-#   - scenario.goal: the user's goal
-#   - scenario.knowledge: list of knowledge items (optional)
-#   - simulation.profile: the simulated user's profile
-# Single knowledge -> inline in prompt; multiple -> via user message.
+# Jinja template for the simulated user's system prompt
 simulated_user_prompt_template: |
   You are a user interacting with an agent through multiple turns.
   The agent is supplied by the following conversation context:
@@ -63,16 +57,10 @@ simulated_user_prompt_template: |
 # Output directory for evaluation results
 output_dir: ./results/evaluation
 
-# Provide paths to Python files that define your custom metrics.
-# Custom quantitative metrics should subclass QuantitativeMetric
-# and implement score(); qualitative metrics should subclass
-# QualitativeMetric and implement evaluate().
-# (from arksim.evaluator import QuantitativeMetric, QualitativeMetric)
+# Paths to Python files defining custom QuantitativeMetric or QualitativeMetric subclasses
 custom_metrics_file_paths: []
 
-# Provide the built-in metrics to be run during evaluation.
-# If empty, all built-in metrics run. Custom metrics defined in
-# custom_metrics_file_paths always run regardless of this list.
+# Built-in metrics to run; if empty, all built-in metrics run
 metrics_to_run:
   - faithfulness
   - helpfulness
@@ -85,10 +73,7 @@ metrics_to_run:
 # Generate HTML report
 generate_html_report: true
 
-# Score threshold for per-conversation final scores (0.0 to 1.0)
-# If any conversation's final score is below this threshold,
-# exit with non-zero code.
-# Set to null to disable threshold checking
+# Exit with non-zero if any score is below this (0.0–1.0); null to disable
 score_threshold: null
 
 # ── SHARED SETTINGS ──────────────────────────────────────────────────────────
@@ -99,7 +84,5 @@ model: gpt-5.1
 # LLM provider
 provider: openai
 
-# Number of workers for parallel processing. "auto" uses all
-# available threads; on large runs this can trigger LLM rate
-# limits — set an explicit integer to cap concurrency.
+# Workers for parallel processing; "auto" uses all available threads
 num_workers: auto

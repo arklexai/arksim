@@ -19,12 +19,6 @@ Steps to run:
 
    The agent config uses `${OPENAI_API_KEY}` which will be automatically substituted at runtime.
 
-   If using the Chat Completions agent (`agent_config_chat_completions.json`), also set:
-
-   ```bash
-   export AGENT_API_KEY="<YOUR_AGENT_API_KEY>"
-   ```
-
 2. The default `agent_config.json` is already configured for OpenAI. No changes needed.
 
 3. Review `config.yaml` for this example.
@@ -38,9 +32,7 @@ Steps to run:
 
 Steps to run:
 
-1. Rename `agent_config_chat_completions.json` to `agent_config.json`. If `agent_config.json` already exists, rename or remove it first.
-
-2. Start the agent:
+1. Start the agent:
 
    The user simulator expects agent responses in the Chat Completions format. You can either use the sample agent provided in the `./examples/e-commerce/agent_server` folder, or integrate your own agent.
 
@@ -88,9 +80,9 @@ Steps to run:
      python -m examples.e-commerce.agent_server.chat_completions.server
      ```
 
-3. Review `config.yaml` for this example.
+2. Review `config.yaml` for this example.
 
-4. From this example directory, run:
+3. From this example directory, run:
    ```bash
-   arksim simulate-evaluate config.yaml
+   arksim simulate-evaluate config.yaml --agent-config-file-path agent_config_chat_completions.json
    ```
