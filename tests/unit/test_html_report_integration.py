@@ -122,48 +122,48 @@ generate_html_report = _gen_report_mod.generate_html_report
 # ---------------------------------------------------------------------------
 # Test helpers
 # ---------------------------------------------------------------------------
-def _build_test_data() -> tuple[
-    Simulation, Evaluation, dict[str, str]
-]:
+def _build_test_data() -> tuple[Simulation, Evaluation, dict[str, str]]:
     """Build minimal test data for HTML report generation."""
-    conversations = Simulation(schema_version="1.0", simulator_version="test", conversations=[
-        Conversation(
-            conversation_id="conv-uuid-1",
-            scenario_id="sc-1",
-            conversation_history=[
-                Message(
-                    turn_id=0, role="simulated_user", content="What is the weather?"
+    conversations = Simulation(
+        schema_version="1.0",
+        simulator_version="test",
+        conversations=[
+            Conversation(
+                conversation_id="conv-uuid-1",
+                scenario_id="sc-1",
+                conversation_history=[
+                    Message(
+                        turn_id=0, role="simulated_user", content="What is the weather?"
+                    ),
+                    Message(turn_id=0, role="assistant", content="It is sunny today."),
+                    Message(turn_id=1, role="simulated_user", content="Thanks!"),
+                    Message(turn_id=1, role="assistant", content="You're welcome!"),
+                ],
+                simulated_user_prompt=SimulatedUserPrompt(
+                    simulated_user_prompt_template="You are a user.",
+                    variables={"goal": "Get weather info"},
                 ),
-                Message(
-                    turn_id=0, role="assistant", content="It is sunny today."
-                ),
-                Message(turn_id=1, role="simulated_user", content="Thanks!"),
-                Message(
-                    turn_id=1, role="assistant", content="You're welcome!"
-                ),
-            ],
-            simulated_user_prompt=SimulatedUserPrompt(
-                simulated_user_prompt_template="You are a user.",
-                variables={"goal": "Get weather info"},
             ),
-        ),
-        Conversation(
-            conversation_id="conv-uuid-2",
-            scenario_id="sc-2",
-            conversation_history=[
-                Message(
-                    turn_id=0, role="simulated_user", content="Tell me about insurance"
+            Conversation(
+                conversation_id="conv-uuid-2",
+                scenario_id="sc-2",
+                conversation_history=[
+                    Message(
+                        turn_id=0,
+                        role="simulated_user",
+                        content="Tell me about insurance",
+                    ),
+                    Message(
+                        turn_id=0, role="assistant", content="Sure, let me explain."
+                    ),
+                ],
+                simulated_user_prompt=SimulatedUserPrompt(
+                    simulated_user_prompt_template="You are a user.",
+                    variables={"goal": "Learn about insurance"},
                 ),
-                Message(
-                    turn_id=0, role="assistant", content="Sure, let me explain."
-                ),
-            ],
-            simulated_user_prompt=SimulatedUserPrompt(
-                simulated_user_prompt_template="You are a user.",
-                variables={"goal": "Learn about insurance"},
             ),
-        ),
-    ])
+        ],
+    )
 
     evaluation_results = Evaluation(
         schema_version="1.0",

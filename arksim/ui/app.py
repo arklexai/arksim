@@ -9,7 +9,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 import uvicorn
-from fastapi import FastAPI
+from fastapi import APIRouter, FastAPI
 from fastapi.responses import FileResponse
 
 from arksim.ui.api.routes_evaluate import router as _oss_evaluate_router
@@ -22,7 +22,7 @@ from arksim.ui.api.ws_logs import router as ws_router
 FRONTEND_DIR = Path(__file__).parent / "frontend"
 
 
-def create_app(evaluate_router=None) -> FastAPI:
+def create_app(evaluate_router: APIRouter | None = None) -> FastAPI:
     """Create the FastAPI application."""
     _evaluate_router = evaluate_router or _oss_evaluate_router
 

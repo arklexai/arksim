@@ -7,6 +7,7 @@ the arksim.evaluator.__init__.py which pulls in heavy deps
 
 import importlib.util
 import sys
+import types
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -16,7 +17,7 @@ from unittest.mock import MagicMock
 _ARKSIM_ROOT = Path(__file__).resolve().parents[2] / "arksim"
 
 
-def _load_module(name: str, filepath: Path):
+def _load_module(name: str, filepath: Path) -> types.ModuleType:
     """Load a Python module from filepath into sys.modules[name]."""
     spec = importlib.util.spec_from_file_location(name, filepath)
     mod = importlib.util.module_from_spec(spec)
@@ -97,9 +98,7 @@ def _make_turn(turn_id: int, failure_label: str, failure_reason: str) -> TurnEva
     )
 
 
-def _make_conv_eval(
-    conversation_id: str, turns: list
-) -> ConversationEvaluation:
+def _make_conv_eval(conversation_id: str, turns: list) -> ConversationEvaluation:
     """Build a ConversationEvaluation with minimal fields."""
     return ConversationEvaluation(
         conversation_id=conversation_id,
@@ -118,7 +117,7 @@ def _make_conv_eval(
 class TestCollectAgentBehaviorFailureReasoning:
     """Tests for collect_agent_behavior_failure_reasoning."""
 
-    def test_collects_failure_turns(self):
+    def test_collects_failure_turns(self) -> None:
         """Turns with a matching failure label are collected."""
         turn = _make_turn(0, "lack of specific information", "Agent missed key details")
         conv = _make_conv_eval("conv-1", [turn])
@@ -130,7 +129,7 @@ class TestCollectAgentBehaviorFailureReasoning:
         assert "lack of specific information" in result[0]
         assert "Agent missed key details" in result[0]
 
-    def test_skips_no_failure(self):
+    def test_skips_no_failure(self) -> None:
         """Turns with 'no failure' label are always skipped."""
         turn = _make_turn(0, "no failure", "All good")
         conv = _make_conv_eval("conv-1", [turn])
@@ -139,7 +138,7 @@ class TestCollectAgentBehaviorFailureReasoning:
         )
         assert len(result) == 0
 
-    def test_skips_non_matching_categories(self):
+    def test_skips_non_matching_categories(self) -> None:
         """Turns whose label is not in failure_categories are skipped."""
         turn = _make_turn(0, "repetition", "Repeated same response")
         conv = _make_conv_eval("conv-1", [turn])
@@ -148,19 +147,19 @@ class TestCollectAgentBehaviorFailureReasoning:
         )
         assert len(result) == 0
 
-    def test_empty_conversations(self):
+    def test_empty_conversations(self) -> None:
         """Empty conversation list returns empty result."""
         result = collect_agent_behavior_failure_reasoning([], ["repetition"])
         assert result == []
 
-    def test_empty_categories(self):
+    def test_empty_categories(self) -> None:
         """Empty categories list matches nothing."""
         turn = _make_turn(0, "repetition", "Repeated")
         conv = _make_conv_eval("conv-1", [turn])
         result = collect_agent_behavior_failure_reasoning([conv], [])
         assert len(result) == 0
 
-    def test_multiple_turns_multiple_convos(self):
+    def test_multiple_turns_multiple_convos(self) -> None:
         """Collects from multiple turns across multiple conversations."""
         turn1 = _make_turn(0, "repetition", "Repeated response")
         turn2 = _make_turn(1, "false information", "Wrong facts provided")
@@ -171,7 +170,7 @@ class TestCollectAgentBehaviorFailureReasoning:
         result = collect_agent_behavior_failure_reasoning([conv1, conv2], categories)
         assert len(result) == 2
 
-    def test_skips_special_outcomes(self):
+    def test_skips_special_outcomes(self) -> None:
         """skipped_good_performance, evaluation_run_failed, agent_api_error are skipped."""
         skip_labels = [
             EvaluationOutcomes.SKIPPED_GOOD_PERFORMANCE.value,
@@ -183,7 +182,7 @@ class TestCollectAgentBehaviorFailureReasoning:
         result = collect_agent_behavior_failure_reasoning([conv], skip_labels)
         assert len(result) == 0
 
-    def test_result_format(self):
+    def test_result_format(self) -> None:
         """Each result string encodes conv_id, turn_id, label and reason."""
         turn = _make_turn(3, "repetition", "Said the same thing twice")
         conv = _make_conv_eval("abc-xyz", [turn])
@@ -193,7 +192,7 @@ class TestCollectAgentBehaviorFailureReasoning:
         assert "repetition" in result[0]
         assert "Said the same thing twice" in result[0]
 
-    def test_only_failure_turns_collected(self):
+    def test_only_failure_turns_collected(self) -> None:
         """Only failing turns within a conversation are collected, not successful ones."""
         turn_fail = _make_turn(0, "repetition", "Repeated")
         turn_ok = _make_turn(1, "no failure", "Fine")

@@ -9,16 +9,17 @@ Usage:
 import asyncio
 import os
 
+from custom_metrics import ConversionMetric, UpsellBehaviorMetric
+
 from arksim.config import AgentConfig
-from arksim.evaluator import Evaluator, EvaluationParams
+from arksim.evaluator import EvaluationParams, Evaluator
 from arksim.llms.chat import LLM
 from arksim.scenario import Scenarios
-from arksim.simulation_engine import Simulator, SimulationParams
+from arksim.simulation_engine import SimulationParams, Simulator
 from arksim.utils.html_report.generate_html_report import (
     HtmlReportParams,
     generate_html_report,
 )
-from custom_metrics import ConversionMetric, UpsellBehaviorMetric
 
 
 async def main() -> None:

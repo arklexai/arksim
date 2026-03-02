@@ -338,5 +338,3 @@ class TestUniqueError:
                 occurrences=[],
             )
             assert item.severity == sev
-
-

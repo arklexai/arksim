@@ -29,7 +29,6 @@ from arksim.evaluator import (
 )
 from arksim.llms.chat import LLM
 
-
 # Custom metrics use their own LLM; this is independent of the
 # evaluator's model/provider config. Feel free to swap in any
 # model, provider, or LLM package that suits your needs.

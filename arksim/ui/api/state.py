@@ -10,7 +10,6 @@ from dataclasses import dataclass, field
 from fastapi import WebSocket
 from pydantic import BaseModel
 
-
 # ── WebSocket event models ────────────────────────────────
 
 

@@ -1,3 +1,4 @@
+import contextlib
 import logging
 import uuid
 
@@ -39,15 +40,13 @@ def detect_agent_error(
                 for occ_str in raw.occurrences:
                     parts = occ_str.rsplit("_", 1)
                     if len(parts) == 2:
-                        try:
+                        with contextlib.suppress(ValueError):
                             occurrences.append(
                                 Occurrence(
                                     conversation_id=parts[0],
                                     turn_id=int(parts[1]),
                                 )
                             )
-                        except ValueError:
-                            pass
                 category = raw.agent_behavior_failure_category
                 unique_errors.append(
                     UniqueError(
