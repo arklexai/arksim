@@ -72,7 +72,20 @@ export OPENAI_API_KEY="your-key"
 
 ```yaml
 # config.yaml
-agent_config_file_path: ./agent_config.json
+agent_config:
+  agent_type: chat_completions
+  agent_name: my-agent
+  api_config:
+    endpoint: https://api.openai.com/v1/chat/completions
+    headers:
+      Content-Type: application/json
+      Authorization: "Bearer ${OPENAI_API_KEY}"
+    body:
+      model: gpt-5.1
+      messages:
+        - role: system
+          content: "You are a helpful assistant."
+
 scenario_file_path: ./scenarios.json
 model: gpt-5.1
 provider: openai
@@ -104,39 +117,33 @@ arksim ui
 
 ## Agent Configuration
 
-Create an `agent_config.json` pointing to your agent. Arksim supports two protocols:
+Agent configuration tells Arksim how to connect to your agent. It is specified directly in your YAML config file. Arksim supports two protocols:
 
 ### Chat Completions API
 
-```json
-{
-  "agent_type": "chat_completions",
-  "agent_name": "my-agent",
-  "api_config": {
-    "endpoint": "http://localhost:8888/chat/completions",
-    "headers": {
-      "Content-Type": "application/json",
-      "Authorization": "Bearer ${AGENT_API_KEY}"
-    },
-    "body": {
-      "messages": [
-        { "role": "system", "content": "You are a helpful assistant." }
-      ]
-    }
-  }
-}
+```yaml
+agent_config:
+  agent_type: chat_completions
+  agent_name: my-agent
+  api_config:
+    endpoint: http://localhost:8080/chat/completions
+    headers:
+      Content-Type: application/json
+      Authorization: "Bearer ${AGENT_API_KEY}"
+    body:
+      messages:
+        - role: system
+          content: "You are a helpful assistant."
 ```
 
 ### A2A (Agent-to-Agent) Protocol
 
-```json
-{
-  "agent_type": "a2a",
-  "agent_name": "my-agent",
-  "api_config": {
-    "endpoint": "http://localhost:9000/agent"
-  }
-}
+```yaml
+agent_config:
+  agent_type: a2a
+  agent_name: my-agent
+  api_config:
+    endpoint: http://localhost:9000/agent
 ```
 
 Environment variables in headers are resolved at runtime using `${VAR_NAME}` syntax.
@@ -219,7 +226,8 @@ All settings can be specified in YAML and overridden via CLI flags (`--key value
 
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
-| `agent_config_file_path` | string | required | Path to agent config JSON |
+| `agent_config` | object | required | Inline agent config (`agent_type`, `agent_name`, `api_config`) |
+
 | `scenario_file_path` | string | required | Path to scenarios JSON |
 | `model` | string | `gpt-5.1` | LLM model for simulated users |
 | `provider` | string | `openai` | LLM provider: `openai`, `azure`, `claude`, `gemini` |

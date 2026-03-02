@@ -5,32 +5,17 @@
 # ── AGENT CONFIGURATION ────────────────────────────────────────────────────
 
 agent_config:
-  agent_type: chat_completions
+  agent_type: a2a
   agent_name: bank-insurance
   api_config:
-    endpoint: https://api.openai.com/v1/chat/completions
+    endpoint: http://localhost:9999
     headers:
-      Content-Type: application/json
-      Authorization: "Bearer ${OPENAI_API_KEY}"
-    body:
-      model: gpt-5.1
-      messages:
-        - role: system
-          content: >-
-            You are a customer service chatbot for XYZ Bank insurance.
-            XYZ Insurance—a core business within XYZ Bank Group—is one of
-            Canada's leading providers of life, health, home, auto, and
-            travel insurance.
-
-            Rules:
-            1. Do not flip roles.
-            2. Avoid using bullet points or lists.
-            3. Never exceed 80 words.
+      api-key: "1234567890"
 
 # ── SIMULATION SETTINGS ──────────────────────────────────────────────────────
 
 # Path to the scenarios file
-scenario_file_path: ./examples/bank-insurance/scenarios.json
+scenario_file_path: ./scenarios.json
 
 # Number of conversations per scenario to generate
 num_conversations_per_scenario: 1
@@ -39,7 +24,7 @@ num_conversations_per_scenario: 1
 max_turns: 5
 
 # Output file path for simulation results
-output_file_path: ./examples/bank-insurance/results/simulation/simulation.json
+output_file_path: ./results/simulation/simulation.json
 
 # Jinja template for the simulated user's system prompt
 simulated_user_prompt_template: null
@@ -47,17 +32,17 @@ simulated_user_prompt_template: null
 # ── EVALUATION SETTINGS ──────────────────────────────────────────────────────
 
 # Output directory for evaluation results
-output_dir: ./examples/bank-insurance/results
+output_dir: ./results/evaluation
 
 # Paths to Python files defining custom QuantitativeMetric or QualitativeMetric subclasses
-custom_metrics_file_paths: []
+custom_metrics_file_paths:
+  - ./custom_metrics.py
 
 # Built-in metrics to run; if empty, all built-in metrics run
 metrics_to_run:
   - faithfulness
   - helpfulness
   - coherence
-  - verbosity
   - relevance
   - goal_completion
   - agent_behavior_failure

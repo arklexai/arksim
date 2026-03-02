@@ -2,10 +2,32 @@
 # Configuration for 'arksim simulate-evaluate' command
 # Runs simulation followed by evaluation in a single pipeline.
 
-# ── SIMULATION SETTINGS ──────────────────────────────────────────────────────
+# ── AGENT CONFIGURATION ────────────────────────────────────────────────────
 
-# Path to agent api configuration file
-agent_config_file_path: ./agent_config.json
+agent_config:
+  agent_type: chat_completions
+  agent_name: bank-insurance
+  api_config:
+    endpoint: https://api.openai.com/v1/chat/completions
+    headers:
+      Content-Type: application/json
+      Authorization: "Bearer ${OPENAI_API_KEY}"
+    body:
+      model: gpt-5.1
+      messages:
+        - role: system
+          content: >-
+            You are a customer service chatbot for XYZ Bank insurance.
+            XYZ Insurance—a core business within XYZ Bank Group—is one of
+            Canada's leading providers of life, health, home, auto, and
+            travel insurance.
+
+            Rules:
+            1. Do not flip roles.
+            2. Avoid using bullet points or lists.
+            3. Never exceed 80 words.
+
+# ── SIMULATION SETTINGS ──────────────────────────────────────────────────────
 
 # Path to the scenarios file
 scenario_file_path: ./scenarios.json
