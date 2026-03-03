@@ -45,6 +45,7 @@ _SYSTEM_INSTRUCTIONS = (
     "do not prefix it with 'Assistant:' or 'AI:'."
 )
 
+
 class Agent:
     """Stateful per-session wrapper around the shared SDK agent.
 
