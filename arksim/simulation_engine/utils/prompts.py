@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 DEFAULT_SIMULATED_USER_PROMPT_TEMPLATE = """\
 You are a user interacting with an agent through multiple turns.
 The agent is supplied by the following conversation context:

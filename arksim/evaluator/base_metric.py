@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """
 Provides the abstract base for all evaluation metrics, both built-in and user-defined custom metrics.
 """

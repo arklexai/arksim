@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """WebSocket endpoint for real-time log streaming."""
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect

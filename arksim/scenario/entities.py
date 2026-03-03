@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 from pydantic import BaseModel
 
 from arksim.utils.output import load_json_file

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 from .utils import (
     load_json_file,
     resolve_output_dir,

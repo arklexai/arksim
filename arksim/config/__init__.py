@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Configuration module for the simulator."""
 
 from .core.agent import A2AConfig, AgentConfig, ChatCompletionsConfig

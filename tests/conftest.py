@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Pytest configuration and fixtures for simulator tests."""
 
 import os
