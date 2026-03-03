@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - SPDX license headers (`Apache-2.0`) to all Python source files
-- Test coverage reporting with `pytest-cov` and Codecov integration
+- Test coverage reporting with `pytest-cov` and Codecov integration (with token authentication)
 - Coverage badge in README
 - CodeQL security scanning workflow (on push, PR, and weekly schedule)
 - Apache `NOTICE` file for third-party dependency attributions
