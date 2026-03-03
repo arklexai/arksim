@@ -1,4 +1,4 @@
-"""RAG-powered banking insurancecustomer service agent using the OpenAI Agents SDK."""
+"""RAG-powered banking insurance customer service agent using the OpenAI Agents SDK."""
 
 import uuid
 from pathlib import Path

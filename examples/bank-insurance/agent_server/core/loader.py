@@ -21,9 +21,6 @@ from urllib.parse import urljoin
 
 import requests
 import tiktoken
-
-with contextlib.suppress(Exception):
-    tiktoken.get_encoding("cl100k_base")
 from bs4 import BeautifulSoup
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from mistralai import Mistral
