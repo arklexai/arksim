@@ -172,9 +172,9 @@ Understanding how each field is used helps you decide what to include.
 
 | Field                  | Used By                | Description                                                          |
 | ---------------------- | ---------------------- | -------------------------------------------------------------------- |
-| `goal`                 | Simulator & Evaluator  | Used in the simulator prompt and in goal-completion evaluation.      |
-| `knowledge[].content`  | Simulator & Evaluator  | Simulated user’s background knowledge for the conversation.          |
-| `user_attributes`      | Simulator & Report     | Simulator: profile matching and persona; report: display only.       |
+| `goal`                 | Simulator & Evaluator  | User's objective; used in the simulator prompt and in goal-completion evaluation. |
+| `knowledge[].content`  | Simulator & Evaluator  | Simulated user's background knowledge; used in simulator prompt and in evaluation (e.g. faithfulness).          |
+| `user_attributes`      | Simulator & Report     | Simulated user's persona; used in simulator for profile generation; displayed in HTML evaluation report. |
 | `knowledge[].metadata` | Not used by Arksim     | For labeling and traceability only.                                  |
 | `origin`               | Not used by Arksim     | Tracks scenario provenance; reference only.                         |
 

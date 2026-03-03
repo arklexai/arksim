@@ -1,6 +1,6 @@
 ---
 title: "Simulation"
-description: "Run your scenarios as live conversations against your agent and collect transcripts for evaluation."
+description: "Run scenarios against your agent and collect chats for evaluation."
 ---
 
 ## What is Simulation?
@@ -21,8 +21,8 @@ Before running a simulation, you need three things in place:
 
 | Input            | Description                                                                                                                                                                          |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Scenarios**    | A `scenario.json` file defining user attributes, goals, knowledge, and scenario metadata. [Learn how to write scenarios →](/build-scenario)                                          |
-| **Agent config** | Inline `agent_config` in your config YAML, or a path via `agent_config_file_path`. Defines how Arksim connects to your agent. See [Agent configuration](#agent-configuration) below. |
+| **Scenarios**    | A `scenarios.json` file defining user attributes, goals, knowledge, and scenario metadata. [Learn how to write scenarios →](/build-scenario)                                          |
+| **Agent config** | Inline `agent_config` in your config YAML. Defines how Arksim connects to your agent. See [Agent configuration](#agent-configuration) below. |
 | **Config file**  | `config.yaml` controlling simulation parameters such as number of conversations, max turns, workers, and model settings.                                                             |
 
 ---
@@ -68,11 +68,24 @@ provider: openai
   Set `num_workers: auto` to automatically parallelize across all conversations, or specify a fixed number to control load on your agent endpoint.
 </Tip>
 
+### Advanced: Custom simulated user prompt
+
+By default, Arksim uses a built-in system prompt to drive the simulated user. You can override it by setting `simulated_user_prompt_template` in your config to a **Jinja2** template string. The template is rendered per conversation with these variables:
+
+| Variable | Description |
+| -------- | ----------- |
+| `scenario.agent_context` | Context about the agent/company the user is talking to. |
+| `scenario.goal` | The simulated user's goal (from the scenario). |
+| `scenario.knowledge` | The scenario's knowledge items (background information the user has). |
+| `simulation.profile` | The generated persona text (from the scenario's user attributes). |
+
+Use them in your template with `{{ scenario.goal }}`, `{{ simulation.profile }}`, and so on. If you omit `simulated_user_prompt_template`, the default prompt is used.
+
 ---
 
 ## Agent configuration
 
-Your config can provide agent connection in two ways: inline `agent_config` in the YAML, or a path to a JSON file via `agent_config_file_path`. The structure is the same.
+Provide agent connection by defining `agent_config` inline in your config YAML.
 
 ### Configuration fields
 
@@ -99,7 +112,7 @@ Arksim supports two agent protocols:
 
     **Required fields:** `endpoint` (API URL), `headers` (e.g. `Content-Type`, `Authorization`), `body` (must include a `messages` array).
 
-    **Placeholders:** `{chat_id}` can be used in `body.messages[*].content`; replaced at runtime. `${ENV_VAR}` is supported in header values for secrets.
+    **Placeholders:** `${ENV_VAR}` is supported in header values for secrets.
 
     **Example (YAML):**
 
@@ -221,10 +234,10 @@ Both types support `${ENV_VAR}` substitution in header values (and in the endpoi
 
         simulation = asyncio.run(run_simulation(SimulationInput(
             agent_config=agent_config,
-            scenario_file_path="scenarios.json",
-            num_conversations_per_scenario=30,
+            scenario_file_path="./scenarios.json",
+            num_conversations_per_scenario=1,
             max_turns=10,
-            num_workers=10,
+            num_workers="auto",
             output_file_path="./simulation.json",
         )))
         ```
