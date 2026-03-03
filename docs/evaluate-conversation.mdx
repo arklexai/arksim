@@ -126,11 +126,16 @@ In addition to the built-in metrics (helpfulness, coherence, relevance, verbosit
     | Return    | `QuantResult` with `name`, `value` (float), `reason` |
 
     ```python
-    from your_eval_lib import QuantitativeMetric, ScoreInput, QuantResult
+    from arksim.evaluator import (
+        QuantitativeMetric,
+        QuantResult,
+        ScoreInput,
+    )
 
     class ClarityScore(QuantitativeMetric):
         def score(self, score_input: ScoreInput) -> QuantResult:
-            # Use score_input.chat_history, .user_goal, .knowledge, etc.
+            # Use your own LLM or any logic; independent of evaluator model config.
+            # score_input.chat_history, .user_goal, .knowledge, etc.
             value = ...  # your scoring logic or LLM call
             return QuantResult(name="clarity", value=value, reason="...")
     ```
@@ -145,7 +150,11 @@ In addition to the built-in metrics (helpfulness, coherence, relevance, verbosit
     | Return    | `QualResult` with `name`, `value` (str), `reason` |
 
     ```python
-    from your_eval_lib import QualitativeMetric, ScoreInput, QualResult
+    from arksim.evaluator import (
+        QualitativeMetric,
+        QualResult,
+        ScoreInput,
+    )
 
     class NeedsAssessment(QualitativeMetric):
         def evaluate(self, score_input: ScoreInput) -> QualResult:
@@ -158,7 +167,7 @@ In addition to the built-in metrics (helpfulness, coherence, relevance, verbosit
 
 ### Available fields
 
-Both metric types receive a `ScoreInput`. You can use your own LLM or any logic inside the metric; it is independent of the evaluator's model config.
+Both metric types receive a `ScoreInput`:
 
 ```python
 score_input.chat_history   # Full conversation turns
@@ -197,42 +206,6 @@ score_input.knowledge      # Retrieved knowledge / context passed to the agent
         )
         ```
       </Tab>
-      <Tab title="Python (from objects)">
-        ```python
-        import arksim
-        from arksim.simulation_engine.entities import (
-            ConversationItem, TurnItem, SimulatedUserPrompt, SimulatedUserPromptVariables
-        )
-
-        conversations = [
-            ConversationItem(
-                conversation_id="00de685e-f76b-4a5f-a6e5-217cad777316",
-                scenario_id="8f4c2a91-3b7e-4d5f-a9c2-6e1b4d9f2037",
-                conversation_history=[
-                    TurnItem(turn_id=0, role="simulated_user", content="What documents do I need to file a claim?"),
-                    TurnItem(turn_id=0, role="assistant", content="You'll need a copy of your policy..."),
-                ],
-                sim_user_prompt=SimulatedUserPrompt(
-                    sim_user_prompt_template="You are a customer interacting with an agent...",
-                    variables=SimulatedUserPromptVariables(
-                        agent_context="XYZ Bank Insurance is a Canadian provider...",
-                        sim_user_profile="Name: Priya Sharma. Age: 32. Location: Toronto...",
-                        user_goal="Find out what documents are needed to file an auto insurance claim.",
-                        knowledge=["Typical timelines: claim setup is usually same day..."],
-                    ),
-                ),
-            )
-        ]
-
-        evaluation_results = arksim.evaluate(
-            conversations=conversations,
-            output_dir="./results/evaluation",
-            model="gpt-5.1",
-            provider="open-ai",
-            generate_html_report=True,
-        )
-        ```
-      </Tab>
     </Tabs>
   </Step>
 </Steps>
@@ -241,14 +214,10 @@ score_input.knowledge      # Retrieved knowledge / context passed to the agent
 
 ## Output Files
 
-| File                                     | Description                                                                                                                                                                       |
-| ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `evaluation.json`                        | Full evaluation output: conversations with scores, failure labels, and unique errors. See [Evaluation output](/schema-reference#evaluation-output-evaluationjson) for the schema. |
-| `final_report.md`                        | High-level summary with metric averages, overall assessment, and top unique errors.                                                                                               |
-| `final_report.html`                      | Same content as `final_report.md`, rendered for easier browsing and sharing.                                                                                                      |
-| `agent_performance_per_turn.csv`         | One row per turn with metric scores, reasoning, and failure labels. Useful for debugging specific moments.                                                                        |
-| `agent_performance_per_conversation.csv` | One row per conversation with rolled-up scores and status. Useful for comparing conversations.                                                                                    |
-| `unique_errors.csv`                      | One row per unique error type with description, category, and links back to occurrences.                                                                                          |
+| File                | Description                                                                                                                                                                       |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `evaluation.json`   | Full evaluation output: conversations with scores, failure labels, and unique errors. See [Evaluation output](/schema-reference#evaluation-output-evaluationjson) for the schema. |
+| `final_report.html` | High-level summary with metric averages, overall assessment, and top unique errors, rendered for easier browsing and sharing.                                                      |
 
 ---
 
