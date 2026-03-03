@@ -72,12 +72,15 @@ provider: openai
 
 By default, Arksim uses a built-in system prompt to drive the simulated user. You can override it by setting `simulated_user_prompt_template` in your config to a **Jinja2** template string. The template is rendered per conversation with these variables:
 
-| Variable | Description |
-| -------- | ----------- |
-| `scenario.agent_context` | Context about the agent/company the user is talking to. |
-| `scenario.goal` | The simulated user's goal (from the scenario). |
-| `scenario.knowledge` | The scenario's knowledge items (background information the user has). |
-| `simulation.profile` | The generated persona text (from the scenario's user attributes). |
+**From the scenario file**
+
+- **`scenario.agent_context`**: Context about the agent/company the user is talking to.
+- **`scenario.goal`**: The simulated user's goal.
+- **`scenario.knowledge`**: The scenario's knowledge items (background information the user has).
+
+**Generated during simulation**
+
+- **`simulation.profile`**: Persona text generated from the scenario's user attributes for this conversation.
 
 Use them in your template with `{{ scenario.goal }}`, `{{ simulation.profile }}`, and so on. If you omit `simulated_user_prompt_template`, the default prompt is used.
 
