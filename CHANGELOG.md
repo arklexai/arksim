@@ -37,6 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Makefile` with common dev commands
 - Issue template chooser linking to docs and discussions
 - Documentation and Changelog checklist in PR template
+- Automated TestPyPI publishing on version tag push via trusted publishing (OIDC)
 
 - CI restructured: separate Lint job, test matrix on Python 3.10 through 3.13, PR checks (title, description, changelog) in one job
 - Dependabot PRs now auto-labeled `skip-changelog` to bypass changelog CI check
