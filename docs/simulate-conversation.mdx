@@ -110,7 +110,7 @@ Arksim supports two agent protocols:
 
     Connects to any OpenAI-compatible chat completions endpoint.
 
-    **Required fields:** `endpoint` (API URL), `headers` (e.g. `Content-Type`, `Authorization`), `body` (must include a `messages` array).
+    **Required fields:** `endpoint` (API URL), `headers` (e.g. `Content-Type`; `Authorization` optional), `body` (must include a `messages` array).
 
     **Placeholders:** `${ENV_VAR}` is supported in header values for secrets.
 
@@ -262,7 +262,7 @@ For the full structure and field order, see the [Schema Reference](/schema-refer
 ```json
 {
   "schema_version": "v1",
-  "simulator_version": "1.4.2",
+  "simulator_version": "v1",
   "generated_at": "2025-04-10T14:32:00Z",
   "conversations": [
     {
