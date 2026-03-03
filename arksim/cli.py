@@ -22,10 +22,9 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 logging.getLogger("openai").setLevel(logging.WARNING)
 logging.getLogger("a2a.client.card_resolver").setLevel(logging.WARNING)
 
-_EXAMPLES_REPO_URL = (
-    "https://github.com/arklexai/arksim/archive/main.tar.gz"
-)
+_EXAMPLES_REPO_URL = "https://github.com/arklexai/arksim/archive/main.tar.gz"
 _EXAMPLES_PREFIX = "examples/"
+
 
 def _check_score_threshold(
     evaluator_output: Evaluation,
@@ -226,10 +225,7 @@ def _run_examples(
             return
 
         if name and name not in available:
-            logger.error(
-                f"Unknown example '{name}'. "
-                f"Available: {', '.join(available)}"
-            )
+            logger.error(f"Unknown example '{name}'. Available: {', '.join(available)}")
             sys.exit(1)
 
         if name:
@@ -249,14 +245,10 @@ def _run_examples(
 
         for member in tar.getmembers():
             if member.name.startswith(filter_prefix):
-                member.name = member.name.removeprefix(
-                    f"{top}/"
-                )
+                member.name = member.name.removeprefix(f"{top}/")
                 tar.extract(member, ".", filter="data")
 
-    logger.info(
-        f"Downloaded to {os.path.abspath(dest_path)}"
-    )
+    logger.info(f"Downloaded to {os.path.abspath(dest_path)}")
 
 
 def build_parser(valid_commands: list[str] | None = None) -> argparse.ArgumentParser:
