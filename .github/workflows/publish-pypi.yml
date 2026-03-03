@@ -3,6 +3,7 @@
 # Triggered by pushing a version tag (e.g. v1.2.3).
 
 name: Publish to PyPI
+run-name: Publish ${{ github.ref_name }} to PyPI
 
 on:
   push:
@@ -66,19 +67,27 @@ jobs:
           name: dist
           path: dist/
 
-      - name: Generate changelog
+      - name: Extract changelog for version
         id: changelog
-        uses: mikepenz/release-changelog-builder-action@v5
-        with:
-          toTag: ${{ github.ref_name }}
-          token: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          version="${{ github.ref_name }}"
+          # Strip leading "v" to match CHANGELOG.md section headers (e.g. v1.2.3 → 1.2.3)
+          version="${version#v}"
+          # Extract the block between this version's heading and the next one.
+          body=$(awk "/^## \[${version}\]/{found=1; next} found && /^## \[/{exit} found{print}" CHANGELOG.md)
+          # Pass the multi-line body to subsequent steps via $GITHUB_OUTPUT.
+          {
+            echo "body<<EOF"
+            echo "$body"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
           name: ${{ github.ref_name }}
-          body: ${{ steps.changelog.outputs.changelog }}
+          body: ${{ steps.changelog.outputs.body }}
           files: dist/*
           # Mark as pre-release when the version contains "rc".
           prerelease: ${{ contains(github.ref_name, 'rc') }}
