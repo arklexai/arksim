@@ -79,7 +79,12 @@ async def chat_completions(
         ) from None
 
     # --- AGENT CHAT LOGIC STARTS HERE ---
-    agent = Agent()
+    chat_history = [
+        {"role": m.role, "content": m.content}
+        for m in request.messages
+        if m is not last_user_msg
+    ]
+    agent = Agent(history=chat_history)
     answer_text = await agent.invoke(last_user_msg.content)
     # --- AGENT CHAT LOGIC ENDS HERE ---
 

@@ -52,7 +52,11 @@ class Agent:
     every ``Runner.run`` call so the model has multi-turn context.
     """
 
-    def __init__(self, context_id: str | None = None) -> None:
+    def __init__(
+        self,
+        context_id: str | None = None,
+        history: list[dict[str, Any]] | None = None,
+    ) -> None:
         self.sdk_agent = SDKAgent(
             name="BankInsuranceAgent",
             instructions=SYSTEM_INSTRUCTIONS,
@@ -60,7 +64,7 @@ class Agent:
             model="gpt-5.1",
         )
         self.context_id = context_id or str(uuid.uuid4())
-        self._history: list[dict[str, Any]] = []
+        self._history: list[dict[str, Any]] = list(history) if history else []
 
     async def invoke(self, question: str) -> str:
         """Process a user message and return the agent's response.
