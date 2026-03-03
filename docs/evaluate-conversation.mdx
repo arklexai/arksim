@@ -105,14 +105,66 @@ For all evaluation config keys, types, and defaults, see [Run configuration → 
 
 In addition to the built-in metrics (helpfulness, coherence, relevance, verbosity, faithfulness, goal completion, behavior failure), you can define **custom metrics** in Python and load them via config.
 
-- **`custom_metrics_file_paths`**: List of paths to Python files. Each file is loaded and every public `QuantitativeMetric` or `QualitativeMetric` subclass is instantiated and run. Custom metrics always run; they are not filtered by `metrics_to_run`.
-- **`metrics_to_run`**: Names of built-in metrics to run. If empty, all built-in metrics run. Use this to restrict evaluation to a subset of built-ins while still running all custom metrics from `custom_metrics_file_paths`.
+<ParamField body="custom_metrics_file_paths" type="list[str]">
+  List of paths to Python files. Each file is loaded and every public `QuantitativeMetric` or `QualitativeMetric` subclass is instantiated and run. Custom metrics **always run** — they are not filtered by `metrics_to_run`.
+</ParamField>
 
-**Quantitative metrics** produce a numeric score (e.g. 0–5): subclass `QuantitativeMetric`, implement `score(score_input: ScoreInput) -> QuantResult`, and return a `QuantResult` with `name`, `value` (float), and `reason`.
+<ParamField body="metrics_to_run" type="list[str]">
+  Names of built-in metrics to run. If empty, all built-in metrics run. Use this to restrict evaluation to a subset of built-ins while still running all custom metrics from `custom_metrics_file_paths`.
+</ParamField>
 
-**Qualitative metrics** produce a categorical label (e.g. `"complete"` / `"partial"`): subclass `QualitativeMetric`, implement `evaluate(score_input: ScoreInput) -> QualResult`, and return a `QualResult` with `name`, `value` (str), and `reason`.
+### Metric Types
 
-You get `ScoreInput` (e.g. `chat_history`, `user_goal`, `knowledge`) and can use your own LLM or logic inside the metric. For a full example with quantitative and qualitative metrics (product suitability, needs assessment, clarity, disclosure completeness, prohibited statements, advice boundary, escalation), see `examples/bank-insurance/custom_metrics.py`.
+<Tabs>
+  <Tab title="Quantitative">
+    Produces a **numeric score** (e.g. 0–5).
+
+    | Step      | Detail                                               |
+    | --------- | ---------------------------------------------------- |
+    | Subclass  | `QuantitativeMetric`                                 |
+    | Implement | `score(score_input: ScoreInput) -> QuantResult`      |
+    | Return    | `QuantResult` with `name`, `value` (float), `reason` |
+
+    ```python
+    from your_eval_lib import QuantitativeMetric, ScoreInput, QuantResult
+    
+    class ClarityScore(QuantitativeMetric):
+        def score(self, score_input: ScoreInput) -> QuantResult:
+            # Use score_input.chat_history, .user_goal, .knowledge, etc.
+            value = ...  # your scoring logic or LLM call
+            return QuantResult(name="clarity", value=value, reason="...")
+    ```
+  </Tab>
+  <Tab title="Qualitative">
+    Produces a **categorical label** (e.g. `"complete"` / `"partial"`).
+
+    | Step      | Detail                                            |
+    | --------- | ------------------------------------------------- |
+    | Subclass  | `QualitativeMetric`                               |
+    | Implement | `evaluate(score_input: ScoreInput) -> QualResult` |
+    | Return    | `QualResult` with `name`, `value` (str), `reason` |
+
+    ```python
+    from your_eval_lib import QualitativeMetric, ScoreInput, QualResult
+    
+    class NeedsAssessment(QualitativeMetric):
+        def evaluate(self, score_input: ScoreInput) -> QualResult:
+            # Use score_input.chat_history, .user_goal, .knowledge, etc.
+            label = ...  # "complete" | "partial" | "missing"
+            return QualResult(name="needs_assessment", value=label, reason="...")
+    ```
+  </Tab>
+</Tabs>
+
+### Available fields
+
+Both metric types receive a `ScoreInput`. You can use your own LLM or any logic inside the metric; it is independent of the evaluator's model config.
+
+```python
+score_input.chat_history   # Full conversation turns
+score_input.user_goal      # The goal the user was trying to achieve
+score_input.knowledge      # Retrieved knowledge / context passed to the agent
+```
 
 ---
 
@@ -134,7 +186,7 @@ You get `ScoreInput` (e.g. `chat_history`, `user_goal`, `knowledge`) and can use
       <Tab title="Python (from file)">
         ```python
         import arksim
-
+        
         evaluation_results = arksim.evaluate(
             simulation_file_path="./simulation.json",
             output_dir="./evaluation",
@@ -151,7 +203,7 @@ You get `ScoreInput` (e.g. `chat_history`, `user_goal`, `knowledge`) and can use
         from arksim.simulation_engine.entities import (
             ConversationItem, TurnItem, SimulatedUserPrompt, SimulatedUserPromptVariables
         )
-
+        
         conversations = [
             ConversationItem(
                 conversation_id="00de685e-f76b-4a5f-a6e5-217cad777316",
@@ -171,7 +223,7 @@ You get `ScoreInput` (e.g. `chat_history`, `user_goal`, `knowledge`) and can use
                 ),
             )
         ]
-
+        
         evaluation_results = arksim.evaluate(
             conversations=conversations,
             output_dir="./results/evaluation",
