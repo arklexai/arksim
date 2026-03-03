@@ -22,6 +22,10 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 logging.getLogger("openai").setLevel(logging.WARNING)
 logging.getLogger("a2a.client.card_resolver").setLevel(logging.WARNING)
 
+_EXAMPLES_REPO_URL = (
+    "https://github.com/arklexai/arksim/archive/main.tar.gz"
+)
+_EXAMPLES_PREFIX = "examples/"
 
 def _check_score_threshold(
     evaluator_output: Evaluation,
@@ -189,6 +193,72 @@ def _run_show_prompts(category: str | None) -> None:
             print()
 
 
+def _run_examples(
+    name: str | None = None,
+    list_only: bool = False,
+) -> None:
+    """Download example projects from the arksim GitHub repo."""
+    import io
+    import tarfile
+    from urllib.request import urlopen
+
+    logger.info("Fetching examples from arksim GitHub repo...")
+    with urlopen(_EXAMPLES_REPO_URL) as resp:
+        data = resp.read()
+
+    with tarfile.open(fileobj=io.BytesIO(data), mode="r:gz") as tar:
+        top = tar.getmembers()[0].name.split("/")[0]
+        example_root = f"{top}/{_EXAMPLES_PREFIX}"
+
+        available = sorted(
+            {
+                m.name.removeprefix(example_root).split("/")[0]
+                for m in tar.getmembers()
+                if m.name.startswith(example_root)
+                and m.name != example_root.rstrip("/")
+            }
+        )
+
+        if list_only:
+            print("Available examples:")
+            for ex in available:
+                print(f"  {ex}")
+            return
+
+        if name and name not in available:
+            logger.error(
+                f"Unknown example '{name}'. "
+                f"Available: {', '.join(available)}"
+            )
+            sys.exit(1)
+
+        if name:
+            filter_prefix = f"{top}/{_EXAMPLES_PREFIX}{name}/"
+            dest_path = os.path.join("examples", name)
+        else:
+            filter_prefix = example_root
+            dest_path = "examples"
+
+        if os.path.exists(dest_path):
+            logger.error(
+                f"'{dest_path}' already exists. "
+                "Remove it first or choose a "
+                "different directory."
+            )
+            sys.exit(1)
+
+        for member in tar.getmembers():
+            if member.name.startswith(filter_prefix):
+                member.name = member.name.removeprefix(
+                    f"{top}/"
+                )
+                tar.extract(member, ".", filter="data")
+
+    logger.info(
+        f"Downloaded to {os.path.abspath(dest_path)}"
+    )
+
+
 def build_parser(valid_commands: list[str] | None = None) -> argparse.ArgumentParser:
     """Build the CLI argument parser.
 
@@ -203,6 +273,7 @@ def build_parser(valid_commands: list[str] | None = None) -> argparse.ArgumentPa
             "evaluate",
             "simulate-evaluate",
             "show-prompts",
+            "examples",
             "ui",
         ]
 
@@ -224,6 +295,16 @@ def build_parser(valid_commands: list[str] | None = None) -> argparse.ArgumentPa
     if "show-prompts" in valid_commands:
         examples.append(
             "  arksim show-prompts --category agent_behavior_failure          # Show prompts by category"
+        )
+    if "examples" in valid_commands:
+        examples.append(
+            "  arksim examples                                                # Download all example projects"
+        )
+        examples.append(
+            "  arksim examples bank-insurance                                 # Download one example"
+        )
+        examples.append(
+            "  arksim examples --list                                         # List available examples"
         )
     if "ui" in valid_commands:
         examples.append(
@@ -272,6 +353,7 @@ def main() -> None:
         "evaluate",
         "simulate-evaluate",
         "show-prompts",
+        "examples",
         "ui",
     ]
 
@@ -284,6 +366,12 @@ def main() -> None:
         overrides = parse_extra_args(args.additional_args)
         category = overrides.get("category")
         _run_show_prompts(category)
+        return
+
+    if args.command == "examples":
+        overrides = parse_extra_args(args.additional_args)
+        list_only = overrides.get("list", False)
+        _run_examples(name=args.config_file, list_only=list_only)
         return
 
     if args.command == "ui":
