@@ -170,7 +170,7 @@ Both types support `${ENV_VAR}` substitution in header values (and in the endpoi
           messages:
             - role: system
               content: "You are a helpful assistant."
-    
+
     scenario_file_path: ./scenarios.json
     num_conversations_per_scenario: 5
     max_turns: 5
@@ -200,7 +200,7 @@ Both types support `${ENV_VAR}` substitution in header values (and in the endpoi
         import asyncio
         from arksim.simulation_engine import run_simulation, SimulationInput
         from arksim.config import AgentConfig
-        
+
         agent_config = AgentConfig(
             agent_type="chat_completions",
             agent_name="my-agent",
@@ -218,7 +218,7 @@ Both types support `${ENV_VAR}` substitution in header values (and in the endpoi
                 },
             },
         )
-        
+
         simulation = asyncio.run(run_simulation(SimulationInput(
             agent_config=agent_config,
             scenario_file_path="scenarios.json",

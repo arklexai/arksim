@@ -119,7 +119,7 @@ For all evaluation config keys, types, and defaults, see [Run configuration → 
       <Tab title="Python (from file)">
         ```python
         import arksim
-        
+
         evaluation_results = arksim.evaluate(
             simulation_file_path="./simulation.json",
             output_dir="./evaluation",
@@ -136,7 +136,7 @@ For all evaluation config keys, types, and defaults, see [Run configuration → 
         from arksim.simulation_engine.entities import (
             ConversationItem, TurnItem, SimulatedUserPrompt, SimulatedUserPromptVariables
         )
-        
+
         conversations = [
             ConversationItem(
                 conversation_id="00de685e-f76b-4a5f-a6e5-217cad777316",
@@ -156,7 +156,7 @@ For all evaluation config keys, types, and defaults, see [Run configuration → 
                 ),
             )
         ]
-        
+
         evaluation_results = arksim.evaluate(
             conversations=conversations,
             output_dir="./results/evaluation",
