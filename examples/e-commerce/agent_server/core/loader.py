@@ -19,8 +19,14 @@ from enum import Enum
 from pathlib import Path
 from urllib.parse import urljoin
 
+import networkx as nx
 import requests
+import tiktoken
+
+with contextlib.suppress(Exception):
+    tiktoken.get_encoding("cl100k_base")
 from bs4 import BeautifulSoup
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from mistralai import Mistral
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
@@ -59,72 +65,15 @@ def encode_image(image_path: str) -> str | None:
         return None
 
 
-def _split_text(
-    text: str, chunk_size: int = 10000, chunk_overlap: int = 1000
-) -> list[str]:
-    """Split text into overlapping chunks, preferring natural break points.
-
-    Tries to split on paragraph boundaries first, then line breaks, then spaces,
-    falling back to hard character splits. This mirrors the behaviour of
-    LangChain's RecursiveCharacterTextSplitter in character-based mode.
-
-    Args:
-        text (str): The text to split.
-        chunk_size (int): Maximum characters per chunk.
-        chunk_overlap (int): Number of characters to overlap between chunks.
-
-    Returns:
-        list[str]: Non-empty text chunks.
-    """
-    if len(text) <= chunk_size:
-        return [text] if text.strip() else []
-
-    separators = ["\n\n", "\n", ". ", " ", ""]
-
-    def _recursive_split(fragment: str, sep_idx: int) -> list[str]:
-        if len(fragment) <= chunk_size:
-            return [fragment] if fragment.strip() else []
-        if sep_idx >= len(separators):
-            # Hard character split as last resort
-            chunks: list[str] = []
-            start = 0
-            while start < len(fragment):
-                end = min(start + chunk_size, len(fragment))
-                chunks.append(fragment[start:end])
-                start = end - chunk_overlap
-            return [c for c in chunks if c.strip()]
-
-        sep = separators[sep_idx]
-        parts = fragment.split(sep) if sep else list(fragment)
-
-        merged: list[str] = []
-        current = ""
-        for part in parts:
-            join = sep if current else ""
-            candidate = current + join + part
-            if len(candidate) <= chunk_size:
-                current = candidate
-            else:
-                if current.strip():
-                    merged.append(current)
-                if len(part) > chunk_size:
-                    merged.extend(_recursive_split(part, sep_idx + 1))
-                    current = ""
-                else:
-                    current = part
-        if current.strip():
-            merged.append(current)
-
-        # Apply overlap between adjacent chunks
-        if chunk_overlap > 0 and len(merged) > 1:
-            overlapped = [merged[0]]
-            for i in range(1, len(merged)):
-                tail = overlapped[-1][-chunk_overlap:]
-                overlapped.append(tail + sep + merged[i] if tail else merged[i])
-            return overlapped
-        return merged
-
-    return _recursive_split(text, 0)
+def _make_text_splitter() -> RecursiveCharacterTextSplitter:
+    """Return a text splitter, preferring tiktoken-based chunking with a character-based fallback."""
+    try:
+        tiktoken.get_encoding("cl100k_base")
+        return RecursiveCharacterTextSplitter.from_tiktoken_encoder(
+            encoding_name="cl100k_base", chunk_size=10000, chunk_overlap=1000
+        )
+    except Exception:
+        return RecursiveCharacterTextSplitter(chunk_size=10000, chunk_overlap=1000)
 
 
 class SourceType(Enum):
@@ -819,6 +768,7 @@ class Loader:
         Returns:
             List[CrawledObject]: List of chunked CrawledObject instances.
         """
+        text_splitter = _make_text_splitter()
         docs: list[CrawledObject] = []
         for doc_obj in doc_objs:
             if doc_obj.is_error or doc_obj.content is None:
@@ -830,7 +780,7 @@ class Loader:
                 continue
 
             try:
-                splits = _split_text(doc_obj.content)
+                splits = text_splitter.split_text(doc_obj.content)
             except Exception as split_error:
                 logger.warning(
                     f"Failed to split document from {doc_obj.source}: {split_error}. Skipping."

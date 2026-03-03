@@ -17,8 +17,8 @@ The example includes two ready-to-run agent setups you can test against out of t
   <Card icon="bolt" title="Example Agent 1: OpenAI API">
     A lightweight agent that calls the OpenAI API directly. Good for getting started quickly with minimal setup.
   </Card>
-  <Card icon="diagram-project" title="Example Agent 2: LangGraph RAG">
-    RAG-based agent with LangGraph, backed by an insurance knowledge base; supports A2A or Chat Completions.
+  <Card icon="diagram-project" title="Example Agent 2: OpenAI Agents SDK RAG">
+    RAG-based agent built with the OpenAI Agents SDK, backed by a product knowledge base; exposes a Chat Completions-compatible endpoint.
   </Card>
 </CardGroup>
 
@@ -59,9 +59,9 @@ This agent calls the OpenAI API directly — no server setup required. The defau
 
 ---
 
-## Example Agent 2: LangGraph RAG Agent
+## Example Agent 2: RAG Agent
 
-This agent is a RAG-based shopping assistant built with LangGraph, exposable via a Chat Completions–compatible endpoint on port `8080` at `/chat/completions`.
+This agent is a RAG-based shopping assistant built with OpenAI Agents SDK, exposable via a Chat Completions–compatible endpoint on port `8888` at `/chat/completions`.
 
 <Steps>
   <Step title="Install agent dependencies">
@@ -102,7 +102,7 @@ This agent is a RAG-based shopping assistant built with LangGraph, exposable via
     ```
 
     <Note>
-      Use `agent_config_chat_completions.json` as your agent config — copy it to `agent_config.json` or point your config at it — so the simulator talks to `http://localhost:8080/chat/completions`.
+      Use `agent_config_chat_completions.json` as your agent config — copy it to `agent_config.json` or point your config at it — so the simulator talks to `http://localhost:8888/chat/completions`.
     </Note>
   </Step>
 </Steps>

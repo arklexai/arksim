@@ -12,7 +12,7 @@ from ..core.agent import Agent  # noqa: TID252
 # To connect
 # your own agent running at an external endpoint instead:
 #
-# 1. Remove the `from .agent import Agent` import above
+# 1. Remove the `from ..core.agent import Agent` import above
 # 2. Add `import httpx` to the imports
 # 3. Replace the code between --- AGENT CHAT LOGIC STARTS HERE --- and
 #    --- AGENT CHAT LOGIC ENDS HERE --- with:
@@ -78,6 +78,7 @@ async def chat_completions(
     # Get the chat id from the system message injected by the simulator
     try:
         chat_id = request.messages[0].content.split("chat_id:")[1].split(" ")[0]
+        print(f"Chat ID: {chat_id}")
     except IndexError:
         raise HTTPException(status_code=400, detail="Chat ID is required") from None
     if not chat_id:

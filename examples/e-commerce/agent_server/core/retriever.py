@@ -1,15 +1,9 @@
-"""FAISS-based document retrieval using native faiss-cpu and the OpenAI Embeddings API.
-
-Replaces the previous LangChain FAISS wrapper with a lightweight, dependency-minimal
-implementation that stores the index in native FAISS format.
+"""FAISS-based document retrieval using LangChain OpenAI Embeddings.
 
 Index layout inside the knowledge base directory:
     index/
         index.faiss   — native FAISS flat index
         docs.pkl      — list[dict] of {content, metadata} matching index rows
-
-Note: if an existing LangChain-format index is present it must be deleted before the
-first run so this module can rebuild it in the new format.
 """
 
 import logging
@@ -22,49 +16,13 @@ from typing import Any
 
 import faiss
 import numpy as np
-from openai import AsyncOpenAI, OpenAI
+from langchain_openai import OpenAIEmbeddings
 
 from .loader import CrawledObject, Loader
 
 logger = logging.getLogger(__name__)
 
-EMBEDDING_MODEL = "text-embedding-3-small"
-_EMBED_BATCH_SIZE = 100
-
-_sync_client = OpenAI()
-_async_client = AsyncOpenAI()
-
-
-def _embed_batch(texts: list[str]) -> np.ndarray:
-    """Embed texts synchronously in batches (used during index building).
-
-    Args:
-        texts: List of text strings to embed.
-
-    Returns:
-        Float32 array of shape (len(texts), embedding_dim).
-    """
-    all_embeddings: list[list[float]] = []
-    for i in range(0, len(texts), _EMBED_BATCH_SIZE):
-        batch = texts[i : i + _EMBED_BATCH_SIZE]
-        response = _sync_client.embeddings.create(model=EMBEDDING_MODEL, input=batch)
-        all_embeddings.extend(item.embedding for item in response.data)
-    return np.array(all_embeddings, dtype=np.float32)
-
-
-async def _embed_query(query: str) -> np.ndarray:
-    """Embed a single query string asynchronously.
-
-    Args:
-        query: The query text to embed.
-
-    Returns:
-        Float32 array of shape (embedding_dim,).
-    """
-    response = await _async_client.embeddings.create(
-        model=EMBEDDING_MODEL, input=[query]
-    )
-    return np.array(response.data[0].embedding, dtype=np.float32)
+_embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
 
 
 class FaissRetriever:
@@ -103,7 +61,7 @@ class FaissRetriever:
 
         logger.info("Building FAISS index from %d documents...", len(self.documents))
         texts = [d["content"] for d in self.documents]
-        embeddings = _embed_batch(texts)
+        embeddings = np.array(_embeddings.embed_documents(texts), dtype=np.float32)
         faiss.normalize_L2(embeddings)
 
         index: faiss.Index = faiss.IndexFlatIP(embeddings.shape[1])
@@ -126,7 +84,7 @@ class FaissRetriever:
         Returns:
             List of dicts with keys: ``content``, ``title``, ``source``, ``confidence``.
         """
-        embedding = await _embed_query(query)
+        embedding = np.array(await _embeddings.aembed_query(query), dtype=np.float32)
         vec = embedding.reshape(1, -1).copy()
         faiss.normalize_L2(vec)
         distances, indices = self.index.search(vec, k)

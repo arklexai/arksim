@@ -17,6 +17,7 @@ Steps to run:
    ```
 
 2. Review `config.yaml` for this example (the default configuration is sufficient to get started).
+
 3. From this example directory, run:
    ```bash
    arksim simulate-evaluate config.yaml
@@ -25,8 +26,6 @@ Steps to run:
 ## Option 2: In-house Agent (`agent_server`)
 
 In the `./examples/bank-insurance/agent_server` folder, we provide a sample RAG-based agent implemented with OpenAI Agents SDK that can be exposed with A2A Protocol or through Chat Completions interface.
-
-The config files support environment variable substitution using `${ENV_VAR_NAME}` syntax (for example, `${A2A_API_KEY}` or `${OPENAI_API_KEY}`).
 
 Steps to run:
 
@@ -39,16 +38,18 @@ Steps to run:
         ```
      2. Navigate to the sample agent directory and install requirements:
         ```bash
-        pip install -r examples/bank-insurance/agent_server/requirements.txt
+        cd examples/bank-insurance/agent_server
+        pip install -r requirements.txt
         ```
 
-2. Start one of the sample agents:
+2. Start one of the sample agents (run all commands below from the **parent directory of the `examples` folder**):
    - **2.1 A2A agent server**
 
      This exposes an A2A-compatible agent on port `9999`.
 
      ```bash
-     export OPENAI_API_KEY=<YOUR_OPENAI_API_KEY>
+     export OPENAI_API_KEY="<YOUR_OPENAI_API_KEY>"
+     export A2A_API_KEY="<YOUR_A2A_API_KEY>"
      python -m examples.bank-insurance.agent_server.a2a.server
      ```
 
@@ -57,7 +58,8 @@ Steps to run:
      This exposes an OpenAI Chat Completions-compatible endpoint on port `8888` at `/chat/completions`.
 
      ```bash
-     export OPENAI_API_KEY=<YOUR_OPENAI_API_KEY>
+     export OPENAI_API_KEY="<YOUR_OPENAI_API_KEY>"
+     export AGENT_API_KEY="<YOUR_AGENT_API_KEY>"
      python -m examples.bank-insurance.agent_server.chat_completions.server
      ```
 
@@ -66,10 +68,13 @@ Steps to run:
 3. From this example directory, run with the appropriate config:
    - **A2A agent**:
      ```bash
-     export A2A_API_KEY=<YOUR_A2A_API_KEY>
+     export A2A_API_KEY="<YOUR_A2A_API_KEY>"
+     export OPENAI_API_KEY="<YOUR_OPENAI_API_KEY>"
      arksim simulate-evaluate config_a2a.yaml
      ```
    - **Chat Completions agent**:
      ```bash
+     export AGENT_API_KEY="<YOUR_AGENT_API_KEY>"
+     export OPENAI_API_KEY="<YOUR_OPENAI_API_KEY>"
      arksim simulate-evaluate config_chat_completions.yaml
      ```
