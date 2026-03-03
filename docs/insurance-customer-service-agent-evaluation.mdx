@@ -167,44 +167,8 @@ max_turns: 5
 # Output file path for simulation results
 output_file_path: ./results/simulation/simulation.json
 
-# Simulated user system prompt: one Jinja template, rendered per scenario.
-# Variables are fetched from scenario.json (the input file):
-#   - scenario.agent_context: context about the agent
-#   - scenario.goal: the user's goal
-#   - scenario.knowledge: list of knowledge items (optional)
-#   - scenario.user_profile: the simulated user's profile
-# Single knowledge -> inline in prompt; multiple -> via user message.
-simulated_user_prompt_template: |
-  You are a user interacting with an agent through multiple turns.
-  The agent is supplied by the following conversation context:
-  {{ scenario.agent_context }}
-
-  Your profile is:
-  {{ scenario.user_profile }}
-
-  You have the following goal when interacting with this agent:
-  {{ scenario.goal }}
-
-  {% if scenario.knowledge and scenario.knowledge|length == 1 %}
-  Here is the content that you might be interested in and might have questions about:
-  {{ scenario.knowledge[0].content }}
-
-  {% elif scenario.knowledge and scenario.knowledge|length > 1 %}
-  You will receive reference knowledge in a user message immediately before each of your replies; use it when relevant to achieve your goal.
-  {% endif %}
-
-  Rules:
-  - Do not give away all the instruction at once. Only provide the information necessary for the current step.
-  - Do not hallucinate information that is not provided in the instruction.
-  - If the instruction goal is satisfied, generate '###STOP###' as a standalone message without anything else.
-  - Do not repeat the exact instruction in the conversation.
-  - Avoid using bullet points or lists.
-  - Keep responses brief and under 50 words.
-  - Do not flip the roles.
-
-  {% if scenario.knowledge and scenario.knowledge|length > 1 %}
-  - Ask only one question per turn.
-  {% endif %}
+# Jinja template for the simulated user's system prompt
+simulated_user_prompt_template: null
 
 # EVALUATION SETTINGS
 
