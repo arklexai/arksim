@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Refactored `bank-insurance` and `e-commerce` example agents to use the OpenAI Agents SDK and corrected the example server port from `8080` to `8888`
 - Agent configuration is now defined inline in `config.yaml` under the `agent_config` key instead of in separate `agent_config.json` files
 - Updated all documentation and examples to use inline agent configuration
 - UI now passes `agent_config`, `custom_metrics_file_paths`, and `metrics_to_run` from loaded config YAML

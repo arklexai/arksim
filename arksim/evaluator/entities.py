@@ -169,5 +169,7 @@ class Evaluation(BaseModel):
     schema_version: str
     generated_at: str  # ISO 8601 UTC
     evaluator_version: str
+    evaluation_id: str
+    simulation_id: str
     conversations: list[ConversationEvaluation]
     unique_errors: list[UniqueError]

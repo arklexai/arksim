@@ -130,6 +130,7 @@ class Simulation(BaseModel):
 
     schema_version: str
     simulator_version: str
+    simulation_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     generated_at: str = Field(
         default_factory=lambda: datetime.now(timezone.utc).strftime(
             "%Y-%m-%dT%H:%M:%SZ"

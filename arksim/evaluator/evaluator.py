@@ -2,6 +2,7 @@ import importlib.util
 import inspect
 import logging
 import os
+import uuid
 from collections import Counter, defaultdict
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -111,6 +112,7 @@ class Evaluator:
     ) -> Evaluation:
         """Evaluate conversations and return results."""
         conversations = simulation.conversations
+        simulation_id = simulation.simulation_id
         logger.info(f"Starting evaluation of {len(conversations)} conversations")
 
         # Pre-process to count total turns for accurate progress tracking
@@ -245,6 +247,8 @@ class Evaluator:
             schema_version=EVALUATION_SCHEMA_VERSION,
             evaluator_version=EVALUATOR_VERSION,
             generated_at=datetime.now(timezone.utc).isoformat(),
+            evaluation_id=str(uuid.uuid4()),
+            simulation_id=simulation_id,
             conversations=convo_score_list,
             unique_errors=unique_errors,
         )
