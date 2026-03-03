@@ -199,7 +199,7 @@
             <div x-show="!_loadedConfig?.agent_config">
               <label class="block text-sm font-medium t-label mb-1">Agent config file</label>
               <div class="flex gap-2">
-                <input type="text" x-model="agentConfigFilePath" class="flex-1 border t-input rounded-lg px-3 py-2 text-sm" placeholder="/path/to/agent_config.json">
+                <input type="text" x-model="agentConfigFilePath" class="flex-1 border t-input rounded-lg px-3 py-2 text-sm" placeholder="/path/to/config.yaml">
                 <button @click="browseFor('agentConfigFilePath')" class="px-3 py-2 border t-border rounded-lg t-hover text-sm" title="Browse"><span class="material-icons-outlined text-base">folder_open</span></button>
               </div>
             </div>

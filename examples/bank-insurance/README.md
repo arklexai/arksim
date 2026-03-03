@@ -16,9 +16,8 @@ Steps to run:
    export OPENAI_API_KEY="<YOUR_OPENAI_API_KEY>"
    ```
 
-2. The default `agent_config.json` is already configured for OpenAI. No changes needed.
-3. Review `config.yaml` for this example (the default configuration is sufficient to get started).
-4. From this example directory, run:
+2. Review `config.yaml` for this example (the default configuration is sufficient to get started).
+3. From this example directory, run:
    ```bash
    arksim simulate-evaluate config.yaml
    ```
@@ -27,7 +26,7 @@ Steps to run:
 
 In the `./examples/bank-insurance/agent_server` folder, we provide a sample RAG-based agent implemented with OpenAI Agents SDK that can be exposed with A2A Protocol or through Chat Completions interface.
 
-The agent configs support environment variable substitution using `${ENV_VAR_NAME}` syntax (for example, `${A2A_CLIENT_CREDENTIAL}` or `${OPENAI_API_KEY}`).
+The config files support environment variable substitution using `${ENV_VAR_NAME}` syntax (for example, `${A2A_API_KEY}` or `${OPENAI_API_KEY}`).
 
 Steps to run:
 
@@ -64,14 +63,13 @@ Steps to run:
 
    You can also adapt these servers to call your own backend agent by following the comments in `agent_server/chat_completions/server.py` (for Chat Completions) or by implementing your own A2A-compatible executor in `agent_server/a2a`.
 
-3. Review `config.yaml` for this example.
-
-4. From this example directory, run with the appropriate agent config:
+3. From this example directory, run with the appropriate config:
    - **A2A agent**:
      ```bash
-     arksim simulate-evaluate config.yaml --agent-config-file-path agent_config_a2a.json
+     export A2A_API_KEY=<YOUR_A2A_API_KEY>
+     arksim simulate-evaluate config_a2a.yaml
      ```
    - **Chat Completions agent**:
      ```bash
-     arksim simulate-evaluate config.yaml --agent-config-file-path agent_config_chat_completions.json
+     arksim simulate-evaluate config_chat_completions.yaml
      ```
