@@ -19,7 +19,6 @@ from enum import Enum
 from pathlib import Path
 from urllib.parse import urljoin
 
-import networkx as nx
 import requests
 import tiktoken
 
