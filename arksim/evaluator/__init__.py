@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """
 Evaluator package for agent and user evaluation.
 """

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Built-in evaluation metrics implemented as QuantitativeMetric subclasses."""
 
 from arksim.llms.chat import LLM

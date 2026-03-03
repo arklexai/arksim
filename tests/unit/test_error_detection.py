@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Tests for error_detection: collect_agent_behavior_failure_reasoning.
 
 Uses importlib to load modules directly from file paths, bypassing

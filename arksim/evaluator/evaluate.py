@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 import logging
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed

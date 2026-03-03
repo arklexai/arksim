@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 SKIPPED_GOOD_PERFORMANCE_REASON = (
     "All metrics passed threshold, qualitative evaluation skipped"
 )

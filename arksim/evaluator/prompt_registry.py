@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Central registry of all evaluation and simulation prompts.
 
 Provides a single lookup for every prompt used in the arksim

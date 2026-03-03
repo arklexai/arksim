@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 from .workers import resolve_num_workers, validate_num_workers
 
 __all__ = [

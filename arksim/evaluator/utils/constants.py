@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 # Quantitative Metric Threshold (1-5 scale)
 METRIC_THRESHOLD = 3
 

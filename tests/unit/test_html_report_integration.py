@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Integration test for HTML report generation.
 
 Uses importlib to load modules directly from file paths, bypassing

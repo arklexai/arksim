@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 from arksim.config import AgentConfig, AgentType
 
 from .base import BaseAgent

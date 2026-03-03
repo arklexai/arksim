@@ -1,0 +1,20 @@
+Arksim
+Copyright 2025 Arklex, Inc.
+
+Licensed under the Apache License, Version 2.0.
+
+This product includes software developed by third parties:
+
+- FastAPI (MIT License) - https://github.com/fastapi/fastapi
+- Uvicorn (BSD 3-Clause License) - https://github.com/encode/uvicorn
+- Pydantic (MIT License) - https://github.com/pydantic/pydantic
+- PyYAML (MIT License) - https://github.com/yaml/pyyaml
+- Jinja2 (BSD 3-Clause License) - https://github.com/pallets/jinja
+- OpenAI Python SDK (Apache 2.0 License) - https://github.com/openai/openai-python
+- tqdm (MIT License) - https://github.com/tqdm/tqdm
+- A2A SDK (Apache 2.0 License) - https://github.com/google-a2a/a2a-python
+
+Optional dependencies:
+- Azure Identity (MIT License) - https://github.com/Azure/azure-sdk-for-python
+- Anthropic Python SDK (MIT License) - https://github.com/anthropics/anthropic-sdk-python
+- Google GenAI (Apache 2.0 License) - https://github.com/googleapis/python-genai

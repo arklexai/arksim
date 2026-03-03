@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 from typing import cast
 
 from typing_extensions import Self
