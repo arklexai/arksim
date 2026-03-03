@@ -531,7 +531,6 @@ function arksim() {
         goal: '',
         _knowledgeText: '',
         user_profile: '',
-        user_attributes: { name: '', age: null, occupation: '' },
         origin: { source: 'ui', method: 'manual' },
       };
     },
@@ -550,13 +549,7 @@ function arksim() {
       return {
         schema_version: '1.0',
         items: this.scenarios.map((sc, i) => {
-          const attrs = Object.fromEntries(
-            Object.entries(sc.user_attributes || {}).filter(([, v]) => v != null && v !== '')
-          );
           const origin = { ...(sc.origin || { source: 'ui', method: 'manual' }) };
-          if (Object.keys(attrs).length > 0) {
-            origin.user_attributes = attrs;
-          }
           return {
             scenario_id: sc.scenario_id || `scenario-${String(i + 1).padStart(3, '0')}`,
             user_id: sc.user_id || `user-${String(i + 1).padStart(3, '0')}`,
@@ -578,7 +571,6 @@ function arksim() {
         goal: item.goal || '',
         _knowledgeText: (item.knowledge || []).map(k => k.content || '').join('\n'),
         user_profile: item.user_profile || '',
-        user_attributes: item.user_attributes || (item.origin && item.origin.user_attributes) || {},
         origin: item.origin || {},
       }));
     },

@@ -50,11 +50,7 @@ pip install arksim
     {
       "scenario_id": "demo-001",
       "goal": "You want to find out whether your home insurance covers water damage from a burst pipe.",
-      "user_attribute": {
-        "customer_type": "existing customer",
-        "location": "Toronto, ON, Canada",
-        "decision_making_style": "analytical"
-      }
+      "user_profile": "You are an existing customer from NYC. You are analytical and detail-oriented."
     }
   ]
 }
