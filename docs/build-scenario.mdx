@@ -30,9 +30,9 @@ Defines the user's characteristics, influencing their tone, communication style,
 Provides context that shapes the simulated user's questions and expectations. Also used during **evaluation** to check whether the agent's responses were accurate and consistent with the source.
 
 > - `home_insurance_overview.md` \
->   XYZ Insurance offers three tiers of home insurance: Basic Form, Broad Form, and Comprehensive Form…
-> - `claims_process.pdf` \
->   To file a claim, log into your account or call the claims line at 1-800-555-0199…
+>   The service robot is a 40 kg payload autonomous service robot with 8-hour battery life and \$70,000 price…
+> - `purchase_options.pdf` \
+>   The payment plans include full purchase, 12-month leasing, and vendor financing…
 
 <Tip>
   Think of a scenario as answering three questions: **Who** is this user? **What** do they want? **What** do they know?
@@ -60,54 +60,9 @@ A scenario file is a single JSON document containing a list of scenario objects.
 }
 ```
 
+For the full scenario schema (all fields and types), see [Schema Reference](/schema-reference#scenarios-scenariosjson).
+
 ---
-
-## Schema Reference
-
-<ResponseField name="schema_version" type="string" required>
-  Schema version identifier. Use `"v1"`.
-</ResponseField>
-
-<ResponseField name="scenarios" type="list[dict]" required>
-  List of scenario objects. Each object represents one simulated user and one conversation session.
-
-  <Expandable title="scenario fields">
-    <ResponseField name="scenario_id" type="string" required>
-      Unique identifier for this scenario.
-    </ResponseField>
-    <ResponseField name="user_id" type="string" required>
-      Unique identifier for the simulated user. Defaults to `scenario_id` if omitted.
-    </ResponseField>
-    <ResponseField name="goal" type="string" required>
-      The user's conversational goal, passed directly into the user simulator prompt. Write it in second person ("You want to...") so it reads naturally as a simulator instruction.
-    </ResponseField>
-    <ResponseField name="user_attribute" type="dict[string, Any]" required>
-      A key-value map representing the traits of a simulated user. Keys and values can be defined freely. These attributes serve as the foundation for generating the user's persona and guiding behavior in evaluations.
-
-      Common attributes used in pre-built scenarios include:
-
-      - **Demographic:** `sex`, `age`, `marital_status`, `household_size`, `location`, `Household_income`, `education`
-      - **Personality (Big Five):** `Openness`, `Conscientiousness`, `Extraversion`, `Agreeableness`, `Neuroticism`
-      - **Behavioral:** `customer_type`, `discovery_type`, `decision_making_style`, `purchasing_preference`, `spending_behavior`, `loyalty_level`
-    </ResponseField>
-    <ResponseField name="knowledge" type="list[KnowledgeItem]">
-      Knowledge items embedded in the simulated user's context during the conversation. Can be omitted if the simulated user has no specific background information.
-
-      Each `KnowledgeItem` contains:
-
-      - `content` (required): The text content injected into the simulator prompt as the user's background knowledge.
-      - `metadata`: Freeform metadata for labeling and traceability (e.g. `title`, `source`, `doc_id`). Not used by the simulator or evaluator.
-    </ResponseField>
-    <ResponseField name="origin" type="dict[string, Any]">
-      Freeform metadata used to record how a scenario was generated. It is not used by the simulator or evaluator and exists purely for provenance tracking.
-
-      Common fields:
-
-      - `target_agent_capability`: The agent capability this scenario was designed to evaluate.
-      - `goal_raw`: The original goal before it was adapted to the full contextual goal string.
-    </ResponseField>
-  </Expandable>
-</ResponseField>
 
 ## Full Example
 
@@ -215,13 +170,13 @@ A scenario can include multiple knowledge items by adding additional entries to 
 
 Understanding how each field is used helps you decide what to include.
 
-| Field                  | Used By               | Description                                                          |
-| ---------------------- | --------------------- | -------------------------------------------------------------------- |
-| `goal`                 | Simulator & Evaluator | Directly used in the simulator prompt; the most important field.     |
-| `knowledge[].content`  | Simulator & Evaluator | Provides simulated user's background knowledge for the conversation. |
-| `user_attribute`       | Evaluator only        | Creates a persona for evaluating user behavior.                      |
-| `knowledge[].metadata` | Not used by Arksim    | For labeling and traceability only.                                  |
-| `origin`               | Not used by Arksim    | Tracks scenario provenance; reference only.                          |
+| Field                  | Used By                | Description                                                          |
+| ---------------------- | ---------------------- | -------------------------------------------------------------------- |
+| `goal`                 | Simulator & Evaluator  | User's objective; used in the simulator prompt and in goal-completion evaluation. |
+| `knowledge[].content`  | Simulator & Evaluator  | Simulated user's background knowledge; used in simulator prompt and in evaluation (e.g. faithfulness).          |
+| `user_attributes`      | Simulator & Report     | Simulated user's persona; used in simulator for profile generation; displayed in HTML evaluation report. |
+| `knowledge[].metadata` | Not used by Arksim     | For labeling and traceability only.                                  |
+| `origin`               | Not used by Arksim     | Tracks scenario provenance; reference only.                         |
 
 ## Next Steps
 

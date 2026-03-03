@@ -73,7 +73,7 @@ This agent is a RAG-based customer service agent built with the OpenAI Agents SD
     - **A2A:** Copy `agent_config_a2a.json` to `agent_config.json`
     - **Chat Completions:** Copy `agent_config_chat_completions.json` to `agent_config.json`
 
-    Agent configs support environment variable substitution (e.g. `${OPENAI_API_KEY}`).
+    Agent configs support environment variable substitution (e.g. `${AGENT_API_KEY}` for Chat Completions, `${A2A_API_KEY}` for A2A).
   </Step>
   <Step title="Install agent dependencies">
     <Tabs>
@@ -100,7 +100,7 @@ This agent is a RAG-based customer service agent built with the OpenAI Agents SD
         Exposes an A2A-compatible agent on port `9999`. Run from the repository root:
 
         ```bash
-        export OPENAI_API_KEY=<YOUR_OPENAI_API_KEY>
+        export A2A_API_KEY=<YOUR_A2A_API_KEY>
         python -m examples.bank-insurance.agent_server.a2a.server
         ```
 
@@ -110,19 +110,19 @@ This agent is a RAG-based customer service agent built with the OpenAI Agents SD
         Exposes an OpenAI Chat Completions-compatible endpoint on port `8888` at `/chat/completions`. Run from the repository root:
 
         ```bash
-        export OPENAI_API_KEY=<YOUR_OPENAI_API_KEY>
+        export AGENT_API_KEY=<YOUR_AGENT_API_KEY>
         python -m examples.bank-insurance.agent_server.chat_completions.server
         ```
-
       </Tab>
     </Tabs>
   </Step>
   <Step title="Run simulation and evaluation">
-    In a new terminal, run from the `examples/bank-insurance` directory:
+    In a new terminal, run from the `examples/bank-insurance` directory. Set the key that matches your agent config (AGENT_API_KEY for Chat Completions, A2A_API_KEY for A2A), then run:
 
     ```bash
     cd examples/bank-insurance
-    export OPENAI_API_KEY="<YOUR_OPENAI_API_KEY>"
+    export AGENT_API_KEY="<YOUR_AGENT_API_KEY>"   # for Chat Completions
+    # export A2A_API_KEY="<YOUR_A2A_API_KEY>"     # for A2A
     arksim simulate-evaluate config.yaml
     ```
   </Step>
@@ -140,7 +140,7 @@ To test your own backend agent against these scenarios:
 Ensure `agent_config.json` points to your endpoint (or use the appropriate pre-made config as a template). Then run simulation and evaluation as above.
 
 <Tip>
-  See [Agent Compatibility](/agent_configurations) for a full breakdown of supported protocols and how to configure `agent_config.json`.
+  See [Agent configuration](/simulate-conversation#agent-configuration) for supported protocols and how to configure agent connections.
 </Tip>
 
 ---
@@ -167,44 +167,8 @@ max_turns: 5
 # Output file path for simulation results
 output_file_path: ./results/simulation/simulation.json
 
-# Simulated user system prompt: one Jinja template, rendered per scenario.
-# Variables are fetched from scenario.json (the input file):
-#   - scenario.agent_context: context about the agent
-#   - scenario.goal: the user's goal
-#   - scenario.knowledge: list of knowledge items (optional)
-#   - simulation.profile: the simulated user's profile
-# Single knowledge -> inline in prompt; multiple -> via user message.
-simulated_user_prompt_template: |
-  You are a user interacting with an agent through multiple turns.
-  The agent is supplied by the following conversation context:
-  {{ scenario.agent_context }}
-
-  Your profile is:
-  {{ simulation.profile }}
-
-  You have the following goal when interacting with this agent:
-  {{ scenario.goal }}
-
-  {% if scenario.knowledge and scenario.knowledge|length == 1 %}
-  Here is the content that you might be interested in and might have questions about:
-  {{ scenario.knowledge[0].content }}
-
-  {% elif scenario.knowledge and scenario.knowledge|length > 1 %}
-  You will receive reference knowledge in a user message immediately before each of your replies; use it when relevant to achieve your goal.
-  {% endif %}
-
-  Rules:
-  - Do not give away all the instruction at once. Only provide the information necessary for the current step.
-  - Do not hallucinate information that is not provided in the instruction.
-  - If the instruction goal is satisfied, generate '###STOP###' as a standalone message without anything else.
-  - Do not repeat the exact instruction in the conversation.
-  - Avoid using bullet points or lists.
-  - Keep responses brief and under 50 words.
-  - Do not flip the roles.
-
-  {% if scenario.knowledge and scenario.knowledge|length > 1 %}
-  - Ask only one question per turn.
-  {% endif %}
+# Jinja template for the simulated user's system prompt
+simulated_user_prompt_template: null
 
 # EVALUATION SETTINGS
 

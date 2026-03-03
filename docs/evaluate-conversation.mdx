@@ -24,10 +24,10 @@ Each agent response is scored on five metrics per turn:
 | **Helpfulness**  | How effectively the response addresses the user's need | 1–5   |
 | **Coherence**    | Logical flow and clarity of the response               | 1–5   |
 | **Relevance**    | How directly the response addresses the user's input   | 1–5   |
-| **Verbosity**    | Conciseness — penalizes unnecessarily long responses   | 1–5   |
+| **Verbosity**    | Conciseness; penalizes unnecessarily long responses.   | 1–5   |
 | **Faithfulness** | Whether the response contradicts the user's knowledge  | 1–5   |
 
-Scores range from **1 (poor)** to **5 (excellent)**, with 3–4 considered good and 4–5 excellent.
+Scores range from **1 (poor)** to **5 (excellent)**, with 3–4 considered good and 4–5 excellent. You can add domain-specific [custom metrics](#custom-metrics) (e.g. product suitability, compliance) via Python files.
 
 At the conversation level, two additional scores are computed on a 0–1 scale:
 
@@ -39,7 +39,7 @@ These combine into an **Overall Agent Score** per conversation:
 <Note>
   `overall_agent_score = turn_success_ratio × 0.75 + goal_completion_score × 0.25`
 
-  Each conversation is assigned a status based on this score: `completed` (1.0), `partial_failure` (≥ 0.6), or `failed` (\< 0.6).
+  Each conversation is assigned a status based on this score. For the exact status values and thresholds, see [Evaluation output](/schema-reference#evaluation-output-evaluationjson) in the Schema Reference.
 </Note>
 
 ---
@@ -63,14 +63,14 @@ Across all conversations, duplicate failures are deduplicated into a **unique er
 
 ## Inputs
 
-The input to evaluation is the `conversations.json` file — the output of the [Simulation](/simulate-conversation) step. Knowledge referenced during evaluation comes from your [Scenarios](/build-scenario) file.
+The input to evaluation is the simulation output file (e.g. `simulation.json`) from the [Simulation](/simulate-conversation) step. Knowledge referenced during evaluation comes from your [Scenarios](/build-scenario) file.
 
 Evaluation is configured via a YAML file:
 
 ```yaml
 # Inputs
 scenario_file_path: ./examples/path/to/scenario.json
-simulation_file_path: ./examples/path/to/conversations.json
+simulation_file_path: ./examples/path/to/simulation.json
 
 # Model
 provider: openai
@@ -97,45 +97,83 @@ output_dir: ./examples/path/to/evaluation
 generate_html_report: true
 ```
 
-<ResponseField name="scenario_file_path" type="string" required>
-  Path to the JSON file defining the scenario to evaluate.
-</ResponseField>
+For all evaluation config keys, types, and defaults, see [Run configuration → Evaluation keys](/schema-reference#evaluation-keys) in the Schema Reference.
 
-<ResponseField name="simulation_file_path" type="string" required>
-  Path to the JSON file containing the simulation output conversations.
-</ResponseField>
+---
 
-<ResponseField name="output_dir" type="string">
-  Directory where evaluation results will be stored. Defaults to `./evaluation`.
-</ResponseField>
+## Custom Metrics
 
-<ResponseField name="model" type="string" required>
-  LLM model to use for scoring.
-</ResponseField>
+In addition to the built-in metrics (helpfulness, coherence, relevance, verbosity, faithfulness, goal completion, behavior failure), you can define **custom metrics** in Python and load them via config.
 
-<ResponseField name="provider" type="string" required>
-  LLM service provider (e.g., `openai`).
-</ResponseField>
+<ParamField body="custom_metrics_file_paths" type="list[str]">
+  List of paths to Python files. Each file is loaded and every public `QuantitativeMetric` or `QualitativeMetric` subclass is instantiated and run. Custom metrics **always run** — they are not filtered by `metrics_to_run`.
+</ParamField>
 
-<ResponseField name="num_workers" type="string | int">
-  Number of parallel workers. Set to `auto` to match available CPU cores.
-</ResponseField>
+<ParamField body="metrics_to_run" type="list[str]">
+  Names of built-in metrics to run. If empty, all built-in metrics run. Use this to restrict evaluation to a subset of built-ins while still running all custom metrics from `custom_metrics_file_paths`.
+</ParamField>
 
-<ResponseField name="custom_metrics_file_paths" type="list[string]">
-  Python files defining custom metrics. Each must subclass `QuantitativeMetric` or `QualitativeMetric`.
-</ResponseField>
+### Metric Types
 
-<ResponseField name="metrics_to_run" type="list[string]">
-  Metrics to evaluate. If empty, runs all standard and custom metrics.
-</ResponseField>
+<Tabs>
+  <Tab title="Quantitative">
+    Produces a **numeric score** (e.g. 0–5).
 
-<ResponseField name="generate_html_report" type="boolean">
-  Whether to produce an HTML evaluation report alongside the markdown report.
-</ResponseField>
+    | Step      | Detail                                               |
+    | --------- | ---------------------------------------------------- |
+    | Subclass  | `QuantitativeMetric`                                 |
+    | Implement | `score(score_input: ScoreInput) -> QuantResult`      |
+    | Return    | `QuantResult` with `name`, `value` (float), `reason` |
 
-<ResponseField name="score_threshold" type="float | null">
-  Minimum acceptable score per conversation. Exits non-zero if any conversation falls below this value.
-</ResponseField>
+    ```python
+    from arksim.evaluator import (
+        QuantitativeMetric,
+        QuantResult,
+        ScoreInput,
+    )
+
+    class ClarityScore(QuantitativeMetric):
+        def score(self, score_input: ScoreInput) -> QuantResult:
+            # Use your own LLM or any logic; independent of evaluator model config.
+            # score_input.chat_history, .user_goal, .knowledge, etc.
+            value = ...  # your scoring logic or LLM call
+            return QuantResult(name="clarity", value=value, reason="...")
+    ```
+  </Tab>
+  <Tab title="Qualitative">
+    Produces a **categorical label** (e.g. `"complete"` / `"partial"`).
+
+    | Step      | Detail                                            |
+    | --------- | ------------------------------------------------- |
+    | Subclass  | `QualitativeMetric`                               |
+    | Implement | `evaluate(score_input: ScoreInput) -> QualResult` |
+    | Return    | `QualResult` with `name`, `value` (str), `reason` |
+
+    ```python
+    from arksim.evaluator import (
+        QualitativeMetric,
+        QualResult,
+        ScoreInput,
+    )
+
+    class NeedsAssessment(QualitativeMetric):
+        def evaluate(self, score_input: ScoreInput) -> QualResult:
+            # Use score_input.chat_history, .user_goal, .knowledge, etc.
+            label = ...  # "complete" | "partial" | "missing"
+            return QualResult(name="needs_assessment", value=label, reason="...")
+    ```
+  </Tab>
+</Tabs>
+
+### Available fields
+
+Both metric types receive a `ScoreInput`:
+
+```python
+score_input.chat_history   # Full conversation turns
+score_input.user_goal      # The goal the user was trying to achieve
+score_input.knowledge      # Retrieved knowledge / context passed to the agent
+```
 
 ---
 
@@ -154,60 +192,17 @@ generate_html_report: true
         arksim evaluate config.yaml
         ```
       </Tab>
-      <Tab title="Python — from file">
+      <Tab title="Python (from file)">
         ```python
-        from arksim.evaluator import run_evaluation, EvaluationInput
+        import arksim
 
-        evaluation = run_evaluation(EvaluationInput(
+        evaluation_results = arksim.evaluate(
             simulation_file_path="./simulation.json",
-            scenario_file_path="./scenarios.json",
             output_dir="./evaluation",
             model="gpt-5.1",
-            provider="openai",
+            provider="open-ai",
             num_workers="auto",
             generate_html_report=True,
-        ))
-        ```
-      </Tab>
-      <Tab title="Python — from objects">
-        ```python
-        from arksim.simulation_engine.entities import (
-            Simulation, Conversation, Message, SimulatedUserPrompt
-        )
-        from arksim.evaluator import run_evaluation, EvaluationInput
-
-        simulation = Simulation(
-            schema_version="v1",
-            simulator_version="v1",
-            conversations=[
-                Conversation(
-                    conversation_id="00de685e-f76b-4a5f-a6e5-217cad777316",
-                    scenario_id="8f4c2a91-3b7e-4d5f-a9c2-6e1b4d9f2037",
-                    conversation_history=[
-                        Message(turn_id=0, role="simulated_user", content="What documents do I need to file a claim?"),
-                        Message(turn_id=0, role="assistant", content="You'll need a copy of your policy..."),
-                    ],
-                    simulated_user_prompt=SimulatedUserPrompt(
-                        simulated_user_prompt_template="You are a customer interacting with an agent...",
-                        variables={
-                            "agent_context": "XYZ Bank Insurance is a Canadian provider...",
-                            "sim_user_profile": "Name: Priya Sharma. Age: 32. Location: Toronto...",
-                            "user_goal": "Find out what documents are needed to file an auto insurance claim.",
-                            "knowledge": ["Typical timelines: claim setup is usually same day..."],
-                        },
-                    ),
-                )
-            ],
-        )
-
-        evaluation = run_evaluation(
-            EvaluationInput(
-                output_dir="./evaluation",
-                model="gpt-5.1",
-                provider="openai",
-                generate_html_report=True,
-            ),
-            simulation=simulation,
         )
         ```
       </Tab>
@@ -219,40 +214,35 @@ generate_html_report: true
 
 ## Output Files
 
-| File                                     | Description                                                                                                |
-| ---------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| `conversations.json`                     | Full transcripts with scores, failure labels, and metadata for every conversation.                         |
-| `final_report.md` _(optional)_           | High-level summary with metric averages, overall assessment, and top unique errors.                        |
-| `final_report.html` _(optional)_         | Same content as `final_report.md`, rendered for easier browsing and sharing.                               |
-| `agent_performance_per_turn.csv`         | One row per turn with metric scores, reasoning, and failure labels. Useful for debugging specific moments. |
-| `agent_performance_per_conversation.csv` | One row per conversation with rolled-up scores and status. Useful for comparing conversations.             |
-| `unique_errors.csv`                      | One row per unique error type with description, category, and links back to occurrences.                   |
+| File                | Description                                                                                                                                                                       |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `evaluation.json`   | Full evaluation output: conversations with scores, failure labels, and unique errors. See [Evaluation output](/schema-reference#evaluation-output-evaluationjson) for the schema. |
+| `final_report.html` | High-level summary with metric averages, overall assessment, and top unique errors, rendered for easier browsing and sharing.                                                      |
 
 ---
 
 ## Reading the Output
 
-<Expandable title="By Conversation — conversations[i]">
-  **Quick summary:**
+Results go to `evaluation.json`: **conversations** (one per run) and **unique_errors** (deduplicated failures).
 
-  - `overall_agent_score`: combined score for the conversation
-  - `evaluation_status`: `completed`, `partial_failure`, or `failed`
-  - `goal_completion_score`: how fully the user goal was achieved
-  - `turn_success_ratio`: proportion of successful turns
+<Expandable title="By conversation">
+  Each `conversations[]` entry has:
 
-  **Detailed analysis:**
+  - **`overall_agent_score`** (0–1): Turn success + goal completion. Use to rank or filter.
+  - **`evaluation_status`**: `Done`, `Partial Failure`, `Failed`, or `Evaluation Failed`.
+  - **`goal_completion_score`** (0–1, or -1 if skipped): How fully the goal was addressed. **`goal_completion_reason`** explains it.
+  - **`turn_success_ratio`** (0–1): Share of turns with no behavior failure.
 
-  - Inspect `turn_scores[]` for per-turn metric scores and reasoning
-  - Check `unique_error_ids` on each turn to trace entries in `unique_errors`
+  Use **`turn_scores[]`** for a turn: `turn_id`, **`scores`** (e.g. helpfulness, faithfulness), **`turn_behavior_failure`**, **`turn_behavior_failure_reason`**, **`unique_error_ids`**. Match IDs to **`unique_errors`** for category and description.
 </Expandable>
 
-<Expandable title="By Error Type — unique_errors[unique_error_id]">
-  **Understand the failure:**
+<Expandable title="By error type">
+  Each **`unique_errors[]`** entry has:
 
-  - `unique_error_description`: description of the error
-  - `behavior_failure_category`: categorization of the failure pattern
+  - **`unique_error_description`**: What went wrong.
+  - **`behavior_failure_category`**: e.g. `false information`, `failure to ask for clarification`, `repetition`.
+  - **`severity`**: e.g. `critical`, `high`, `medium`, `low`.
+  - **`occurrences`**: `{ "conversation_id", "turn_id" }` list. Use to find the conversation and turn in logs or CSV.
 
-  **Trace occurrences:**
-
-  - `occurrences_by_conversation_id`: maps the error to specific turns and conversations
+  Use **`occurrences`** to go from an error to the exact turn; then check **`turn_scores`** and the transcript.
 </Expandable>

@@ -28,7 +28,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Replaced with generic insurance-domain examples consistent with the public bank-insurance example
 
 ### Fixed
-
+- Documentation: end-of-file newlines in `docs/insurance-customer-service-agent-evaluation.mdx` and `docs/e-commerce-customer-service-agent-evaluation.mdx`
+- Documentation: trailing whitespace and end-of-file in `docs/simulate-conversation.mdx` and `docs/evaluate-conversation.mdx`
 - Trailing whitespace and missing EOF newlines across 81 files (docs, examples, tests, source)
 - UI file browser: `PROJECT_ROOT` now uses `cwd` for PyPI installs, parent navigation works correctly, YAML files shown in browser
 - Lint: replaced `try/except/pass` with `contextlib.suppress` in example loader
