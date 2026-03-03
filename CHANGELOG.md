@@ -21,6 +21,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Separate `agent_config.json` files from all examples (replaced by inline YAML config)
 - Knowledge Configuration and Data folder sections from agent configuration docs
 
+### Security
+
+- Removed third-party client data from test fixtures and evaluator prompt examples
+- Replaced with generic insurance-domain examples consistent with the public bank-insurance example
+
 ### Fixed
 - Documentation: end-of-file newlines in `docs/insurance-customer-service-agent-evaluation.mdx` and `docs/e-commerce-customer-service-agent-evaluation.mdx`
 - Documentation: trailing whitespace and end-of-file in `docs/simulate-conversation.mdx` and `docs/evaluate-conversation.mdx`
