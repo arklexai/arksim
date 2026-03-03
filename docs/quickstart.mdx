@@ -31,78 +31,39 @@ description: "Get started with Arksim in minutes. This guide walks you through y
     ```
   </Step>
   <Step title="Run Simulation & Evaluation">
-    You can simulate conversations with your agent and evaluate them via the CLI, Python, or the web UI.
+    Use the **bank example** so you don't have to write your own scenarios or config. The example includes ready-made scenarios and a config that calls the OpenAI API.
+
+    **Get the examples:** Clone or download the repository to get the `examples/` folder. [Download examples (GitHub)](https://github.com/arklexai/arksim/tree/main/examples)
+
+    Then run simulation and evaluation via the CLI, Python, or the web UI.
 
     <Tabs>
       <Tab title="CLI">
-        This command simulates conversations against your agent, evaluates them, and saves results to the specified output location.
+        From the **bank example** directory, run:
 
         ```bash
-        arksim simulate-evaluate <path/to/config.yaml>
+        cd examples/bank-insurance
+        arksim simulate-evaluate config.yaml
         ```
 
-        Example:
+        This uses the example's `config.yaml` (OpenAI) and `scenarios.json`. No local agent server is required—just ensure `OPENAI_API_KEY` is set from Step 2.
 
-        ```bash
-        arksim simulate-evaluate ./config.yaml
-        ```
-
-        Your config should define:
-
-        **Agent Configuration**
-
-        ```yaml
-        agent_config:
-          agent_type: chat_completions
-          agent_name: my-agent
-          api_config:
-            endpoint: https://api.openai.com/v1/chat/completions
-            headers:
-              Content-Type: application/json
-              Authorization: "Bearer ${OPENAI_API_KEY}"
-            body:
-              model: gpt-5.1
-              messages:
-                - role: system
-                  content: "You are a helpful assistant."
-        ```
-
-        **Pre-built Scenario**
-
-        ```yaml
-        scenario_file_path: ./path/to/scenario/scenario.json
-        ```
-
-        Path to the `scenario.json` file used to simulate conversations.
-
-        **Simulation Output**
-
-        ```yaml
-        output_file_path: ./path/to/results/conversations.json
-        ```
-
-        Where the simulated conversation transcripts will be saved.
-
-        **Evaluation Output**
-
-        ```yaml
-        output_dir: ./path/to/results/evaluation/
-        ```
-
-        Directory where evaluation scores, metrics, and reports will be written.
+        <Tip>
+          To learn what goes in a config (agent, scenario path, outputs), see [Scenarios](/build-scenario), [Simulation](/simulate-conversation), and [Evaluation](/evaluate-conversation). To run against the sample local agent instead of OpenAI, see [Insurance customer service](/insurance-customer-service-agent-evaluation).
+        </Tip>
       </Tab>
       <Tab title="Python">
-        You can also simulate and evaluate conversations programmatically inside your own codebase.
+        You can also run simulation and evaluation from Python. Use paths from the bank example (e.g. after cloning the repo):
 
         ```python
         from arksim.simulation_engine import run_simulation, SimulationInput
         from arksim.evaluator import run_evaluation, EvaluationInput
         from arksim.config import AgentConfig
 
-        # Define your agent configuration
+        # Example agent config (OpenAI, same idea as bank example config.yaml)
         agent_config = AgentConfig(
             agent_type="chat_completions",
-            agent_name="my-agent",
+            agent_name="bank-insurance",
             api_config={
                 "endpoint": "https://api.openai.com/v1/chat/completions",
                 "headers": {
@@ -112,26 +73,25 @@ description: "Get started with Arksim in minutes. This guide walks you through y
                 "body": {
                     "model": "gpt-5.1",
                     "messages": [
-                        {"role": "system", "content": "You are a helpful assistant."}
+                        {"role": "system", "content": "You are a customer service chatbot for XYZ Bank insurance."}
                     ],
                 },
             },
         )
 
-        # Run simulation
+        # Run from examples/bank-insurance directory so scenario path resolves
         simulation = run_simulation(SimulationInput(
             agent_config=agent_config,
-            scenario_file_path="examples/path/to/scenario.json",
-            num_conversations_per_scenario=30,
-            max_turns=10,
+            scenario_file_path="examples/bank-insurance/scenarios.json",
+            num_conversations_per_scenario=1,
+            max_turns=5,
             num_workers="auto",
             output_file_path="./simulation.json",
         ))
 
-        # Evaluate simulated agent conversations
         evaluation = run_evaluation(EvaluationInput(
             simulation_file_path="./simulation.json",
-            scenario_file_path="examples/path/to/scenario.json",
+            scenario_file_path="examples/bank-insurance/scenarios.json",
             output_dir="./evaluation",
             model="gpt-5.1",
             provider="openai",
