@@ -1880,18 +1880,12 @@
                     modalStatusClass = 'done';
                 }
 
-                const attrs = (convosRow.user_attributes && typeof convosRow.user_attributes === 'object')
-                    ? convosRow.user_attributes : {};
-                const attrsHtml = Object.entries(attrs)
-                    .map(([k, v]) => `<strong>${escapeHtml(k)}:</strong> ${escapeHtml(String(v))}`)
-                    .join(' &nbsp;|&nbsp; ') || 'N/A';
-
                 const knowledgeItems = Array.isArray(convosRow.knowledge) ? convosRow.knowledge : [];
                 const knowledgeHtml = knowledgeItems.length
                     ? knowledgeItems.map((item, i) => `<div style="margin-bottom:8px"><strong>${i + 1}.</strong> ${escapeHtml(item)}</div>`).join('')
                     : 'N/A';
 
-                const simProfile = conversation?.simulated_user_prompt?.variables?.['simulation.profile'] || 'N/A';
+                const simPromptTemplate = conversation?.simulated_user_prompt?.simulated_user_prompt_template || 'N/A';
 
                 modalContent += `
                     <details class="info-section" style="margin-bottom:24px">
@@ -1904,8 +1898,8 @@
                                 <div class="info-value">${escapeHtml(convosRow.goal || 'N/A')}</div>
                             </div>
                             <div>
-                                <div class="info-label">User Attributes</div>
-                                <div class="info-value">${attrsHtml}</div>
+                                <div class="info-label">User Profile</div>
+                                <div class="info-value">${escapeHtml(convosRow.user_profile || 'N/A')}</div>
                             </div>
                             <div>
                                 <div class="info-label">Knowledge</div>
@@ -1932,11 +1926,8 @@
                         <summary class="info-label">
                             Simulation Prompt
                         </summary>
-                        <div style="margin-top:12px;display:flex;flex-direction:column;gap:12px">
-                            <div>
-                                <div class="info-label">Simulation Profile</div>
-                                <div class="info-value">${escapeHtml(simProfile)}</div>
-                            </div>
+                        <div style="margin-top:12px">
+                            <pre style="white-space:pre-wrap;word-break:break-word;background:#f5f7fa;padding:12px;border-radius:8px;font-size:13px;line-height:1.5;max-height:400px;overflow-y:auto">${escapeHtml(simPromptTemplate)}</pre>
                         </div>
                     </details>
                 `;

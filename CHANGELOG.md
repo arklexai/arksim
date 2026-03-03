@@ -25,11 +25,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Agent configuration is now defined inline in `config.yaml` under the `agent_config` key instead of in separate `agent_config.json` files
 - Updated all documentation and examples to use inline agent configuration
 - UI now passes `agent_config`, `custom_metrics_file_paths`, and `metrics_to_run` from loaded config YAML
+- `user_profile` is now the primary persona field on `Scenario` (replaces `user_attributes`)
+- Simulator reads `user_profile` directly instead of generating profiles via LLM
+- Jinja template variable renamed from `simulation.profile` to `scenario.user_profile`
+- HTML report shows user profile in Scenario section and prompt template in Simulation Prompt section
 
 ### Removed
 
 - Separate `agent_config.json` files from all examples (replaced by inline YAML config)
 - Knowledge Configuration and Data folder sections from agent configuration docs
+- LLM-based profile generation (`profile.py`, `prompts.py`, `schema.py` under `arksim/scenario/`)
+- `user_attributes` removed from `Scenario` model root (moved into `origin` as metadata)
+- `generate_profiles` method from simulator
 
 ### Security
 

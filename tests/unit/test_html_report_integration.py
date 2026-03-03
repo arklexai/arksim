@@ -69,8 +69,9 @@ class _KnowledgeItem(BaseModel):
 class _Scenario(BaseModel):
     scenario_id: str
     goal: str = ""
-    user_attributes: dict[str, Any] = Field(default_factory=dict)
+    user_profile: str = ""
     knowledge: list[_KnowledgeItem] = Field(default_factory=list)
+    origin: dict[str, Any] = Field(default_factory=dict)
 
 
 class _Scenarios(BaseModel):

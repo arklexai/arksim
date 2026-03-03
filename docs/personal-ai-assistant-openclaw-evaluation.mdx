@@ -145,7 +145,7 @@ provider: openai
 num_workers: auto
 ```
 
-The config also defines a `simulated_user_prompt_template` (Jinja) that uses `scenario.agent_context`, `scenario.goal`, `scenario.knowledge`, and `simulation.profile` to drive the simulated user.
+The config also defines a `simulated_user_prompt_template` (Jinja) that uses `scenario.agent_context`, `scenario.goal`, `scenario.knowledge`, and `scenario.user_profile` to drive the simulated user.
 
 <Note>
   The example directory contains `config.yaml` and `scenarios.json`. There are no separate simulate or evaluate config files.

@@ -708,20 +708,9 @@
                   <label class="block text-sm font-medium t-label mb-1">Knowledge <span class="font-normal t-caption">(context the simulated user has)</span></label>
                   <textarea x-model="sc._knowledgeText" @input="scenarioDirty = true" rows="2" class="w-full border t-input rounded-lg px-3 py-2 text-sm mb-3" placeholder="Background information the user knows about..."></textarea>
 
-                  <div class="grid grid-cols-3 gap-3">
-                    <div>
-                      <label class="block text-sm font-medium t-label mb-1">Name</label>
-                      <input type="text" x-model="sc.user_attributes.name" @input="scenarioDirty = true" class="w-full border t-input rounded-lg px-3 py-2 text-sm" placeholder="Alex">
-                    </div>
-                    <div>
-                      <label class="block text-sm font-medium t-label mb-1">Age</label>
-                      <input type="number" x-model.number="sc.user_attributes.age" @input="scenarioDirty = true" class="w-full border t-input rounded-lg px-3 py-2 text-sm" placeholder="30">
-                    </div>
-                    <div>
-                      <label class="block text-sm font-medium t-label mb-1">Occupation</label>
-                      <input type="text" x-model="sc.user_attributes.occupation" @input="scenarioDirty = true" class="w-full border t-input rounded-lg px-3 py-2 text-sm" placeholder="Engineer">
-                    </div>
-                  </div>
+                  <label class="block text-sm font-medium t-label mb-1">User Profile <span class="font-normal t-caption">(persona description for simulated user)</span></label>
+                  <textarea x-model="sc.user_profile" @input="scenarioDirty = true" rows="2" class="w-full border t-input rounded-lg px-3 py-2 text-sm mb-3" placeholder="You are Alex, a 30-year-old engineer from Chicago who is conscientious and agreeable..."></textarea>
+
                 </div>
               </template>
             </div>

@@ -19,11 +19,11 @@ Describes the user's objective, guiding their actions and decisions throughout t
 
 > Plan a purchase of a service robot, focusing on delivery timelines and suitability for commercial use.
 
-### User Attributes (Persona)
+### User Profile (Persona)
 
-Defines the user's characteristics, influencing their tone, communication style, and behavior.
+Defines who the simulated user is — their personality, demographics, and behavior — as a natural-language description written in second person.
 
-> Alex, 26 years old, living in Chicago, works as an operations analyst at a mid-sized logistics company; analytical, detail-oriented, budget-conscious, and risk-aware.
+> You are Alex, a 26-year-old operations analyst at a mid-sized logistics company in Chicago. You are analytical, detail-oriented, budget-conscious, and risk-aware.
 
 ### Knowledge
 
@@ -85,29 +85,30 @@ For the full scenario schema (all fields and types), see [Schema Reference](/sch
           }
         }
       ],
-      "user_attribute": {
-        "sex": "Female",
-        "age": "34",
-        "marital_status": "single",
-        "household_size": "1",
-        "location": "Toronto, ON, Canada",
-        "Household_income": "$50,000 - $74,999",
-        "education": "Bachelor's degree",
-        "Openness": "open to experience",
-        "Conscientiousness": "conscientious",
-        "Extraversion": "introverted",
-        "Agreeableness": "agreeable",
-        "Neuroticism": "emotionally stable",
-        "customer_type": "prospective customer",
-        "discovery_type": "online search",
-        "decision_making_style": "analytical",
-        "purchasing_preference": "value oriented",
-        "spending_behavior": "moderate spending",
-        "loyalty_level": "neutral"
-      },
+      "user_profile": "You are Priya Chen who is open to experience, conscientious, introverted, agreeable, and emotionally stable. You are a 34-year-old single woman living in Toronto, ON, Canada. As a prospective customer who found XYZ Insurance through an online search, you are analytical and value-oriented with moderate spending habits.",
       "origin": {
         "target_agent_capability": "Answer questions about XYZ Insurance products and coverage",
-        "goal_raw": "Ask question about XYZ insurance"
+        "goal_raw": "Ask question about XYZ insurance",
+        "user_attributes": {
+          "sex": "Female",
+          "age": "34",
+          "marital_status": "single",
+          "household_size": "1",
+          "location": "Toronto, ON, Canada",
+          "Household_income": "$50,000 - $74,999",
+          "education": "Bachelor's degree",
+          "Openness": "open to experience",
+          "Conscientiousness": "conscientious",
+          "Extraversion": "introverted",
+          "Agreeableness": "agreeable",
+          "Neuroticism": "emotionally stable",
+          "customer_type": "prospective customer",
+          "discovery_type": "online search",
+          "decision_making_style": "analytical",
+          "purchasing_preference": "value oriented",
+          "spending_behavior": "moderate spending",
+          "loyalty_level": "neutral"
+        }
       }
     }
   ]
@@ -118,7 +119,7 @@ For the full scenario schema (all fields and types), see [Schema Reference](/sch
 
 ## Writing Scenarios
 
-You can write scenario files manually. The minimum required fields are `scenario_id`, `goal`, and `user_attribute`:
+You can write scenario files manually. The minimum required fields are `scenario_id`, `goal`, and `user_profile`:
 
 ```json
 {
@@ -127,10 +128,7 @@ You can write scenario files manually. The minimum required fields are `scenario
     {
       "scenario_id": "my-scenario-001",
       "goal": "You want to find out whether your home insurance policy covers water damage from a burst pipe.",
-      "user_attribute": {
-        "customer_type": "existing customer",
-        "location": "Calgary, AB, Canada"
-      }
+      "user_profile": "You are Jordan, an existing customer from Calgary, AB, Canada. You are detail-oriented and want a clear answer.",
     }
   ]
 }
@@ -170,13 +168,13 @@ A scenario can include multiple knowledge items by adding additional entries to 
 
 Understanding how each field is used helps you decide what to include.
 
-| Field                  | Used By                | Description                                                          |
-| ---------------------- | ---------------------- | -------------------------------------------------------------------- |
-| `goal`                 | Simulator & Evaluator  | User's objective; used in the simulator prompt and in goal-completion evaluation. |
-| `knowledge[].content`  | Simulator & Evaluator  | Simulated user's background knowledge; used in simulator prompt and in evaluation (e.g. faithfulness).          |
-| `user_attributes`      | Simulator & Report     | Simulated user's persona; used in simulator for profile generation; displayed in HTML evaluation report. |
-| `knowledge[].metadata` | Not used by Arksim     | For labeling and traceability only.                                  |
-| `origin`               | Not used by Arksim     | Tracks scenario provenance; reference only.                         |
+| Field                          | Used By               | Description                                                          |
+| ------------------------------ | --------------------- | -------------------------------------------------------------------- |
+| `goal`                         | Simulator & Evaluator | Directly used in the simulator prompt; the most important field.     |
+| `knowledge[].content`          | Simulator & Evaluator | Provides simulated user's background knowledge for the conversation. |
+| `user_profile`                 | Simulator             | Used as-is in the simulated user prompt to define the persona.       |
+| `knowledge[].metadata`         | Not used by Arksim    | For labeling and traceability only.                                  |
+| `origin`                       | Not used by Arksim    | Tracks scenario provenance; reference only.                          |
 
 ## Next Steps
 

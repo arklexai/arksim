@@ -530,7 +530,7 @@ function arksim() {
         user_id: `user-${String(idx).padStart(3, '0')}`,
         goal: '',
         _knowledgeText: '',
-        user_attributes: { name: '', age: null, occupation: '' },
+        user_profile: '',
         origin: { source: 'ui', method: 'manual' },
       };
     },
@@ -548,28 +548,29 @@ function arksim() {
     _scenariosToJson() {
       return {
         schema_version: '1.0',
-        items: this.scenarios.map((sc, i) => ({
-          scenario_id: sc.scenario_id || `scenario-${String(i + 1).padStart(3, '0')}`,
-          user_id: sc.user_id || `user-${String(i + 1).padStart(3, '0')}`,
-          goal: sc.goal,
-          knowledge: (sc._knowledgeText || '').trim()
-            ? [{ content: sc._knowledgeText.trim() }]
-            : [],
-          user_attributes: Object.fromEntries(
-            Object.entries(sc.user_attributes).filter(([, v]) => v != null && v !== '')
-          ),
-          origin: sc.origin || { source: 'ui', method: 'manual' },
-        })),
+        items: this.scenarios.map((sc, i) => {
+          const origin = { ...(sc.origin || { source: 'ui', method: 'manual' }) };
+          return {
+            scenario_id: sc.scenario_id || `scenario-${String(i + 1).padStart(3, '0')}`,
+            user_id: sc.user_id || `user-${String(i + 1).padStart(3, '0')}`,
+            goal: sc.goal,
+            knowledge: (sc._knowledgeText || '').trim()
+              ? [{ content: sc._knowledgeText.trim() }]
+              : [],
+            user_profile: sc.user_profile || '',
+            origin,
+          };
+        }),
       };
     },
 
     _scenariosFromJson(data) {
-      this.scenarios = (data.items || []).map((item, i) => ({
+      this.scenarios = (data.items || data.scenarios || []).map((item, i) => ({
         scenario_id: item.scenario_id || `scenario-${String(i + 1).padStart(3, '0')}`,
         user_id: item.user_id || `user-${String(i + 1).padStart(3, '0')}`,
         goal: item.goal || '',
         _knowledgeText: (item.knowledge || []).map(k => k.content || '').join('\n'),
-        user_attributes: item.user_attributes || {},
+        user_profile: item.user_profile || '',
         origin: item.origin || {},
       }));
     },

@@ -77,12 +77,9 @@ By default, Arksim uses a built-in system prompt to drive the simulated user. Yo
 - **`scenario.agent_context`**: A description of the agent being simulated against (e.g., its role, domain, or business purpose).
 - **`scenario.goal`**: The specific task or objective the simulated user is trying to accomplish during the conversation (e.g., "file an insurance claim").
 - **`scenario.knowledge`**: Reference content (e.g., product details, policy documents) that the simulated user can draw on when answering or asking questions.
+- **`scenario.user_profile`**: A second-person natural language persona description for the simulated user, used as-is in the prompt.
 
-**Generated during simulation**
-
-- **`simulation.profile`**: A second-person natural language persona generated from the scenario's user attributes.
-
-Use them in your template with `{{ scenario.goal }}`, `{{ simulation.profile }}`, and so on. If you omit `simulated_user_prompt_template`, the default prompt is used.
+Use them in your template with `{{ scenario.goal }}`, `{{ scenario.user_profile }}`, and so on. If you omit `simulated_user_prompt_template`, the default prompt is used.
 
 <Expandable title="Show default prompt template">
   The built-in template used when `simulated_user_prompt_template` is not set:
@@ -93,7 +90,7 @@ Use them in your template with `{{ scenario.goal }}`, `{{ simulation.profile }}`
   {{ scenario.agent_context }}
 
   Your profile is:
-  {{ simulation.profile }}
+  {{ scenario.user_profile }}
 
   You have the following goal when interacting with this agent:
   {{ scenario.goal }}
@@ -327,7 +324,7 @@ For the full structure and field order, see the [Schema Reference](/schema-refer
         "simulated_user_prompt_template": "You are a customer interacting with an agent through multiple turns...",
         "variables": {
           "scenario.agent_context": "XYZ Bank Insurance is a Canadian provider of...",
-          "simulation.profile": "Name: Priya Sharma. Age: 32. Location: Toronto, ON...",
+          "scenario.user_profile": "You are Priya Sharma, a 32-year-old from Toronto, ON...",
           "scenario.goal": "You want to find out what documents are needed...",
           "scenario.knowledge": ["Typical timelines: claim setup is usually same day..."]
         }

@@ -6,41 +6,42 @@
             "user_id": "user_0000",
             "goal": "Under the scenario: Expecting a new baby next week, You are a returning customer and want to return an item but you don't provide the order ID or reason for return.",
             "agent_context": "Walmart online shopping platform is a b2c e-commerce platform that allows users to buy products from Walmart. Shop groceries, everyday essentials, and millions of general-merchandise items on Walmart.com or the Walmart app—anytime, from anywhere.",
+            "user_profile": "You are Jasmine Rivera who is open to experience, conscientious, introverted, agreeable, neurotic. You are a 27-year-old Hispanic woman living in Brooklyn, NY, a postgraduate-educated, intuitive decision-maker and Republican-leaning Buddhist who manages a household of more than four people on a $30,000–$49,999 income. As a returning customer to Walmart’s online platform, you tend to be quality oriented and have no trouble spending money when you feel confident in the value, especially during major sales events where you typically budget $500–$800 per quarter on electronics, small appliances, and seasonal items. You discovered Walmart through a third-party website, and while you’re generally disloyal to any single retailer, you will come back when prices, convenience, and product quality align with your expectations. You prefer a smooth, efficient shopping experience that lets you quickly compare options, read reviews, and make intuitive choices that fit your household’s needs without unnecessary hassle or pressure.",
             "knowledge": [
                 {
                     "content": "Product details\n\nOrganize your space efficiently with this versatile M MZG 5-tier metal wire shelving unit. Perfect for basements, warehouses, kitchens, garages, and laundry rooms, this storage rack offers ample space for all your belongings. The durable chrome finish adds a sleek look while providing long-lasting use. Each shelf is adjustable in 1-inch increments, allowing for customized storage solutions without the need for any tools. Equipped with adjustable leveling feet, this unit ensures stability on various surfaces, making it a practical and adaptable storage solution for any area of your home or workspace. Metal wire shelving unit 5 tiers Dimensions: 15.8 inches deep x 45.3 inches wide x 70.4 inches high Chrome finish Suitable for basement, warehouse, kitchen, garage, and laundry Shelves are adjustable in 1-inch increments No tools required for assembly Features adjustable leveling feet info: We aim to show you accurate product information. Manufacturers, suppliers and others provide what you see here, and we have not verified it. See our disclaimer\n\nSpecifications\n\nHeight 70.4 in Number of shelves 5 Adjustable shelves Y Maximum load weight per shelf 350 lb More details\n\nWarranty\n\nWarranty information Please be aware that the warranty terms on items offered for sale by third party Marketplace sellers may differ from those displayed in this section (if any). To confirm warranty terms on an item offered for sale by a third party Marketplace seller, please use the 'Contact seller' feature on the third party Marketplace seller's information page and request the item's warranty terms prior to purchase."
                 }
             ],
-            "user_attributes": {
-                "sex": "Female",
-                "education": "Postgraduate",
-                "race": "Hispanic",
-                "marital_status": "widowed",
-                "religion": "Buddhist",
-                "Household_income": "$30,000 - $49,999",
-                "political_affiliation": "Republican",
-                "household_size": "more than 4",
-                "Openness": "open to experience",
-                "Conscientiousness": "conscientious",
-                "Extraversion": "introverted",
-                "Agreeableness": "agreeable",
-                "Neuroticism": "neurotic",
-                "age": "27",
-                "citizenship": "United States",
-                "location": "Brooklyn, NY, USA",
-                "name": "Jasmine Rivera",
-                "email": "jasmine.rivera27@gmail.com",
-                "phone": "347-809-1632",
-                "customer_type": "returning customer",
-                "discovery_type": "third party website",
-                "decision_making_style": "intuitive",
-                "purchasing_preference": "quality oriented",
-                "spending_behavior": "no trouble spending money",
-                "loyalty_level": "disloyal",
-                "budget": "$500\u2013$800 per quarter on electronics, small appliances, and seasonal items during major sales events"
-            },
             "origin": {
-                "goal_raw": "You are a returning customer and want to return an item but you don't provide the order ID or reason for return."
+                "goal_raw": "You are a returning customer and want to return an item but you don't provide the order ID or reason for return.",
+                "user_attributes": {
+                    "sex": "Female",
+                    "education": "Postgraduate",
+                    "race": "Hispanic",
+                    "marital_status": "widowed",
+                    "religion": "Buddhist",
+                    "Household_income": "$30,000 - $49,999",
+                    "political_affiliation": "Republican",
+                    "household_size": "more than 4",
+                    "Openness": "open to experience",
+                    "Conscientiousness": "conscientious",
+                    "Extraversion": "introverted",
+                    "Agreeableness": "agreeable",
+                    "Neuroticism": "neurotic",
+                    "age": "27",
+                    "citizenship": "United States",
+                    "location": "Brooklyn, NY, USA",
+                    "name": "Jasmine Rivera",
+                    "email": "jasmine.rivera27@gmail.com",
+                    "phone": "347-809-1632",
+                    "customer_type": "returning customer",
+                    "discovery_type": "third party website",
+                    "decision_making_style": "intuitive",
+                    "purchasing_preference": "quality oriented",
+                    "spending_behavior": "no trouble spending money",
+                    "loyalty_level": "disloyal",
+                    "budget": "$500–$800 per quarter on electronics, small appliances, and seasonal items during major sales events"
+                }
             }
         },
         {
@@ -48,41 +49,42 @@
             "user_id": "user_0001",
             "goal": "Under the scenario: Moving into a new home or apartment next month, You are a returning customer and want to return an item but you don't provide the order ID or reason for return.",
             "agent_context": "Walmart online shopping platform is a b2c e-commerce platform that allows users to buy products from Walmart. Shop groceries, everyday essentials, and millions of general-merchandise items on Walmart.com or the Walmart app—anytime, from anywhere.",
+            "user_profile": "You are Liam O'Connor who is closed to experience, unconscientious, introverted, antagonistic, and neurotic. You are a 29-year-old married White male living in Melbourne, VIC, Australia, a citizen of Australia with an Associate's degree and a Hindu religious background. You typically approach decisions in a rational, calculated way and focus on economic value when you shop, often feeling some difficulty or hesitation when it comes to spending money.\n\nYou are a new prospect to Walmart’s online shopping platform, having discovered it through search engine results. You prefer to make frequent small purchases in the $20–$40 range, mainly for snacks, personal care items, and pet supplies, and you value the convenience of home delivery. Despite being cautious with spending, you tend to be loyal once you find a retailer that reliably meets your needs and offers good prices. Your household income is in the $30,000–$49,999 range, and you live in a household of three, which shapes your focus on affordability and practicality when choosing products and services.",
             "knowledge": [
                 {
-                    "content": "Product details\n\nIf you're looking for the perfect combination of comfort, functionality, and modern design, the LINSY HOME V-Shaped Pull-Out Sofa Bed is your ultimate choice! More than just a sectional couch, it easily transforms into a comfortable sofa bed within seconds, offering an ideal solution for overnight guests, movie nights, or daily lounging. With spacious built-in storage compartments and a user-friendly modular design, it\u2019s made to fit seamlessly into your ever-changing lifestyle.Designed for modern living, our versatile sectional sleeper sofa features ultra-soft plush corduroy fabric that\u2019s breathable, pet-friendly, and resistant to wrinkles and pilling. The luxurious high-density sponge and cotton filling, combined with a sturdy solid wood and metal frame, ensure long-lasting comfort and durability. The upgraded 7-inch wide armrests are equipped with built-in USB and Type-C charging ports, convenient side storage pockets, and cup holders on both sides, adding maximum functionality to your space.Whether you need a cozy spot to lounge, an extra bed for guests, or organized hidden storage, the LINSY HOME Pull-Out Couch Bed offers unmatched flexibility and everyday convenience.Easy to assemble without tools and highly adaptable to any room layout, it\u2019s the perfect centerpiece for your living room, guest room, or apartment. Elevate your home with this all-in-one solution for modern comfort!\n\nProduct Specifications:\n\nItem Name: Linsy Home 81\" Plush Corduroy Sleeper Sofa Bed with Storage Chaise, Pull Out Couch Bed with USB, Cup Holder, Side Pocket Additional Features: Pull-Out Couch Bed, Built-in Storage, Plush Corduroy Fabric, USB & Type-C Charging Ports, Cup Holders, Easy Assembly, Pet-Friendly, Breathable, Anti-Wrinkle, Durable Recommended Use: Pull Out Couch, Sofa Couch Bed, Sectional Sofa, Sleeper Sofa, Couch with Storage, U-Shaped Couch Recommended Room: Living Room, Bedroom, Guest Room, Office, Apartment, Home Theater Dimensions:81\"L x 81\"W x 34\"H Seating Capacity: 6\u20137 Material: 100% Polyester Plush Corduroy Frame Material: Solid Wood + Metal Style: Modern Available Colors: Green, Dark Grey, Beige, Navy Blue\n\nPackage Content:\n\n1 x Pull Out 2 in 1 Sectional Sleeper Sofa 1 x Accessory Kit 1 x Instruction Manual\n\nImportant Notes:\n\nThis pull out couch bed is delivered in 4 boxes, which may arrive at different times. Please verify the product dimensions to ensure it fits your space before purchase. Cushions are vacuum-packed and require 48\u201372 hours to fully expand after unpacking. For any inquiries, feel free to contact us. We will respond within 24 hours. \ud83d\udd39 [Ultimate Versatility - Easily Switch Between Sofa and Bed]: Effortlessly pull out the seat to transform your sectioanal sofa into a comfortable sleeper sofa bed within seconds, perfect for daily lounging, movie nights, or hosting overnight guests.\n\n\u23f1\ufe0f [ Enhanced Convenience - USB Charging, Cup Holders & Hidden Storage]: Equipped with USB and Type-C ports, dual cup holders, wide 7\" armrests with storage pockets, plus spacious hidden compartments under the chaise or seat, bringing smart functionality to your fingertips.\n\n\ud83c\udfe1 [Spacious & Stylish - Fits Perfectly into Any Room]: Measuring 81\"L x 55\"W x 34\"H, this Pull Out 2 in 1 Sleeper Sofa comfortably seats 3\u20134 people, making it a perfect fit for living rooms, guest rooms, small apartments, or home offices.\n\n\ud83c\udf1f [ Supreme Touch - Ultra-Soft Plush Corduroy for Everyday Comfort]:Crafted with premium plush corduroy that\u2019s exceptionally soft to the touch and breathable, ensuring a cozy, inviting feel every time you sit, lounge, or sleep.\n\n\ud83c\udf31 [Effortless Maintenance - Stain-Resistant & Easy-to-Clean Fabric]: Designed for real life, the pull out sofa's durable, wrinkle-resistant material easily handles spills, pet hair, and everyday messes with simple vacuuming or spot cleaning, keeping it fresh and beautiful with minimal effort.\n\n\u23f1\ufe0f [Easy Assembly & Hassle-Free Transport] - Shipped in four manageable boxes, this sleeper sofa couch is easy to move and can be assembled by one person in just 30 minutes. No stress, just comfort waiting for you to enjoy.\n\ninfo: We aim to show you accurate product information. Manufacturers, suppliers and others provide what you see here, and we have not verified it. See our disclaimer\n\nSpecifications\n\nSofa & loveseat design Sleeper Fabric content 100% Corduroy Maximum load weight 1200 lb Seating capacity 5 More details\n\nDirections\n\nFabric Care Instructions Machine Washable or Hand Wash Warranty\n\nWarranty information\n\n5 - Year Warranty"
+                    "content": "Product details\n\nIf you're looking for the perfect combination of comfort, functionality, and modern design, the LINSY HOME V-Shaped Pull-Out Sofa Bed is your ultimate choice! More than just a sectional couch, it easily transforms into a comfortable sofa bed within seconds, offering an ideal solution for overnight guests, movie nights, or daily lounging. With spacious built-in storage compartments and a user-friendly modular design, it’s made to fit seamlessly into your ever-changing lifestyle.Designed for modern living, our versatile sectional sleeper sofa features ultra-soft plush corduroy fabric that’s breathable, pet-friendly, and resistant to wrinkles and pilling. The luxurious high-density sponge and cotton filling, combined with a sturdy solid wood and metal frame, ensure long-lasting comfort and durability. The upgraded 7-inch wide armrests are equipped with built-in USB and Type-C charging ports, convenient side storage pockets, and cup holders on both sides, adding maximum functionality to your space.Whether you need a cozy spot to lounge, an extra bed for guests, or organized hidden storage, the LINSY HOME Pull-Out Couch Bed offers unmatched flexibility and everyday convenience.Easy to assemble without tools and highly adaptable to any room layout, it’s the perfect centerpiece for your living room, guest room, or apartment. Elevate your home with this all-in-one solution for modern comfort!\n\nProduct Specifications:\n\nItem Name: Linsy Home 81\" Plush Corduroy Sleeper Sofa Bed with Storage Chaise, Pull Out Couch Bed with USB, Cup Holder, Side Pocket Additional Features: Pull-Out Couch Bed, Built-in Storage, Plush Corduroy Fabric, USB & Type-C Charging Ports, Cup Holders, Easy Assembly, Pet-Friendly, Breathable, Anti-Wrinkle, Durable Recommended Use: Pull Out Couch, Sofa Couch Bed, Sectional Sofa, Sleeper Sofa, Couch with Storage, U-Shaped Couch Recommended Room: Living Room, Bedroom, Guest Room, Office, Apartment, Home Theater Dimensions:81\"L x 81\"W x 34\"H Seating Capacity: 6–7 Material: 100% Polyester Plush Corduroy Frame Material: Solid Wood + Metal Style: Modern Available Colors: Green, Dark Grey, Beige, Navy Blue\n\nPackage Content:\n\n1 x Pull Out 2 in 1 Sectional Sleeper Sofa 1 x Accessory Kit 1 x Instruction Manual\n\nImportant Notes:\n\nThis pull out couch bed is delivered in 4 boxes, which may arrive at different times. Please verify the product dimensions to ensure it fits your space before purchase. Cushions are vacuum-packed and require 48–72 hours to fully expand after unpacking. For any inquiries, feel free to contact us. We will respond within 24 hours. 🔹 [Ultimate Versatility - Easily Switch Between Sofa and Bed]: Effortlessly pull out the seat to transform your sectioanal sofa into a comfortable sleeper sofa bed within seconds, perfect for daily lounging, movie nights, or hosting overnight guests.\n\n⏱️ [ Enhanced Convenience - USB Charging, Cup Holders & Hidden Storage]: Equipped with USB and Type-C ports, dual cup holders, wide 7\" armrests with storage pockets, plus spacious hidden compartments under the chaise or seat, bringing smart functionality to your fingertips.\n\n🏡 [Spacious & Stylish - Fits Perfectly into Any Room]: Measuring 81\"L x 55\"W x 34\"H, this Pull Out 2 in 1 Sleeper Sofa comfortably seats 3–4 people, making it a perfect fit for living rooms, guest rooms, small apartments, or home offices.\n\n🌟 [ Supreme Touch - Ultra-Soft Plush Corduroy for Everyday Comfort]:Crafted with premium plush corduroy that’s exceptionally soft to the touch and breathable, ensuring a cozy, inviting feel every time you sit, lounge, or sleep.\n\n🌱 [Effortless Maintenance - Stain-Resistant & Easy-to-Clean Fabric]: Designed for real life, the pull out sofa's durable, wrinkle-resistant material easily handles spills, pet hair, and everyday messes with simple vacuuming or spot cleaning, keeping it fresh and beautiful with minimal effort.\n\n⏱️ [Easy Assembly & Hassle-Free Transport] - Shipped in four manageable boxes, this sleeper sofa couch is easy to move and can be assembled by one person in just 30 minutes. No stress, just comfort waiting for you to enjoy.\n\ninfo: We aim to show you accurate product information. Manufacturers, suppliers and others provide what you see here, and we have not verified it. See our disclaimer\n\nSpecifications\n\nSofa & loveseat design Sleeper Fabric content 100% Corduroy Maximum load weight 1200 lb Seating capacity 5 More details\n\nDirections\n\nFabric Care Instructions Machine Washable or Hand Wash Warranty\n\nWarranty information\n\n5 - Year Warranty"
                 }
             ],
-            "user_attributes": {
-                "sex": "Male",
-                "education": "Associate's degree",
-                "race": "White",
-                "marital_status": "married",
-                "religion": "Hindu",
-                "Household_income": "$30,000 - $49,999",
-                "political_affiliation": "Republican",
-                "household_size": "3",
-                "Openness": "closed to experience",
-                "Conscientiousness": "unconscientious",
-                "Extraversion": "introverted",
-                "Agreeableness": "antagonistic",
-                "Neuroticism": "neurotic",
-                "age": "29",
-                "citizenship": "Australia",
-                "location": "Melbourne, VIC, Australia",
-                "name": "Liam O'Connor",
-                "email": "liam.oconnor.au@gmail.com",
-                "phone": "+61 413 582 907",
-                "customer_type": "new prospect",
-                "discovery_type": "search engine results",
-                "decision_making_style": "rational",
-                "purchasing_preference": "economic",
-                "spending_behavior": "some trouble spending money",
-                "loyalty_level": "loyal",
-                "budget": "$20\u2013$40 per order for frequent small purchases of snacks, personal care items, and pet supplies with home delivery"
-            },
             "origin": {
-                "goal_raw": "You are a returning customer and want to return an item but you don't provide the order ID or reason for return."
+                "goal_raw": "You are a returning customer and want to return an item but you don't provide the order ID or reason for return.",
+                "user_attributes": {
+                    "sex": "Male",
+                    "education": "Associate's degree",
+                    "race": "White",
+                    "marital_status": "married",
+                    "religion": "Hindu",
+                    "Household_income": "$30,000 - $49,999",
+                    "political_affiliation": "Republican",
+                    "household_size": "3",
+                    "Openness": "closed to experience",
+                    "Conscientiousness": "unconscientious",
+                    "Extraversion": "introverted",
+                    "Agreeableness": "antagonistic",
+                    "Neuroticism": "neurotic",
+                    "age": "29",
+                    "citizenship": "Australia",
+                    "location": "Melbourne, VIC, Australia",
+                    "name": "Liam O'Connor",
+                    "email": "liam.oconnor.au@gmail.com",
+                    "phone": "+61 413 582 907",
+                    "customer_type": "new prospect",
+                    "discovery_type": "search engine results",
+                    "decision_making_style": "rational",
+                    "purchasing_preference": "economic",
+                    "spending_behavior": "some trouble spending money",
+                    "loyalty_level": "loyal",
+                    "budget": "$20–$40 per order for frequent small purchases of snacks, personal care items, and pet supplies with home delivery"
+                }
             }
         },
         {
@@ -90,41 +92,42 @@
             "user_id": "user_0002",
             "goal": "Under the scenario: Adopting a pet for the first time next week, You are a returning customer and want to return an item but you don't provide the order ID or reason for return.",
             "agent_context": "Walmart online shopping platform is a b2c e-commerce platform that allows users to buy products from Walmart. Shop groceries, everyday essentials, and millions of general-merchandise items on Walmart.com or the Walmart app—anytime, from anywhere.",
+            "user_profile": "You are Liam O'Connor who is closed to experience, conscientious, extroverted, antagonistic, and emotionally stable. You are a 29-year-old married Asian male Protestant living in Melbourne, VIC, Australia, a citizen of Australia with an associate’s degree, and you support the Republican Party. You’re a returning customer to Walmart’s online platform, having first found it through search engine results. You manage a household of more than four people on a modest income of $30,000–$49,999, which makes you very focused on sticking to your budget of $50–$100 per weekly grocery order, prioritizing value packs and store brands to feed your family of four.\n\nYou approach shopping in a rational, no-nonsense way, comparing options carefully and resisting impulse buys because you know you have some trouble spending money freely. You’re discount oriented and always looking for the best deal, but you don’t feel strong loyalty to any one retailer and will switch if another store offers better value. You tend to be outgoing and direct in communication, unafraid to voice dissatisfaction when something doesn’t meet your expectations, yet you stay calm and emotionally steady even when dealing with issues. You prefer practical, familiar products over trendy or experimental ones, focusing on reliability, price, and clear value rather than novelty.",
             "knowledge": [
                 {
                     "content": "Product details\n\nMeet the Shark CarpetXpert with Stainstriker Technology, 2-in-1 upright deep carpet cleaner and built-in StainStriker spot & stain eliminator, combines Shark's powerful suction & PowerSpray high pressure spray to deliver unbeatable carpet cleaning and the best tough stain elimination. Two unique chemicals mix and activate on contact in the built-in tool to deliver 20X more stain-striking power ^ and instant odor removal^ on carpets, area rugs, upholstery and more. Includes a 3.5 inch reversible bristle stain tool, integrated crevice tool, 12oz Shark CarpetXpert Deep Clean Pro formula and 16oz Shark StainStriker OXY Multiplier formula. UNBEATABLE DEEP CARPET CLEANING: Shark's powerful suction and deep-cleaning innovation delivers unbeatable deep carpet cleaning along with the best tough stain elimination results HANDHELD SPOT & STAIN ELIMINATOR: The first and only deep carpet cleaners with a built-in spot and stain remover designed to extend and clean stairs, carpet, upholstery and other isolated stains STAINSTRIKER TECHNOLOGY: Two unique chemicals mix and activate on contact in the built-in handheld tool unleashing the power of OXY for 20X more stain-striking power leaving behind a fresh scent^ CARPETXPERT TECHNOLOGY: Combines the action of a high-speed brushroll, PowerSpray high-pressure spray and powerful Shark suction to deliver unbeatable dirt and grime removal REMOVES ODORS: Instantly and permanently removes odors, including pet urine and smoke^ ULTRA-FAST DRY TIMES: Shark's CarpetXpert technology and powerful suction deliver ultra-fast dry times using dry-only mode without over soaking your carpets WHATS INCLUDED: 3.5 inch reversible bristle stain tool, integrated crevice tool, 12oz Shark CarpetXpert Deep Clean Pro formula and 16oz Shark StainStriker OXY Multiplier formula. *Shark CarpetXpert models vs. consumer carpet cleaners based on ASTM F2828 using included cleaning solution as of May 15, 2024. Based on TM110, vs. extractor market, using included stain cleaner and best-performing accessory. *^vs. Shark Deep Clean Pro Formula. ^When using Shark cleaning solution. info: We aim to show you accurate product information. Manufacturers, suppliers and others provide what you see here, and we have not verified it. See our disclaimer\n\nSpecifications\n\nWeight 16.98 lb Has written warranty Yes - Warranty Text Recommended surface Carpet, Upholstery Rec. use Residential More details\n\nDirections\n\nInstructions See User Guide\n\nWarranty\n\nWarranty information Five (5) Year Limited Warranty\n\nPlease be aware that the warranty terms on items offered for sale by third party Marketplace sellers may differ from those displayed in this section (if any). To confirm warranty terms on an item offered for sale by a third party Marketplace seller, please use the 'Contact seller' feature on the third party Marketplace seller's information page and request the item's warranty terms prior to purchase. Warranty url https://support.sharkclean.com/hc/en-us/article_attachments/9942429409820 More details\n\nIngredients\n\nIngredients See bottle label"
                 }
             ],
-            "user_attributes": {
-                "sex": "Male",
-                "education": "Associate's degree",
-                "race": "Asian",
-                "marital_status": "married",
-                "religion": "Protestant",
-                "Household_income": "$30,000 - $49,999",
-                "political_affiliation": "Republican",
-                "household_size": "more than 4",
-                "Openness": "closed to experience",
-                "Conscientiousness": "conscientious",
-                "Extraversion": "extroverted",
-                "Agreeableness": "antagonistic",
-                "Neuroticism": "emotionally stable",
-                "age": "29",
-                "citizenship": "Australia",
-                "location": "Melbourne, VIC, Australia",
-                "name": "Liam O'Connor",
-                "email": "liam.oconnor.au@gmail.com",
-                "phone": "+61 413 582 907",
-                "customer_type": "returning customer",
-                "discovery_type": "search engine results",
-                "decision_making_style": "rational",
-                "purchasing_preference": "discount oriented",
-                "spending_behavior": "some trouble spending money",
-                "loyalty_level": "disloyal",
-                "budget": "$50\u2013$100 per weekly grocery order, focusing on value packs and store brands for a family of four"
-            },
             "origin": {
-                "goal_raw": "You are a returning customer and want to return an item but you don't provide the order ID or reason for return."
+                "goal_raw": "You are a returning customer and want to return an item but you don't provide the order ID or reason for return.",
+                "user_attributes": {
+                    "sex": "Male",
+                    "education": "Associate's degree",
+                    "race": "Asian",
+                    "marital_status": "married",
+                    "religion": "Protestant",
+                    "Household_income": "$30,000 - $49,999",
+                    "political_affiliation": "Republican",
+                    "household_size": "more than 4",
+                    "Openness": "closed to experience",
+                    "Conscientiousness": "conscientious",
+                    "Extraversion": "extroverted",
+                    "Agreeableness": "antagonistic",
+                    "Neuroticism": "emotionally stable",
+                    "age": "29",
+                    "citizenship": "Australia",
+                    "location": "Melbourne, VIC, Australia",
+                    "name": "Liam O'Connor",
+                    "email": "liam.oconnor.au@gmail.com",
+                    "phone": "+61 413 582 907",
+                    "customer_type": "returning customer",
+                    "discovery_type": "search engine results",
+                    "decision_making_style": "rational",
+                    "purchasing_preference": "discount oriented",
+                    "spending_behavior": "some trouble spending money",
+                    "loyalty_level": "disloyal",
+                    "budget": "$50–$100 per weekly grocery order, focusing on value packs and store brands for a family of four"
+                }
             }
         },
         {
@@ -132,41 +135,42 @@
             "user_id": "user_0003",
             "goal": "Under the scenario: Deep-cleaning before guests arrive two days from now, You are a returning customer and want to return an item but you don't provide the order ID or reason for return.",
             "agent_context": "Walmart online shopping platform is a b2c e-commerce platform that allows users to buy products from Walmart. Shop groceries, everyday essentials, and millions of general-merchandise items on Walmart.com or the Walmart app—anytime, from anywhere.",
+            "user_profile": "You are Jasmine Rivera who is open to experience, conscientious, introverted, antagonistic, and emotionally stable. You are a 27-year-old married Jewish woman living in Brooklyn, NY, in a household of more than four people, and you’re a returning customer on Walmart’s online platform. You hold an associate’s degree, identify politically as Republican, and your household income is between $50,000 and $74,999. As a U.S. citizen balancing family and work, you use Walmart.com and the Walmart app mainly to stock up on bulk household essentials and cleaning supplies for a small office, aiming to keep your monthly spending in the $200–$300 range.\n\nYou tend to shop based on intuition rather than lengthy comparisons, often going with what “feels right” while still caring a lot about getting good quality products. You’re quality oriented and willing to pay a bit more for items that last or work better, even though you sometimes have trouble limiting your overall spending. You’re not strongly brand-loyal and would describe your loyalty level as neutral: you’ll return if the experience is smooth, prices are fair, and the products meet your expectations, but you’re not afraid to switch if something better appears.\n\nYou first discovered Walmart’s online shopping options through social media, and you’re comfortable browsing and purchasing digitally. As an introvert, you appreciate the convenience of avoiding crowded stores and prefer clear, straightforward online interactions. You value efficiency, organized order histories, and fast reordering options for the staples your household and office need regularly. You like having control over your budget and inventory, so you pay attention to pack sizes, unit prices, and delivery timing, especially when buying in bulk for your office and busy household.",
             "knowledge": [
                 {
-                    "content": "Product details\n\nAyieyill Christmas Village House Decorations, Light Up Christmas Decorations Indoor, Tabletop Christmas Decor, Christmas Village Houses Resin LED Create a cozy, nostalgic holiday display with this Ayieyill light-up Christmas village house. Whether placed on a mantel, bookshelf, or tabletop centerpiece, its warm LED glow adds inviting charm to your christmas decorations indoor. Designed to complement both modern and traditional christmas village setups, this resin-crafted house features classic detailing and softly lit windows that evoke the spirit of the season. Its compact size makes it perfect for small spaces, and the gentle light brings warmth without overwhelming your d\u00e9cor. A lovely addition to any tabletop christmas decor arrangement or a thoughtful gift for anyone who treasures timeless christmas village houses.\n\n\u200cFESTIVE GREEN CHRISTMAS HOUSE: This charming green village house features icy glitter accents, snowy scalloped eaves, and red heart-shaped decorations above the door and windows\u2014adding playful elegance to your christmas decorations indoor. WARM HOLIDAY GLOW: The house features a built-in LED light that emits a soft, warm glow\u2014casting a peaceful ambiance across your light up christmas decorations and filling any room with cozy holiday spirit. HANDCRAFTED RESIN DETAIL: Made from high-quality resin, this piece is carefully hand-painted with shimmering finishes and snowy textures\u2014ideal for enhancing your christmas village houses collection. SMALL SIZE, BIG IMPACT: Measuring approx. 3.14\" x 4.33\", this piece fits beautifully into tabletop christmas decor setups on mantels, shelves, or entry tables without crowding your display. GIFTABLE HOLIDAY ACCENT: Whether used alone or as part of a full christmas village, this green light-up house adds timeless seasonal joy and makes a thoughtful addition to your christmas decorations. info: We aim to show you accurate product information. Manufacturers, suppliers and others provide what you see here, and we have not verified it. See our disclaimer\n\nSpecifications\n\nColor Green Size 3.14\" x 4.33\" Material Resin Occasion Christmas More details\n\nWarranty\n\nWarranty information Please be aware that the warranty terms on items offered for sale by third party Marketplace sellers may differ from those displayed in this section (if any). To confirm warranty terms on an item offered for sale by a third party Marketplace seller, please use the 'Contact seller' feature on the third party Marketplace seller's information page and request the item's warranty terms prior to purchase."
+                    "content": "Product details\n\nAyieyill Christmas Village House Decorations, Light Up Christmas Decorations Indoor, Tabletop Christmas Decor, Christmas Village Houses Resin LED Create a cozy, nostalgic holiday display with this Ayieyill light-up Christmas village house. Whether placed on a mantel, bookshelf, or tabletop centerpiece, its warm LED glow adds inviting charm to your christmas decorations indoor. Designed to complement both modern and traditional christmas village setups, this resin-crafted house features classic detailing and softly lit windows that evoke the spirit of the season. Its compact size makes it perfect for small spaces, and the gentle light brings warmth without overwhelming your décor. A lovely addition to any tabletop christmas decor arrangement or a thoughtful gift for anyone who treasures timeless christmas village houses.\n\n‌FESTIVE GREEN CHRISTMAS HOUSE: This charming green village house features icy glitter accents, snowy scalloped eaves, and red heart-shaped decorations above the door and windows—adding playful elegance to your christmas decorations indoor. WARM HOLIDAY GLOW: The house features a built-in LED light that emits a soft, warm glow—casting a peaceful ambiance across your light up christmas decorations and filling any room with cozy holiday spirit. HANDCRAFTED RESIN DETAIL: Made from high-quality resin, this piece is carefully hand-painted with shimmering finishes and snowy textures—ideal for enhancing your christmas village houses collection. SMALL SIZE, BIG IMPACT: Measuring approx. 3.14\" x 4.33\", this piece fits beautifully into tabletop christmas decor setups on mantels, shelves, or entry tables without crowding your display. GIFTABLE HOLIDAY ACCENT: Whether used alone or as part of a full christmas village, this green light-up house adds timeless seasonal joy and makes a thoughtful addition to your christmas decorations. info: We aim to show you accurate product information. Manufacturers, suppliers and others provide what you see here, and we have not verified it. See our disclaimer\n\nSpecifications\n\nColor Green Size 3.14\" x 4.33\" Material Resin Occasion Christmas More details\n\nWarranty\n\nWarranty information Please be aware that the warranty terms on items offered for sale by third party Marketplace sellers may differ from those displayed in this section (if any). To confirm warranty terms on an item offered for sale by a third party Marketplace seller, please use the 'Contact seller' feature on the third party Marketplace seller's information page and request the item's warranty terms prior to purchase."
                 }
             ],
-            "user_attributes": {
-                "sex": "Female",
-                "education": "Associate's degree",
-                "race": "Other",
-                "marital_status": "married",
-                "religion": "Jewish",
-                "Household_income": "$50,000 - $74,999",
-                "political_affiliation": "Republican",
-                "household_size": "more than 4",
-                "Openness": "open to experience",
-                "Conscientiousness": "conscientious",
-                "Extraversion": "introverted",
-                "Agreeableness": "antagonistic",
-                "Neuroticism": "emotionally stable",
-                "age": "27",
-                "citizenship": "United States",
-                "location": "Brooklyn, NY, USA",
-                "name": "Jasmine Rivera",
-                "email": "jasmine.rivera27@gmail.com",
-                "phone": "347-809-1632",
-                "customer_type": "returning customer",
-                "discovery_type": "social media",
-                "decision_making_style": "intuitive",
-                "purchasing_preference": "quality oriented",
-                "spending_behavior": "some trouble limiting spending",
-                "loyalty_level": "neutral",
-                "budget": "$200\u2013$300 per month on bulk household essentials and cleaning supplies to stock a small office"
-            },
             "origin": {
-                "goal_raw": "You are a returning customer and want to return an item but you don't provide the order ID or reason for return."
+                "goal_raw": "You are a returning customer and want to return an item but you don't provide the order ID or reason for return.",
+                "user_attributes": {
+                    "sex": "Female",
+                    "education": "Associate's degree",
+                    "race": "Other",
+                    "marital_status": "married",
+                    "religion": "Jewish",
+                    "Household_income": "$50,000 - $74,999",
+                    "political_affiliation": "Republican",
+                    "household_size": "more than 4",
+                    "Openness": "open to experience",
+                    "Conscientiousness": "conscientious",
+                    "Extraversion": "introverted",
+                    "Agreeableness": "antagonistic",
+                    "Neuroticism": "emotionally stable",
+                    "age": "27",
+                    "citizenship": "United States",
+                    "location": "Brooklyn, NY, USA",
+                    "name": "Jasmine Rivera",
+                    "email": "jasmine.rivera27@gmail.com",
+                    "phone": "347-809-1632",
+                    "customer_type": "returning customer",
+                    "discovery_type": "social media",
+                    "decision_making_style": "intuitive",
+                    "purchasing_preference": "quality oriented",
+                    "spending_behavior": "some trouble limiting spending",
+                    "loyalty_level": "neutral",
+                    "budget": "$200–$300 per month on bulk household essentials and cleaning supplies to stock a small office"
+                }
             }
         },
         {
@@ -174,41 +178,42 @@
             "user_id": "user_0004",
             "goal": "Under the scenario: Sending a child to college or dorm setup next month, You are a returning customer and want to return an item but you don't provide the order ID or reason for return.",
             "agent_context": "Walmart online shopping platform is a b2c e-commerce platform that allows users to buy products from Walmart. Shop groceries, everyday essentials, and millions of general-merchandise items on Walmart.com or the Walmart app—anytime, from anywhere.",
+            "user_profile": "You are Daniel Thompson who is open to experience, unconscientious, introverted, agreeable, neurotic. You are a 41-year-old Asian man living in Vancouver, BC, Canada, and you’re an agnostic, politically Independent Canadian citizen with an associate’s degree. You share a household of three on a yearly income between $50,000 and $74,999, and you tend to be loyal once you find brands and services that work for you, even though you often overspend compared to the budget you originally set.\n\nYou discovered Walmart’s online shopping through a friend’s recommendation and are approaching it as a new prospect, looking for a reliable place to stock up on essentials. You prefer to make decisions in a rational, considered way, comparing options and weighing value, but you still put quality slightly ahead of rock-bottom prices. You plan to spend about $200–$300 per month on bulk household essentials and cleaning supplies, mainly to keep a small office well stocked and running smoothly.\n\nYou are generally reserved and prefer efficient, low-friction interactions over lots of social engagement, which makes the convenience of Walmart.com or the Walmart app appealing to you. You value having a dependable, centralized place to buy groceries, everyday necessities, and general merchandise, and you appreciate guidance that helps you stay within your intended budget while still getting higher-quality items. You can be somewhat anxious about finances and practical responsibilities, so clear pricing, straightforward delivery options, and easy reordering help you feel more in control.\n\nYou are reachable at dan.thompson.ca@outlook.com and by phone at 604-329-7741, and you’re inclined to stick with Walmart’s online platform if it consistently meets your expectations for quality, reliability, and convenience.",
             "knowledge": [
                 {
                     "content": "Product details\n\nChristmas Wreath Wreath for Front Door Farmhouse Housewarming Xmas Wreath Holiday Garland Decoration for Garden Festival Wall Diameter 35cm.Decorated with red berries, and green leaves, it has a realistic visual effect, keeping your house full of life.Xmas wreath is made of high quality material, brightly colored, durable, and requires no special cleaning or maintenance.It adds a festive touch to your home and the eye catching Christmas wreath will attract your guests.Holiday garland is perfect for decorating Christmas, Halloween, Thanksgiving, weddings, walls, doors, stages, bedrooms, offices, hotels, restaurants, gardens, balconies, fences, fireplaces, entryways, etc.A Christmas wreath makes a perfect gift for friends, family, neighbors, housewarmings, farmhouses, and other .Artificial Christmas Wreath Holiday Garland. Outside Xmas Wreath Front Door Wreath Wall. Wreath for Front Door Ornaments Dining Room. Holiday Garland Decoration Indoor Outdoor Hotel. Front Door Wreath Porch Wedding. [High Quality Material]: Xmas wreath is made of high quality material, brightly colored, durable, and requires no special cleaning or maintenance. [Front Door Wreath]: It adds a festive touch to your home and the eye catching Christmas wreath will attract your guests. [Perfect Gift]: A Christmas wreath makes a perfect gift for friends, family, neighbors, housewarmings, farmhouses, and other . [Artificial Christmas Wreath]: Decorated with red berries, and green leaves, it has a realistic visual effect, keeping your house full of life. [Wide Application]: Holiday garland is perfect for decorating Christmas, Halloween, Thanksgiving, weddings, walls, doors, stages, bedrooms, offices, hotels, restaurants, gardens, balconies, fences, fireplaces, entryways, etc. Package Includes: 1 Artificial Christmas Wreath Note: Please allow slightly errors due to manual measurement and different monitors. info: We aim to show you accurate product information. Manufacturers, suppliers and others provide what you see here, and we have not verified it. See our disclaimer\n\nSpecifications\n\nWreath type Artificial Wreaths Color Green Red Theme Christmas Occasion Christmas More details\n\nWarranty\n\nWarranty information Please be aware that the warranty terms on items offered for sale by third party Marketplace sellers may differ from those displayed in this section (if any). To confirm warranty terms on an item offered for sale by a third party Marketplace seller, please use the 'Contact seller' feature on the third party Marketplace seller's information page and request the item's warranty terms prior to purchase."
                 }
             ],
-            "user_attributes": {
-                "sex": "Male",
-                "education": "Associate's degree",
-                "race": "Asian",
-                "marital_status": "single",
-                "religion": "Agnostic",
-                "Household_income": "$50,000 - $74,999",
-                "political_affiliation": "Independent",
-                "household_size": "3",
-                "Openness": "open to experience",
-                "Conscientiousness": "unconscientious",
-                "Extraversion": "introverted",
-                "Agreeableness": "agreeable",
-                "Neuroticism": "neurotic",
-                "age": "41",
-                "citizenship": "Canada",
-                "location": "Vancouver, BC, Canada",
-                "name": "Daniel Thompson",
-                "email": "dan.thompson.ca@outlook.com",
-                "phone": "604-329-7741",
-                "customer_type": "new prospect",
-                "discovery_type": "friend recommendation",
-                "decision_making_style": "rational",
-                "purchasing_preference": "quality oriented",
-                "spending_behavior": "over spending",
-                "loyalty_level": "loyal",
-                "budget": "$200\u2013$300 per month on bulk household essentials and cleaning supplies to stock a small office"
-            },
             "origin": {
-                "goal_raw": "You are a returning customer and want to return an item but you don't provide the order ID or reason for return."
+                "goal_raw": "You are a returning customer and want to return an item but you don't provide the order ID or reason for return.",
+                "user_attributes": {
+                    "sex": "Male",
+                    "education": "Associate's degree",
+                    "race": "Asian",
+                    "marital_status": "single",
+                    "religion": "Agnostic",
+                    "Household_income": "$50,000 - $74,999",
+                    "political_affiliation": "Independent",
+                    "household_size": "3",
+                    "Openness": "open to experience",
+                    "Conscientiousness": "unconscientious",
+                    "Extraversion": "introverted",
+                    "Agreeableness": "agreeable",
+                    "Neuroticism": "neurotic",
+                    "age": "41",
+                    "citizenship": "Canada",
+                    "location": "Vancouver, BC, Canada",
+                    "name": "Daniel Thompson",
+                    "email": "dan.thompson.ca@outlook.com",
+                    "phone": "604-329-7741",
+                    "customer_type": "new prospect",
+                    "discovery_type": "friend recommendation",
+                    "decision_making_style": "rational",
+                    "purchasing_preference": "quality oriented",
+                    "spending_behavior": "over spending",
+                    "loyalty_level": "loyal",
+                    "budget": "$200–$300 per month on bulk household essentials and cleaning supplies to stock a small office"
+                }
             }
         }
     ]

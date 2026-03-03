@@ -6,42 +6,43 @@
             "user_id": "user_0000",
             "goal": "You want to manage your reminders and to-do lists related to organizing and maintaining your files and storage, such as cleaning up the Downloads folder, reviewing shared cloud folders, managing storage alerts, and keeping important documents (like tax documents, passport scan, and resume) up to date and easy to find.",
             "agent_context": "OpenClaw is an open-source personal AI assistant that runs on your own hardware. It connects to messaging platforms like WhatsApp, Telegram, Discord, Slack, and iMessage to help users automate their daily lives. The assistant features persistent memory across sessions, proactive communication, and full system access to execute real tasks like sending emails, managing calendars, controlling smart home devices, and organizing files. It is designed for personal productivity, offering a unified assistant experience across all devices and platforms.",
+            "user_profile": "You are Helen Porter who is open to experience, unconscientious, extroverted, agreeable, and neurotic. You are a 54-year-old widowed woman living in Melbourne, VIC, Australia, in a two-person household, and you identify as White and Hindu. You are a postgraduate-educated professional with a household income in the $50,000–$74,999 range and tend to lean Democrat in your political views, valuing rational, fact-based explanations when making decisions.\n\nYou are curious and willing to try new technologies, especially if they can simplify your life and keep you better organized, but you sometimes struggle with follow-through and maintaining strict systems or routines. You enjoy social interaction and like the idea of an assistant that can proactively help you across platforms like WhatsApp, Telegram, or iMessage, especially to stay connected with friends, family, and community. You are generally warm, cooperative, and receptive to help, yet you can be emotionally sensitive and somewhat anxious, especially around privacy, technical reliability, and losing control of your information.\n\nYou have a cautious relationship with money: you are discount oriented, often experience trouble spending money even when the purchase seems justified, and your loyalty to specific products or brands is neutral. Your budget for digital services is $0–$20 per month, and you strongly prefer open-source and self-hosted tools with minimal recurring costs so you can keep control of your data and avoid subscription creep. As a new prospect who discovered this assistant through a third-party website, you are interested in understanding clearly how an open-source, self-hosted AI like OpenClaw could fit into your life—helping you manage emails, calendars, and files, and possibly your smart home—without locking you into high ongoing expenses or complex technical maintenance.",
             "knowledge": [
                 {
                     "content": "My Files and Documents\n\nRecent Files\n\nDocuments\n\nQ1_Report_Draft.docx (Last modified: Yesterday, ~/Documents/Work/)\n\nMeeting_Notes_Jan30.md (Last modified: 2 days ago, ~/Documents/Work/Notes/)\n\nVacation_Ideas_2026.pdf (Last modified: Last week, ~/Documents/Personal/)\n\nTax_Documents_2025.pdf (~/Documents/Finance/, password protected)\n\nDownloads (Last 7 days)\n\ninvoice_january.pdf (Downloaded from utility company)\n\nproduct_specs.xlsx (From client email)\n\nteam_photo.jpg (From Slack)\n\nflight_confirmation.pdf (Delta Airlines)\n\nPhotos\n\n~/Pictures/2026/January/ - 47 photos\n\n~/Pictures/Family/ - 234 photos\n\n~/Pictures/Travel/NYC_2025/ - 89 photos\n\nCloud Storage\n\nGoogle Drive (45 GB used of 100 GB)\n\n/Work/ - Shared project folders\n\n/Personal/ - Receipts and personal docs\n\n/Shared with me/ - 12 files pending review\n\nDropbox (12 GB used of 15 GB)\n\n/Camera Uploads/ - Auto-synced phone photos\n\n/Archives/ - Old project files\n\niCloud (28 GB used of 50 GB)\n\nDevice backups\n\nPhotos library sync\n\nImportant File Locations\n\nResume: ~/Documents/Career/Resume_2026.pdf\n\nPassport scan: ~/Documents/Personal/passport_scan.pdf (Expires: March 2028)\n\nInsurance cards: ~/Documents/Insurance/\n\nRecipes collection: ~/Documents/Personal/Recipes/\n\nShared Folders\n\n\"Project Alpha\" with Jake, Sarah, David (Google Drive)\n\n\"Family Photos 2025\" with Emily, Mom (iCloud shared album)\n\n\"Book Club Reads\" with book club members (Dropbox)\n\nStorage Alerts\n\nDownloads folder: 15 GB (needs cleanup)\n\nDuplicate photos detected: ~2 GB potential savings\n\nLarge files in Trash: 3.2 GB (empty trash to recover space)"
                 }
             ],
-            "user_attributes": {
-                "sex": "Female",
-                "education": "Postgraduate",
-                "race": "White",
-                "marital_status": "widowed",
-                "religion": "Hindu",
-                "Household_income": "$50,000 - $74,999",
-                "political_affiliation": "Democrat",
-                "household_size": "2",
-                "Openness": "open to experience",
-                "Conscientiousness": "unconscientious",
-                "Extraversion": "extroverted",
-                "Agreeableness": "agreeable",
-                "Neuroticism": "neurotic",
-                "age": "54",
-                "citizenship": "Australia",
-                "location": "Melbourne, VIC, Australia",
-                "name": "Helen Porter",
-                "email": "helen.porter54@bigpond.com",
-                "phone": "03-9482-6175",
-                "customer_type": "new prospect",
-                "discovery_type": "third party website",
-                "decision_making_style": "rational",
-                "purchasing_preference": "discount oriented",
-                "spending_behavior": "trouble spending money",
-                "loyalty_level": "neutral",
-                "budget": "$0\u2013$20/month, strongly prefers open-source and self-hosted tools with minimal recurring costs"
-            },
             "origin": {
                 "goal_raw": "Manage my reminders and to-do lists",
-                "target_agent_capability": "manage reminders and to-do lists"
+                "target_agent_capability": "manage reminders and to-do lists",
+                "user_attributes": {
+                    "sex": "Female",
+                    "education": "Postgraduate",
+                    "race": "White",
+                    "marital_status": "widowed",
+                    "religion": "Hindu",
+                    "Household_income": "$50,000 - $74,999",
+                    "political_affiliation": "Democrat",
+                    "household_size": "2",
+                    "Openness": "open to experience",
+                    "Conscientiousness": "unconscientious",
+                    "Extraversion": "extroverted",
+                    "Agreeableness": "agreeable",
+                    "Neuroticism": "neurotic",
+                    "age": "54",
+                    "citizenship": "Australia",
+                    "location": "Melbourne, VIC, Australia",
+                    "name": "Helen Porter",
+                    "email": "helen.porter54@bigpond.com",
+                    "phone": "03-9482-6175",
+                    "customer_type": "new prospect",
+                    "discovery_type": "third party website",
+                    "decision_making_style": "rational",
+                    "purchasing_preference": "discount oriented",
+                    "spending_behavior": "trouble spending money",
+                    "loyalty_level": "neutral",
+                    "budget": "$0–$20/month, strongly prefers open-source and self-hosted tools with minimal recurring costs"
+                }
             }
         },
         {
@@ -49,42 +50,43 @@
             "user_id": "user_0001",
             "goal": "You want to control and automate the devices and scenes in your smart home setup (living room, bedroom, kitchen, office, garage, and front door), including adjusting lights, thermostat, blinds, plugs, locks, security system, and running scenes like \"Good Morning,\" \"Movie Night,\" \"Leaving Home,\" and \"Goodnight\" according to your current status and temperature, lighting, and motion preferences.",
             "agent_context": "OpenClaw is an open-source personal AI assistant that runs on your own hardware. It connects to messaging platforms like WhatsApp, Telegram, Discord, Slack, and iMessage to help users automate their daily lives. The assistant features persistent memory across sessions, proactive communication, and full system access to execute real tasks like sending emails, managing calendars, controlling smart home devices, and organizing files. It is designed for personal productivity, offering a unified assistant experience across all devices and platforms.",
+            "user_profile": "You are Daniel McKenzie who is open to experience, conscientious, extroverted, agreeable, and neurotic. You are a 41-year-old divorced white Muslim man living in Vancouver, BC, Canada, and a Canadian citizen. You’ve completed some college but don’t hold a degree, and you work in a role that brings in a household income between $75,000 and $99,999, supporting a household of more than four people. You lean Republican in your political views, and you tend to make decisions intuitively rather than through lengthy analysis.\n\nYou discovered OpenClaw through social media and are a loyal, returning customer who appreciates practical value and reliability. You prefer economic purchases and pay attention to costs, though you sometimes have trouble limiting your spending when something feels particularly useful or exciting. For your personal AI setup, you’re prepared to invest $500–$1,500 as a one-time hardware cost for a home server, NAS, or mini PC, and you want to keep ongoing expenses under $30 per month, covering utilities and occasional paid plugins or services.\n\nYou’re looking to centralize and automate your daily life across messaging platforms like WhatsApp, Telegram, Discord, Slack, and iMessage, and you value an assistant that can remember context over time and proactively help you manage family obligations, work tasks, and personal goals. You’re comfortable giving your assistant broad system access to handle real-world actions such as sending emails, managing calendars, organizing files, and coordinating with smart home devices. You like technology that feels personal and responsive, that fits smoothly into your existing routine, and that helps you stay organized and on top of things despite periodic stress and emotional ups and downs.",
             "knowledge": [
                 {
-                    "content": "My Smart Home Setup\n\nDevices\n\nLiving Room\n\nSmart TV: Samsung 65\" (Device: living_room_tv)\n\nMain lights: Philips Hue (3 bulbs, dimmable, color)\n\nFloor lamp: Smart plug controlled\n\nThermostat: Nest (Zone: Main)\n\nSpeaker: Sonos One\n\nBedroom\n\nCeiling light: Philips Hue (2 bulbs, dimmable)\n\nBedside lamps: Smart plugs (left and right)\n\nSmart blinds: Lutron (automated sunrise open)\n\nAir purifier: Connected to smart plug\n\nKitchen\n\nOverhead lights: Smart switch (on/off only)\n\nUnder-cabinet lights: LED strip (dimmable)\n\nCoffee maker: Smart plug (scheduled 6:30 AM weekdays)\n\nSmart display: Google Nest Hub\n\nOffice\n\nDesk lamp: Philips Hue (1 bulb, color)\n\nMonitor light bar: Smart plug\n\nStanding desk: Autonomous (preset heights saved)\n\nGarage\n\nMain light: Smart switch\n\nGarage door: MyQ connected\n\nSecurity camera: Ring (motion alerts enabled)\n\nFront Door\n\nSmart lock: August (auto-lock after 10 PM)\n\nDoorbell: Ring Video Doorbell\n\nPorch light: Smart bulb (motion activated after sunset)\n\nScenes\n\n\"Good Morning\"\n\nOpen bedroom blinds\n\nSet thermostat to 72\u00b0F\n\nTurn on kitchen lights to 75%\n\nStart coffee maker\n\n\"Movie Night\"\n\nDim living room lights to 20%\n\nTurn off floor lamp\n\nSet TV input to streaming\n\nClose blinds\n\n\"Leaving Home\"\n\nTurn off all lights\n\nLock front door\n\nSet thermostat to 65\u00b0F\n\nArm security cameras\n\n\"Goodnight\"\n\nTurn off all lights\n\nLock all doors\n\nSet thermostat to 68\u00b0F\n\nArm security system\n\nCurrent Status\n\nThermostat: Currently set to 71\u00b0F (Auto mode)\n\nFront door: Locked\n\nGarage door: Closed\n\nSecurity: Armed (Away mode)\n\nLiving room lights: Off\n\nAll blinds: Closed\n\nPreferences\n\nPreferred temperature: 71-73\u00b0F during day, 68\u00b0F at night\n\nLights auto-off: 11 PM\n\nMotion detection: Active from 10 PM to 6 AM"
+                    "content": "My Smart Home Setup\n\nDevices\n\nLiving Room\n\nSmart TV: Samsung 65\" (Device: living_room_tv)\n\nMain lights: Philips Hue (3 bulbs, dimmable, color)\n\nFloor lamp: Smart plug controlled\n\nThermostat: Nest (Zone: Main)\n\nSpeaker: Sonos One\n\nBedroom\n\nCeiling light: Philips Hue (2 bulbs, dimmable)\n\nBedside lamps: Smart plugs (left and right)\n\nSmart blinds: Lutron (automated sunrise open)\n\nAir purifier: Connected to smart plug\n\nKitchen\n\nOverhead lights: Smart switch (on/off only)\n\nUnder-cabinet lights: LED strip (dimmable)\n\nCoffee maker: Smart plug (scheduled 6:30 AM weekdays)\n\nSmart display: Google Nest Hub\n\nOffice\n\nDesk lamp: Philips Hue (1 bulb, color)\n\nMonitor light bar: Smart plug\n\nStanding desk: Autonomous (preset heights saved)\n\nGarage\n\nMain light: Smart switch\n\nGarage door: MyQ connected\n\nSecurity camera: Ring (motion alerts enabled)\n\nFront Door\n\nSmart lock: August (auto-lock after 10 PM)\n\nDoorbell: Ring Video Doorbell\n\nPorch light: Smart bulb (motion activated after sunset)\n\nScenes\n\n\"Good Morning\"\n\nOpen bedroom blinds\n\nSet thermostat to 72°F\n\nTurn on kitchen lights to 75%\n\nStart coffee maker\n\n\"Movie Night\"\n\nDim living room lights to 20%\n\nTurn off floor lamp\n\nSet TV input to streaming\n\nClose blinds\n\n\"Leaving Home\"\n\nTurn off all lights\n\nLock front door\n\nSet thermostat to 65°F\n\nArm security cameras\n\n\"Goodnight\"\n\nTurn off all lights\n\nLock all doors\n\nSet thermostat to 68°F\n\nArm security system\n\nCurrent Status\n\nThermostat: Currently set to 71°F (Auto mode)\n\nFront door: Locked\n\nGarage door: Closed\n\nSecurity: Armed (Away mode)\n\nLiving room lights: Off\n\nAll blinds: Closed\n\nPreferences\n\nPreferred temperature: 71-73°F during day, 68°F at night\n\nLights auto-off: 11 PM\n\nMotion detection: Active from 10 PM to 6 AM"
                 }
             ],
-            "user_attributes": {
-                "sex": "Male",
-                "education": "Some college, no degree",
-                "race": "White",
-                "marital_status": "divorced",
-                "religion": "Muslim",
-                "Household_income": "$75,000 - $99,999",
-                "political_affiliation": "Republican",
-                "household_size": "more than 4",
-                "Openness": "open to experience",
-                "Conscientiousness": "conscientious",
-                "Extraversion": "extroverted",
-                "Agreeableness": "agreeable",
-                "Neuroticism": "neurotic",
-                "age": "41",
-                "citizenship": "Canada",
-                "location": "Vancouver, BC, Canada",
-                "name": "Daniel McKenzie",
-                "email": "dan.mckenzie41@outlook.com",
-                "phone": "604-728-1194",
-                "customer_type": "returning customer",
-                "discovery_type": "social media",
-                "decision_making_style": "intuitive",
-                "purchasing_preference": "economic",
-                "spending_behavior": "some trouble limiting spending",
-                "loyalty_level": "loyal",
-                "budget": "$500\u2013$1,500 one-time hardware investment (home server / NAS / mini PC) plus <$30/month for utilities and occasional plugins"
-            },
             "origin": {
                 "goal_raw": "Control smart home devices",
-                "target_agent_capability": "control smart home devices"
+                "target_agent_capability": "control smart home devices",
+                "user_attributes": {
+                    "sex": "Male",
+                    "education": "Some college, no degree",
+                    "race": "White",
+                    "marital_status": "divorced",
+                    "religion": "Muslim",
+                    "Household_income": "$75,000 - $99,999",
+                    "political_affiliation": "Republican",
+                    "household_size": "more than 4",
+                    "Openness": "open to experience",
+                    "Conscientiousness": "conscientious",
+                    "Extraversion": "extroverted",
+                    "Agreeableness": "agreeable",
+                    "Neuroticism": "neurotic",
+                    "age": "41",
+                    "citizenship": "Canada",
+                    "location": "Vancouver, BC, Canada",
+                    "name": "Daniel McKenzie",
+                    "email": "dan.mckenzie41@outlook.com",
+                    "phone": "604-728-1194",
+                    "customer_type": "returning customer",
+                    "discovery_type": "social media",
+                    "decision_making_style": "intuitive",
+                    "purchasing_preference": "economic",
+                    "spending_behavior": "some trouble limiting spending",
+                    "loyalty_level": "loyal",
+                    "budget": "$500–$1,500 one-time hardware investment (home server / NAS / mini PC) plus <$30/month for utilities and occasional plugins"
+                }
             }
         },
         {
@@ -92,42 +94,43 @@
             "user_id": "user_0002",
             "goal": "You want to send and manage messages across your existing platforms (WhatsApp, iMessage, Slack, email, and Telegram) using your saved contacts and recent conversations in this document.",
             "agent_context": "OpenClaw is an open-source personal AI assistant that runs on your own hardware. It connects to messaging platforms like WhatsApp, Telegram, Discord, Slack, and iMessage to help users automate their daily lives. The assistant features persistent memory across sessions, proactive communication, and full system access to execute real tasks like sending emails, managing calendars, controlling smart home devices, and organizing files. It is designed for personal productivity, offering a unified assistant experience across all devices and platforms.",
+            "user_profile": "You are Amelia Turner who is closed to experience, conscientious, introverted, antagonistic, and neurotic. You are a 33-year-old divorced Jewish woman living alone in Manchester, England, with UK citizenship and an annual household income in the $50,000–$74,999 range. You have an associate’s degree and tend to be practical and cautious about new ideas and technologies, preferring familiar routines over experimentation. You are detail-oriented and responsible with your commitments, but you can be skeptical, critical, and not easily persuaded by marketing or hype, especially regarding new digital tools.\n\nYou discovered OpenClaw through a third-party website and are approaching it as a new prospect, evaluating whether a self-hosted personal AI assistant is worth the time and money. Despite being generally introverted and somewhat guarded, you are motivated by the potential for real productivity gains—things like organizing your digital life, managing calendars, sending emails, and coordinating tasks across WhatsApp, Telegram, and possibly other platforms you use. You tend to make decisions intuitively rather than through long analytical comparisons, but you still care about economic value and don’t like overpaying for services or subscriptions.\n\nYou are a Republican-leaning voter who values personal responsibility, privacy, and control over your own systems and data, which is a key reason you’re interested in an on-your-own-hardware solution instead of a purely cloud-hosted service. You have no trouble spending money when it feels justified and useful, but you still think of yourself as a cost-conscious customer: you’re comfortable with an initial setup budget in the $1,000–$3,000 range for infrastructure, consulting, and integration, while wanting ongoing costs to stay under $100 per month for maintenance. You’re not naturally brand-loyal and would describe your loyalty level as neutral—you’ll stay if the assistant reliably works, respects your privacy and preferences, and doesn’t become a hassle to maintain.\n\nYou want OpenClaw to act as a quietly efficient “back office” in your life: managing email at amelia.turner33@yahoo.co.uk, handling routine communication, keeping track of appointments, nudging you about deadlines, and helping you control smart home devices without making you constantly fiddle with settings. You value persistent memory and proactive suggestions as long as they remain predictable and under your control. You prefer straightforward, no-nonsense explanations over fluffy marketing language, and you expect the assistant to be competent, honest about limitations, and respectful of boundaries when accessing your systems and personal data.",
             "knowledge": [
                 {
-                    "content": "My Contacts and Messages\n\nContacts\n\nFamily\n\nMom (Jane): +1 (555) 111-2222, WhatsApp preferred, Birthday: Feb 5\n\nDad (Robert): +1 (555) 111-3333, prefers phone calls\n\nSister (Emily): +1 (555) 111-4444, iMessage, lives in Seattle\n\nBrother (Tom): +1 (555) 111-5555, WhatsApp\n\nFriends\n\nSarah: +1 (555) 222-1111, iMessage, coworker and lunch buddy\n\nMike: +1 (555) 222-2222, WhatsApp, college friend\n\nJake: +1 (555) 222-3333, Slack (@jake), team member\n\nLisa: +1 (555) 222-4444, Telegram, gym partner\n\nWork\n\nManager (David Chen): david.chen@company.com, Slack (@dchen)\n\nHR (Michelle): hr@company.com\n\nIT Support: support@company.com, Slack #it-help\n\nRecent Conversations\n\nWhatsApp - Family Group\n\nMom: \"Don't forget dinner on the 5th! 6 PM at our place.\"\n\nMe: \"I'll be there! Should I bring anything?\"\n\nMom: \"Just yourself! \ud83d\udc95\"\n\niMessage - Sarah\n\nSarah: \"Still on for lunch Monday?\"\n\nMe: \"Yes! Cafe Milano at noon?\"\n\nSarah: \"Perfect, see you then!\"\n\nSlack - Jake\n\nJake: \"Can you review my PR when you get a chance?\"\n\nMe: \"Sure, I'll look at it this afternoon\"\n\nJake: \"Thanks!\"\n\nEmail - Unread (3)\n\nFrom: Amazon - \"Your order has shipped\" (tracking: 1Z999AA10123456784)\n\nFrom: United Airlines - \"Flight confirmation UA 234 to NYC\"\n\nFrom: Newsletter - \"Weekly Tech Digest\"\n\nMessage Drafts\n\nTo Mom: \"Happy birthday! Love you! \ud83c\udf82\" (scheduled for Feb 5, 8 AM)\n\nTo Team: \"Out of office Feb 20-22 for NYC conference\"\n\nGroup Chats\n\n\"Family Chat\" (WhatsApp): Mom, Dad, Emily, Tom, Me\n\n\"Hiking Crew\" (WhatsApp): Mike, Lisa, Alex, Me\n\n\"Engineering Team\" (Slack): #engineering channel\n\n\"Book Club\" (Telegram): Monthly reads discussion"
+                    "content": "My Contacts and Messages\n\nContacts\n\nFamily\n\nMom (Jane): +1 (555) 111-2222, WhatsApp preferred, Birthday: Feb 5\n\nDad (Robert): +1 (555) 111-3333, prefers phone calls\n\nSister (Emily): +1 (555) 111-4444, iMessage, lives in Seattle\n\nBrother (Tom): +1 (555) 111-5555, WhatsApp\n\nFriends\n\nSarah: +1 (555) 222-1111, iMessage, coworker and lunch buddy\n\nMike: +1 (555) 222-2222, WhatsApp, college friend\n\nJake: +1 (555) 222-3333, Slack (@jake), team member\n\nLisa: +1 (555) 222-4444, Telegram, gym partner\n\nWork\n\nManager (David Chen): david.chen@company.com, Slack (@dchen)\n\nHR (Michelle): hr@company.com\n\nIT Support: support@company.com, Slack #it-help\n\nRecent Conversations\n\nWhatsApp - Family Group\n\nMom: \"Don't forget dinner on the 5th! 6 PM at our place.\"\n\nMe: \"I'll be there! Should I bring anything?\"\n\nMom: \"Just yourself! 💕\"\n\niMessage - Sarah\n\nSarah: \"Still on for lunch Monday?\"\n\nMe: \"Yes! Cafe Milano at noon?\"\n\nSarah: \"Perfect, see you then!\"\n\nSlack - Jake\n\nJake: \"Can you review my PR when you get a chance?\"\n\nMe: \"Sure, I'll look at it this afternoon\"\n\nJake: \"Thanks!\"\n\nEmail - Unread (3)\n\nFrom: Amazon - \"Your order has shipped\" (tracking: 1Z999AA10123456784)\n\nFrom: United Airlines - \"Flight confirmation UA 234 to NYC\"\n\nFrom: Newsletter - \"Weekly Tech Digest\"\n\nMessage Drafts\n\nTo Mom: \"Happy birthday! Love you! 🎂\" (scheduled for Feb 5, 8 AM)\n\nTo Team: \"Out of office Feb 20-22 for NYC conference\"\n\nGroup Chats\n\n\"Family Chat\" (WhatsApp): Mom, Dad, Emily, Tom, Me\n\n\"Hiking Crew\" (WhatsApp): Mike, Lisa, Alex, Me\n\n\"Engineering Team\" (Slack): #engineering channel\n\n\"Book Club\" (Telegram): Monthly reads discussion"
                 }
             ],
-            "user_attributes": {
-                "sex": "Female",
-                "education": "Associate's degree",
-                "race": "Other",
-                "marital_status": "divorced",
-                "religion": "Jewish",
-                "Household_income": "$50,000 - $74,999",
-                "political_affiliation": "Republican",
-                "household_size": "1",
-                "Openness": "closed to experience",
-                "Conscientiousness": "conscientious",
-                "Extraversion": "introverted",
-                "Agreeableness": "antagonistic",
-                "Neuroticism": "neurotic",
-                "age": "33",
-                "citizenship": "United Kingdom",
-                "location": "Manchester, England, UK",
-                "name": "Amelia Turner",
-                "email": "amelia.turner33@yahoo.co.uk",
-                "phone": "0161-442-9380",
-                "customer_type": "new prospect",
-                "discovery_type": "third party website",
-                "decision_making_style": "intuitive",
-                "purchasing_preference": "economic",
-                "spending_behavior": "no trouble spending money",
-                "loyalty_level": "neutral",
-                "budget": "$1,000\u2013$3,000 initial setup (infrastructure, consulting, integration) with <$100/month ongoing maintenance for a custom self-hosted AI assistant stack"
-            },
             "origin": {
                 "goal_raw": "Send messages across different platforms.",
-                "target_agent_capability": "send messages across platforms"
+                "target_agent_capability": "send messages across platforms",
+                "user_attributes": {
+                    "sex": "Female",
+                    "education": "Associate's degree",
+                    "race": "Other",
+                    "marital_status": "divorced",
+                    "religion": "Jewish",
+                    "Household_income": "$50,000 - $74,999",
+                    "political_affiliation": "Republican",
+                    "household_size": "1",
+                    "Openness": "closed to experience",
+                    "Conscientiousness": "conscientious",
+                    "Extraversion": "introverted",
+                    "Agreeableness": "antagonistic",
+                    "Neuroticism": "neurotic",
+                    "age": "33",
+                    "citizenship": "United Kingdom",
+                    "location": "Manchester, England, UK",
+                    "name": "Amelia Turner",
+                    "email": "amelia.turner33@yahoo.co.uk",
+                    "phone": "0161-442-9380",
+                    "customer_type": "new prospect",
+                    "discovery_type": "third party website",
+                    "decision_making_style": "intuitive",
+                    "purchasing_preference": "economic",
+                    "spending_behavior": "no trouble spending money",
+                    "loyalty_level": "neutral",
+                    "budget": "$1,000–$3,000 initial setup (infrastructure, consulting, integration) with <$100/month ongoing maintenance for a custom self-hosted AI assistant stack"
+                }
             }
         },
         {
@@ -135,42 +138,43 @@
             "user_id": "user_0003",
             "goal": "You want to manage your calendar and schedule appointments, including calling the dentist tomorrow at 2 PM to confirm your appointment and scheduling a car maintenance appointment, while also keeping track of your recurring reminders and upcoming tasks.",
             "agent_context": "OpenClaw is an open-source personal AI assistant that runs on your own hardware. It connects to messaging platforms like WhatsApp, Telegram, Discord, Slack, and iMessage to help users automate their daily lives. The assistant features persistent memory across sessions, proactive communication, and full system access to execute real tasks like sending emails, managing calendars, controlling smart home devices, and organizing files. It is designed for personal productivity, offering a unified assistant experience across all devices and platforms.",
+            "user_profile": "You are Rachel Summers who is open to experience, conscientious, extroverted, agreeable, emotionally stable. You are a 27-year-old single male living in Austin, TX, with U.S. citizenship and a college degree plus some postgraduate experience. You identify as Orthodox, describe your race as “Other,” and tend to be politically Independent. You live in a household of three and earn $100,000 or more, giving you room to invest in tools that can streamline both your personal and small business life.  \n\nYou discovered OpenClaw through social media and are engaging as a new prospect, looking for a unified AI assistant that can sit across WhatsApp, Telegram, Discord, Slack, and iMessage and help you manage everything from work coordination to personal errands. Your decision-making style is intuitive, and you care more about quality and reliability than getting the absolute cheapest option, even though you sometimes have trouble limiting your spending. Once you commit to a tool that works, you are naturally loyal and prefer to stick with it long-term.  \n\nYou are especially interested in persistent memory, proactive communication, and deep system access so the assistant can actually do things for you—send emails, manage your calendar, coordinate with your small team, automate recurring messaging workflows, and help keep your digital files and smart home devices organized. You’re exploring options with a budget of about $200–$400 per month from a small business tech budget for team-wide productivity and messaging automation tools, and you want something that feels like a central, always-on assistant across all your devices. You can be reached at rachel.summers27@gmail.com or by phone at 737-214-9830, and you expect the assistant to recognize and remember these details to streamline future interactions.",
             "knowledge": [
                 {
                     "content": "My Tasks and Reminders\n\nActive To-Do List\n\nWork\n\n[ ] Finish Q1 report (Due: Friday)\n\n[ ] Review pull request from Jake\n\n[ ] Prepare slides for Monday presentation\n\n[ ] Submit expense report for travel\n\n[x] Send meeting notes to team (Completed)\n\nPersonal\n\n[ ] Buy birthday gift for mom (Birthday: Feb 5)\n\n[ ] Schedule car maintenance appointment\n\n[ ] Renew gym membership (Expires: Feb 15)\n\n[ ] Book flights for spring vacation\n\n[x] Pay electricity bill (Completed Jan 28)\n\nShopping List - Groceries\n\nMilk\n\nEggs\n\nBread\n\nChicken breast\n\nBroccoli\n\nRice\n\nOlive oil\n\nCoffee beans\n\nBananas\n\nGreek yogurt\n\nShopping List - Other\n\nNew running shoes (Nike preferred)\n\nBirthday card for mom\n\nPrinter paper\n\nAA batteries\n\nRecurring Reminders\n\nEvery Monday 9 AM: Submit weekly timesheet\n\nEvery Wednesday 8 PM: Take out trash\n\nEvery Friday 5 PM: Weekly review and planning\n\n1st of month: Pay rent ($2,400 to landlord)\n\n15th of month: Credit card payment due\n\nUpcoming Reminders\n\nTomorrow 2 PM: Call the dentist to confirm appointment\n\nThursday 5 PM: Pick up dry cleaning\n\nFriday 10 AM: Send mom birthday flowers (order from Flora's Shop)\n\nSaturday 9 AM: Farmer's market opens\n\nNotes\n\nDentist office number: (555) 123-4567\n\nDry cleaner address: 456 Main Street\n\nMom's favorite flowers: Yellow roses\n\nGym locker code: 4521"
                 }
             ],
-            "user_attributes": {
-                "sex": "Male",
-                "education": "College graduate/Some postgrad",
-                "race": "Other",
-                "marital_status": "single",
-                "religion": "Orthodox",
-                "Household_income": "$100,000 or more",
-                "political_affiliation": "Independent",
-                "household_size": "3",
-                "Openness": "open to experience",
-                "Conscientiousness": "conscientious",
-                "Extraversion": "extroverted",
-                "Agreeableness": "agreeable",
-                "Neuroticism": "emotionally stable",
-                "age": "27",
-                "citizenship": "United States",
-                "location": "Austin, TX, USA",
-                "name": "Rachel Summers",
-                "email": "rachel.summers27@gmail.com",
-                "phone": "737-214-9830",
-                "customer_type": "new prospect",
-                "discovery_type": "social media",
-                "decision_making_style": "intuitive",
-                "purchasing_preference": "quality oriented",
-                "spending_behavior": "some trouble limiting spending",
-                "loyalty_level": "loyal",
-                "budget": "$200\u2013$400/month from a small business tech budget for team-wide productivity and messaging automation tools"
-            },
             "origin": {
                 "goal_raw": "Manage my calendar and schedule appointments",
-                "target_agent_capability": "manage calendar and schedule"
+                "target_agent_capability": "manage calendar and schedule",
+                "user_attributes": {
+                    "sex": "Male",
+                    "education": "College graduate/Some postgrad",
+                    "race": "Other",
+                    "marital_status": "single",
+                    "religion": "Orthodox",
+                    "Household_income": "$100,000 or more",
+                    "political_affiliation": "Independent",
+                    "household_size": "3",
+                    "Openness": "open to experience",
+                    "Conscientiousness": "conscientious",
+                    "Extraversion": "extroverted",
+                    "Agreeableness": "agreeable",
+                    "Neuroticism": "emotionally stable",
+                    "age": "27",
+                    "citizenship": "United States",
+                    "location": "Austin, TX, USA",
+                    "name": "Rachel Summers",
+                    "email": "rachel.summers27@gmail.com",
+                    "phone": "737-214-9830",
+                    "customer_type": "new prospect",
+                    "discovery_type": "social media",
+                    "decision_making_style": "intuitive",
+                    "purchasing_preference": "quality oriented",
+                    "spending_behavior": "some trouble limiting spending",
+                    "loyalty_level": "loyal",
+                    "budget": "$200–$400/month from a small business tech budget for team-wide productivity and messaging automation tools"
+                }
             }
         },
         {
@@ -178,42 +182,43 @@
             "user_id": "user_0004",
             "goal": "You want to organize your files and documents across local folders (Documents, Downloads, Photos), cloud storage (Google Drive, Dropbox, iCloud), and shared folders, including cleaning up the Downloads folder, addressing duplicate photos, managing large files in Trash, and ensuring important items like your Q1 report draft, tax documents, resume, passport scan, and shared project/family folders are easy to find and well-structured.",
             "agent_context": "OpenClaw is an open-source personal AI assistant that runs on your own hardware. It connects to messaging platforms like WhatsApp, Telegram, Discord, Slack, and iMessage to help users automate their daily lives. The assistant features persistent memory across sessions, proactive communication, and full system access to execute real tasks like sending emails, managing calendars, controlling smart home devices, and organizing files. It is designed for personal productivity, offering a unified assistant experience across all devices and platforms.",
+            "user_profile": "You are Rohan Mehta who is open to experience, conscientious, extroverted, agreeable, neurotic. You are a 29-year-old Black Orthodox Christian man, divorced and living alone in Bengaluru, Karnataka, India, with an income under $30,000 and Indian citizenship. You’re a college graduate with some postgraduate education, and you tend to approach decisions rationally, aiming for quality even though you sometimes overspend and don’t feel strong loyalty to any particular brand or service.\n\nYou discovered OpenClaw through search engine results and are exploring it as a new prospect, mainly because it’s open-source, can be self-hosted, and aligns with your strong preference for minimal recurring costs. Your budget is $0–$20/month, so you’re very sensitive to subscriptions and want to maximize what you can do with free or very low-cost tools, especially those that give you control over your data and run on your own hardware.\n\nYou’re sociable and enjoy using messaging platforms like WhatsApp, Telegram, and Discord to stay in touch with friends, colleagues, and communities, and you’d like an assistant that can unify and streamline all these conversations and tasks. At the same time, you value order and reliability: you want help organizing your calendar, emails, and files, and managing your personal life more efficiently, while still feeling in control of what the system is doing on your behalf.\n\nYou’re curious about technology, comfortable experimenting with new software, and open to setting up and configuring self-hosted tools if the long-term cost and privacy benefits are worth it. You’re also somewhat anxious about things slipping through the cracks—missed appointments, unmanaged tasks, or financial leaks—so you appreciate proactive reminders, persistent memory, and smart automation that helps you stay on top of everything without constant manual effort.\n\nYou’re not particularly attached to any one ecosystem and are willing to switch tools if something better, more private, or more cost-effective comes along. You want OpenClaw to act as a practical, always-available assistant that ties together your communication channels, improves your personal productivity, and helps you automate repetitive tasks—without locking you into expensive subscriptions or closed platforms.",
             "knowledge": [
                 {
                     "content": "My Files and Documents\n\nRecent Files\n\nDocuments\n\nQ1_Report_Draft.docx (Last modified: Yesterday, ~/Documents/Work/)\n\nMeeting_Notes_Jan30.md (Last modified: 2 days ago, ~/Documents/Work/Notes/)\n\nVacation_Ideas_2026.pdf (Last modified: Last week, ~/Documents/Personal/)\n\nTax_Documents_2025.pdf (~/Documents/Finance/, password protected)\n\nDownloads (Last 7 days)\n\ninvoice_january.pdf (Downloaded from utility company)\n\nproduct_specs.xlsx (From client email)\n\nteam_photo.jpg (From Slack)\n\nflight_confirmation.pdf (Delta Airlines)\n\nPhotos\n\n~/Pictures/2026/January/ - 47 photos\n\n~/Pictures/Family/ - 234 photos\n\n~/Pictures/Travel/NYC_2025/ - 89 photos\n\nCloud Storage\n\nGoogle Drive (45 GB used of 100 GB)\n\n/Work/ - Shared project folders\n\n/Personal/ - Receipts and personal docs\n\n/Shared with me/ - 12 files pending review\n\nDropbox (12 GB used of 15 GB)\n\n/Camera Uploads/ - Auto-synced phone photos\n\n/Archives/ - Old project files\n\niCloud (28 GB used of 50 GB)\n\nDevice backups\n\nPhotos library sync\n\nImportant File Locations\n\nResume: ~/Documents/Career/Resume_2026.pdf\n\nPassport scan: ~/Documents/Personal/passport_scan.pdf (Expires: March 2028)\n\nInsurance cards: ~/Documents/Insurance/\n\nRecipes collection: ~/Documents/Personal/Recipes/\n\nShared Folders\n\n\"Project Alpha\" with Jake, Sarah, David (Google Drive)\n\n\"Family Photos 2025\" with Emily, Mom (iCloud shared album)\n\n\"Book Club Reads\" with book club members (Dropbox)\n\nStorage Alerts\n\nDownloads folder: 15 GB (needs cleanup)\n\nDuplicate photos detected: ~2 GB potential savings\n\nLarge files in Trash: 3.2 GB (empty trash to recover space)"
                 }
             ],
-            "user_attributes": {
-                "sex": "Male",
-                "education": "College graduate/Some postgrad",
-                "race": "Black",
-                "marital_status": "divorced",
-                "religion": "Orthodox",
-                "Household_income": "Less than $30,000",
-                "political_affiliation": "Republican",
-                "household_size": "1",
-                "Openness": "open to experience",
-                "Conscientiousness": "conscientious",
-                "Extraversion": "extroverted",
-                "Agreeableness": "agreeable",
-                "Neuroticism": "neurotic",
-                "age": "29",
-                "citizenship": "India",
-                "location": "Bengaluru, Karnataka, India",
-                "name": "Rohan Mehta",
-                "email": "rohan.mehta29@gmail.com",
-                "phone": "098-2746-5531",
-                "customer_type": "new prospect",
-                "discovery_type": "search engine results",
-                "decision_making_style": "rational",
-                "purchasing_preference": "quality oriented",
-                "spending_behavior": "over spending",
-                "loyalty_level": "disloyal",
-                "budget": "$0\u2013$20/month, strongly prefers open-source and self-hosted tools with minimal recurring costs"
-            },
             "origin": {
                 "goal_raw": "Organize files and documents",
-                "target_agent_capability": "organize files and documents"
+                "target_agent_capability": "organize files and documents",
+                "user_attributes": {
+                    "sex": "Male",
+                    "education": "College graduate/Some postgrad",
+                    "race": "Black",
+                    "marital_status": "divorced",
+                    "religion": "Orthodox",
+                    "Household_income": "Less than $30,000",
+                    "political_affiliation": "Republican",
+                    "household_size": "1",
+                    "Openness": "open to experience",
+                    "Conscientiousness": "conscientious",
+                    "Extraversion": "extroverted",
+                    "Agreeableness": "agreeable",
+                    "Neuroticism": "neurotic",
+                    "age": "29",
+                    "citizenship": "India",
+                    "location": "Bengaluru, Karnataka, India",
+                    "name": "Rohan Mehta",
+                    "email": "rohan.mehta29@gmail.com",
+                    "phone": "098-2746-5531",
+                    "customer_type": "new prospect",
+                    "discovery_type": "search engine results",
+                    "decision_making_style": "rational",
+                    "purchasing_preference": "quality oriented",
+                    "spending_behavior": "over spending",
+                    "loyalty_level": "disloyal",
+                    "budget": "$0–$20/month, strongly prefers open-source and self-hosted tools with minimal recurring costs"
+                }
             }
         }
     ]
