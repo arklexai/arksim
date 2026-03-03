@@ -64,50 +64,6 @@ For the full scenario schema (all fields and types), see [Schema Reference](/sch
 
 ---
 
-## Schema Reference
-
-<ResponseField name="schema_version" type="string" required>
-  Schema version identifier. Use `"v1"`.
-</ResponseField>
-
-<ResponseField name="scenarios" type="list[dict]" required>
-  List of scenario objects. Each object represents one simulated user and one conversation session.
-
-  <Expandable title="scenario fields">
-    <ResponseField name="scenario_id" type="string" required>
-      Unique identifier for this scenario.
-    </ResponseField>
-    <ResponseField name="user_id" type="string" required>
-      Unique identifier for the simulated user. Defaults to `scenario_id` if omitted.
-    </ResponseField>
-    <ResponseField name="goal" type="string" required>
-      The user's conversational goal, passed directly into the user simulator prompt. Write it in second person ("You want to...") so it reads naturally as a simulator instruction.
-    </ResponseField>
-    <ResponseField name="user_profile" type="string">
-      A natural-language persona description for the simulated user. This is used directly in the simulation prompt to shape tone, communication style, and behavior.
-
-      Write in second person (e.g. "You are Alex who is conscientious, introverted, and agreeable. You are a 30-year-old engineer from Chicago...").
-    </ResponseField>
-    <ResponseField name="knowledge" type="list[KnowledgeItem]">
-      Knowledge items embedded in the simulated user's context during the conversation. Can be omitted if the simulated user has no specific background information.
-
-      Each `KnowledgeItem` contains:
-
-      - `content` (required): The text content injected into the simulator prompt as the user's background knowledge.
-      - `metadata`: Freeform metadata for labeling and traceability (e.g. `title`, `source`, `doc_id`). Not used by the simulator or evaluator.
-    </ResponseField>
-    <ResponseField name="origin" type="dict[string, Any]">
-      Freeform metadata used to record how a scenario was generated. Not used by the simulator and exists purely for provenance tracking.
-
-      Common fields:
-
-      - `target_agent_capability`: The agent capability this scenario was designed to evaluate.
-      - `goal_raw`: The original goal before it was adapted to the full contextual goal string.
-      - `user_attributes`: Structured key-value map of the user's traits (demographic, personality, behavioral).
-    </ResponseField>
-  </Expandable>
-</ResponseField>
-
 ## Full Example
 
 ```json
