@@ -1,4 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
+
 import json
 import sys
 from pathlib import Path
@@ -114,7 +116,7 @@ class AgentConfig(BaseModel):
         return data
 
     @classmethod
-    def load(cls, path: str | Path) -> "AgentConfig":
+    def load(cls, path: str | Path) -> AgentConfig:
         """Load agent configuration from a JSON file."""
         path = Path(path)
         if not path.exists():

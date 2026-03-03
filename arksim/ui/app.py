@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 """Arksim Control Plane — FastAPI application."""
 
+from __future__ import annotations
+
 import asyncio
 import logging
 import threading

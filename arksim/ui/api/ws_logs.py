@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 """WebSocket endpoint for real-time log streaming."""
 
+from __future__ import annotations
+
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from arksim.ui.api.state import AppState

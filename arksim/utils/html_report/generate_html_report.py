@@ -1,11 +1,12 @@
 # SPDX-License-Identifier: Apache-2.0
-#!/usr/bin/env python3
 """
 Generate a standalone HTML report by embedding data into the template.
 This allows the HTML to be opened directly without needing an HTTP server.
 
 This module is called directly from arksim.py with data objects.
 """
+
+from __future__ import annotations
 
 import json
 from collections import Counter, defaultdict

@@ -3,6 +3,8 @@
 Provides the abstract base for all evaluation metrics, both built-in and user-defined custom metrics.
 """
 
+from __future__ import annotations
+
 import abc
 from typing import Any
 
