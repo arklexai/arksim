@@ -17,7 +17,7 @@ agent_config:
       model: openclaw
       messages:
         - role: system
-          content: "chat_id:{chat_id}"
+          content: "You are a helpful personal assistant."
       enable_metadata: false
 
 # ── SIMULATION SETTINGS ──────────────────────────────────────────────────────

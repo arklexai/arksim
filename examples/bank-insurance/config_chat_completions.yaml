@@ -15,7 +15,7 @@ agent_config:
     body:
       messages:
         - role: system
-          content: "You are being invoked by arklex user simulator chat_id:{chat_id}"
+          content: "You are being invoked by arklex user simulator"
       enable_metadata: false
 
 # ── SIMULATION SETTINGS ──────────────────────────────────────────────────────
