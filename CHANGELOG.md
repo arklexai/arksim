@@ -22,6 +22,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - PyPI publish workflow now shows a human-readable run name (e.g. "Publish v1.2.3 to PyPI") in GitHub Actions
 - PyPI version and Python version README badges now use a 5-minute cache TTL (`cacheSeconds=300`) so they update promptly after a release
+- `user_profile` is now the primary persona field on `Scenario` (replaces `user_attributes`)
+- Simulator reads `user_profile` directly instead of generating profiles via LLM
+- Jinja template variable renamed from `simulation.profile` to `scenario.user_profile`
+- HTML report shows user profile in Scenario section and prompt template in Simulation Prompt section
+
+### Removed
+
+- LLM-based profile generation (`profile.py`, `prompts.py`, `schema.py` under `arksim/scenario/`)
+- `user_attributes` removed from `Scenario` model root (moved into `origin` as metadata)
+- `generate_profiles` method from simulator
 
 ## [0.0.3] - 2026-03-03
 

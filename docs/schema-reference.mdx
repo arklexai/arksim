@@ -36,10 +36,8 @@ The scenario file is a single JSON document that lists scenario objects. Each sc
     <ResponseField name="agent_context" type="string" required>
       Context about the agent (e.g. company or product overview) supplied to the simulated user.
     </ResponseField>
-    <ResponseField name="user_attributes" type="dict[string, Any]" required>
-      Key-value map of the simulated user's traits (persona). Keys and values are freeform. Used to generate the user's profile and in evaluation.
-
-      Common attributes in pre-built scenarios: `sex`, `age`, `marital_status`, `household_size`, `location`, `Household_income`, `education`, `Openness`, `Conscientiousness`, `Extraversion`, `Agreeableness`, `Neuroticism`, `customer_type`, `discovery_type`, `decision_making_style`, `purchasing_preference`, `spending_behavior`, `loyalty_level`.
+    <ResponseField name="user_profile" type="string">
+      Natural-language persona description for the simulated user. Used directly in the simulation prompt. Write in second person ("You are...").
     </ResponseField>
     <ResponseField name="knowledge" type="list[KnowledgeItem]" required>
       Knowledge items injected into the simulated user's context. Can be an empty list. Each item has:
@@ -47,7 +45,7 @@ The scenario file is a single JSON document that lists scenario objects. Each sc
       - `content` (string, required): Text used as the user's background knowledge. (Additional keys such as `metadata` may be present in the file for traceability but are not part of the loaded model.)
     </ResponseField>
     <ResponseField name="origin" type="dict[string, Any]" required>
-      Provenance metadata (e.g. `target_agent_capability`, `goal_raw`). Not used by the simulator or evaluator.
+      Provenance metadata (e.g. `target_agent_capability`, `goal_raw`, `user_attributes`). Not used by the simulator or evaluator.
     </ResponseField>
   </Expandable>
 </ResponseField>
@@ -95,7 +93,7 @@ Written by `arksim simulate` or the simulation step of `arksim simulate-evaluate
       Rendered simulated user prompt and variables used to drive the conversation.
 
       - `simulated_user_prompt_template`: The Jinja template used for the simulated user system prompt.
-      - `variables`: Dict used to render the template. Keys are `scenario.agent_context`, `scenario.goal`, `scenario.knowledge`, and `simulation.profile`.
+      - `variables`: Dict used to render the template. Keys are `scenario.agent_context`, `scenario.goal`, `scenario.knowledge`, and `scenario.user_profile`.
     </ResponseField>
   </Expandable>
 </ResponseField>
