@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- Add your changes here under the appropriate heading. -->
 <!-- Use: Added, Changed, Deprecated, Removed, Fixed, Security -->
 
+### Added
+
+- GitHub Actions workflow to build, release, and publish `arksim` to PyPI on `v*` tag pushes, with dynamic VCS-based versioning via `hatch-vcs`
+
 ### Changed
 
 - Refactored `bank-insurance` and `e-commerce` example agents to use the OpenAI Agents SDK and corrected the example server port from `8080` to `8888`
