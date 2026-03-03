@@ -1,10 +1,4 @@
-"""RAG-powered e-commerce customer service agent using the OpenAI Agents SDK.
-
-The module initialises the knowledge base and FAISS retriever once at import
-time, then exposes a per-session ``Agent`` class whose public interface
-(``__init__(context_id)``, ``async invoke(question) -> str``) is compatible
-with the ``chat_completions/server.py`` server.
-"""
+"""RAG-powered e-commerce customer service agent using the OpenAI Agents SDK."""
 
 import uuid
 from pathlib import Path
@@ -15,19 +9,11 @@ from agents import Runner, function_tool
 
 from .retriever import FaissRetriever, build_rag
 
-# ---------------------------------------------------------------------------
-# Module-level knowledge base initialisation
-# ---------------------------------------------------------------------------
-
 _AGENT_SERVER_DIR = Path(__file__).parent.parent
 _knowledge_config = [{"type": "local", "source": "./data"}]
 
 build_rag(str(_AGENT_SERVER_DIR), _knowledge_config)
 _retriever = FaissRetriever.load(str(_AGENT_SERVER_DIR))
-
-# ---------------------------------------------------------------------------
-# Retrieval tool
-# ---------------------------------------------------------------------------
 
 
 @function_tool
@@ -51,10 +37,6 @@ async def retrieve_context(query: str) -> str:
     return "\n\n---\n\n".join(parts)
 
 
-# ---------------------------------------------------------------------------
-# Shared SDK agent (stateless — session history is managed per Agent instance)
-# ---------------------------------------------------------------------------
-
 _SYSTEM_INSTRUCTIONS = (
     "You are a helpful e-commerce customer service agent. "
     "Before answering, always call the retrieve_context tool with a concise "
@@ -62,17 +44,6 @@ _SYSTEM_INSTRUCTIONS = (
     "information. Keep your final response concise (no more than 40 words) and "
     "do not prefix it with 'Assistant:' or 'AI:'."
 )
-
-_sdk_agent = SDKAgent(
-    name="EcommerceAgent",
-    instructions=_SYSTEM_INSTRUCTIONS,
-    tools=[retrieve_context],
-    model="gpt-4o-mini",
-)
-
-# ---------------------------------------------------------------------------
-# Per-session wrapper
-# ---------------------------------------------------------------------------
 
 
 class Agent:
@@ -82,9 +53,19 @@ class Agent:
     every ``Runner.run`` call so the model has multi-turn context.
     """
 
-    def __init__(self, context_id: str | None = None) -> None:
+    def __init__(
+        self,
+        context_id: str | None = None,
+        history: list[dict[str, Any]] | None = None,
+    ) -> None:
+        self.sdk_agent = SDKAgent(
+            name="EcommerceAgent",
+            instructions=_SYSTEM_INSTRUCTIONS,
+            tools=[retrieve_context],
+            model="gpt-4o-mini",
+        )
         self.context_id = context_id or str(uuid.uuid4())
-        self._history: list[dict[str, Any]] = []
+        self._history: list[dict[str, Any]] = list(history) if history else []
 
     async def invoke(self, question: str) -> str:
         """Process a user message and return the agent's response.
@@ -96,7 +77,7 @@ class Agent:
             The agent's text response.
         """
         self._history.append({"role": "user", "content": question})
-        result = await Runner.run(_sdk_agent, input=self._history)
+        result = await Runner.run(self.sdk_agent, input=self._history)
         answer: str = result.final_output
         self._history.append({"role": "assistant", "content": answer})
         return answer

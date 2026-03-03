@@ -41,7 +41,7 @@ Arksim simulates realistic multi-turn conversations between LLM-powered users an
 - **Custom metrics**: Define your own quantitative and qualitative metrics with full access to conversation context
 - **Error detection**: Automatically categorize agent failures (false information, disobeying requests, repetition) with severity levels
 - **Protocol-agnostic**: Works with Chat Completions API, A2A protocol, or any HTTP endpoint
-- **Multi-provider**: Use OpenAI, Azure OpenAI, Anthropic Claude, or Google Gemini as the evaluation LLM
+- **Multi-provider**: Use OpenAI, Anthropic Claude, or Google Gemini as the evaluation LLM
 - **Parallel execution**: Configurable concurrency for both simulation and evaluation
 - **Visual reports**: Interactive HTML reports with score breakdowns, error analysis, and full conversation viewer
 
@@ -57,7 +57,6 @@ For additional LLM providers:
 
 ```bash
 pip install arksim[all]        # All providers
-pip install arksim[azure]      # Azure OpenAI only
 pip install arksim[anthropic]  # Anthropic Claude only
 pip install arksim[gemini]     # Google Gemini only
 ```
@@ -126,7 +125,7 @@ agent_config:
   agent_type: chat_completions
   agent_name: my-agent
   api_config:
-    endpoint: http://localhost:8080/chat/completions
+    endpoint: http://localhost:8888/chat/completions
     headers:
       Content-Type: application/json
       Authorization: "Bearer ${AGENT_API_KEY}"
@@ -230,7 +229,7 @@ All settings can be specified in YAML and overridden via CLI flags (`--key value
 
 | `scenario_file_path` | string | required | Path to scenarios JSON |
 | `model` | string | `gpt-5.1` | LLM model for simulated users |
-| `provider` | string | `openai` | LLM provider: `openai`, `azure`, `claude`, `gemini` |
+| `provider` | string | `openai` | LLM provider: `openai`, `claude`, `gemini` |
 | `num_conversations_per_scenario` | int | `5` | Conversations to generate per scenario |
 | `max_turns` | int | `5` | Maximum turns per conversation |
 | `num_workers` | int/string | `auto` | Parallel workers |

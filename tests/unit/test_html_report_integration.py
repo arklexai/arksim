@@ -169,6 +169,8 @@ def _build_test_data() -> tuple[Simulation, Evaluation, dict[str, str]]:
         schema_version="1.0",
         generated_at="2025-01-01T00:00:00Z",
         evaluator_version="v1",
+        evaluation_id="eval-uuid-1",
+        simulation_id="sim-uuid-1",
         conversations=[
             ConversationEvaluation(
                 conversation_id="conv-uuid-1",
