@@ -21,7 +21,7 @@ Steps to run:
 
 3. From this example directory, run:
    ```bash
-   arksim simulate-evaluate path/to/examples/e-commerce/config_simulate.yaml
+   arksim simulate-evaluate path/to/examples/e-commerce/config.yaml
    ```
 
 ## Option 2: In-house Agent (`agent_server`)
