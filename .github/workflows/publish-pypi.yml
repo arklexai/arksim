@@ -3,6 +3,7 @@
 # Triggered by pushing a version tag (e.g. v1.2.3).
 
 name: Publish to PyPI
+run-name: Publish ${{ github.ref_name }} to PyPI
 
 on:
   push:
