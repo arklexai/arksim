@@ -22,7 +22,7 @@ Before running a simulation, you need three things in place:
 | Input            | Description                                                                                                                                       |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Scenarios**    | A `scenario.json` file defining user attributes, goals, knowledge, and scenario metadata. [Learn how to write scenarios →](/build-scenario)       |
-| **Agent config** | The `agent_config` section in your config YAML defines how Arksim connects to your agent and which protocol to use. See [Agent configurations](/agent_configurations). |
+| **Agent config** | Inline `agent_config` in your config YAML, or a path via `agent_config_file_path`. Defines how Arksim connects to your agent. See [Agent configuration](#agent-configuration) below. |
 | **Config file**  | `config.yaml` controlling simulation parameters such as number of conversations, max turns, workers, and model settings.                          |
 
 ---
@@ -70,16 +70,83 @@ provider: openai
 
 ---
 
-## Agent Compatibility
+## Agent configuration
 
-Arksim supports two agent protocols out of the box:
+Your config can provide agent connection in two ways: inline `agent_config` in the YAML, or a path to a JSON file via `agent_config_file_path`. The structure is the same.
+
+### Configuration fields
+
+| Field         | Type   | Required | Description                                                       |
+| ------------- | ------ | -------- | ----------------------------------------------------------------- |
+| `agent_name`  | string | Yes      | Unique identifier for your agent (e.g. lowercase, no spaces).    |
+| `agent_type`  | string | Yes      | One of `chat_completions` or `a2a`. See [API connection types](#api-connection-types). |
+| `api_config`  | object | Yes      | Connection details. See [API connection types](#api-connection-types). |
+
+### API connection types
+
+Arksim supports two agent protocols:
 
 | Protocol                                                                            | When to use                                                                                   |
 | ----------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
 | [**Chat Completions**](https://developers.openai.com/api/reference/resources/chat/) | Any agent that accepts OpenAI-compatible requests (OpenAI, Azure OpenAI, or a custom wrapper) |
 | [**A2A**](https://a2a-protocol.org/latest/)                                         | Agents exposed via the Agent-to-Agent protocol                                                |
 
-The `agent_config` section in your config YAML specifies which protocol to use and how to connect.
+<Tabs>
+  <Tab title="Chat Completions">
+    **Type:** `chat_completions`
+
+    Connects to any OpenAI-compatible chat completions endpoint.
+
+    **Required fields:** `endpoint` (API URL), `headers` (e.g. `Content-Type`, `Authorization`), `body` (must include a `messages` array).
+
+    **Placeholders:** `{chat_id}` can be used in `body.messages[*].content`; replaced at runtime. `${ENV_VAR}` is supported in header values for secrets.
+
+    **Example (YAML):**
+
+    ```yaml
+    agent_config:
+      agent_type: chat_completions
+      agent_name: my-agent
+      api_config:
+        endpoint: https://api.openai.com/v1/chat/completions
+        headers:
+          Content-Type: application/json
+          Authorization: "Bearer ${OPENAI_API_KEY}"
+        body:
+          model: gpt-5.1
+          messages:
+            - role: system
+              content: "You are a helpful assistant."
+    ```
+  </Tab>
+  <Tab title="A2A">
+    **Type:** `a2a`
+
+    For agents that speak the Agent-to-Agent (A2A) protocol.
+
+    **Required fields:** `endpoint` (A2A agent server URL). **Optional:** `headers` (e.g. for auth).
+
+    **Example (YAML):**
+
+    ```yaml
+    agent_config:
+      agent_type: a2a
+      agent_name: a2a-agent
+      api_config:
+        endpoint: http://localhost:9999
+        headers:
+          api-key: "${A2A_AUTH_TOKEN}"
+    ```
+  </Tab>
+</Tabs>
+
+### Environment variable support
+
+Both types support `${ENV_VAR}` substitution in header values (and in the endpoint URL for chat completions where applicable). At runtime the value is replaced; if unset, it becomes an empty string. You can mix static text and variables (e.g. `"Bearer ${API_KEY}"`).
+
+<Tip>
+  **Security:** Keep credentials in environment variables and out of committed config files.
+</Tip>
 
 ---
 
@@ -130,6 +197,7 @@ The `agent_config` section in your config YAML specifies which protocol to use a
       </Tab>
       <Tab title="Python">
         ```python
+        import asyncio
         from arksim.simulation_engine import run_simulation, SimulationInput
         from arksim.config import AgentConfig
 
@@ -151,20 +219,20 @@ The `agent_config` section in your config YAML specifies which protocol to use a
             },
         )
 
-        simulation = run_simulation(SimulationInput(
+        simulation = asyncio.run(run_simulation(SimulationInput(
             agent_config=agent_config,
             scenario_file_path="scenarios.json",
             num_conversations_per_scenario=30,
             max_turns=10,
             num_workers=10,
             output_file_path="./simulation.json",
-        ))
+        )))
         ```
       </Tab>
     </Tabs>
   </Step>
   <Step title="Inspect your output">
-    Simulation writes a `conversations.json` file to your `output_dir`. This contains the full transcript of every conversation, ready to inspect or pass into [Evaluation](/evaluate-conversation).
+    Simulation writes to the path set by `output_file_path` (default `./simulation.json`). The file contains the full transcript of every conversation, ready to inspect or pass into [Evaluation](/evaluate-conversation).
   </Step>
 </Steps>
 
@@ -172,62 +240,17 @@ The `agent_config` section in your config YAML specifies which protocol to use a
 
 ## Output
 
-Simulation produces **one primary output file**: `conversations.json`.
+Simulation writes one file: the path set by `output_file_path` (default `./simulation.json`). It contains the full transcript of every conversation: message history, scenario ID, simulated user prompt (template and variables), and all agent and simulated user messages.
 
-This file contains the full transcript of every conversation, including the complete message history, scenario ID, system prompt, user profile, goal, knowledge, user attributes, and all agent and simulated user messages.
+For the full structure and field order, see [Simulation output (`simulation.json`)](/schema-reference#simulation-output-simulationjson) in the Schema Reference.
 
-### Output Schema
-
-Describes the structure of `conversations.json`, the file produced at the end of a simulation run.
-
-<ResponseField name="schema_version" type="string" required>
-  Version of the `conversations.json` schema (e.g., `"v1"`).
-</ResponseField>
-
-<ResponseField name="generated_at" type="string" required>
-  ISO-8601 UTC timestamp of when the file was generated.
-</ResponseField>
-
-<ResponseField name="simulator_version" type="string" required>
-  Arksim package version that produced this output.
-</ResponseField>
-
-<ResponseField name="conversations" type="list[ConversationItem]" required>
-  List of conversation records. Each item represents one full simulated conversation.
-
-  <Expandable title="ConversationItem fields">
-    <ResponseField name="conversation_id" type="string" required>
-      Unique ID for this conversation.
-    </ResponseField>
-    <ResponseField name="scenario_id" type="string" required>
-      Identifier of the scenario used for this conversation.
-    </ResponseField>
-    <ResponseField name="conversation_history" type="list[ConversationMessage]" required>
-      Ordered list of all messages in the conversation.
-
-      - `turn_id` _(int, required)_: Turn index (one user message + one assistant message = one turn).
-      - `message_id` _(string, required)_: Unique message ID.
-      - `role` _(string, required)_: Either `"simulated_user"` or `"assistant"`.
-      - `content` _(string, required)_: The message text.
-    </ResponseField>
-    <ResponseField name="simulated_user_prompt" type="SimulatedUserPrompt" required>
-      Stores the rendered prompt template and variables used to drive the simulated user. Useful for traceability and debugging.
-
-      - `simulated_user_prompt_template` _(string)_: The Jinja template used to construct the simulated user's system prompt.
-      - `variables` _(dict[string, Any])_: Key-value map used to render the template. Includes `knowledge`, `user_goal`, `sim_user_profile`, and `agent_context`.
-    </ResponseField>
-  </Expandable>
-</ResponseField>
-
----
-
-### Example Output
+### Example output
 
 ```json
 {
   "schema_version": "v1",
+  "simulator_version": "1.4.2",
   "generated_at": "2025-04-10T14:32:00Z",
-  "simulator_version": "v1",
   "conversations": [
     {
       "conversation_id": "00de685e-f76b-4a5f-a6e5-217cad777316",
@@ -249,10 +272,10 @@ Describes the structure of `conversations.json`, the file produced at the end of
       "simulated_user_prompt": {
         "simulated_user_prompt_template": "You are a customer interacting with an agent through multiple turns...",
         "variables": {
-          "agent_context": "XYZ Bank Insurance is a Canadian provider of...",
-          "sim_user_profile": "Name: Priya Sharma. Age: 32. Location: Toronto, ON...",
-          "user_goal": "You want to find out what documents are needed...",
-          "knowledge": ["Typical timelines: claim setup is usually same day..."]
+          "scenario.agent_context": "XYZ Bank Insurance is a Canadian provider of...",
+          "simulation.profile": "Name: Priya Sharma. Age: 32. Location: Toronto, ON...",
+          "scenario.goal": "You want to find out what documents are needed...",
+          "scenario.knowledge": ["Typical timelines: claim setup is usually same day..."]
         }
       }
     }
