@@ -27,7 +27,7 @@ Each agent response is scored on five metrics per turn:
 | **Verbosity**    | Conciseness; penalizes unnecessarily long responses.   | 1–5   |
 | **Faithfulness** | Whether the response contradicts the user's knowledge  | 1–5   |
 
-Scores range from **1 (poor)** to **5 (excellent)**, with 3–4 considered good and 4–5 excellent.
+Scores range from **1 (poor)** to **5 (excellent)**, with 3–4 considered good and 4–5 excellent. You can add domain-specific [custom metrics](#custom-metrics) (e.g. product suitability, compliance) via Python files.
 
 At the conversation level, two additional scores are computed on a 0–1 scale:
 
@@ -98,6 +98,21 @@ generate_html_report: true
 ```
 
 For all evaluation config keys, types, and defaults, see [Run configuration → Evaluation keys](/schema-reference#evaluation-keys) in the Schema Reference.
+
+---
+
+## Custom Metrics
+
+In addition to the built-in metrics (helpfulness, coherence, relevance, verbosity, faithfulness, goal completion, behavior failure), you can define **custom metrics** in Python and load them via config.
+
+- **`custom_metrics_file_paths`**: List of paths to Python files. Each file is loaded and every public `QuantitativeMetric` or `QualitativeMetric` subclass is instantiated and run. Custom metrics always run; they are not filtered by `metrics_to_run`.
+- **`metrics_to_run`**: Names of built-in metrics to run. If empty, all built-in metrics run. Use this to restrict evaluation to a subset of built-ins while still running all custom metrics from `custom_metrics_file_paths`.
+
+**Quantitative metrics** produce a numeric score (e.g. 0–5): subclass `QuantitativeMetric`, implement `score(score_input: ScoreInput) -> QuantResult`, and return a `QuantResult` with `name`, `value` (float), and `reason`.
+
+**Qualitative metrics** produce a categorical label (e.g. `"complete"` / `"partial"`): subclass `QualitativeMetric`, implement `evaluate(score_input: ScoreInput) -> QualResult`, and return a `QualResult` with `name`, `value` (str), and `reason`.
+
+You get `ScoreInput` (e.g. `chat_history`, `user_goal`, `knowledge`) and can use your own LLM or logic inside the metric. For a full example with quantitative and qualitative metrics (product suitability, needs assessment, clarity, disclosure completeness, prohibited statements, advice boundary, escalation), see `examples/bank-insurance/custom_metrics.py`.
 
 ---
 
