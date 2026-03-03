@@ -414,7 +414,12 @@ async def run_simulation(
     if scenario_output is None:
         scenario_output = Scenarios.load(settings.scenario_file_path)
 
-    agent_config = AgentConfig.load(settings.agent_config_file_path)
+    if settings.agent_config is not None:
+        # Inline agent config from YAML (already validated by pydantic)
+        agent_config = settings.agent_config
+    else:
+        # Backward compat: load from separate JSON file
+        agent_config = AgentConfig.load(settings.agent_config_file_path)
 
     llm = LLM(
         model=settings.model,

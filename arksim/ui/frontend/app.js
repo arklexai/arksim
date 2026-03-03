@@ -72,6 +72,8 @@ function arksim() {
     evalNumWorkers: 'auto',
     generateHtmlReport: true,
     scoreThreshold: '',
+    metricsToRun: [],
+    customMetricsFilePaths: '',
 
     resultsInputSource: 'auto',
     resultsInputDir: '',
@@ -137,8 +139,10 @@ function arksim() {
     showLogs: false,
 
     // ── Config ──────────────────────────────────
+    projectRoot: '',
     configs: [],
     selectedConfig: '',
+    _loadedConfig: null,  // full settings object from loaded YAML
 
     // ── Directory/File Browser ────────────────────
     showBrowser: false,
@@ -170,8 +174,17 @@ function arksim() {
     async init() {
       this._initDarkMode();
       this._connectWs();
+      await this._fetchProjectRoot();
       await this._loadConfigs();
       await this._loadDemoScenario();
+    },
+
+    async _fetchProjectRoot() {
+      try {
+        const resp = await fetch('/api/fs/root');
+        const data = await resp.json();
+        this.projectRoot = data.root || '';
+      } catch { /* ignore */ }
     },
 
     // ── WebSocket ───────────────────────────────
@@ -248,7 +261,8 @@ function arksim() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          agent_config_file_path: this.agentConfigFilePath,
+          agent_config_file_path: this.agentConfigFilePath || null,
+          agent_config: this._loadedConfig?.agent_config || null,
           model: this.model || d.model,
           provider: this.provider || d.provider,
           num_conversations: parseInt(this.numConversations) || d.numConversations,
@@ -289,6 +303,10 @@ function arksim() {
           num_workers: (this.evalNumWorkers || d.evalNumWorkers) === 'auto' ? 'auto' : parseInt(this.evalNumWorkers),
           generate_html_report: this.generateHtmlReport ?? d.generateHtmlReport,
           score_threshold: this.scoreThreshold ? parseFloat(this.scoreThreshold) : null,
+          metrics_to_run: this.metricsToRun.length > 0 ? this.metricsToRun : null,
+          custom_metrics_file_paths: this.customMetricsFilePaths
+            ? this.customMetricsFilePaths.split(',').map(s => s.trim()).filter(Boolean)
+            : [],
           output_file_path: this.outputFilePath || null,
         }),
       });
@@ -331,7 +349,7 @@ function arksim() {
       if (!data.settings) return;
       const s = data.settings;
       const d = this._defaults;
-      console.log("s ....", s)
+      this._loadedConfig = s;
       this.agentConfigFilePath = s.agent_config_file_path || '';
       this.model = s.model || d.model;
       this.provider = s.provider || d.provider;
@@ -346,6 +364,10 @@ function arksim() {
       }
       this.generateHtmlReport = s.generate_html_report !== undefined ? s.generate_html_report : d.generateHtmlReport;
       this.scoreThreshold = s.score_threshold != null ? String(s.score_threshold) : '';
+      this.metricsToRun = Array.isArray(s.metrics_to_run) ? [...s.metrics_to_run] : [];
+      this.customMetricsFilePaths = Array.isArray(s.custom_metrics_file_paths)
+        ? s.custom_metrics_file_paths.join(', ')
+        : '';
       // Also populate eval fields so they stay in sync on config load
       this.evalAgentConfigFilePath = s.agent_config_file_path || '';
       this.evalModel = s.model || d.model;
@@ -403,9 +425,9 @@ function arksim() {
     },
 
     async browseFor(field) {
-      const jsonFileFields = ['agentConfigFilePath', 'evalAgentConfigFilePath', 'evalSimulationFilePath'];
-      if (jsonFileFields.includes(field)) {
-        const val = await this.openBrowser(this[field], 'file', ['.json']);
+      const configFileFields = ['agentConfigFilePath', 'evalAgentConfigFilePath', 'evalSimulationFilePath'];
+      if (configFileFields.includes(field)) {
+        const val = await this.openBrowser(this[field], 'file', ['.json', '.yaml', '.yml']);
         if (val) this[field] = val;
       } else {
         const val = await this.openBrowser(this[field]);

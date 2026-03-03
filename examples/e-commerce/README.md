@@ -19,11 +19,9 @@ Steps to run:
 
    The agent config uses `${OPENAI_API_KEY}` which will be automatically substituted at runtime.
 
-2. The default `agent_config.json` is already configured for OpenAI. No changes needed.
+2. Review `config.yaml` for this example (the default configuration is sufficient to get started).
 
-3. Review `config.yaml` for this example.
-
-4. From this example directory, run:
+3. From this example directory, run:
    ```bash
    arksim simulate-evaluate config.yaml
    ```
@@ -84,5 +82,5 @@ Steps to run:
 
 3. From this example directory, run:
    ```bash
-   arksim simulate-evaluate config.yaml --agent-config-file-path agent_config_chat_completions.json
+   arksim simulate-evaluate config_chat_completions.yaml
    ```

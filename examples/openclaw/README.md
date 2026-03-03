@@ -45,9 +45,7 @@ Use this for production evaluation against your actual OpenClaw deployment.
 
    Find your token in `~/.openclaw/openclaw.json` under `gateway.auth.token`.
 
-3. Use the local `agent_config.json` (already configured for OpenClaw).
-
-4. From this example directory, run:
+3. From this example directory, run:
    ```bash
    arksim simulate-evaluate config.yaml
    ```
@@ -74,4 +72,3 @@ For more information on configuration, see the [Arksim documentation](https://do
 | ------------------- | ------------------------------------------ |
 | `config.yaml`       | Simulator + evaluator configuration        |
 | `scenarios.json`    | Simulation scenarios                       |
-| `agent_config.json` | OpenClaw agent config                      |

@@ -2,10 +2,26 @@
 # Configuration for 'arksim simulate-evaluate' command
 # Runs simulation followed by evaluation in a single pipeline.
 
-# ── SIMULATION SETTINGS ──────────────────────────────────────────────────────
+# ── AGENT CONFIGURATION ────────────────────────────────────────────────────
 
-# Path to agent api configuration file
-agent_config_file_path: ./agent_config.json
+agent_config:
+  agent_type: chat_completions
+  agent_name: e-commerce
+  api_config:
+    endpoint: https://api.openai.com/v1/chat/completions
+    headers:
+      Content-Type: application/json
+      Authorization: "Bearer ${OPENAI_API_KEY}"
+    body:
+      model: gpt-5.1
+      messages:
+        - role: system
+          content: >-
+            You are a shopping assistant. Please provide a complete answer
+            to the user's question based on your knowledge. Response within
+            50 words.
+
+# ── SIMULATION SETTINGS ──────────────────────────────────────────────────────
 
 # Path to the scenarios file
 scenario_file_path: ./scenarios.json

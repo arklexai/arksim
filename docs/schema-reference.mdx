@@ -6,7 +6,7 @@ description: "JSON and YAML schemas used by Arksim for scenarios, simulation out
 This page documents the structure of the main artifacts used and produced by Arksim: scenario files, simulation output, evaluation output, and the run configuration file. Use it when building integrations, writing custom tooling, or debugging pipeline outputs.
 
 <Tip>
-  For agent connection details (Chat Completions, A2A, and `agent_config.json`), see [Agent configurations](/agent_configurations).
+  For agent connection details (Chat Completions, A2A, and inline `agent_config`), see [Agent configurations](/agent_configurations).
 </Tip>
 
 ---
@@ -175,13 +175,18 @@ Written by `arksim evaluate` or the evaluation step of `arksim simulate-evaluate
 
 The same YAML file can be used for `arksim simulate`, `arksim evaluate`, and `arksim simulate-evaluate`. For `simulate-evaluate`, simulation and evaluation settings are merged from a single config.
 
+### Agent configuration
+
+| Key              | Type   | Description                                                                                                    |
+| ---------------- | ------ | -------------------------------------------------------------------------------------------------------------- |
+| `agent_config`   | object | Inline agent configuration. See [Agent configurations](/agent_configurations) for `chat_completions` and `a2a`. |
+
 ### Simulation keys
 
 Used by `simulate` and the simulation phase of `simulate-evaluate`.
 
 | Key                              | Type          | Description                                                    |
 | -------------------------------- | ------------- | -------------------------------------------------------------- |
-| `agent_config_file_path`         | string        | Path to `agent_config.json`.                                   |
 | `scenario_file_path`             | string        | Path to `scenarios.json`.                                      |
 | `num_conversations_per_scenario` | int           | Number of conversations to run per scenario.                   |
 | `max_turns`                      | int           | Maximum turns per conversation.                                |

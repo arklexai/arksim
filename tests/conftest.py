@@ -20,7 +20,6 @@ def valid_agent_config_a2a_basic() -> dict:
     return {
         "agent_type": "a2a",
         "agent_name": "test-agent",
-        "agent_capabilities": ["answer questions", "provide support"],
         "api_config": {
             "endpoint": "https://api.example.com/agent",
         },
@@ -33,7 +32,6 @@ def valid_agent_config_a2a() -> dict:
     return {
         "agent_type": "a2a",
         "agent_name": "test-a2a-agent",
-        "agent_capabilities": ["handle requests"],
         "api_config": {
             "endpoint": "https://a2a.example.com/agent",
             "headers": {"Authorization": "Bearer ${API_TOKEN}"},
@@ -47,7 +45,6 @@ def valid_agent_config_chat_completions_new() -> dict:
     return {
         "agent_type": "chat_completions",
         "agent_name": "test-chat-agent-new",
-        "agent_capabilities": ["chat", "assist"],
         "api_config": {
             "endpoint": "https://api.openai.com/v1/chat/completions",
             "headers": {

@@ -28,7 +28,6 @@ async def main() -> None:
     results_dir = os.path.join(agent_setup_dir, "results")
 
     scenario_file_path = os.path.join(agent_setup_dir, "scenarios.json")
-    agent_config_path = os.path.join(agent_setup_dir, "agent_config.json")
     simulation_output_file = os.path.join(results_dir, "simulation", "simulation.json")
     evaluation_output_dir = os.path.join(results_dir, "evaluation")
 
@@ -41,7 +40,30 @@ async def main() -> None:
     print("=" * 60)
 
     scenario_output = Scenarios.load(scenario_file_path)
-    agent_config = AgentConfig.load(agent_config_path)
+    agent_config = AgentConfig(
+        agent_type="chat_completions",
+        agent_name="e-commerce",
+        api_config={
+            "endpoint": "https://api.openai.com/v1/chat/completions",
+            "headers": {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer ${OPENAI_API_KEY}",
+            },
+            "body": {
+                "model": "gpt-5.1",
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": (
+                            "You are a shopping assistant. Please provide a complete answer "
+                            "to the user's question based on your knowledge. Response within "
+                            "50 words."
+                        ),
+                    }
+                ],
+            },
+        },
+    )
     llm = LLM(model=model)
 
     simulation_params = SimulationParams(

@@ -6,6 +6,7 @@ import threading
 from fastapi import APIRouter, Request
 from pydantic import BaseModel
 
+from arksim.config.core.agent import AgentConfig
 from arksim.constants import DEFAULT_MODEL, DEFAULT_PROVIDER
 from arksim.ui.api.state import AppState
 
@@ -22,7 +23,8 @@ router = APIRouter(tags=["simulate"])
 class SimulateRequest(BaseModel):
     """Request body for starting a simulation."""
 
-    agent_config_file_path: str
+    agent_config_file_path: str | None = None
+    agent_config: AgentConfig | None = None
     model: str = DEFAULT_MODEL
     provider: str = DEFAULT_PROVIDER
     num_conversations: int = 3
@@ -104,6 +106,7 @@ def _run_simulation(app_state: AppState, body: SimulateRequest) -> None:
 
             settings = SimulationInput(
                 agent_config_file_path=body.agent_config_file_path,
+                agent_config=body.agent_config,
                 model=body.model,
                 provider=body.provider,
                 num_conversations_per_scenario=body.num_conversations,

@@ -81,14 +81,14 @@ This agent is a RAG-based customer service agent built with LangGraph, backed by
         ```bash
         uv venv --python 3.11
         source .venv/bin/activate
-        pip install -r arksim/examples/bank-insurance/agent_server/requirements.txt
+        pip install -r examples/bank-insurance/agent_server/requirements.txt
         ```
       </Tab>
       <Tab title="conda">
         ```bash
         conda create -n bank_venv python=3.11 -y
         conda activate bank_venv
-        pip install -r arksim/examples/bank-insurance/agent_server/requirements.txt
+        pip install -r examples/bank-insurance/agent_server/requirements.txt
         ```
       </Tab>
     </Tabs>
@@ -114,7 +114,6 @@ This agent is a RAG-based customer service agent built with LangGraph, backed by
         python -m examples.bank-insurance.agent_server.chat_completions.server
         ```
 
-        When `enable_metadata` is set to `true` in the request body, the following fields are sent alongside each user message: `chat_id`, `user_attributes`, `user_goal`, `knowledge`.
       </Tab>
     </Tabs>
   </Step>

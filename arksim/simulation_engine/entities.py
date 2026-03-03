@@ -12,6 +12,7 @@ else:
 
 from pydantic import BaseModel, Field, ValidationInfo, model_validator
 
+from arksim.config.core.agent import AgentConfig
 from arksim.constants import DEFAULT_MODEL, DEFAULT_PROVIDER
 from arksim.utils.concurrency import validate_num_workers
 
@@ -19,9 +20,15 @@ from arksim.utils.concurrency import validate_num_workers
 class SimulationInput(BaseModel):
     """Input configuration for the simulation engine module."""
 
-    agent_config_file_path: str = Field(
-        default="./agent_config.json",
-        description="Path to the agent API configuration file",
+    agent_config_file_path: str | None = Field(
+        default=None,
+        description="Path to the agent API configuration file (JSON). "
+        "Alternative to inline agent_config.",
+    )
+    agent_config: AgentConfig | None = Field(
+        default=None,
+        description="Inline agent configuration (agent_type, agent_name, api_config). "
+        "Takes precedence over agent_config_file_path when both are present.",
     )
     scenario_file_path: str | None = Field(
         default=None,
@@ -53,6 +60,14 @@ class SimulationInput(BaseModel):
     def validate_simulation_input(self, info: ValidationInfo) -> Self:
         """Validate simulation input fields."""
         validate_num_workers(self.num_workers)
+
+        # Skip validation if context indicates pipeline mode
+        skip = info.context and info.context.get("skip_input_dir_validation")
+        if not skip and not self.agent_config and not self.agent_config_file_path:
+            raise ValueError(
+                "Either inline agent_config or agent_config_file_path must be provided."
+            )
+
         return self
 
 

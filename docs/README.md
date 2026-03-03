@@ -70,9 +70,28 @@ Or in Python:
 
 ```python
 from arksim.simulation_engine import run_simulation, SimulationInput
+from arksim.config import AgentConfig
+
+agent_config = AgentConfig(
+    agent_type="chat_completions",
+    agent_name="my-agent",
+    api_config={
+        "endpoint": "https://api.openai.com/v1/chat/completions",
+        "headers": {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer ${OPENAI_API_KEY}",
+        },
+        "body": {
+            "model": "gpt-5.1",
+            "messages": [
+                {"role": "system", "content": "You are a helpful assistant."}
+            ],
+        },
+    },
+)
 
 results = run_simulation(SimulationInput(
-    agent_config_file_path="agent_config.json",
+    agent_config=agent_config,
     scenario_file_path="scenario.json",
     num_conversations_per_scenario=10,
     max_turns=8,
