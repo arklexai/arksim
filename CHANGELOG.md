@@ -64,7 +64,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Python SDK with `run_simulation()` and `run_evaluation()`
 - Parallel execution with configurable worker count
 - Example setups for e-commerce and bank insurance use cases
-- OpenAI, Anthropic, Google Gemini, and Azure OpenAI provider support
+- OpenAI, Anthropic, and Google Gemini provider support
 - HTML report generation for evaluation results
 
 [Unreleased]: https://github.com/arklexai/arksim/compare/v0.0.1...HEAD
