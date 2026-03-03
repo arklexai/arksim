@@ -180,67 +180,66 @@ Rules:
 Use the EXACT definitions and examples for these categories below.
 
 Failure to ask for Clarification
-Definition: When the agent encounters an ambiguous, incomplete, or unclear user query but proceeds with an assumption instead of asking for clarification. When knowledge or context is available, the agent must use it to detect unclear terms, multiple possible matches, or missing information — and generate a specific clarification question rather than assuming.
+Definition: When the agent encounters an ambiguous, incomplete, or unclear user query but proceeds with an assumption instead of asking for clarification. When knowledge or context is available, the agent must use it to detect unclear terms, multiple possible matches, or missing information -- and generate a specific clarification question rather than assuming.
 
 Example 1:
 Conversation up to the last assistant turn: [
-user: Why's there is so much tos
-assistant: Could you please specify the country or US state where you plan to take the GED test? The answer can be different based on the location.
+user: What's the ded on my policy
+assistant: Your home insurance policy includes coverage for fire, theft, and liability. Would you like more details about your coverage?
 ]
-Output: {"label": "failure to ask for clarification", "reason": "The user's query is unclear. The assisant should have asked for clarification on what they meant by tos."}
+Output: {"label": "failure to ask for clarification", "reason": "The user's query is unclear. The assistant should have asked for clarification on what they meant by 'ded' (likely 'deductible')."}
 
 Example 2:
 Conversation up to the last assistant turn: [
-user: i wo
-assistant: Could you please specify the country or US state where you plan to take the GED test? The answer can be different based on the location.
+user: i wa
+assistant: Your home insurance policy has a $1,000 deductible for most claims. Is there anything else you'd like to know?
 ]
-Output: {"agent_behavior_failure_category": "failure to ask for clarification", "reason": "The user's query is clearly cut-off, the agent should clarify instead of continue the conversation."}
+Output: {"agent_behavior_failure_category": "failure to ask for clarification", "reason": "The user's query is clearly cut-off, the agent should clarify instead of continuing the conversation."}
 
 Example 3:
-Knowledge: list of available products: [avatar, product]
+Knowledge: Available insurance products: [home insurance, auto insurance, travel insurance]
 
 Conversation up to the last assistant turn: [
-user: Schedule a demo for avtr product
-assistant: Could you please specify the country or US state where you plan to take the GED test? The answer can be different based on the location.
+user: I need to file a clam for my car
+assistant: Your home insurance policy has a $1,000 deductible for most claims. Is there anything else you'd like to know?
 ]
-Output: {"agent_behavior_failure_category": "failure to ask for clarification", "reason": "The user's query is unclear because 'avtr' is ambiguous. The assistant should have asked for clarification — specifically asking whether the user meant 'avatar' based on the available products in the knowledge base."}
+Output: {"agent_behavior_failure_category": "failure to ask for clarification", "reason": "The user's query is unclear because 'clam' is likely a typo for 'claim'. The assistant should have asked for clarification and confirmed whether the user meant an auto insurance claim based on the mention of 'car'."}
 
 Example 4:
-Knowledge: product_id: 006; name: DUST-E S; category: Cleaning; description: DUST-E S is a compact floor cleaning robot designed for small to medium spaces.
-product_id: 007; name: DUST-E MX; category: Cleaning; description: DUST-E MX is a large floor cleaning robot designed for large commercial spaces.
+Knowledge: Policy tier: Basic Form covers named perils only. Policy tier: Broad Form covers additional risks. Policy tier: Comprehensive Form covers all risks except exclusions.
 
 Conversation up to the last assistant turn: [
 assistant: Hi there! How can I help you?
-user: I want to book a demo for the cleaning robot
-assistant: Great! I can help you book a demo. Our cleaning robots are perfect for maintaining spotless floors. Would you like to schedule a demo for next week?
+user: I want to upgrade my coverage
+assistant: Great! I can upgrade your policy to Comprehensive Form right away. This will give you the most complete protection available.
 ]
 
-Output: {"label": "failure to ask for clarification", "reason": "Ther user's query the user's query is clearly cut-off, the agent should clarify instead of continue the conversation."}
+Output: {"label": "failure to ask for clarification", "reason": "The user did not specify which tier they want to upgrade to. The assistant should have clarified which coverage level the user is interested in rather than assuming Comprehensive Form."}
 
 Repetition
 Definition: When the agent redundantly restates the same content within a single turn or across multiple turns without adding new value.
 Example:
 Conversation up to the last assistant turn: [
 assistant: Hi there! How can I help you?
-user: It says I already have an account im trying to create an account
-assistant: It seems like you might have a duplicate account issue.  1. If you have created more than one GED.com account, you will receive an Eligibility Alert. To resolve this, you should email help@ged.com with your name, GED ID number, and a scanned copy of your ID, requesting that your accounts be merged into one.  2. For further assistance, you can visit the [GED Contact Us page](https://www.ged.com/en/contact-us/).  If you have any more questions or need further assistance, feel free to ask!
-user: I am attempting to create an new ged account and it says I already have one
-assistant: It seems like you might have a duplicate account issue.  1. If you have created more than one GED.com account, you will receive an Eligibility Alert. To resolve this, you should email help@ged.com with your name, GED ID number, and a scanned copy of your ID, requesting that your accounts be merged into one.  2. For further assistance, you can visit the [GED Contact Us page](https://www.ged.com/en/contact-us/).  If you have any more questions or need further assistance, feel free to ask!
+user: I need to update my address on my home insurance policy
+assistant: To update your address, please log into your account at xyzinsurance.com and navigate to "My Policy" then "Update Details." You can also call our customer service line at 1-800-555-0199. If you have any other questions, feel free to ask!
+user: I already tried the website and it's not working, can you help me directly?
+assistant: To update your address, please log into your account at xyzinsurance.com and navigate to "My Policy" then "Update Details." You can also call our customer service line at 1-800-555-0199. If you have any other questions, feel free to ask!
 ]
 Output: {"label": "repetition", "reason": "The assistant kept repeating the same response and added no new value."}
 
 Disobey user request
-Definition: When the agent’s response completely ignores the user request. The assumption here is that the user request is clear.
+Definition: When the agent's response completely ignores the user request. The assumption here is that the user request is clear.
 Example:
 
 Conversation up to the last assistant turn: [
 assistant: Hi there! How can I help you?
-user: calculator guide in spanish
-assistant: Are you going to take the test in the US or internationally?
-user: us
-assistant: In the US, the GED is offered in both English and Spanish. Students who typically take the Spanish GED test in the US primarily speak dialects from North, Central and South America rather than dialects of Spanish spoken in Spain. The GED test uses "Universal" Spanish, which translation companies use when the target audience is US Spanish
+user: I need a copy of my policy documents in French
+assistant: What province are you located in? Coverage options vary by region.
+user: Quebec
+assistant: In Quebec, home insurance is mandatory for mortgage holders. Our Basic Form policy starts at $800 per year and covers fire, theft, and liability. Would you like to get a quote?
 ]
-Output: {"label": "disobey user request", "reason": "Here, the agent incorrectly interprets “in Spanish” as applying to the GED exam, instead of the user’s actual request for the calculator guide to be in Spanish. As a result, the agent ignores the user’s request."}
+Output: {"label": "disobey user request", "reason": "The agent incorrectly interpreted 'in French' as a question about Quebec coverage options, instead of the user's actual request for policy documents in the French language. The agent ignored the user's request entirely."}
 
 Lack of specific information
 Definition: When the agent provides only a generic or partial answer, omitting important elements necessary to fully address the user's query. This assumes the agent has the required knowledge and tools. IMPORTANT: This category only applies when the information provided is CORRECT but incomplete. If any information provided contradicts or is not supported by the knowledge base, use "false information" instead.
@@ -248,39 +247,34 @@ Example:
 
 Conversation up to the last assistant turn: [
 assistant: Hi there! How can I help you?
-user: i have not recived my GED score
-assistant: Could you please specify the country or US state where you plan to take the GED test? The answer can be different based on the location.
-user: California Us at Chula Vista
-assistant: In California, links to electronic transcripts and certificates are typically emailed within hours of obtaining your credential. If you haven't received your documents within 2-3 weeks, please contact GED Customer Service at 877-392-6433. For more information, you can visit the [California GED policy page](https://www.ged.com/policies/california). If you have further questions, feel free to ask!
-user: I took my final test today and I supposed to get my score after two hours my language arts
-assistant: If you took your final test today and haven't received your score after two hours, it might take a bit longer for the results to be processed. Scores are typically available within a few hours, but delays can occur. If you don't receive your score soon, you can check your account on the GED website for updates. If you have further questions, feel free to ask!
+user: My basement flooded from a burst pipe. How do I file a claim?
+assistant: I'm sorry to hear about the flooding. You can file a claim by logging into your account or calling our claims line.
+user: What documents do I need to submit with my claim?
+assistant: You'll need to provide documentation of the damage. Our claims team will guide you through the process. If you have any other questions, feel free to ask!
 ]
-Output: {"label": "lack of specific information", "reason": "The output is missing the contact number to use if the test score hasn't been received after 2-3 weeks."}
+Output: {"label": "lack of specific information", "reason": "The output is missing specific details about required documentation such as photos of damage, repair estimates, and the receipts for emergency repairs that the knowledge base specifies."}
 
 False information
 Definition: When the agent provides hallucinated, fabricated, or contextually inaccurate information, including facts, details, or claims that contradict or are not supported by the provided knowledge or context. This includes cases where the agent provides incorrect numerical values or other factual details that differ from what is stated in the knowledge base, even if the response is also incomplete.
 Example 1:
-Knowledge: The GED test consists of four subject tests: Mathematical Reasoning, Reasoning Through Language Arts, Science, and Social Studies. Each test takes approximately 1.5 to 2 hours to complete. The total testing time is approximately 7.5 hours.
+Knowledge: XYZ Insurance home deductibles range from $500 to $2,500 depending on the policy tier. Basic Form has a $1,000 standard deductible. Broad Form has a $750 standard deductible. Comprehensive Form has a $500 standard deductible.
 
 Conversation up to the last assistant turn: [
 assistant: Hi there! How can I help you?
-user: How long does the GED test take?
-assistant: The GED test consists of four subject tests and takes approximately 10 hours to complete in total. Each individual test takes about 2.5 hours.
+user: What is the deductible on the Basic Form home insurance?
+assistant: The Basic Form home insurance has a standard deductible of $500 per claim.
 ]
-Output: {"label": "false information", "reason": "The assistant stated that the GED test takes 10 hours total and each test takes 2.5 hours, but according to the knowledge, the total testing time is approximately 7.5 hours and each test takes 1.5 to 2 hours."}
+Output: {"label": "false information", "reason": "The assistant stated the Basic Form deductible is $500, but according to the knowledge, the Basic Form has a $1,000 standard deductible. The $500 deductible applies to the Comprehensive Form."}
 
 Example 2:
-Knowledge: Texas GED knowledge states that you can only take the test online (from home or a testing center) and explicitly mentions that in-person testing is not available.
+Knowledge: XYZ Insurance water damage policy states that claims for appliances older than 15 years are excluded from coverage. There are no exceptions to this age limit.
 
 Conversation up to the last assistant turn: [
 assistant: Hi there! How can I help you?
-assistant: Hello, how can I assist you?
-user: do you have info about In person testing?
-assistant: Could you please specify the country or US state where you plan to take the GED test? The answer can be different based on the location.
-user: Texas
-assistant: In Texas, you can take the GED test either online or in-person at a testing center. For in-person testing, you can schedule all test subjects on the same day if the testing center's hours allow it. For more details on scheduling and testing locations, please visit [GED Testing in Texas](https://www.ged.com/policies/texas). If you have further questions, feel free to ask!
+user: My 18-year-old water heater burst. Am I covered?
+assistant: While appliances over 15 years old are generally excluded, we can make exceptions on a case-by-case basis for well-maintained units. I'd recommend filing a claim and our adjusters will review it.
 ]
-Output: {"label": "false information", "reason": "The knowledge explicitly states that in Texas you can only take the GED test online, but the assistant claimed it can be taken online or in-person. The response contradicts the knowledge base and fails to enforce grounding."}
+Output: {"label": "false information", "reason": "The knowledge explicitly states there are no exceptions to the 15-year age limit, but the assistant suggested case-by-case exceptions are possible. The response contradicts the knowledge base."}
 
 Example 3:
 Knowledge: Our pricing is based on the number of conversations and features you need. We offer flexible plans starting from $99/month for small businesses up to enterprise solutions with custom pricing. The basic plan includes up to 1,000 conversations per month.
@@ -292,13 +286,13 @@ assistant: We offer plans starting from $49/month for small businesses with up t
 Output: {"label": "false information", "reason": "The assistant stated pricing starts at $49/month with 500 conversations, but the knowledge base states pricing starts at $99/month with 1,000 conversations. The assistant provided incorrect pricing information that contradicts the knowledge base."}
 
 No Failure
-Definition: When the agent’s response is correct, helpful, and addresses the user’s request without any clear failures.
+Definition: When the agent's response is correct, helpful, and addresses the user's request without any clear failures.
 Example:
 Conversation up to the last assistant turn: [assistant: Hi there! How can I help you?
-user: How can I order my GED transcript online?
-assistant: You can order your GED transcript by logging into your GED account at the official GED website. Once logged in, go to "My Scores" and select "Order Transcripts." From there you can choose electronic or paper delivery. If you need further assistance, the GED Contact Us page provides support options.
-user: Perfect, thanks! That’s exactly what I needed.
-assistant: You’re welcome! If you have any other questions about GED transcripts or related services, feel free to ask.]
+user: How do I add my new car to my existing auto insurance policy?
+assistant: You can add a new vehicle to your policy by logging into your account at xyzinsurance.com and selecting "Add Vehicle" under your auto policy. You'll need the vehicle's make, model, year, and VIN number. Alternatively, you can call us at 1-800-555-0199 and an agent will update your policy over the phone.
+user: Perfect, thanks! That's exactly what I needed.
+assistant: You're welcome! If you have any other questions about your auto insurance or other policies, feel free to ask.]
 
 Output: {"label": "no failure", "reason": "The assistant directly answered the user's request with accurate and relevant steps, and the user confirmed satisfaction."}
 """
