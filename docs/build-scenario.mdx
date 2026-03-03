@@ -103,7 +103,7 @@ For the full scenario schema (all fields and types), see [Schema Reference](/sch
 
       - `target_agent_capability`: The agent capability this scenario was designed to evaluate.
       - `goal_raw`: The original goal before it was adapted to the full contextual goal string.
-      - `user_attributes`: Structured key-value map of the user's traits (demographic, personality, behavioral). Stored here as metadata for traceability and display in reports.
+      - `user_attributes`: Structured key-value map of the user's traits (demographic, personality, behavioral).
     </ResponseField>
   </Expandable>
 </ResponseField>
@@ -163,7 +163,7 @@ For the full scenario schema (all fields and types), see [Schema Reference](/sch
 
 ## Writing Scenarios
 
-You can write scenario files manually. The minimum required fields are `scenario_id`, `goal`, and `origin`:
+You can write scenario files manually. The minimum required fields are `scenario_id`, `goal`, and `user_profile`:
 
 ```json
 {
@@ -173,7 +173,6 @@ You can write scenario files manually. The minimum required fields are `scenario
       "scenario_id": "my-scenario-001",
       "goal": "You want to find out whether your home insurance policy covers water damage from a burst pipe.",
       "user_profile": "You are Jordan, an existing customer from Calgary, AB, Canada. You are detail-oriented and want a clear answer.",
-      "origin": {}
     }
   ]
 }
