@@ -7,9 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-<!-- Add your changes here under the appropriate heading. -->
-<!-- Use: Added, Changed, Deprecated, Removed, Fixed, Security -->
-
 ### Added
 
 - Bandit security scanning in CI pipeline
