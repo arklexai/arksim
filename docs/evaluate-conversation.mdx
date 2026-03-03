@@ -127,7 +127,7 @@ In addition to the built-in metrics (helpfulness, coherence, relevance, verbosit
 
     ```python
     from your_eval_lib import QuantitativeMetric, ScoreInput, QuantResult
-    
+
     class ClarityScore(QuantitativeMetric):
         def score(self, score_input: ScoreInput) -> QuantResult:
             # Use score_input.chat_history, .user_goal, .knowledge, etc.
@@ -146,7 +146,7 @@ In addition to the built-in metrics (helpfulness, coherence, relevance, verbosit
 
     ```python
     from your_eval_lib import QualitativeMetric, ScoreInput, QualResult
-    
+
     class NeedsAssessment(QualitativeMetric):
         def evaluate(self, score_input: ScoreInput) -> QualResult:
             # Use score_input.chat_history, .user_goal, .knowledge, etc.
@@ -186,7 +186,7 @@ score_input.knowledge      # Retrieved knowledge / context passed to the agent
       <Tab title="Python (from file)">
         ```python
         import arksim
-        
+
         evaluation_results = arksim.evaluate(
             simulation_file_path="./simulation.json",
             output_dir="./evaluation",
@@ -203,7 +203,7 @@ score_input.knowledge      # Retrieved knowledge / context passed to the agent
         from arksim.simulation_engine.entities import (
             ConversationItem, TurnItem, SimulatedUserPrompt, SimulatedUserPromptVariables
         )
-        
+
         conversations = [
             ConversationItem(
                 conversation_id="00de685e-f76b-4a5f-a6e5-217cad777316",
@@ -223,7 +223,7 @@ score_input.knowledge      # Retrieved knowledge / context passed to the agent
                 ),
             )
         ]
-        
+
         evaluation_results = arksim.evaluate(
             conversations=conversations,
             output_dir="./results/evaluation",
