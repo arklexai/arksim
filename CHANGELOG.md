@@ -10,14 +10,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- Add your changes here under the appropriate heading. -->
 <!-- Use: Added, Changed, Deprecated, Removed, Fixed, Security -->
 
+### Changed
+
+- Agent configuration is now defined inline in `config.yaml` under the `agent_config` key instead of in separate `agent_config.json` files
+- Updated all documentation and examples to use inline agent configuration
+- UI now passes `agent_config`, `custom_metrics_file_paths`, and `metrics_to_run` from loaded config YAML
+
+### Removed
+
+- Separate `agent_config.json` files from all examples (replaced by inline YAML config)
+- Knowledge Configuration and Data folder sections from agent configuration docs
+
 ### Fixed
 
 - Trailing whitespace and missing EOF newlines across 81 files (docs, examples, tests, source)
-
-### Changed
-
-- CI restructured: separate Lint job, test matrix on Python 3.10 through 3.13, PR checks (title, description, changelog) in one job
-- Dependabot PRs now auto-labeled `skip-changelog` to bypass changelog CI check
+- UI file browser: `PROJECT_ROOT` now uses `cwd` for PyPI installs, parent navigation works correctly, YAML files shown in browser
+- Lint: replaced `try/except/pass` with `contextlib.suppress` in example loader
 
 ### Added
 
@@ -29,6 +37,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Makefile` with common dev commands
 - Issue template chooser linking to docs and discussions
 - Documentation and Changelog checklist in PR template
+
+- CI restructured: separate Lint job, test matrix on Python 3.10 through 3.13, PR checks (title, description, changelog) in one job
+- Dependabot PRs now auto-labeled `skip-changelog` to bypass changelog CI check
 
 ## [0.0.1] - 2026-03-02
 

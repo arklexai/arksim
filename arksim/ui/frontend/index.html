@@ -68,8 +68,9 @@
 
   <!-- ═══ Sidebar ═══ -->
   <aside class="w-60 t-surface border-r t-border flex flex-col shrink-0">
-    <div class="h-14 flex items-center px-5 border-b t-border">
+    <div class="px-5 py-3 border-b t-border">
       <span class="font-bold text-lg" :style="'color:' + (darkMode ? '#8EC1D6' : '#035E7B')">Arksim</span>
+      <p x-show="projectRoot" class="text-[10px] t-muted font-mono mt-0.5 truncate" :title="projectRoot" x-text="projectRoot"></p>
     </div>
 
     <div class="px-3 pt-4 pb-2">
@@ -172,15 +173,53 @@
           <p x-show="!scenarioFilePath" class="text-xs t-muted mb-6">Need scenarios? Use <button @click="navigate('build')" class="underline font-medium" style="color: #035E7B">Build</button> to generate them, or provide your own scenario.json below.</p>
           <p x-show="scenarioFilePath" class="mb-6"></p>
 
-          <!-- Agent & Model -->
+          <!-- Agent Config -->
           <div class="t-surface rounded-xl border t-border p-5 mb-4">
-            <h2 class="font-semibold t-heading mb-3">Agent & Model</h2>
-            <label class="block text-sm font-medium t-label mb-1">Agent config file</label>
-            <div class="flex gap-2 mb-3">
-              <input type="text" x-model="agentConfigFilePath" class="flex-1 border t-input rounded-lg px-3 py-2 text-sm" placeholder="/path/to/agent_config.json">
-              <button @click="browseFor('agentConfigFilePath')" class="px-3 py-2 border t-border rounded-lg t-hover text-sm" title="Browse"><span class="material-icons-outlined text-base">folder_open</span></button>
+            <h2 class="font-semibold t-heading mb-1">Agent Config</h2>
+            <p class="text-xs t-caption mb-3">How arksim connects to your agent.</p>
+            <!-- Loaded from config YAML -->
+            <div x-show="_loadedConfig?.agent_config">
+              <div class="grid grid-cols-2 gap-x-4 gap-y-1.5 text-sm mb-2">
+                <div class="flex items-center gap-1.5">
+                  <span class="t-caption text-xs w-20 shrink-0">Type</span>
+                  <span class="t-label font-mono text-xs" x-text="_loadedConfig?.agent_config?.agent_type || '—'"></span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <span class="t-caption text-xs w-20 shrink-0">Name</span>
+                  <span class="t-label font-mono text-xs" x-text="_loadedConfig?.agent_config?.agent_name || '—'"></span>
+                </div>
+                <div class="flex items-center gap-1.5 col-span-2">
+                  <span class="t-caption text-xs w-20 shrink-0">Endpoint</span>
+                  <span class="t-label font-mono text-xs truncate" x-text="_loadedConfig?.agent_config?.api_config?.endpoint || '—'"></span>
+                </div>
+              </div>
+              <p class="text-[11px] t-muted">Loaded from config YAML. Select a different config in the sidebar to change.</p>
             </div>
-            <div class="grid grid-cols-2 gap-3">
+            <!-- Or load from separate file -->
+            <div x-show="!_loadedConfig?.agent_config">
+              <label class="block text-sm font-medium t-label mb-1">Agent config file</label>
+              <div class="flex gap-2">
+                <input type="text" x-model="agentConfigFilePath" class="flex-1 border t-input rounded-lg px-3 py-2 text-sm" placeholder="/path/to/config.yaml">
+                <button @click="browseFor('agentConfigFilePath')" class="px-3 py-2 border t-border rounded-lg t-hover text-sm" title="Browse"><span class="material-icons-outlined text-base">folder_open</span></button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Scenario Input -->
+          <div class="t-surface rounded-xl border t-border p-5 mb-4">
+            <h2 class="font-semibold t-heading mb-3">Scenario Input</h2>
+            <label class="block text-sm font-medium t-label mb-1">Scenario file</label>
+            <div class="flex gap-2">
+              <input type="text" x-model="scenarioFilePath" class="flex-1 border t-input rounded-lg px-3 py-2 text-sm" placeholder="/path/to/scenario.json">
+              <button @click="browseForScenario()" class="px-3 py-2 border t-border rounded-lg t-hover text-sm"><span class="material-icons-outlined text-base">folder_open</span></button>
+            </div>
+            <p x-show="scenarioFilePath" class="text-xs t-caption mt-1">Directory: <span x-text="scenarioFilePath.substring(0, scenarioFilePath.lastIndexOf('/'))"></span></p>
+          </div>
+
+          <!-- Simulation Parameters -->
+          <div class="t-surface rounded-xl border t-border p-5 mb-4">
+            <h2 class="font-semibold t-heading mb-3">Simulation Parameters</h2>
+            <div class="grid grid-cols-2 gap-3 mb-3">
               <div>
                 <label class="block text-sm font-medium t-label mb-1">Provider</label>
                 <select x-show="providers.includes(provider)" x-model="provider" @change="if (provider === '__custom__') { provider = ''; $nextTick(() => $refs.simProviderCustom.focus()); } else { const ms = modelsForProvider(provider); if (!ms.includes(model)) model = ms[0] || model; }" class="w-full border t-input rounded-lg px-3 py-2 text-sm">
@@ -214,18 +253,13 @@
                 </div>
               </div>
             </div>
-            <div x-show="envHint(provider)" class="mt-2 text-xs t-muted">
+            <div x-show="envHint(provider)" class="mb-3 text-xs t-muted">
               <span class="material-icons-outlined text-xs align-middle">vpn_key</span>
               Requires env: <code class="t-code px-1 rounded" x-text="envHint(provider)"></code>
             </div>
-          </div>
-
-          <!-- Parameters -->
-          <div class="t-surface rounded-xl border t-border p-5 mb-4">
-            <h2 class="font-semibold t-heading mb-3">Parameters</h2>
             <div class="grid grid-cols-3 gap-3">
               <div>
-                <label class="block text-sm font-medium t-label mb-1">Conversations <span class="tip" data-tip="Number of simulated conversations to generate"><svg class="w-3.5 h-3.5 inline-block align-middle" style="color: var(--text-5)" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"/></svg></span></label>
+                <label class="block text-sm font-medium t-label mb-1">Conversations per scenario <span class="tip" data-tip="Number of simulated conversations to generate per scenario"><svg class="w-3.5 h-3.5 inline-block align-middle" style="color: var(--text-5)" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"/></svg></span></label>
                 <input type="number" x-model.number="numConversations" min="1" placeholder="3" @blur="if (!numConversations) numConversations = _defaults.numConversations" class="w-full border t-input rounded-lg px-3 py-2 text-sm">
               </div>
               <div>
@@ -237,17 +271,6 @@
                 <input type="text" x-model="numWorkers" placeholder="auto" @blur="if (!numWorkers) numWorkers = _defaults.numWorkers" class="w-full border t-input rounded-lg px-3 py-2 text-sm">
               </div>
             </div>
-          </div>
-
-          <!-- Scenario Input -->
-          <div class="t-surface rounded-xl border t-border p-5 mb-4">
-            <h2 class="font-semibold t-heading mb-3">Scenario Input</h2>
-            <label class="block text-sm font-medium t-label mb-1">Scenario file</label>
-            <div class="flex gap-2">
-              <input type="text" x-model="scenarioFilePath" class="flex-1 border t-input rounded-lg px-3 py-2 text-sm" placeholder="/path/to/scenario.json">
-              <button @click="browseForScenario()" class="px-3 py-2 border t-border rounded-lg t-hover text-sm"><span class="material-icons-outlined text-base">folder_open</span></button>
-            </div>
-            <p x-show="scenarioFilePath" class="text-xs t-caption mt-1">Directory: <span x-text="scenarioFilePath.substring(0, scenarioFilePath.lastIndexOf('/'))"></span></p>
           </div>
 
           <!-- Run -->
@@ -409,6 +432,25 @@
                 </div>
               </div>
             </div>
+          </div>
+
+          <!-- Metrics -->
+          <div class="t-surface rounded-xl border t-border p-5 mb-4">
+            <h2 class="font-semibold t-heading mb-3">Metrics</h2>
+            <label class="block text-sm font-medium t-label mb-2">Built-in metrics <span class="tip" data-tip="Select which built-in metrics to run. If none selected, all built-in metrics will run."><svg class="w-3.5 h-3.5 inline-block align-middle" style="color: var(--text-5)" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"/></svg></span></label>
+            <div class="flex flex-wrap gap-2 mb-3">
+              <template x-for="m in ['faithfulness', 'helpfulness', 'coherence', 'verbosity', 'relevance', 'goal_completion', 'agent_behavior_failure']" :key="m">
+                <label class="flex items-center gap-1.5 px-2.5 py-1 border rounded-lg text-xs cursor-pointer transition-colors"
+                  :class="metricsToRun.includes(m) ? 'border-primary bg-primary/10' : 't-border'"
+                  :style="metricsToRun.includes(m) ? 'color: #035E7B' : 'color: var(--text-3)'">
+                  <input type="checkbox" :value="m" x-model="metricsToRun" class="sr-only">
+                  <span class="material-icons-outlined text-xs" x-text="metricsToRun.includes(m) ? 'check_box' : 'check_box_outline_blank'"></span>
+                  <span x-text="m"></span>
+                </label>
+              </template>
+            </div>
+            <label class="block text-sm font-medium t-label mb-1">Custom metrics files <span class="tip" data-tip="Comma-separated paths to Python files defining custom metrics"><svg class="w-3.5 h-3.5 inline-block align-middle" style="color: var(--text-5)" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"/></svg></span></label>
+            <input type="text" x-model="customMetricsFilePaths" class="w-full border t-input rounded-lg px-3 py-2 text-sm" placeholder="path/to/custom_metrics.py, path/to/other_metrics.py">
           </div>
 
           <!-- Run -->

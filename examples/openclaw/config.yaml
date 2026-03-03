@@ -2,10 +2,25 @@
 # Configuration for 'arksim simulate-evaluate' command
 # Runs simulation followed by evaluation in a single pipeline.
 
-# ── SIMULATION SETTINGS ──────────────────────────────────────────────────────
+# ── AGENT CONFIGURATION ────────────────────────────────────────────────────
 
-# Path to agent api configuration file
-agent_config_file_path: ./agent_config.json
+agent_config:
+  agent_type: chat_completions
+  agent_name: openclaw
+  api_config:
+    endpoint: http://localhost:18789/v1/chat/completions
+    headers:
+      Content-Type: application/json
+      Authorization: "Bearer ${OPENCLAW_TOKEN}"
+      x-openclaw-agent-id: main
+    body:
+      model: openclaw
+      messages:
+        - role: system
+          content: "chat_id:{chat_id}"
+      enable_metadata: false
+
+# ── SIMULATION SETTINGS ──────────────────────────────────────────────────────
 
 # Path to the scenarios file
 scenario_file_path: ./scenarios.json

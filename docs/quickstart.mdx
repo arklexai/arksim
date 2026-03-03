@@ -38,7 +38,7 @@ description: "Get started with Arksim in minutes. This guide walks you through y
         This command simulates conversations against your agent, evaluates them, and saves results to the specified output location.
 
         ```bash
-        arksim simulate-evaluate <path/to/config_simulate.yaml>
+        arksim simulate-evaluate <path/to/config.yaml>
         ```
 
         Example:
@@ -49,6 +49,24 @@ description: "Get started with Arksim in minutes. This guide walks you through y
 
         Your config should define:
 
+        **Agent Configuration**
+
+        ```yaml
+        agent_config:
+          agent_type: chat_completions
+          agent_name: my-agent
+          api_config:
+            endpoint: https://api.openai.com/v1/chat/completions
+            headers:
+              Content-Type: application/json
+              Authorization: "Bearer ${OPENAI_API_KEY}"
+            body:
+              model: gpt-5.1
+              messages:
+                - role: system
+                  content: "You are a helpful assistant."
+        ```
+
         **Pre-built Scenario**
 
         ```yaml
@@ -56,14 +74,6 @@ description: "Get started with Arksim in minutes. This guide walks you through y
         ```
 
         Path to the `scenario.json` file used to simulate conversations.
-
-        **Agent Setup**
-
-        ```yaml
-        agent_config_file_path: ./path/to/agent/agent_config.json
-        ```
-
-        Path to your agent's configuration file.
 
         **Simulation Output**
 
@@ -87,10 +97,30 @@ description: "Get started with Arksim in minutes. This guide walks you through y
         ```python
         from arksim.simulation_engine import run_simulation, SimulationInput
         from arksim.evaluator import run_evaluation, EvaluationInput
+        from arksim.config import AgentConfig
+
+        # Define your agent configuration
+        agent_config = AgentConfig(
+            agent_type="chat_completions",
+            agent_name="my-agent",
+            api_config={
+                "endpoint": "https://api.openai.com/v1/chat/completions",
+                "headers": {
+                    "Content-Type": "application/json",
+                    "Authorization": "Bearer ${OPENAI_API_KEY}",
+                },
+                "body": {
+                    "model": "gpt-5.1",
+                    "messages": [
+                        {"role": "system", "content": "You are a helpful assistant."}
+                    ],
+                },
+            },
+        )
 
         # Run simulation
         simulation = run_simulation(SimulationInput(
-            agent_config_file_path="examples/path/to/agent_config.json",
+            agent_config=agent_config,
             scenario_file_path="examples/path/to/scenario.json",
             num_conversations_per_scenario=30,
             max_turns=10,

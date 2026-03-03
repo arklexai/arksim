@@ -11,13 +11,18 @@ from pydantic import BaseModel
 
 router = APIRouter(tags=["filesystem"])
 
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+PROJECT_ROOT = os.getcwd()
 
 _PATH_KEYS = {
     "agent_config_file_path",
     "scenario_file_path",
     "simulation_file_path",
     "output_dir",
+}
+
+# Keys whose values are lists of file paths (each element resolved).
+_LIST_PATH_KEYS = {
+    "custom_metrics_file_paths",
 }
 
 
@@ -72,13 +77,23 @@ def browse_directory(
         for e in entries_raw
     ]
 
-    parent = str(resolved.parent) if resolved != resolved.parent else None
+    parent_path = resolved.parent
+    if parent_path != resolved and (parent_path == root or root in parent_path.parents):
+        parent = str(parent_path)
+    else:
+        parent = None
 
     return {
         "current": str(resolved),
         "parent": parent,
         "entries": entries,
     }
+
+
+@router.get("/fs/root")
+def get_project_root() -> dict:
+    """Return the working directory arksim ui was launched from."""
+    return {"root": PROJECT_ROOT}
 
 
 @router.get("/fs/configs")
@@ -121,15 +136,24 @@ def load_config(path: str) -> dict:
     with open(resolved) as f:
         cfg = yaml.safe_load(f) or {}
 
+    config_dir = os.path.dirname(resolved)
+
+    def _resolve_rel(val: str) -> str:
+        if not val or os.path.isabs(val):
+            return val
+        if val.startswith("./"):
+            val = val.removeprefix("./")
+        return os.path.join(config_dir, val)
+
     for key in _PATH_KEYS:
         val = cfg.get(key)
         if val and isinstance(val, str):
-            if not val or os.path.isabs(val):
-                cfg[key] = val
-            else:
-                if val.startswith("./"):
-                    val = val.removeprefix("./")
-                cfg[key] = os.path.join(os.path.dirname(resolved), val)
+            cfg[key] = _resolve_rel(val)
+
+    for key in _LIST_PATH_KEYS:
+        val = cfg.get(key)
+        if isinstance(val, list):
+            cfg[key] = [_resolve_rel(v) for v in val if isinstance(v, str)]
 
     return {"settings": cfg}
 

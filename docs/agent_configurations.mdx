@@ -4,24 +4,13 @@ title: "Agent Configurations"
 
 ## Overview
 
-Configure your agent's API connection and business context. These files tell arksim how to connect to your agent and what context to use when simulating conversations.
-
-### Directory Structure
-
-Create a configuration directory with the required JSON files:
-
-```shellscript
-/path/to/agent-setup-dir/
-├── agent_config.json    # API and agent configuration
-├── knowledge.json       # Business context (e.g. corporate overview)
-└── data/                # (Optional) Local knowledge files
-```
+Configure how your agent connects to Arksim.
 
 ---
 
 ## Agent Configuration
 
-The `agent_config.json` file configures how arksim connects to your conversational agent API.
+The `agent_config` key in your config YAML configures how arksim connects to your agent via API.
 
 ### Configuration Fields
 
@@ -30,29 +19,6 @@ The `agent_config.json` file configures how arksim connects to your conversation
 | `agent_name`         | String    | Yes      | Unique identifier for your agent (e.g. lowercase, no spaces)                           |
 | `agent_type`         | String    | Yes      | One of `chat_completions` or `a2a`. See [API Connection Types](#api-connection-types). |
 | `api_config`         | Object    | Yes      | Connection details. See [API Connection Types](#api-connection-types).                 |
-| `agent_capabilities` | List[Str] | No       | Optional list of tasks your agent can handle (for context/docs)                        |
-
-### Writing Effective Agent Capabilities
-
-When you use `agent_capabilities`, describe capabilities with a **Verb + Object (+ Scope)** structure. Each capability should state a specific, observable action.
-
-**Good examples:**
-
-- Answer feature-specific questions about products
-- Provide pricing information and generate quotes
-- Process returns and refunds for orders
-- Schedule appointments and send confirmations
-
-**Avoid:**
-
-- Be helpful
-- Answer questions
-- Handle customer requests
-
-<Note>
-  Vague descriptions don't set clear expectations. Be specific about what your agent can do.
-</Note>
-
 ### API Connection Types
 
 arksim supports two agent types for API connections:
@@ -69,70 +35,28 @@ arksim supports two agent types for API connections:
     - `headers`: HTTP headers (e.g. `Content-Type`, `Authorization`)
     - `body`: Request body; must include a `messages` array
 
-    #### Placeholders and variables
+    #### Environment variables
 
-    - `{chat_id}`: Can be included in `body.messages[*].content`; replaced at runtime
     - `${ENV_VAR}`: Supported in header values for secrets
 
     #### Example
 
-    ```json
-    {
-      "agent_type": "chat_completions",
-      "agent_name": "chat_completions_example",
-      "agent_capabilities": [
-        "answer feature-specific queries about products"
-      ],
-      "api_config": {
-        "endpoint": "http://localhost:7050/chat/completions",
-        "headers": {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer ${OPENAI_API_KEY}"
-        },
-        "body": {
-          "model": "gpt-5.1",
-          "messages": [
-            {
-              "role": "system",
-              "content": "You are being invoked by arksim user simulator."
-            }
-          ]
-        }
-      }
-    }
+    ```yaml
+    agent_config:
+      agent_type: chat_completions
+      agent_name: chat_completions_example
+      api_config:
+        endpoint: http://localhost:7050/chat/completions
+        headers:
+          Content-Type: application/json
+          Authorization: "Bearer ${OPENAI_API_KEY}"
+        body:
+          model: gpt-5.1
+          messages:
+            - role: system
+              content: "You are being invoked by arksim user simulator."
     ```
 
-    #### Example with Chat ID
-
-    ```json
-    {
-      "agent_type": "chat_completions",
-      "agent_name": "chat_completions_with_chat_id",
-      "agent_capabilities": [
-        "answer feature-specific queries about products"
-      ],
-      "api_config": {
-        "endpoint": "http://localhost:7050/chat/completions",
-        "headers": {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer ${OPENAI_API_KEY}"
-        },
-        "body": {
-          "model": "gpt-5.1",
-          "messages": [
-            {
-              "role": "system",
-              "content": "You are being invoked with chat_id:{chat_id}"
-            }
-          ]
-        }
-      }
-    }
-    ```
-
-    <Note>
-      The `{chat_id}` placeholder is replaced with the actual chat ID during execution.
-    </Note>
   </Tab>
   <Tab title="A2A Protocol">
     **Type:** `a2a`
@@ -146,20 +70,14 @@ arksim supports two agent types for API connections:
 
     #### Example
 
-    ```json
-    {
-      "agent_type": "a2a",
-      "agent_name": "a2a_example",
-      "agent_capabilities": [
-        "answer feature-specific queries about products"
-      ],
-      "api_config": {
-        "endpoint": "http://localhost:9999",
-        "headers": {
-          "api-key": "${A2A_AUTH_TOKEN}"
-        }
-      }
-    }
+    ```yaml
+    agent_config:
+      agent_type: a2a
+      agent_name: a2a_example
+      api_config:
+        endpoint: http://localhost:9999
+        headers:
+          api-key: "${A2A_AUTH_TOKEN}"
     ```
   </Tab>
 </Tabs>
@@ -177,65 +95,3 @@ Both `chat_completions` and `a2a` support environment variable substitution usin
 <Tip>
   **Security:** Keep credentials in environment variables and out of committed config files.
 </Tip>
-
----
-
-## Knowledge Configuration
-
-The `knowledge.json` file defines business context used by arksim when building simulated user prompts (e.g. company overview).
-
-### Configuration fields
-
-| Field                | Type       | Description                                                                  |
-| -------------------- | ---------- | ---------------------------------------------------------------------------- |
-| `corporate_overview` | String     | A short description of your company/product used as context for simulation   |
-| `knowledge`          | List[Dict] | Optional. Defines knowledge sources (e.g. local `data/` folder) for examples |
-
-`corporate_overview` is used by the simulator when generating the simulated user’s system prompt so conversations are grounded in your business context.
-
-### Local knowledge (optional)
-
-You can point to a local folder of documents (e.g. for examples or future tooling):
-
-```json
-{
-  "corporate_overview": "YourCompany Inc. is a leading provider of software solutions...",
-  "knowledge": [
-    {
-      "source": "/path/to/agent-setup-dir/data",
-      "type": "local"
-    }
-  ]
-}
-```
-
-<Note>
-  In open-source arksim, scenario building is not included. Pre-built scenarios already contain the knowledge used during simulation. The `knowledge` array in `knowledge.json` is optional and may be used by examples or custom scripts.
-</Note>
-
-### Minimal example
-
-```json
-{
-  "corporate_overview": "YourCompany Inc. is a leading provider of innovative software solutions. We help businesses automate workflows and improve customer engagement."
-}
-```
-
----
-
-## Data folder
-
-The optional `data` folder holds knowledge documents (e.g. for your own agent or examples). You can add, remove, or update files to match your use case.
-
-### Supported file formats
-
-| Category      | Formats                                         |
-| ------------- | ----------------------------------------------- |
-| Documents     | `.md`, `.pdf`, `.doc`, `.docx`, `.txt`, `.html` |
-| Data files    | `.json`, `.xls`, `.xlsx`                        |
-| Presentations | `.ppt`, `.pptx`                                 |
-| Images\*      | `.png`, `.jpg`, `.jpeg`                         |
-
-<Note>
-  \*Image OCR may require additional environment configuration (e.g. `MISTRAL_API_KEY`) depending on your setup.
-</Note>
