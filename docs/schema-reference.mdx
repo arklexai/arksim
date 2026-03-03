@@ -69,6 +69,10 @@ Written by `arksim simulate` or the simulation step of `arksim simulate-evaluate
   Arksim package version that produced this file.
 </ResponseField>
 
+<ResponseField name="simulation_id" type="string" required>
+  UUID that uniquely identifies this simulation run. Referenced by the evaluation output as `simulation_id` to link the two artifacts.
+</ResponseField>
+
 <ResponseField name="generated_at" type="string" required>
   ISO-8601 UTC timestamp when the file was generated.
 </ResponseField>
@@ -115,6 +119,14 @@ Written by `arksim evaluate` or the evaluation step of `arksim simulate-evaluate
 
 <ResponseField name="evaluator_version" type="string" required>
   Arksim package version that produced this file.
+</ResponseField>
+
+<ResponseField name="evaluation_id" type="string" required>
+  UUID that uniquely identifies this evaluation run. Generated fresh for each `arksim evaluate` or `arksim simulate-evaluate` invocation.
+</ResponseField>
+
+<ResponseField name="simulation_id" type="string" required>
+  UUID of the simulation run that produced the conversations being evaluated. Copied from `simulation.json` to link the two artifacts.
 </ResponseField>
 
 <ResponseField name="conversations" type="list[ConversationEvaluation]" required>

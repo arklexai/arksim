@@ -184,12 +184,16 @@ Describes the structure of `conversations.json`, the file produced at the end of
   Version of the `conversations.json` schema (e.g., `"v1"`).
 </ResponseField>
 
-<ResponseField name="generated_at" type="string" required>
-  ISO-8601 UTC timestamp of when the file was generated.
-</ResponseField>
-
 <ResponseField name="simulator_version" type="string" required>
   Arksim package version that produced this output.
+</ResponseField>
+
+<ResponseField name="simulation_id" type="string" required>
+  UUID that uniquely identifies this simulation run. Referenced by the evaluation output to link the two artifacts.
+</ResponseField>
+
+<ResponseField name="generated_at" type="string" required>
+  ISO-8601 UTC timestamp of when the file was generated.
 </ResponseField>
 
 <ResponseField name="conversations" type="list[ConversationItem]" required>
@@ -226,8 +230,9 @@ Describes the structure of `conversations.json`, the file produced at the end of
 ```json
 {
   "schema_version": "v1",
-  "generated_at": "2025-04-10T14:32:00Z",
   "simulator_version": "v1",
+  "simulation_id": "a3f2c1d4-8e7b-4f9a-b6c2-1d0e5f3a8b7c",
+  "generated_at": "2025-04-10T14:32:00Z",
   "conversations": [
     {
       "conversation_id": "00de685e-f76b-4a5f-a6e5-217cad777316",
