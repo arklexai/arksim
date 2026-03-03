@@ -19,11 +19,11 @@ Describes the user's objective, guiding their actions and decisions throughout t
 
 > Plan a purchase of a service robot, focusing on delivery timelines and suitability for commercial use.
 
-### User Attributes (Persona)
+### User Profile (Persona)
 
-Defines the user's characteristics, influencing their tone, communication style, and behavior.
+Defines who the simulated user is — their personality, demographics, and behavior — as a natural-language description written in second person.
 
-> Alex, 26 years old, living in Chicago, works as an operations analyst at a mid-sized logistics company; analytical, detail-oriented, budget-conscious, and risk-aware.
+> You are Alex, a 26-year-old operations analyst at a mid-sized logistics company in Chicago. You are analytical, detail-oriented, budget-conscious, and risk-aware.
 
 ### Knowledge
 
@@ -64,6 +64,50 @@ For the full scenario schema (all fields and types), see [Schema Reference](/sch
 
 ---
 
+## Schema Reference
+
+<ResponseField name="schema_version" type="string" required>
+  Schema version identifier. Use `"v1"`.
+</ResponseField>
+
+<ResponseField name="scenarios" type="list[dict]" required>
+  List of scenario objects. Each object represents one simulated user and one conversation session.
+
+  <Expandable title="scenario fields">
+    <ResponseField name="scenario_id" type="string" required>
+      Unique identifier for this scenario.
+    </ResponseField>
+    <ResponseField name="user_id" type="string" required>
+      Unique identifier for the simulated user. Defaults to `scenario_id` if omitted.
+    </ResponseField>
+    <ResponseField name="goal" type="string" required>
+      The user's conversational goal, passed directly into the user simulator prompt. Write it in second person ("You want to...") so it reads naturally as a simulator instruction.
+    </ResponseField>
+    <ResponseField name="user_profile" type="string">
+      A natural-language persona description for the simulated user. This is used directly in the simulation prompt to shape tone, communication style, and behavior.
+
+      Write in second person (e.g. "You are Alex who is conscientious, introverted, and agreeable. You are a 30-year-old engineer from Chicago...").
+    </ResponseField>
+    <ResponseField name="knowledge" type="list[KnowledgeItem]">
+      Knowledge items embedded in the simulated user's context during the conversation. Can be omitted if the simulated user has no specific background information.
+
+      Each `KnowledgeItem` contains:
+
+      - `content` (required): The text content injected into the simulator prompt as the user's background knowledge.
+      - `metadata`: Freeform metadata for labeling and traceability (e.g. `title`, `source`, `doc_id`). Not used by the simulator or evaluator.
+    </ResponseField>
+    <ResponseField name="origin" type="dict[string, Any]">
+      Freeform metadata used to record how a scenario was generated. Not used by the simulator and exists purely for provenance tracking.
+
+      Common fields:
+
+      - `target_agent_capability`: The agent capability this scenario was designed to evaluate.
+      - `goal_raw`: The original goal before it was adapted to the full contextual goal string.
+      - `user_attributes`: Structured key-value map of the user's traits (demographic, personality, behavioral). Stored here as metadata for traceability and display in reports.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
 ## Full Example
 
 ```json
@@ -85,29 +129,30 @@ For the full scenario schema (all fields and types), see [Schema Reference](/sch
           }
         }
       ],
-      "user_attribute": {
-        "sex": "Female",
-        "age": "34",
-        "marital_status": "single",
-        "household_size": "1",
-        "location": "Toronto, ON, Canada",
-        "Household_income": "$50,000 - $74,999",
-        "education": "Bachelor's degree",
-        "Openness": "open to experience",
-        "Conscientiousness": "conscientious",
-        "Extraversion": "introverted",
-        "Agreeableness": "agreeable",
-        "Neuroticism": "emotionally stable",
-        "customer_type": "prospective customer",
-        "discovery_type": "online search",
-        "decision_making_style": "analytical",
-        "purchasing_preference": "value oriented",
-        "spending_behavior": "moderate spending",
-        "loyalty_level": "neutral"
-      },
+      "user_profile": "You are Priya Chen who is open to experience, conscientious, introverted, agreeable, and emotionally stable. You are a 34-year-old single woman living in Toronto, ON, Canada. As a prospective customer who found XYZ Insurance through an online search, you are analytical and value-oriented with moderate spending habits.",
       "origin": {
         "target_agent_capability": "Answer questions about XYZ Insurance products and coverage",
-        "goal_raw": "Ask question about XYZ insurance"
+        "goal_raw": "Ask question about XYZ insurance",
+        "user_attributes": {
+          "sex": "Female",
+          "age": "34",
+          "marital_status": "single",
+          "household_size": "1",
+          "location": "Toronto, ON, Canada",
+          "Household_income": "$50,000 - $74,999",
+          "education": "Bachelor's degree",
+          "Openness": "open to experience",
+          "Conscientiousness": "conscientious",
+          "Extraversion": "introverted",
+          "Agreeableness": "agreeable",
+          "Neuroticism": "emotionally stable",
+          "customer_type": "prospective customer",
+          "discovery_type": "online search",
+          "decision_making_style": "analytical",
+          "purchasing_preference": "value oriented",
+          "spending_behavior": "moderate spending",
+          "loyalty_level": "neutral"
+        }
       }
     }
   ]
@@ -118,7 +163,7 @@ For the full scenario schema (all fields and types), see [Schema Reference](/sch
 
 ## Writing Scenarios
 
-You can write scenario files manually. The minimum required fields are `scenario_id`, `goal`, and `user_attribute`:
+You can write scenario files manually. The minimum required fields are `scenario_id`, `goal`, and `origin`:
 
 ```json
 {
@@ -127,10 +172,8 @@ You can write scenario files manually. The minimum required fields are `scenario
     {
       "scenario_id": "my-scenario-001",
       "goal": "You want to find out whether your home insurance policy covers water damage from a burst pipe.",
-      "user_attribute": {
-        "customer_type": "existing customer",
-        "location": "Calgary, AB, Canada"
-      }
+      "user_profile": "You are Jordan, an existing customer from Calgary, AB, Canada. You are detail-oriented and want a clear answer.",
+      "origin": {}
     }
   ]
 }
@@ -170,13 +213,13 @@ A scenario can include multiple knowledge items by adding additional entries to 
 
 Understanding how each field is used helps you decide what to include.
 
-| Field                  | Used By                | Description                                                          |
-| ---------------------- | ---------------------- | -------------------------------------------------------------------- |
-| `goal`                 | Simulator & Evaluator  | User's objective; used in the simulator prompt and in goal-completion evaluation. |
-| `knowledge[].content`  | Simulator & Evaluator  | Simulated user's background knowledge; used in simulator prompt and in evaluation (e.g. faithfulness).          |
-| `user_attributes`      | Simulator & Report     | Simulated user's persona; used in simulator for profile generation; displayed in HTML evaluation report. |
-| `knowledge[].metadata` | Not used by Arksim     | For labeling and traceability only.                                  |
-| `origin`               | Not used by Arksim     | Tracks scenario provenance; reference only.                         |
+| Field                          | Used By               | Description                                                          |
+| ------------------------------ | --------------------- | -------------------------------------------------------------------- |
+| `goal`                         | Simulator & Evaluator | Directly used in the simulator prompt; the most important field.     |
+| `knowledge[].content`          | Simulator & Evaluator | Provides simulated user's background knowledge for the conversation. |
+| `user_profile`                 | Simulator             | Used as-is in the simulated user prompt to define the persona.       |
+| `knowledge[].metadata`         | Not used by Arksim    | For labeling and traceability only.                                  |
+| `origin`                       | Not used by Arksim    | Tracks scenario provenance; reference only.                          |
 
 ## Next Steps
 

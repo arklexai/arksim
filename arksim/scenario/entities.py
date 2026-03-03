@@ -18,7 +18,7 @@ class Scenario(BaseModel):
     goal: str
     agent_context: str
     knowledge: list[KnowledgeItem]
-    user_attributes: dict
+    user_profile: str = ""
     origin: dict
 
 

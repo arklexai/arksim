@@ -128,7 +128,7 @@ def _run_simulation(app_state: AppState, body: SimulateRequest) -> None:
             from arksim.utils.output.utils import load_json_file
 
             scenario_data = load_json_file(body.scenario_file)
-            scenario_output = Scenarios.model_validate(scenario_data)
+            scenarios = Scenarios.model_validate(scenario_data)
 
             from arksim.simulation_engine import run_simulation
 
@@ -140,7 +140,7 @@ def _run_simulation(app_state: AppState, body: SimulateRequest) -> None:
             result = asyncio.run(
                 run_simulation(
                     settings,
-                    scenario_output=scenario_output,
+                    scenarios=scenarios,
                     on_progress=_on_progress,
                 )
             )

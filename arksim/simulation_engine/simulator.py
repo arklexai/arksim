@@ -10,16 +10,15 @@ from tqdm import tqdm
 
 from arksim.config import AgentConfig
 from arksim.llms.chat import LLM
-from arksim.scenario import KnowledgeItem, Scenario, Scenarios
+from arksim.scenario import (
+    KnowledgeItem,
+    Scenarios,
+)
 from arksim.utils.concurrency import resolve_num_workers
 from arksim.utils.output import save_json_file_async
 
 from .agent.factory import create_agent
-from .core import (
-    TURN_KNOWLEDGE_FN,
-    convert_attribute_to_profile_async,
-    find_matched_attribute_async,
-)
+from .core import TURN_KNOWLEDGE_FN
 from .entities import (
     Conversation,
     ConversationState,
@@ -54,52 +53,6 @@ class Simulator:
         self.llm = llm
         self.simulation: Simulation | None = None
 
-    async def generate_profiles(
-        self, scenario_output: Scenarios
-    ) -> list[dict[str, Any]]:
-        """Generate profiles for the scenario data."""
-
-        scenarios = scenario_output.scenarios
-        logger.info(f"Generating profiles for {len(scenarios)} scenarios")
-        num_workers = resolve_num_workers(
-            self.simulator_params.num_workers, len(scenarios)
-        )
-        semaphore = asyncio.Semaphore(num_workers)
-
-        async def _generate_single_profile(scenario: Scenario) -> dict[str, Any]:
-            async with semaphore:
-                attribute_options = list(scenario.user_attributes.keys())
-                label = await find_matched_attribute_async(
-                    self.llm, scenario.goal, scenario.user_attributes, attribute_options
-                )
-                profile = await convert_attribute_to_profile_async(
-                    self.llm,
-                    scenario.user_attributes,
-                    label,
-                    scenario.agent_context,
-                )
-                return {
-                    "scenario_id": scenario.scenario_id,
-                    "goal": scenario.goal,
-                    "knowledge": scenario.knowledge,
-                    "profile": profile,
-                    "attribute": scenario.user_attributes,
-                    "agent_context": scenario.agent_context,
-                }
-
-        tasks = [_generate_single_profile(scenario) for scenario in scenarios]
-        profiles = []
-        with tqdm(total=len(scenarios), desc="Generating profiles") as pbar:
-            for coro in asyncio.as_completed(tasks):
-                try:
-                    profiles.append(await coro)
-                except Exception as e:
-                    logger.error(f"Error generating profile: {str(e)}")
-                finally:
-                    pbar.update(1)
-
-        return profiles
-
     def _render_simulated_user_prompt(
         self,
         simulated_user_prompt_template: str,
@@ -115,8 +68,8 @@ class Simulator:
                 "agent_context": agent_context,
                 "goal": goal,
                 "knowledge": knowledge,
+                "user_profile": profile,
             },
-            simulation={"profile": profile},
         )
 
     async def _generate_simulated_user_output(
@@ -152,7 +105,6 @@ class Simulator:
         goal: str,
         knowledge: KnowledgeItem | list[KnowledgeItem],
         agent_context: str,
-        attribute: dict[str, Any],
         max_turns: int,
         scenario_id: str = "",
         on_turn_complete: Callable[[], None] | None = None,
@@ -183,7 +135,6 @@ class Simulator:
             ]
             metadata = {
                 "chat_id": conversation_id,
-                "user_attributes": attribute,
                 "user_goal": goal,
                 "knowledge": knowledge,
             }
@@ -270,7 +221,7 @@ class Simulator:
                 "scenario.agent_context": state.agent_context,
                 "scenario.goal": state.user_goal,
                 "scenario.knowledge": state.knowledge,
-                "simulation.profile": state.simulated_user_profile,
+                "scenario.user_profile": state.simulated_user_profile,
             },
         )
 
@@ -293,8 +244,8 @@ class Simulator:
         max_turns = self.simulator_params.max_turns
         estimated_total_turns = num_convos * max_turns
 
-        profiles = await self.generate_profiles(scenarios)
         num_workers = resolve_num_workers(self.simulator_params.num_workers, num_convos)
+        logger.info(f"Preparing {len(scenarios.scenarios)} scenarios for simulation")
 
         pbar = tqdm(
             total=estimated_total_turns,
@@ -319,13 +270,7 @@ class Simulator:
         running_tasks = set()
         results: list[ConversationState] = []
 
-        for scenario in profiles:
-            profile = scenario["profile"]
-            goal = scenario["goal"]
-            knowledge = scenario["knowledge"]
-            attribute = scenario["attribute"]
-            agent_context = scenario["agent_context"]
-            scenario_id = scenario["scenario_id"]
+        for scenario in scenarios.scenarios:
             if len(running_tasks) >= num_workers:
                 done, running_tasks = await asyncio.wait(
                     running_tasks, return_when=asyncio.FIRST_COMPLETED
@@ -340,13 +285,12 @@ class Simulator:
                         logger.error(traceback.format_exc())
 
             coro = self._run_single_conversation(
-                profile,
-                goal,
-                knowledge,
-                agent_context,
-                attribute,
+                scenario.user_profile,
+                scenario.goal,
+                scenario.knowledge,
+                scenario.agent_context,
                 max_turns,
-                scenario_id=scenario_id,
+                scenario_id=scenario.scenario_id,
                 on_turn_complete=on_turn_complete,
                 on_turn_display=on_turn_display,
             )
@@ -408,12 +352,12 @@ class Simulator:
 
 async def run_simulation(
     settings: SimulationInput,
-    scenario_output: Scenarios | None = None,
+    scenarios: Scenarios | None = None,
     on_progress: Callable[[int, int], None] | None = None,
     verbose: bool = False,
 ) -> Simulation:
-    if scenario_output is None:
-        scenario_output = Scenarios.load(settings.scenario_file_path)
+    if scenarios is None:
+        scenarios = Scenarios.load(settings.scenario_file_path)
 
     if settings.agent_config is not None:
         # Inline agent config from YAML (already validated by pydantic)
@@ -441,7 +385,7 @@ async def run_simulation(
         llm=llm,
     )
     simulation_output = await simulator.simulate(
-        scenario_output, on_progress=on_progress, verbose=verbose
+        scenarios, on_progress=on_progress, verbose=verbose
     )
     await simulator.save()
     return simulation_output

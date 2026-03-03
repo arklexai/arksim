@@ -61,7 +61,7 @@ class Evaluator:
         )
         system_prompt = variables.get("scenario.agent_context", "")
         knowledge = variables.get("scenario.knowledge", [])
-        profile = variables.get("simulation.profile", "")
+        profile = variables.get("scenario.user_profile", "")
         user_goal = variables.get("scenario.goal", "")
 
         convo_list = []

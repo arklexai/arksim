@@ -168,7 +168,7 @@ output_file_path: ./results/simulation/simulation.json
 #   - scenario.agent_context: context about the agent
 #   - scenario.goal: the user's goal
 #   - scenario.knowledge: list of knowledge items (optional)
-#   - simulation.profile: the simulated user's profile
+#   - scenario.user_profile: the simulated user's profile
 # Single knowledge -> inline in prompt; multiple -> via user message.
 simulated_user_prompt_template: |
   You are a user interacting with an agent through multiple turns.
@@ -176,7 +176,7 @@ simulated_user_prompt_template: |
   {{ scenario.agent_context }}
 
   Your profile is:
-  {{ simulation.profile }}
+  {{ scenario.user_profile }}
 
   You have the following goal when interacting with this agent:
   {{ scenario.goal }}

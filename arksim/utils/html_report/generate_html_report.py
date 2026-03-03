@@ -89,10 +89,10 @@ class ConvoRow(BaseModel):
     chat_id: str
     scenario_id: str
     goal: str
+    user_profile: str = ""
     goal_completion_score: float
     final_score: float
     status: str
-    user_attributes: dict[str, Any] = Field(default_factory=dict)
     knowledge: list[str] = Field(default_factory=list)
     goal_completion_reason: str
 
@@ -334,10 +334,10 @@ def _build_convo_rows(
                 chat_id=conv.conversation_id,
                 scenario_id=sim_conv.scenario_id if sim_conv else "",
                 goal=scenario.goal if scenario else "",
+                user_profile=scenario.user_profile if scenario else "",
                 goal_completion_score=conv.goal_completion_score,
                 final_score=conv.overall_agent_score,
                 status=conv.evaluation_status,
-                user_attributes=scenario.user_attributes if scenario else {},
                 knowledge=[k.content for k in scenario.knowledge]
                 if scenario and scenario.knowledge
                 else [],
