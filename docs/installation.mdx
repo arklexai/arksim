@@ -20,13 +20,13 @@ ArkSim uses OpenAI by default. To use other providers, install the corresponding
 
 ```bash
 # Anthropic (Claude)
-pip install arksim[anthropic]
+pip install "arksim[anthropic]"
 
 # Google Gemini
-pip install arksim[gemini]
+pip install "arksim[gemini]"
 
 # All providers
-pip install arksim[all]
+pip install "arksim[all]"
 ```
 
 ## Install from source
@@ -45,7 +45,7 @@ This installs in editable mode with test dependencies (`pytest`, `pytest-asyncio
 arksim --help
 ```
 
-You should see the available commands: `simulate`, `evaluate`, `simulate-evaluate`, `show-prompts`, and `ui`.
+You should see the available commands: `simulate`, `evaluate`, `simulate-evaluate`, `show-prompts`, `examples` and `ui`.
 
 <Check>
   You're all set! Continue to the [Quickstart guide](/quickstart) to run your first simulation.
