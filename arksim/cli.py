@@ -11,6 +11,7 @@ import time
 
 import yaml
 
+from arksim import __version__
 from arksim.evaluator import Evaluation, EvaluationInput, run_evaluation
 from arksim.simulation_engine import SimulationInput, run_simulation
 from arksim.utils.logger import get_logger
@@ -293,6 +294,7 @@ def build_parser() -> argparse.ArgumentParser:
         epilog=textwrap.dedent("""\
 
             Examples:
+              arksim --version
               arksim simulate config.yaml
               arksim evaluate config.yaml
               arksim simulate-evaluate config.yaml
@@ -301,6 +303,14 @@ def build_parser() -> argparse.ArgumentParser:
               arksim examples bank-insurance
               arksim ui --port 9090
         """),
+    )
+
+    parser.add_argument(
+        "-v",
+        "--version",
+        action="version",
+        version=f"%(prog)s {__version__}",
+        help="Show version and exit",
     )
 
     sub = parser.add_subparsers(dest="command")

@@ -139,6 +139,7 @@ function arksim() {
     showLogs: false,
 
     // ── Config ──────────────────────────────────
+    version: '',
     projectRoot: '',
     configs: [],
     selectedConfig: '',
@@ -174,9 +175,18 @@ function arksim() {
     async init() {
       this._initDarkMode();
       this._connectWs();
+      await this._fetchVersion();
       await this._fetchProjectRoot();
       await this._loadConfigs();
       if (this.scenarios.length === 0) await this._loadDemoScenario();
+    },
+
+    async _fetchVersion() {
+      try {
+        const resp = await fetch('/api/version');
+        const data = await resp.json();
+        this.version = data.version || '';
+      } catch { /* ignore */ }
     },
 
     async _fetchProjectRoot() {

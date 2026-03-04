@@ -253,6 +253,7 @@ All settings can be specified in YAML and overridden via CLI flags (`--key value
 ## CLI Reference
 
 ```
+arksim --version                        Show version and exit
 arksim simulate <config.yaml>           Run agent simulations
 arksim evaluate <config.yaml>           Evaluate simulation results
 arksim simulate-evaluate <config.yaml>  Simulate then evaluate

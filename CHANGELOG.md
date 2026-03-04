@@ -48,6 +48,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `-v` / `--version` CLI flag to show arksim version and exit
+- Version display in web UI sidebar (next to "Arksim" title)
 - `arksim examples` CLI command to download example projects from GitHub without cloning
 - Bandit security scanning in CI pipeline
 - Test coverage threshold (60% minimum) enforced in CI
