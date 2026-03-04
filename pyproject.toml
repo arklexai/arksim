@@ -1,7 +1,7 @@
 [project]
 name = "arksim"
 dynamic = ["version"]
-description = "⛵️⚙️ Stress-test your AI agents before users do."
+description = "⛵️⚙️ Open-source framework for simulating and evaluating conversational AI agents"
 readme = "README.md"
 license = "Apache-2.0"
 authors = [{name = "Arklex", email = "support@arklex.ai"}]

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-"""⛵️⚙️ ArkSim: stress-test your AI agents before users do."""
+"""⛵️⚙️ ArkSim: simulate and evaluate conversational AI agents."""
 
 import importlib
 
