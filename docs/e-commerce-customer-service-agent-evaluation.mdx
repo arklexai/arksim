@@ -13,6 +13,8 @@ The example includes two ready-to-run agent setups you can test against out of t
 
 ## Example Agents
 
+You can run the example in two ways: **Option 1** uses the OpenAI API directly (no server, minimal setup). **Option 2** runs a local RAG agent (OpenAI Agents SDK, e-commerce knowledge base) via A2A or Chat Completions. Before following either path, ensure [Arksim is installed](/installation) (`pip install arksim`).
+
 <CardGroup cols={2}>
   <Card icon="bolt" title="Option 1: OpenAI API">
     A lightweight agent that calls the OpenAI API directly. Quick start with minimal setup; default agent_config.json is preconfigured.
@@ -61,7 +63,7 @@ This agent calls the OpenAI API directly, with no server setup required.
 
 ---
 
-## Example Agent 2: RAG Agent
+## Option 2: RAG Agent
 
 This agent is a RAG-based shopping assistant built with OpenAI Agents SDK, backed by an e-commerce knowledge base. It can be exposed via either the A2A Protocol or a Chat Completions-compatible endpoint.
 
@@ -222,16 +224,15 @@ num_workers: auto
 
 ## Output
 
-**Simulation** writes to `examples/e-commerce/results/conversation/`:
+When run from `examples/e-commerce`, paths are relative to that directory (as set in `config.yaml`).
 
-- `conversations.json`: full transcripts of every simulated conversation
-- `target_goals.json`: the resolved goals used to drive each simulated user
+**Simulation** writes to `results/simulation/`:
 
-**Evaluation** writes to `examples/e-commerce/results/evaluation/`:
+- `simulation.json`: full simulation output, including transcripts of every simulated conversation and the resolved goals used to drive each simulated user
 
-| File                                     | Contents                                                              |
-| ---------------------------------------- | --------------------------------------------------------------------- |
-| `agent_performance_per_turn.csv`         | Per-turn metric scores, reasoning, and failure labels                 |
-| `agent_performance_per_conversation.csv` | Rolled-up scores and status per conversation                          |
-| `unique_errors.csv`                      | Deduplicated failure patterns with descriptions and occurrence traces |
-| `final_report.html`                      | Interactive report for browsing and sharing results                   |
+**Evaluation** writes to `results/evaluation/`:
+
+| File                | Contents                                                                 |
+| ------------------- | ------------------------------------------------------------------------ |
+| `evaluation.json`   | Full evaluation results: per-turn and per-conversation scores, unique error patterns, and metric reasoning |
+| `final_report.html` | Interactive HTML report for browsing and sharing results (when `generate_html_report: true`) |
