@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """
 Example script that runs the full pipeline (simulation → evaluation)
 programmatically, with custom metrics passed to the evaluator.

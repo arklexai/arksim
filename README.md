@@ -5,7 +5,7 @@
   </p>
   <p align="center">
     <a href="https://github.com/arklexai/arksim/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/arklexai/arksim/actions/workflows/ci.yml/badge.svg"></a>
-    <a href="https://app.codecov.io/gh/arklexai/arksim"><img alt="Coverage" src="https://img.shields.io/codecov/c/github/arklexai/arksim?token=90b886a9-5e88-4abf-a64e-8618c3c04677"></a>
+    <a href="https://app.codecov.io/gh/arklexai/arksim"><img alt="Coverage" src="https://img.shields.io/codecov/c/github/arklexai/arksim"></a>
     <a href="https://pypi.org/project/arksim/"><img alt="PyPI" src="https://img.shields.io/pypi/v/arksim.svg?cacheSeconds=300"></a>
     <a href="https://www.python.org/downloads/"><img alt="Python" src="https://img.shields.io/pypi/pyversions/arksim.svg?cacheSeconds=300"></a>
     <a href="https://github.com/arklexai/arksim/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/badge/license-Apache--2.0-blue.svg"></a>
@@ -227,7 +227,6 @@ All settings can be specified in YAML and overridden via CLI flags (`--key value
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
 | `agent_config` | object | required | Inline agent config (`agent_type`, `agent_name`, `api_config`) |
-
 | `scenario_file_path` | string | required | Path to scenarios JSON |
 | `model` | string | `gpt-5.1` | LLM model for simulated users |
 | `provider` | string | `openai` | LLM provider: `openai`, `claude`, `gemini` |

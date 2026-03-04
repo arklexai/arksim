@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 """Tests for agent configuration models."""
 
+import json
 import os
 from unittest.mock import patch
 
@@ -133,6 +134,11 @@ class TestChatCompletionsConfig:
         endpoint = config.get_endpoint()
         assert endpoint == "https://api.openai.com/v1/chat/completions"
 
+    def test_get_endpoint_raises_when_not_configured(self) -> None:
+        config = ChatCompletionsConfig(body={"messages": []})
+        with pytest.raises(ValueError, match="endpoint is not configured"):
+            config.get_endpoint()
+
     def test_get_headers_resolves_env_vars(
         self, mock_env_vars: dict, valid_agent_config_chat_completions_new: dict
     ) -> None:
@@ -190,3 +196,53 @@ class TestAgentConfig:
         config = AgentConfig(**config_data)
 
         assert isinstance(config.api_config, A2AConfig)
+
+    def test_non_dict_raises(self) -> None:
+        """Test non-dict input raises validation error."""
+        with pytest.raises(ValidationError, match="must be a dictionary"):
+            AgentConfig.model_validate("not a dict")
+
+
+class TestAgentConfigLoad:
+    """Tests for AgentConfig.load classmethod."""
+
+    def test_load_valid_a2a(self, temp_dir: str) -> None:
+        data = {
+            "agent_type": "a2a",
+            "agent_name": "test-agent",
+            "api_config": {"endpoint": "https://example.com/agent"},
+        }
+        path = os.path.join(temp_dir, "agent.json")
+        with open(path, "w") as f:
+            json.dump(data, f)
+
+        config = AgentConfig.load(path)
+        assert config.agent_name == "test-agent"
+        assert config.agent_type == "a2a"
+
+    def test_load_valid_chat_completions(self, temp_dir: str) -> None:
+        data = {
+            "agent_type": "chat_completions",
+            "agent_name": "chat-agent",
+            "api_config": {
+                "endpoint": "https://api.openai.com/v1/chat/completions",
+                "body": {"model": "gpt-4", "messages": []},
+            },
+        }
+        path = os.path.join(temp_dir, "chat.json")
+        with open(path, "w") as f:
+            json.dump(data, f)
+
+        config = AgentConfig.load(path)
+        assert config.agent_type == "chat_completions"
+
+    def test_load_missing_file(self) -> None:
+        with pytest.raises(FileNotFoundError):
+            AgentConfig.load("/nonexistent/agent.json")
+
+    def test_load_invalid_json(self, temp_dir: str) -> None:
+        path = os.path.join(temp_dir, "bad.json")
+        with open(path, "w") as f:
+            f.write("{invalid")
+        with pytest.raises(ValueError, match="Invalid JSON"):
+            AgentConfig.load(path)

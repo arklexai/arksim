@@ -100,7 +100,17 @@ fix typo in readme
 
 ## Testing
 
-Tests live under `tests/` and run with `pytest`. Mark slow or integration tests with the markers defined in `pytest.ini` — `unit`, `integration`, or `slow` — when relevant.
+Tests live under `tests/` and run with `pytest`. Mark slow or integration tests with the markers defined in `pytest.ini` when relevant.
+
+### Quality gates
+
+| Gate | Current | Direction |
+|------|---------|-----------|
+| Test coverage (line) | 60% minimum | Ratchet upward as modules gain coverage |
+| Ruff lint + format | Required in CI and pre-commit | Add rules incrementally |
+| Bandit security scan | Required in CI | Expand as surface area grows |
+
+Coverage is enforced in both `pyproject.toml` (`fail_under`) and the CI workflow (`--cov-fail-under`). When you add tests that push coverage above the current threshold, please bump both values so they stay in sync and the bar never drops.
 
 ---
 
@@ -125,4 +135,4 @@ AI-assisted contributions are welcome. Please:
 
 ---
 
-Have questions? Open a [GitHub discussion](https://github.com/arklex/arksim/discussions) or an issue and we'll do our best to help.
+Have questions? Open a [GitHub discussion](https://github.com/arklexai/arksim/discussions) or an issue and we'll do our best to help.
