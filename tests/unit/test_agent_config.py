@@ -134,6 +134,11 @@ class TestChatCompletionsConfig:
         endpoint = config.get_endpoint()
         assert endpoint == "https://api.openai.com/v1/chat/completions"
 
+    def test_get_endpoint_raises_when_not_configured(self) -> None:
+        config = ChatCompletionsConfig(body={"messages": []})
+        with pytest.raises(ValueError, match="endpoint is not configured"):
+            config.get_endpoint()
+
     def test_get_headers_resolves_env_vars(
         self, mock_env_vars: dict, valid_agent_config_chat_completions_new: dict
     ) -> None:

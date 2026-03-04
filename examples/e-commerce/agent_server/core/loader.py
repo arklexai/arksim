@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Document and content loading utilities for the example agent.
 
 This module provides functionality for loading and processing various types of content,

@@ -87,7 +87,7 @@ select = [
   "TID", # flake8-tidy-imports
 ]
 ignore = [
-  "E501",  # Line too long (if you're using Black)
+  "E501",  # Line too long (managed by ruff format)
   "UP045", # Use X | None instead of Optional[X] - keep for compatibility
 ]
 

@@ -2,7 +2,7 @@ name: PR checks
 
 on:
   pull_request:
-    types: [opened, edited, synchronize, reopened, labeled, unlabeled]
+    types: [opened, edited, synchronize, reopened]
     branches: [main]
 
 permissions:
@@ -27,19 +27,20 @@ jobs:
               return;
             }
 
-            // Format: <component>: <verb> <description>
-            const pattern = /^[a-z][a-z0-9_-]*: [a-z]+ .+$/;
+            // Format: <type>(<scope>): <description>  (scope is optional)
+            const pattern = /^(feat|fix|docs|chore|ci|build|refactor|test|perf|style|revert)(\([a-z][a-z0-9_-]*\))?!?: .+$/;
             if (!pattern.test(title)) {
               core.setFailed(
                 `PR title does not match the required format.\n\n` +
-                `Expected: <component>: <verb> <description>\n` +
-                `  - component: lowercase, may contain digits, hyphens, underscores\n` +
-                `  - verb: lowercase imperative (add, fix, update, remove, ...)\n` +
+                `Expected: <type>(<scope>): <description>\n` +
+                `  - type: feat, fix, docs, chore, ci, build, refactor, test, perf, style, revert\n` +
+                `  - scope (optional): lowercase, may contain digits, hyphens, underscores\n` +
                 `  - description: free text\n\n` +
                 `Examples:\n` +
-                `  arksim: add retry logic to evaluator\n` +
-                `  simulator: fix config loading for empty fields\n` +
-                `  ci: update python version in workflow\n\n` +
+                `  feat: add retry logic to evaluator\n` +
+                `  fix(evaluator): handle empty conversation list\n` +
+                `  docs: update simulation guide\n` +
+                `  chore: bump dependencies\n\n` +
                 `Got: "${title}"`
               );
             }
@@ -76,33 +77,5 @@ jobs:
                 `PR description is too short (${cleaned.length} characters of real content, minimum 20).\n\n` +
                 `Please fill out the PR template with a meaningful summary and description.\n` +
                 `Template headers, comments, and empty checkboxes do not count.`
-              );
-            }
-
-      - name: Check CHANGELOG.md was updated
-        uses: actions/github-script@v8
-        with:
-          script: |
-            const labels = context.payload.pull_request.labels.map(l => l.name);
-            if (labels.includes('skip-changelog')) {
-              core.info('skip-changelog label found, skipping check.');
-              return;
-            }
-
-            const { data: files } = await github.rest.pulls.listFiles({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: context.payload.pull_request.number,
-              per_page: 100,
-            });
-
-            const changelogUpdated = files.some(f => f.filename === 'CHANGELOG.md');
-            if (!changelogUpdated) {
-              core.setFailed(
-                `CHANGELOG.md was not updated in this PR.\n\n` +
-                `Please add an entry under the [Unreleased] section describing your change.\n` +
-                `Use the appropriate heading: Added, Changed, Fixed, Removed, etc.\n\n` +
-                `If this change does not need a changelog entry (e.g. internal refactor,\n` +
-                `CI-only change), add the "skip-changelog" label to this PR.`
               );
             }

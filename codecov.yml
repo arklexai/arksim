@@ -1,0 +1,14 @@
+coverage:
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 1%
+    patch:
+      default:
+        target: 50%
+        threshold: 5%
+
+comment:
+  layout: "condensed_header, diff, flags, components"
+  require_changes: true
