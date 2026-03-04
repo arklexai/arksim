@@ -413,9 +413,9 @@ class Evaluator:
         )
 
     def _format_metric_score(self, value: float, use_label: bool = True) -> str:
-        """Format a metric score, handling -1 as evaluation failure."""
+        """Format a metric score, handling not-computed sentinel."""
         if value == SCORE_NOT_COMPUTED:
-            return "N/A (Evaluation Failed)"
+            return "N/A (Not computed)"
         if use_label:
             return f"{value:.1f} ({score_label(value)})"
         return f"{value:.1f}"

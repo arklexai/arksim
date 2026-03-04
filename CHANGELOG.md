@@ -17,8 +17,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Path traversal protection on filesystem and results API endpoints
 - Generic error messages in API endpoints to prevent server path leakage
 - Shared evaluation constants (`SCORE_NOT_COMPUTED`, `BEHAVIOR_FAILURE_THRESHOLD`)
+- Quality gates section in CONTRIBUTING.md documenting coverage ratchet policy
 
 ### Changed
+
+- `SCORE_NOT_COMPUTED` display label changed from "N/A (Evaluation Failed)" to "N/A (Not computed)"
 
 - UI auto-loads scenarios from config on startup instead of always showing the demo
 - File browser shows a hint that browsing is scoped to the launch directory
@@ -31,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Project root path from the UI sidebar header
 - Dead code: unused error message constants, `METRIC_THRESHOLD`, `UNIQUE_BUGS` enum, `flip_hist_content_only`, `LLMConfig`
+- Hidden Unicode characters (U+200C zero-width non-joiner) from e-commerce example data files
 
 ## [0.0.4] - 2026-03-03
 
