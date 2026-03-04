@@ -1,88 +1,9 @@
 # SPDX-License-Identifier: Apache-2.0
-"""Tests for error_detection: collect_agent_behavior_failure_reasoning.
+"""Tests for error_detection: collect_agent_behavior_failure_reasoning."""
 
-Uses importlib to load modules directly from file paths, bypassing
-the arksim.evaluator.__init__.py which pulls in heavy deps
-(langchain, azure, etc.) that may not be installed in the test env.
-"""
-
-import importlib.util
-import sys
-import types
-from pathlib import Path
-from unittest.mock import MagicMock
-
-# ---------------------------------------------------------------------------
-# Direct-import helpers: load .py files without triggering __init__.py chains
-# ---------------------------------------------------------------------------
-_ARKSIM_ROOT = Path(__file__).resolve().parents[2] / "arksim"
-
-
-def _load_module(name: str, filepath: Path) -> types.ModuleType:
-    """Load a Python module from filepath into sys.modules[name]."""
-    spec = importlib.util.spec_from_file_location(name, filepath)
-    mod = importlib.util.module_from_spec(spec)
-    sys.modules[name] = mod
-    spec.loader.exec_module(mod)
-    return mod
-
-
-# 1. Load lightweight dependency modules first
-_enums_mod = _load_module(
-    "arksim.evaluator.utils.enums",
-    _ARKSIM_ROOT / "evaluator" / "utils" / "enums.py",
-)
-
-_base_metric_mod = _load_module(
-    "arksim.evaluator.base_metric",
-    _ARKSIM_ROOT / "evaluator" / "base_metric.py",
-)
-
-# 2. Load entities.py directly
-_entities_mod = _load_module(
-    "arksim.evaluator.entities",
-    _ARKSIM_ROOT / "evaluator" / "entities.py",
-)
-
-# 3. Stub LLM deps before loading error_detection
-_orig_llms = sys.modules.get("arksim.llms")
-_orig_llms_chat = sys.modules.get("arksim.llms.chat")
-sys.modules["arksim.llms"] = MagicMock()
-sys.modules["arksim.llms.chat"] = MagicMock()
-
-_prompts_mod = _load_module(
-    "arksim.evaluator.utils.prompts",
-    _ARKSIM_ROOT / "evaluator" / "utils" / "prompts.py",
-)
-_schema_mod = _load_module(
-    "arksim.evaluator.utils.schema",
-    _ARKSIM_ROOT / "evaluator" / "utils" / "schema.py",
-)
-
-_error_detection_mod = _load_module(
-    "arksim.evaluator.error_detection",
-    _ARKSIM_ROOT / "evaluator" / "error_detection.py",
-)
-
-# Restore original sys.modules to avoid polluting other test files
-if _orig_llms is None:
-    sys.modules.pop("arksim.llms", None)
-else:
-    sys.modules["arksim.llms"] = _orig_llms
-if _orig_llms_chat is None:
-    sys.modules.pop("arksim.llms.chat", None)
-else:
-    sys.modules["arksim.llms.chat"] = _orig_llms_chat
-
-
-# Pull out the classes/functions we need
-ConversationEvaluation = _entities_mod.ConversationEvaluation
-TurnEvaluation = _entities_mod.TurnEvaluation
-QuantResult = _entities_mod.QuantResult
-EvaluationOutcomes = _enums_mod.EvaluationOutcomes
-collect_agent_behavior_failure_reasoning = (
-    _error_detection_mod.collect_agent_behavior_failure_reasoning
-)
+from arksim.evaluator.entities import ConversationEvaluation, TurnEvaluation
+from arksim.evaluator.error_detection import collect_agent_behavior_failure_reasoning
+from arksim.evaluator.utils.enums import EvaluationOutcomes
 
 
 # ---------------------------------------------------------------------------
