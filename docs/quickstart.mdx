@@ -17,7 +17,7 @@ description: "Get started with Arksim in minutes. This guide walks you through y
     ```
   </Step>
   <Step title="Set your API key">
-    Set the key for the provider your config uses (e.g. OpenAI):
+    Set the key for the provider (e.g. OpenAI):
 
     ```bash
     export OPENAI_API_KEY="your-api-key"
@@ -51,7 +51,7 @@ description: "Get started with Arksim in minutes. This guide walks you through y
         ```
 
         This uses the example's `config.yaml` (OpenAI) and `scenarios.json`. Ensure `OPENAI_API_KEY` is set from Step 2.
-</Tab>
+      </Tab>
       <Tab title="Python">
         Run simulation and evaluation from Python using the bank-insurance example:
 
@@ -59,7 +59,7 @@ description: "Get started with Arksim in minutes. This guide walks you through y
         from arksim.simulation_engine import run_simulation, SimulationInput
         from arksim.evaluator import run_evaluation, EvaluationInput
         from arksim.config import AgentConfig
-
+        
         # Example agent config (OpenAI; match bank-insurance config.yaml)
         agent_config = AgentConfig(
             agent_type="chat_completions",
@@ -78,7 +78,7 @@ description: "Get started with Arksim in minutes. This guide walks you through y
                 },
             },
         )
-
+        
         simulation = run_simulation(SimulationInput(
             agent_config=agent_config,
             scenario_file_path="examples/bank-insurance/scenarios.json",
@@ -87,7 +87,7 @@ description: "Get started with Arksim in minutes. This guide walks you through y
             num_workers="auto",
             output_file_path="./simulation.json",
         ))
-
+        
         evaluation = run_evaluation(EvaluationInput(
             simulation_file_path="./simulation.json",
             scenario_file_path="examples/bank-insurance/scenarios.json",
@@ -97,12 +97,12 @@ description: "Get started with Arksim in minutes. This guide walks you through y
             num_workers="auto",
             generate_html_report=True,
         ))
-
+        
         print("Simulation and evaluation complete.")
         print(f"Simulated {len(simulation.conversations)} conversations.")
         print("Evaluation results saved to ./evaluation")
         ```
-</Tab>
+      </Tab>
       <Tab title="UI">
         Run simulation and evaluation from your browser with the arksim web UI.
 
@@ -116,10 +116,9 @@ description: "Get started with Arksim in minutes. This guide walks you through y
     <Note>
       You can run **e-commerce** and **openclaw** the same way from `examples/e-commerce` and `examples/openclaw`. See the example guides in Next Steps below.
     </Note>
-</Step>
+  </Step>
   <Step title="View Results">
-    - **Conversations:** Open `conversations.json` in your simulation output directory for full transcripts.
-    - **Evaluation:** Open `final_report.html` or `final_report.md` and the CSV files in your evaluation output directory for metrics and failure analysis.
+    Open `final_report.html` or `evaluation.json`  in your `results/evaluation`  directory for metrics and failure analysis.
 
     Use these to see how your agent performed and where it failed or could be improved.
   </Step>
@@ -132,12 +131,4 @@ description: "Get started with Arksim in minutes. This guide walks you through y
 Now that you've run your first simulation and evaluation, here's where to go next.
 
 - **Explore the core concepts:** Dive deeper into [Scenarios](/build-scenario), [Simulation](/simulate-conversation), and [Evaluation](/evaluate-conversation) to understand how each piece works and how to configure them for your agent.
-
-<CardGroup cols={2}>
-  <Card icon="cart-shopping" href="/e-commerce-customer-service-agent-evaluation" title="E-commerce customer service">
-    Run scenarios and evaluation against an e-commerce retail/support agent.
-  </Card>
-  <Card icon="robot" href="/personal-ai-assistant-openclaw-evaluation" title="Personal AI assistant (OpenClaw)">
-    Run scenarios and evaluation against an OpenClaw personal assistant.
-  </Card>
-</CardGroup>
+- **Explore the examples:** Run Arksim against [E-commerce](/e-commerce-customer-service-agent-evaluation), [Insurance](/insurance-customer-service-agent-evaluation), and [Personal AI assistant (OpenClaw)](/personal-ai-assistant-openclaw-evaluation) to see different use cases and configs.
