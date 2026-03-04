@@ -494,6 +494,9 @@ def generate_html_report(params: HtmlReportParams) -> Path:
     convo_rows = _build_convo_rows(
         params.evaluation, params.simulation, params.scenarios
     )
+    if not convo_rows:
+        raise ValueError("conversations is required (should be in evaluation)")
+
     turn_rows = _build_turn_rows(params.evaluation)
     error_rows = _build_error_rows(
         params.evaluation, params.simulation, params.chat_id_to_label
