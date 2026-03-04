@@ -1,4 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
+
+
 def validate_num_workers(num_workers: int | str) -> None:
     """Validate that num_workers is an integer or the string 'auto'."""
     if isinstance(num_workers, str):

@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 """Filesystem browsing API endpoints."""
 
+from __future__ import annotations
+
 import glob
 import os
 from pathlib import Path

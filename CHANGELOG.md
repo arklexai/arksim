@@ -20,6 +20,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Project root path from the UI sidebar header
 
+### Added
+
+- Bandit security scanning in CI pipeline
+- Test coverage threshold (30% minimum) enforced in CI
+- `from __future__ import annotations` to all source files for consistent typing
+
+### Changed
+
+- Coverage badge switched from Codecov-hosted to shields.io for reliability
+- Expanded SECURITY.md with response process, scope, and disclosure guidelines
+
 ## [0.0.4] - 2026-03-03
 
 ### Added
