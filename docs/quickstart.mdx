@@ -51,7 +51,7 @@ description: "Get started with Arksim in minutes. This guide walks you through y
         ```
 
         This uses the example's `config.yaml` (OpenAI) and `scenarios.json`. Ensure `OPENAI_API_KEY` is set from Step 2.
-      </Tab>
+</Tab>
       <Tab title="Python">
         Run simulation and evaluation from Python using the bank-insurance example:
 
@@ -78,7 +78,7 @@ description: "Get started with Arksim in minutes. This guide walks you through y
                 },
             },
         )
-        
+
         simulation = run_simulation(SimulationInput(
             agent_config=agent_config,
             scenario_file_path="examples/bank-insurance/scenarios.json",
@@ -102,7 +102,7 @@ description: "Get started with Arksim in minutes. This guide walks you through y
         print(f"Simulated {len(simulation.conversations)} conversations.")
         print("Evaluation results saved to ./evaluation")
         ```
-      </Tab>
+</Tab>
       <Tab title="UI">
         Run simulation and evaluation from your browser with the arksim web UI.
 
@@ -116,7 +116,7 @@ description: "Get started with Arksim in minutes. This guide walks you through y
     <Note>
       You can run **e-commerce** and **openclaw** the same way from `examples/e-commerce` and `examples/openclaw`. See the example guides in Next Steps below.
     </Note>
-  </Step>
+</Step>
   <Step title="View Results">
     - **Conversations:** Open `conversations.json` in your simulation output directory for full transcripts.
     - **Evaluation:** Open `final_report.html` or `final_report.md` and the CSV files in your evaluation output directory for metrics and failure analysis.

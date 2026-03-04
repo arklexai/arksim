@@ -116,7 +116,7 @@ This agent is a RAG-based shopping assistant built with OpenAI Agents SDK, backe
 
         ```bash
         export OPENAI_API_KEY="<YOUR_OPENAI_API_KEY>"
-        export AGENT_API_KEY=123456 
+        export AGENT_API_KEY=123456
         python -m examples.e-commerce.agent_server.chat_completions.server
         ```
 
@@ -184,7 +184,7 @@ agent_config:
             to the user's question based on your knowledge. Response within
             50 words.
 
-# SIMULATION SETTINGS 
+# SIMULATION SETTINGS
 
 # Path to the scenarios file
 scenario_file_path: ./scenarios.json
@@ -206,7 +206,7 @@ simulated_user_prompt_template: null
 # Output directory for evaluation results
 output_dir: ./results/evaluation
 
-# Paths to Python files defining custom 
+# Paths to Python files defining custom
 # QuantitativeMetric or QualitativeMetric subclasses
 custom_metrics_file_paths:
   - ./custom_metrics.py
@@ -258,4 +258,4 @@ When run from `examples/e-commerce`, paths are relative to that directory (as se
 | File                | Contents                                                                                                   |
 | ------------------- | ---------------------------------------------------------------------------------------------------------- |
 | `evaluation.json`   | Full evaluation results: per-turn and per-conversation scores, unique error patterns, and metric reasoning |
-| `final_report.html` | Interactive HTML report for browsing and sharing results (when `generate_html_report: true`)               |
+| `final_report.html` | Interactive HTML report for browsing and sharing results (when `generate_html_report: true`) |
