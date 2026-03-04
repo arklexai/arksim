@@ -15,10 +15,10 @@ The example includes two ready-to-run agent implementations you can test against
 
 <CardGroup cols={2}>
   <Card icon="bolt" title="Option 1: OpenAI API">
-    A lightweight agent that calls the OpenAI API directly. Quick start with minimal setup; default agent_config.json is preconfigured.
+    A lightweight agent that calls the OpenAI API directly. Quick start with minimal setup; `config.yaml` is preconfigured.
   </Card>
   <Card icon="diagram-project" title="Option 2: OpenAI Agents SDK RAG">
-    RAG-based agent using the OpenAI Agents SDK with an insurance knowledge base. Supports A2A or Chat Completions; configure via `agent_config.json`.
+    RAG-based agent using the OpenAI Agents SDK with an insurance knowledge base. Supports A2A or Chat Completions; use `config_a2a.yaml` or `config_chat_completions.yaml`.
   </Card>
 </CardGroup>
 
@@ -68,12 +68,12 @@ This agent is a RAG-based customer service agent built with the OpenAI Agents SD
 
 <Steps>
   <Step title="Select agent config">
-    In the example directory, use the agent config for your chosen interface. If `agent_config.json` already exists, rename or remove it first.
+    In the example directory, use the config file for your chosen interface:
 
-    - **A2A:** Copy `agent_config_a2a.json` to `agent_config.json`
-    - **Chat Completions:** Copy `agent_config_chat_completions.json` to `agent_config.json`
+    - **A2A:** `config_a2a.yaml` (inline agent config; uses `${A2A_API_KEY}`)
+    - **Chat Completions:** `config_chat_completions.yaml` (inline agent config; uses `${AGENT_API_KEY}`)
 
-    Agent configs support environment variable substitution (e.g. `${AGENT_API_KEY}` for Chat Completions, `${A2A_API_KEY}` for A2A).
+    Set the matching environment variable before running.
   </Step>
   <Step title="Install agent dependencies">
     <Tabs>
@@ -117,13 +117,13 @@ This agent is a RAG-based customer service agent built with the OpenAI Agents SD
     </Tabs>
   </Step>
   <Step title="Run simulation and evaluation">
-    In a new terminal, run from the `examples/bank-insurance` directory. Set the key that matches your agent config (AGENT_API_KEY for Chat Completions, A2A_API_KEY for A2A), then run:
+    In a new terminal, run from the `examples/bank-insurance` directory. Set the key that matches your interface (AGENT_API_KEY for Chat Completions, A2A_API_KEY for A2A), then run with the matching config:
 
     ```bash
     cd examples/bank-insurance
-    export AGENT_API_KEY="<YOUR_AGENT_API_KEY>"   # for Chat Completions
-    # export A2A_API_KEY="<YOUR_A2A_API_KEY>"     # for A2A
-    arksim simulate-evaluate config.yaml
+    export AGENT_API_KEY="<YOUR_AGENT_API_KEY>"             # for Chat Completions
+    # export A2A_API_KEY="<YOUR_A2A_API_KEY>"               # for A2A
+    arksim simulate-evaluate config_chat_completions.yaml   # or config_a2a.yaml for A2A
     ```
   </Step>
 </Steps>
@@ -137,7 +137,7 @@ To test your own backend agent against these scenarios:
 - **Chat Completions:** Follow the comments in `agent_server/chat_completions/server.py` to swap in your own backend logic or point to your endpoint.
 - **A2A:** Implement your own A2A executor in `agent_server/a2a/`.
 
-Ensure `agent_config.json` points to your endpoint (or use the appropriate pre-made config as a template). Then run simulation and evaluation as above.
+Use a config YAML that points to your endpoint (inline `agent_config` or `agent_config_file_path`). Then run simulation and evaluation as above.
 
 <Tip>
   See [Agent configuration](/simulate-conversation#agent-configuration) for supported protocols and how to configure agent connections.
@@ -220,7 +220,7 @@ num_workers: auto
 The config also defines a `simulated_user_prompt_template` (Jinja) that uses `scenario.agent_context`, `scenario.goal`, `scenario.knowledge`, and `scenario.user_profile` to drive the simulated user.
 
 <Note>
-  The example directory contains `agent_config.json` (default OpenAI), `agent_config_a2a.json`, and `agent_config_chat_completions.json`, the insurance knowledge base under `agent_server/data/`, and the scenario file `scenarios.json`.
+  The example directory contains `config.yaml` (OpenAI), `config_a2a.yaml`, and `config_chat_completions.yaml`, the insurance knowledge base under `agent_server/data/`, and the scenario file `scenarios.json`.
 </Note>
 
 ---

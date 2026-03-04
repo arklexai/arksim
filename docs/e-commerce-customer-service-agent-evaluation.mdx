@@ -13,14 +13,14 @@ The example includes two ready-to-run agent setups you can test against out of t
 
 ## Example Agents
 
-You can run the example in two ways: **Option 1** uses the OpenAI API directly (no server, minimal setup). **Option 2** runs a local RAG agent (OpenAI Agents SDK, e-commerce knowledge base) via a Chat Completions–compatible endpoint. Before following either path, ensure [Arksim is installed](/installation) (`pip install arksim`).
+You can run the example in two ways: **Option 1** uses the OpenAI API directly (no server, minimal setup). **Option 2** runs a local RAG agent (OpenAI Agents SDK, e-commerce knowledge base) via A2A or Chat Completions. Before following either path, ensure [Arksim is installed](/installation) (`pip install arksim`).
 
 <CardGroup cols={2}>
   <Card icon="bolt" title="Option 1: OpenAI API">
-    A lightweight agent that calls the OpenAI API directly. Quick start with minimal setup; default agent_config.json is preconfigured.
+    A lightweight agent that calls the OpenAI API directly. Quick start with minimal setup; `config.yaml` is preconfigured.
   </Card>
   <Card icon="diagram-project" title="Option 2: LangGraph RAG">
-    RAG-based agent with OpenAI Agents SDK, backed by an e-commerce knowledge base; exposes a Chat Completions–compatible endpoint.
+    RAG-based agent with OpenAI Agents SDK, backed by an e-commerce knowledge base; supports A2A or Chat Completions.
   </Card>
 </CardGroup>
 
@@ -65,11 +65,16 @@ This agent calls the OpenAI API directly, with no server setup required.
 
 ## Option 2: RAG Agent
 
-This agent is a RAG-based shopping assistant built with OpenAI Agents SDK, backed by an e-commerce knowledge base. It exposes a Chat Completions–compatible endpoint.
+This agent is a RAG-based shopping assistant built with OpenAI Agents SDK, backed by an e-commerce knowledge base. It can be exposed via either the A2A Protocol or a Chat Completions–compatible endpoint.
 
 <Steps>
-  <Step title="Use the Chat Completions config">
-    Use `config_chat_completions.yaml`; it has the agent endpoint and auth inline. Set `AGENT_API_KEY` in your environment; the config uses `${AGENT_API_KEY}` for the request header.
+  <Step title="Select agent config">
+    In the example directory, use the config file for your chosen interface:
+
+    - **A2A:** `config_a2a.yaml` (inline agent config; uses `${A2A_API_KEY}`)
+    - **Chat Completions:** `config_chat_completions.yaml` (inline agent config; uses `${AGENT_API_KEY}`)
+
+    Set the matching environment variable before running.
   </Step>
   <Step title="Install agent dependencies">
     <Tabs>
@@ -91,22 +96,37 @@ This agent is a RAG-based shopping assistant built with OpenAI Agents SDK, backe
     Or from inside the example directory: `pip install -r agent_server/requirements.txt`
   </Step>
   <Step title="Start the agent server">
-    Exposes a Chat Completions–compatible endpoint on port `8888` at `/chat/completions`. Run from the repository root:
+    <Tabs>
+      <Tab title="A2A">
+        Exposes an A2A-compatible agent on port `9999`. Run from the repository root:
 
-    ```bash
-    export AGENT_API_KEY=<YOUR_AGENT_API_KEY>
-    python -m examples.e_commerce.agent_server.chat_completions.server
-    ```
+        ```bash
+        export A2A_API_KEY=<YOUR_A2A_API_KEY>
+        python -m examples.e_commerce.agent_server.a2a.server
+        ```
 
-    Run from the repository root (or the directory that contains the `examples` package). If your layout differs, use the module path that resolves to `agent_server/chat_completions/server.py` under the e-commerce example.
+        Run from the repository root (or the directory that contains the `examples` package). If your layout differs, use the module path that resolves to `agent_server/a2a/server.py` under the e-commerce example.
+      </Tab>
+      <Tab title="Chat Completions">
+        Exposes a Chat Completions–compatible endpoint on port `8888` at `/chat/completions`. Run from the repository root:
+
+        ```bash
+        export AGENT_API_KEY=<YOUR_AGENT_API_KEY>
+        python -m examples.e_commerce.agent_server.chat_completions.server
+        ```
+
+        Run from the repository root (or the directory that contains the `examples` package). If your layout differs, use the module path that resolves to `agent_server/chat_completions/server.py` under the e-commerce example.
+      </Tab>
+    </Tabs>
   </Step>
   <Step title="Run simulation and evaluation">
-    In a **new terminal**, run from the `examples/e-commerce` directory:
+    In a **new terminal**, run from the `examples/e-commerce` directory. Set the key that matches your agent config (AGENT_API_KEY for Chat Completions, A2A_API_KEY for A2A), then run with the matching config: `config_chat_completions.yaml` or `config_a2a.yaml`.
 
     ```bash
     cd examples/e-commerce
-    export AGENT_API_KEY="<YOUR_AGENT_API_KEY>"
-    arksim simulate-evaluate config_chat_completions.yaml
+    export AGENT_API_KEY="<YOUR_AGENT_API_KEY>"             # for Chat Completions
+    # export A2A_API_KEY="<YOUR_A2A_API_KEY>"               # for A2A
+    arksim simulate-evaluate config_chat_completions.yaml   # or config_a2a.yaml for A2A
     ```
   </Step>
 </Steps>
@@ -117,7 +137,7 @@ This agent is a RAG-based shopping assistant built with OpenAI Agents SDK, backe
 
 To test your own backend agent against these scenarios, follow the `#TODO` comments in `chat_completion_wrapper.py` to call your backend instead of the sample agent.
 
-Once your server is running on a Chat Completions–compatible endpoint, point `agent_config.json` at it and run simulation and evaluation as normal.
+Once your server is running on a Chat Completions–compatible endpoint, use a config YAML with your endpoint (inline `agent_config` or `agent_config_file_path`) and run simulation and evaluation as normal.
 
 <Tip>
   See [Agent configuration](/simulate-conversation#agent-configuration) for supported protocols and how to configure agent connections.
@@ -199,7 +219,7 @@ num_workers: auto
 ```
 
 <Note>
-  `agent_setup_dir` contains the `agent_config.json` and `knowledge.json` used to drive both simulation and evaluation. For evaluation, point `input_dir` at the folder containing `conversations.json` produced by the simulation step.
+  The example configs use inline `agent_config` in YAML. You can instead set `agent_config_file_path` to a JSON file. Evaluation reads simulation output from the path set in the config.
 </Note>
 
 ---
