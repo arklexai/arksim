@@ -153,9 +153,9 @@ This agent is a customer service agent built with the OpenAI Agents SDK, backed 
 To test your own backend agent against these scenarios:
 
 - **Chat Completions:** Follow the comments in `agent_server/chat_completions/server.py` to swap in your own backend logic or point to your endpoint.
-- **A2A:** Implement your own A2A executor in `agent_server/a2a/`.
+- **A2A:** Implement your own A2A executor in `agent_server/a2a/agent_executor.py`.
 
-Use a config YAML that points to your endpoint (inline `agent_config` or `agent_config_file_path`). Then run simulation and evaluation as above.
+Make sure the `agent_config` field in the `config.yaml`is updated. Then run simulation and evaluation as above.
 
 <Tip>
   See [Agent configuration](/simulate-conversation#agent-configuration) for supported protocols and how to configure agent connections.
@@ -245,12 +245,6 @@ provider: openai
 # Workers for parallel processing; "auto" uses all available threads
 num_workers: auto
 ```
-
-The config also defines a `simulated_user_prompt_template` (Jinja) that uses `scenario.agent_context`, `scenario.goal`, `scenario.knowledge`, and `scenario.user_profile` to drive the simulated user.
-
-<Note>
-  The example directory contains `config.yaml` (OpenAI), `config_a2a.yaml`, and `config_chat_completions.yaml`, the insurance knowledge base under `agent_server/data/`, and the scenario file `scenarios.json`.
-</Note>
 
 ---
 
