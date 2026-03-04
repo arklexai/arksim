@@ -5,6 +5,24 @@ All notable changes to ArkSim will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.6](https://github.com/arklexai/arksim/compare/v0.0.5...v0.0.6) (2026-03-04)
+
+
+### Fixed
+
+* multi-provider chat completions and config-driven LLM ([#60](https://github.com/arklexai/arksim/issues/60)) ([4b8ce23](https://github.com/arklexai/arksim/commit/4b8ce23f6aaefaea6b8f6c87735f408f35ecd01b))
+* respect num_conversations_per_scenario in simulator ([#55](https://github.com/arklexai/arksim/issues/55)) ([28b65b3](https://github.com/arklexai/arksim/commit/28b65b35ffc554ceb22b3ee4db2f9726a80039db))
+
+
+### Documentation
+
+* update quickstart to use examples command, fix examples ([#44](https://github.com/arklexai/arksim/issues/44)) ([97a27db](https://github.com/arklexai/arksim/commit/97a27db762c57d8eb7152de66b856d9dd0802efe))
+
+
+### Changed
+
+* trigger PyPI publish on release instead of tag push ([#62](https://github.com/arklexai/arksim/issues/62)) ([c086aea](https://github.com/arklexai/arksim/commit/c086aea0ac8a66d11c7adfb82cd79183f2e7d747))
+
 ## [0.0.5](https://github.com/arklexai/arksim/compare/v0.0.4...v0.0.5) (2026-03-04)
 
 
