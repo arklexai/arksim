@@ -4,11 +4,26 @@
 from __future__ import annotations
 
 import os
+from pathlib import Path
 
 from fastapi import APIRouter, Request
 from fastapi.responses import FileResponse, JSONResponse
 
+from arksim.ui.api.routes_filesystem import PROJECT_ROOT
+
 router = APIRouter(tags=["results"])
+
+
+def _validate_results_dir(dir_path: str) -> str | None:
+    """Validate that a results directory is within PROJECT_ROOT.
+
+    Returns the resolved path or None if invalid.
+    """
+    resolved = os.path.abspath(dir_path)
+    root = os.path.abspath(PROJECT_ROOT)
+    if not Path(resolved).is_relative_to(root):
+        return None
+    return resolved
 
 
 @router.get("/results")
@@ -25,7 +40,10 @@ def get_results(request: Request, dir: str | None = None) -> dict:
 
     # Try loading from disk
     if dir:
-        results_file = os.path.join(dir, "evaluation_results.json")
+        resolved_dir = _validate_results_dir(dir)
+        if not resolved_dir:
+            return {"results": None, "output_dir": None}
+        results_file = os.path.join(resolved_dir, "evaluation_results.json")
         if os.path.exists(results_file):
             import json
 
@@ -39,7 +57,10 @@ def get_results(request: Request, dir: str | None = None) -> dict:
 @router.get("/results/report", response_model=None)
 def get_report(dir: str) -> FileResponse | JSONResponse:
     """Serve the HTML report file."""
-    report_path = os.path.join(dir, "final_report.html")
+    resolved_dir = _validate_results_dir(dir)
+    if not resolved_dir:
+        return JSONResponse({"error": "Invalid directory"}, status_code=403)
+    report_path = os.path.join(resolved_dir, "final_report.html")
     if os.path.exists(report_path):
         return FileResponse(report_path, media_type="text/html")
     return JSONResponse(
@@ -62,7 +83,10 @@ def get_result_file(dir: str, name: str) -> FileResponse | JSONResponse:
             {"error": "File not allowed"},
             status_code=403,
         )
-    file_path = os.path.join(dir, name)
+    resolved_dir = _validate_results_dir(dir)
+    if not resolved_dir:
+        return JSONResponse({"error": "Invalid directory"}, status_code=403)
+    file_path = os.path.join(resolved_dir, name)
     if not os.path.exists(file_path):
         return JSONResponse(
             {"error": f"{name} not found"},

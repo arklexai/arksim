@@ -227,7 +227,6 @@ All settings can be specified in YAML and overridden via CLI flags (`--key value
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
 | `agent_config` | object | required | Inline agent config (`agent_type`, `agent_name`, `api_config`) |
-
 | `scenario_file_path` | string | required | Path to scenarios JSON |
 | `model` | string | `gpt-5.1` | LLM model for simulated users |
 | `provider` | string | `openai` | LLM provider: `openai`, `claude`, `gemini` |

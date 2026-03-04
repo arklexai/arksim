@@ -60,43 +60,35 @@ class TestCreateAgent:
             )
 
 
+class _ConcreteAgent(BaseAgent):
+    """Minimal concrete subclass for testing."""
+
+    async def get_chat_id(self) -> str:
+        return "test-id"
+
+    async def execute(self, user_query: str, **kwargs: object) -> str:
+        return "response"
+
+
 class TestBaseAgent:
     """Tests for BaseAgent base class."""
 
+    def test_cannot_instantiate_directly(self, valid_agent_config_a2a: dict) -> None:
+        """Test BaseAgent cannot be instantiated (abstract)."""
+        config = AgentConfig(**valid_agent_config_a2a)
+        with pytest.raises(TypeError, match="abstract"):
+            BaseAgent(config)
+
     def test_init_stores_config(self, valid_agent_config_a2a: dict) -> None:
-        """Test BaseAgent stores config on init."""
+        """Test concrete subclass stores config on init."""
         config = AgentConfig(**valid_agent_config_a2a)
-
-        agent = BaseAgent(config)
-
+        agent = _ConcreteAgent(config)
         assert agent.agent_config == config
-
-    async def test_get_chat_id_not_implemented(
-        self, valid_agent_config_a2a: dict
-    ) -> None:
-        """Test get_chat_id raises NotImplementedError."""
-        config = AgentConfig(**valid_agent_config_a2a)
-        agent = BaseAgent(config)
-
-        with pytest.raises(
-            NotImplementedError, match="get_chat_id must be implemented"
-        ):
-            await agent.get_chat_id()
-
-    async def test_execute_not_implemented(self, valid_agent_config_a2a: dict) -> None:
-        """Test execute raises NotImplementedError."""
-        config = AgentConfig(**valid_agent_config_a2a)
-        agent = BaseAgent(config)
-
-        with pytest.raises(NotImplementedError, match="execute must be implemented"):
-            await agent.execute("test query")
 
     async def test_close_default_implementation(
         self, valid_agent_config_a2a: dict
     ) -> None:
         """Test close has default no-op implementation."""
         config = AgentConfig(**valid_agent_config_a2a)
-        agent = BaseAgent(config)
-
-        # Should not raise
-        await agent.close()
+        agent = _ConcreteAgent(config)
+        await agent.close()  # Should not raise

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """FAISS-based document retrieval using LangChain OpenAI Embeddings.
 
 Index layout inside the knowledge base directory:

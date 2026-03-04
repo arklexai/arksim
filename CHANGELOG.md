@@ -12,27 +12,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `-v` / `--version` CLI flag to show arksim version and exit
 - Version display in web UI sidebar (next to "Arksim" title)
 - `arksim examples` CLI command to download example projects from GitHub without cloning
+- Bandit security scanning in CI pipeline
+- Test coverage threshold (60% minimum) enforced in CI
+- 26 new unit test files covering evaluator metrics, CLI utilities, LLM factory, concurrency workers, simulation utilities, error detection, API endpoints, and path validation
+- `from __future__ import annotations` to all source files for consistent typing
+- Path traversal protection on filesystem and results API endpoints
+- Generic error messages in API endpoints to prevent server path leakage
+- Shared evaluation constants (`SCORE_NOT_COMPUTED`, `BEHAVIOR_FAILURE_THRESHOLD`)
+- Quality gates section in CONTRIBUTING.md documenting coverage ratchet policy
+- `codecov.yml` with patch target of 50% to avoid false-positive CI failures on infra changes
 
 ### Changed
 
+- `SCORE_NOT_COMPUTED` display label changed from "N/A (Evaluation Failed)" to "N/A (Not computed)"
+- Removed stale `{chat_id}` placeholder reference from `ChatCompletionsConfig.body` field description
+
 - UI auto-loads scenarios from config on startup instead of always showing the demo
 - File browser shows a hint that browsing is scoped to the launch directory
+- Coverage badge switched from Codecov-hosted to shields.io for reliability
+- Expanded SECURITY.md with response process, scope, and disclosure guidelines
+- Azure OpenAI provider now raises `ValueError` instead of silently returning a raw string when structured output parsing fails
+- `validate_num_workers` rejects zero and negative values
 
 ### Removed
 
 - Project root path from the UI sidebar header
-
-### Added
-
-- Bandit security scanning in CI pipeline
-- Test coverage threshold (60% minimum) enforced in CI
-- 21 new unit test files covering evaluator metrics, CLI utilities, LLM factory, concurrency workers, simulation utilities, and error detection
-- `from __future__ import annotations` to all source files for consistent typing
-
-### Changed
-
-- Coverage badge switched from Codecov-hosted to shields.io for reliability
-- Expanded SECURITY.md with response process, scope, and disclosure guidelines
+- Dead code: unused error message constants, `METRIC_THRESHOLD`, `UNIQUE_BUGS` enum, `flip_hist_content_only`, `LLMConfig`
+- Hidden Unicode characters (U+200C zero-width non-joiner) from e-commerce example data files
 
 ## [0.0.4] - 2026-03-03
 

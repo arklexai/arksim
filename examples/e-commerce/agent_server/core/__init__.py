@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 from .agent import Agent
 from .loader import CrawledObject, Loader, SourceType
 from .retriever import FaissRetriever, build_rag
