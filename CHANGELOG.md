@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `arksim examples` CLI command to download example projects from GitHub without cloning
 - Bandit security scanning in CI pipeline
 - Test coverage threshold (60% minimum) enforced in CI
-- 21 new unit test files covering evaluator metrics, CLI utilities, LLM factory, concurrency workers, simulation utilities, and error detection
+- 26 new unit test files covering evaluator metrics, CLI utilities, LLM factory, concurrency workers, simulation utilities, error detection, API endpoints, and path validation
 - `from __future__ import annotations` to all source files for consistent typing
 - Path traversal protection on filesystem and results API endpoints
 - Generic error messages in API endpoints to prevent server path leakage
