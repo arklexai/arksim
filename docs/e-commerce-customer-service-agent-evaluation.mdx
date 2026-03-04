@@ -120,13 +120,22 @@ This agent is a RAG-based shopping assistant built with OpenAI Agents SDK, backe
     </Tabs>
   </Step>
   <Step title="Run simulation and evaluation">
-    In a **new terminal**, run from the `examples/e-commerce` directory. Set the key that matches your agent config (AGENT_API_KEY for Chat Completions, A2A_API_KEY for A2A), then run with the matching config: `config_chat_completions.yaml` or `config_a2a.yaml`.
+    In a **new terminal**, run from the `examples/e-commerce` directory. Set the key that matches your agent config (AGENT_API_KEY for Chat Completions, A2A_API_KEY for A2A), then run with the matching config.
+
+    **Chat Completions:**
 
     ```bash
     cd examples/e-commerce
-    export AGENT_API_KEY="<YOUR_AGENT_API_KEY>"             # for Chat Completions
-    # export A2A_API_KEY="<YOUR_A2A_API_KEY>"               # for A2A
-    arksim simulate-evaluate config_chat_completions.yaml   # or config_a2a.yaml for A2A
+    export AGENT_API_KEY="<YOUR_AGENT_API_KEY>"
+    arksim simulate-evaluate config_chat_completions.yaml
+    ```
+
+    **A2A:**
+
+    ```bash
+    cd examples/e-commerce
+    export A2A_API_KEY="<YOUR_A2A_API_KEY>"
+    arksim simulate-evaluate config_a2a.yaml
     ```
   </Step>
 </Steps>
