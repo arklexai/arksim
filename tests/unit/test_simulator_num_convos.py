@@ -117,7 +117,9 @@ class TestNumConvosPerScenario:
         assert len(result.conversations) == 6
         assert _patch_conversation() == 6
         for sc in scenarios.scenarios:
-            count = sum(1 for c in result.conversations if c.scenario_id == sc.scenario_id)
+            count = sum(
+                1 for c in result.conversations if c.scenario_id == sc.scenario_id
+            )
             assert count == 2, f"Expected 2 convos for {sc.scenario_id}, got {count}"
 
     @pytest.mark.asyncio
