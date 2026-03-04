@@ -164,7 +164,7 @@ description: "Get started with ArkSim in minutes. This guide walks you through y
             agent_config=agent_config,
             num_conversations_per_scenario=1,
             max_turns=5,
-            num_workers="auto",
+            num_workers="50",
             output_file_path=f"{BANK_INSURANCE_DIR}/results/simulation.json",
         )))
 
@@ -182,7 +182,7 @@ description: "Get started with ArkSim in minutes. This guide walks you through y
             ],
             model="gpt-5.1",
             provider="openai",
-            num_workers="auto",
+            num_workers=50,
             generate_html_report=True,
         ), simulation=simulation, scenarios=scenarios)
 

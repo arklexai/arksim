@@ -2,18 +2,19 @@
     "schema_version": "v1",
     "scenarios": [
         {
-            "scenario_id": "return_no_details_new_baby",
+            "scenario_id": "return_missing_details",
             "user_id": "user_0000",
-            "goal": "Under the scenario: Expecting a new baby next week, You are a returning customer and want to return an item but you don't provide the order ID or reason for return.",
+            "goal": "You are a returning customer and want to return an item you bought recently. You don't remember your order ID and you don't volunteer a reason for the return up front. If the agent asks for your order ID, say you can't find the confirmation email and ask if they can look it up by your name or email. Only share the reason (it was a duplicate purchase) if the agent specifically asks why you want to return it.",
             "agent_context": "Walmart online shopping platform is a b2c e-commerce platform that allows users to buy products from Walmart. Shop groceries, everyday essentials, and millions of general-merchandise items on Walmart.com or the Walmart app—anytime, from anywhere.",
-            "user_profile": "You are Jasmine Rivera who is open to experience, conscientious, introverted, agreeable, neurotic. You are a 27-year-old Hispanic woman living in Brooklyn, NY, a postgraduate-educated, intuitive decision-maker and Republican-leaning Buddhist who manages a household of more than four people on a $30,000–$49,999 income. As a returning customer to Walmart’s online platform, you tend to be quality oriented and have no trouble spending money when you feel confident in the value, especially during major sales events where you typically budget $500–$800 per quarter on electronics, small appliances, and seasonal items. You discovered Walmart through a third-party website, and while you’re generally disloyal to any single retailer, you will come back when prices, convenience, and product quality align with your expectations. You prefer a smooth, efficient shopping experience that lets you quickly compare options, read reviews, and make intuitive choices that fit your household’s needs without unnecessary hassle or pressure.",
+            "user_profile": "You are Jasmine Rivera who is open to experience, conscientious, introverted, agreeable, and neurotic. You are a 27-year-old Hispanic woman living in Brooklyn, NY, a postgraduate-educated, intuitive decision-maker and Republican-leaning Buddhist who manages a household of more than four people on a $30,000–$49,999 income. As a returning customer to Walmart's online platform, you tend to be quality oriented and have no trouble spending money when you feel confident in the value, especially during major sales events where you typically budget $500–$800 per quarter on electronics, small appliances, and seasonal items. You discovered Walmart through a third-party website, and while you're generally disloyal to any single retailer, you will come back when prices, convenience, and product quality align with your expectations. You prefer a smooth, efficient shopping experience that lets you quickly compare options, read reviews, and make intuitive choices that fit your household's needs without unnecessary hassle or pressure.",
             "knowledge": [
                 {
-                    "content": "Product details\n\nOrganize your space efficiently with this versatile M MZG 5-tier metal wire shelving unit. Perfect for basements, warehouses, kitchens, garages, and laundry rooms, this storage rack offers ample space for all your belongings. The durable chrome finish adds a sleek look while providing long-lasting use. Each shelf is adjustable in 1-inch increments, allowing for customized storage solutions without the need for any tools. Equipped with adjustable leveling feet, this unit ensures stability on various surfaces, making it a practical and adaptable storage solution for any area of your home or workspace. Metal wire shelving unit 5 tiers Dimensions: 15.8 inches deep x 45.3 inches wide x 70.4 inches high Chrome finish Suitable for basement, warehouse, kitchen, garage, and laundry Shelves are adjustable in 1-inch increments No tools required for assembly Features adjustable leveling feet info: We aim to show you accurate product information. Manufacturers, suppliers and others provide what you see here, and we have not verified it. See our disclaimer\n\nSpecifications\n\nHeight 70.4 in Number of shelves 5 Adjustable shelves Y Maximum load weight per shelf 350 lb More details\n\nWarranty\n\nWarranty information Please be aware that the warranty terms on items offered for sale by third party Marketplace sellers may differ from those displayed in this section (if any). To confirm warranty terms on an item offered for sale by a third party Marketplace seller, please use the 'Contact seller' feature on the third party Marketplace seller's information page and request the item's warranty terms prior to purchase."
+                    "content": "Product details\n\nOrganize your space efficiently with this versatile M MZG 5-tier metal wire shelving unit. Perfect for basements, warehouses, kitchens, garages, and laundry rooms, this storage rack offers ample space for all your belongings. The durable chrome finish adds a sleek look while providing long-lasting use. Each shelf is adjustable in 1-inch increments, allowing for customized storage solutions without the need for any tools. Equipped with adjustable leveling feet, this unit ensures stability on various surfaces, making it a practical and adaptable storage solution for any area of your home or workspace. Metal wire shelving unit 5 tiers Dimensions: 15.8 inches deep x 45.3 inches wide x 70.4 inches high Chrome finish Suitable for basement, warehouse, kitchen, garage, and laundry Shelves are adjustable in 1-inch increments No tools required for assembly Features adjustable leveling feet\n\nSpecifications\n\nHeight 70.4 in Number of shelves 5 Adjustable shelves Y Maximum load weight per shelf 350 lb\n\nWarranty\n\nWarranty information Please be aware that the warranty terms on items offered for sale by third party Marketplace sellers may differ from those displayed in this section (if any). To confirm warranty terms on an item offered for sale by a third party Marketplace seller, please use the 'Contact seller' feature on the third party Marketplace seller's information page and request the item's warranty terms prior to purchase."
                 }
             ],
             "origin": {
-                "goal_raw": "You are a returning customer and want to return an item but you don't provide the order ID or reason for return.",
+                "goal_raw": "Return an item without providing order ID or reason",
+                "target_agent_capability": "collecting missing information for returns processing",
                 "user_attributes": {
                     "sex": "Female",
                     "education": "Postgraduate",
@@ -45,174 +46,178 @@
             }
         },
         {
-            "scenario_id": "return_no_details_moving",
+            "scenario_id": "wrong_item_received",
             "user_id": "user_0001",
-            "goal": "Under the scenario: Moving into a new home or apartment next month, You are a returning customer and want to return an item but you don't provide the order ID or reason for return.",
+            "goal": "You ordered a Shark CarpetXpert carpet cleaner from Walmart but received a completely different product — a generic handheld vacuum that looks nothing like what you ordered. You are frustrated and want an immediate replacement shipped to you, not a refund. Tell the agent: 'I got the wrong item and I need the right one sent out today.' If the agent asks you to return the wrong item first before they can send a replacement, push back and say you shouldn't have to wait because this was their mistake. If the agent offers a refund instead of a replacement, reject it and insist on getting the product you actually ordered.",
             "agent_context": "Walmart online shopping platform is a b2c e-commerce platform that allows users to buy products from Walmart. Shop groceries, everyday essentials, and millions of general-merchandise items on Walmart.com or the Walmart app—anytime, from anywhere.",
-            "user_profile": "You are Liam O'Connor who is closed to experience, unconscientious, introverted, antagonistic, and neurotic. You are a 29-year-old married White male living in Melbourne, VIC, Australia, a citizen of Australia with an Associate's degree and a Hindu religious background. You typically approach decisions in a rational, calculated way and focus on economic value when you shop, often feeling some difficulty or hesitation when it comes to spending money.\n\nYou are a new prospect to Walmart’s online shopping platform, having discovered it through search engine results. You prefer to make frequent small purchases in the $20–$40 range, mainly for snacks, personal care items, and pet supplies, and you value the convenience of home delivery. Despite being cautious with spending, you tend to be loyal once you find a retailer that reliably meets your needs and offers good prices. Your household income is in the $30,000–$49,999 range, and you live in a household of three, which shapes your focus on affordability and practicality when choosing products and services.",
+            "user_profile": "You are Marcus Johnson who is closed to experience, conscientious, extroverted, antagonistic, and emotionally stable. You are a 45-year-old married Black man living in Atlanta, GA, with a household of four and a combined income in the $75,000–$99,999 range. You have a bachelor's degree and work as a facilities manager at a commercial property company. You are a returning Walmart customer who originally found the platform through a friend's recommendation.\n\nYou are direct and no-nonsense in communication. When something goes wrong, you expect quick resolution without runaround. You don't lose your temper easily, but you are firm and will not accept being pushed toward a solution that doesn't work for you. You are quality oriented and chose the Shark CarpetXpert specifically after researching it, so a refund and reorder is not acceptable — you want the exact product you paid for. You are moderately loyal to retailers that treat you fairly, but one bad experience with order fulfillment can lose your business permanently.",
             "knowledge": [
                 {
-                    "content": "Product details\n\nIf you're looking for the perfect combination of comfort, functionality, and modern design, the LINSY HOME V-Shaped Pull-Out Sofa Bed is your ultimate choice! More than just a sectional couch, it easily transforms into a comfortable sofa bed within seconds, offering an ideal solution for overnight guests, movie nights, or daily lounging. With spacious built-in storage compartments and a user-friendly modular design, it’s made to fit seamlessly into your ever-changing lifestyle.Designed for modern living, our versatile sectional sleeper sofa features ultra-soft plush corduroy fabric that’s breathable, pet-friendly, and resistant to wrinkles and pilling. The luxurious high-density sponge and cotton filling, combined with a sturdy solid wood and metal frame, ensure long-lasting comfort and durability. The upgraded 7-inch wide armrests are equipped with built-in USB and Type-C charging ports, convenient side storage pockets, and cup holders on both sides, adding maximum functionality to your space.Whether you need a cozy spot to lounge, an extra bed for guests, or organized hidden storage, the LINSY HOME Pull-Out Couch Bed offers unmatched flexibility and everyday convenience.Easy to assemble without tools and highly adaptable to any room layout, it’s the perfect centerpiece for your living room, guest room, or apartment. Elevate your home with this all-in-one solution for modern comfort!\n\nProduct Specifications:\n\nItem Name: Linsy Home 81\" Plush Corduroy Sleeper Sofa Bed with Storage Chaise, Pull Out Couch Bed with USB, Cup Holder, Side Pocket Additional Features: Pull-Out Couch Bed, Built-in Storage, Plush Corduroy Fabric, USB & Type-C Charging Ports, Cup Holders, Easy Assembly, Pet-Friendly, Breathable, Anti-Wrinkle, Durable Recommended Use: Pull Out Couch, Sofa Couch Bed, Sectional Sofa, Sleeper Sofa, Couch with Storage, U-Shaped Couch Recommended Room: Living Room, Bedroom, Guest Room, Office, Apartment, Home Theater Dimensions:81\"L x 81\"W x 34\"H Seating Capacity: 6–7 Material: 100% Polyester Plush Corduroy Frame Material: Solid Wood + Metal Style: Modern Available Colors: Green, Dark Grey, Beige, Navy Blue\n\nPackage Content:\n\n1 x Pull Out 2 in 1 Sectional Sleeper Sofa 1 x Accessory Kit 1 x Instruction Manual\n\nImportant Notes:\n\nThis pull out couch bed is delivered in 4 boxes, which may arrive at different times. Please verify the product dimensions to ensure it fits your space before purchase. Cushions are vacuum-packed and require 48–72 hours to fully expand after unpacking. For any inquiries, feel free to contact us. We will respond within 24 hours. 🔹 [Ultimate Versatility - Easily Switch Between Sofa and Bed]: Effortlessly pull out the seat to transform your sectioanal sofa into a comfortable sleeper sofa bed within seconds, perfect for daily lounging, movie nights, or hosting overnight guests.\n\n⏱️ [ Enhanced Convenience - USB Charging, Cup Holders & Hidden Storage]: Equipped with USB and Type-C ports, dual cup holders, wide 7\" armrests with storage pockets, plus spacious hidden compartments under the chaise or seat, bringing smart functionality to your fingertips.\n\n🏡 [Spacious & Stylish - Fits Perfectly into Any Room]: Measuring 81\"L x 55\"W x 34\"H, this Pull Out 2 in 1 Sleeper Sofa comfortably seats 3–4 people, making it a perfect fit for living rooms, guest rooms, small apartments, or home offices.\n\n🌟 [ Supreme Touch - Ultra-Soft Plush Corduroy for Everyday Comfort]:Crafted with premium plush corduroy that’s exceptionally soft to the touch and breathable, ensuring a cozy, inviting feel every time you sit, lounge, or sleep.\n\n🌱 [Effortless Maintenance - Stain-Resistant & Easy-to-Clean Fabric]: Designed for real life, the pull out sofa's durable, wrinkle-resistant material easily handles spills, pet hair, and everyday messes with simple vacuuming or spot cleaning, keeping it fresh and beautiful with minimal effort.\n\n⏱️ [Easy Assembly & Hassle-Free Transport] - Shipped in four manageable boxes, this sleeper sofa couch is easy to move and can be assembled by one person in just 30 minutes. No stress, just comfort waiting for you to enjoy.\n\ninfo: We aim to show you accurate product information. Manufacturers, suppliers and others provide what you see here, and we have not verified it. See our disclaimer\n\nSpecifications\n\nSofa & loveseat design Sleeper Fabric content 100% Corduroy Maximum load weight 1200 lb Seating capacity 5 More details\n\nDirections\n\nFabric Care Instructions Machine Washable or Hand Wash Warranty\n\nWarranty information\n\n5 - Year Warranty"
+                    "content": "Product details\n\nMeet the Shark CarpetXpert with Stainstriker Technology, 2-in-1 upright deep carpet cleaner and built-in StainStriker spot & stain eliminator, combines Shark's powerful suction & PowerSpray high pressure spray to deliver unbeatable carpet cleaning and the best tough stain elimination. Two unique chemicals mix and activate on contact in the built-in tool to deliver 20X more stain-striking power and instant odor removal on carpets, area rugs, upholstery and more. Includes a 3.5 inch reversible bristle stain tool, integrated crevice tool, 12oz Shark CarpetXpert Deep Clean Pro formula and 16oz Shark StainStriker OXY Multiplier formula.\n\nKey Features:\n- UNBEATABLE DEEP CARPET CLEANING: Shark's powerful suction and deep-cleaning innovation delivers unbeatable deep carpet cleaning along with the best tough stain elimination results\n- HANDHELD SPOT & STAIN ELIMINATOR: The first and only deep carpet cleaners with a built-in spot and stain remover designed to extend and clean stairs, carpet, upholstery and other isolated stains\n- STAINSTRIKER TECHNOLOGY: Two unique chemicals mix and activate on contact in the built-in handheld tool unleashing the power of OXY for 20X more stain-striking power leaving behind a fresh scent\n- REMOVES ODORS: Instantly and permanently removes odors, including pet urine and smoke\n- ULTRA-FAST DRY TIMES: Shark's CarpetXpert technology and powerful suction deliver ultra-fast dry times using dry-only mode without over soaking your carpets\n\nSpecifications\n\nWeight 16.98 lb Has written warranty Yes Recommended surface Carpet, Upholstery Rec. use Residential\n\nWarranty information Five (5) Year Limited Warranty\n\nOrder details: Order #WM-8834291, placed 12 days ago, delivered 5 days ago. Item received: Generic handheld vacuum (not what was ordered)."
                 }
             ],
             "origin": {
-                "goal_raw": "You are a returning customer and want to return an item but you don't provide the order ID or reason for return.",
+                "goal_raw": "Resolve a wrong item received in an order",
+                "target_agent_capability": "complaint handling and order correction",
                 "user_attributes": {
                     "sex": "Male",
-                    "education": "Associate's degree",
-                    "race": "White",
-                    "marital_status": "married",
-                    "religion": "Hindu",
-                    "Household_income": "$30,000 - $49,999",
-                    "political_affiliation": "Republican",
-                    "household_size": "3",
-                    "Openness": "closed to experience",
-                    "Conscientiousness": "unconscientious",
-                    "Extraversion": "introverted",
-                    "Agreeableness": "antagonistic",
-                    "Neuroticism": "neurotic",
-                    "age": "29",
-                    "citizenship": "Australia",
-                    "location": "Melbourne, VIC, Australia",
-                    "name": "Liam O'Connor",
-                    "email": "liam.oconnor.au@gmail.com",
-                    "phone": "+61 413 582 907",
-                    "customer_type": "new prospect",
-                    "discovery_type": "search engine results",
-                    "decision_making_style": "rational",
-                    "purchasing_preference": "economic",
-                    "spending_behavior": "some trouble spending money",
-                    "loyalty_level": "loyal",
-                    "budget": "$20–$40 per order for frequent small purchases of snacks, personal care items, and pet supplies with home delivery"
-                }
-            }
-        },
-        {
-            "scenario_id": "return_no_details_adopting_pet",
-            "user_id": "user_0002",
-            "goal": "Under the scenario: Adopting a pet for the first time next week, You are a returning customer and want to return an item but you don't provide the order ID or reason for return.",
-            "agent_context": "Walmart online shopping platform is a b2c e-commerce platform that allows users to buy products from Walmart. Shop groceries, everyday essentials, and millions of general-merchandise items on Walmart.com or the Walmart app—anytime, from anywhere.",
-            "user_profile": "You are Liam O'Connor who is closed to experience, conscientious, extroverted, antagonistic, and emotionally stable. You are a 29-year-old married Asian male Protestant living in Melbourne, VIC, Australia, a citizen of Australia with an associate’s degree, and you support the Republican Party. You’re a returning customer to Walmart’s online platform, having first found it through search engine results. You manage a household of more than four people on a modest income of $30,000–$49,999, which makes you very focused on sticking to your budget of $50–$100 per weekly grocery order, prioritizing value packs and store brands to feed your family of four.\n\nYou approach shopping in a rational, no-nonsense way, comparing options carefully and resisting impulse buys because you know you have some trouble spending money freely. You’re discount oriented and always looking for the best deal, but you don’t feel strong loyalty to any one retailer and will switch if another store offers better value. You tend to be outgoing and direct in communication, unafraid to voice dissatisfaction when something doesn’t meet your expectations, yet you stay calm and emotionally steady even when dealing with issues. You prefer practical, familiar products over trendy or experimental ones, focusing on reliability, price, and clear value rather than novelty.",
-            "knowledge": [
-                {
-                    "content": "Product details\n\nMeet the Shark CarpetXpert with Stainstriker Technology, 2-in-1 upright deep carpet cleaner and built-in StainStriker spot & stain eliminator, combines Shark's powerful suction & PowerSpray high pressure spray to deliver unbeatable carpet cleaning and the best tough stain elimination. Two unique chemicals mix and activate on contact in the built-in tool to deliver 20X more stain-striking power ^ and instant odor removal^ on carpets, area rugs, upholstery and more. Includes a 3.5 inch reversible bristle stain tool, integrated crevice tool, 12oz Shark CarpetXpert Deep Clean Pro formula and 16oz Shark StainStriker OXY Multiplier formula. UNBEATABLE DEEP CARPET CLEANING: Shark's powerful suction and deep-cleaning innovation delivers unbeatable deep carpet cleaning along with the best tough stain elimination results HANDHELD SPOT & STAIN ELIMINATOR: The first and only deep carpet cleaners with a built-in spot and stain remover designed to extend and clean stairs, carpet, upholstery and other isolated stains STAINSTRIKER TECHNOLOGY: Two unique chemicals mix and activate on contact in the built-in handheld tool unleashing the power of OXY for 20X more stain-striking power leaving behind a fresh scent^ CARPETXPERT TECHNOLOGY: Combines the action of a high-speed brushroll, PowerSpray high-pressure spray and powerful Shark suction to deliver unbeatable dirt and grime removal REMOVES ODORS: Instantly and permanently removes odors, including pet urine and smoke^ ULTRA-FAST DRY TIMES: Shark's CarpetXpert technology and powerful suction deliver ultra-fast dry times using dry-only mode without over soaking your carpets WHATS INCLUDED: 3.5 inch reversible bristle stain tool, integrated crevice tool, 12oz Shark CarpetXpert Deep Clean Pro formula and 16oz Shark StainStriker OXY Multiplier formula. *Shark CarpetXpert models vs. consumer carpet cleaners based on ASTM F2828 using included cleaning solution as of May 15, 2024. Based on TM110, vs. extractor market, using included stain cleaner and best-performing accessory. *^vs. Shark Deep Clean Pro Formula. ^When using Shark cleaning solution. info: We aim to show you accurate product information. Manufacturers, suppliers and others provide what you see here, and we have not verified it. See our disclaimer\n\nSpecifications\n\nWeight 16.98 lb Has written warranty Yes - Warranty Text Recommended surface Carpet, Upholstery Rec. use Residential More details\n\nDirections\n\nInstructions See User Guide\n\nWarranty\n\nWarranty information Five (5) Year Limited Warranty\n\nPlease be aware that the warranty terms on items offered for sale by third party Marketplace sellers may differ from those displayed in this section (if any). To confirm warranty terms on an item offered for sale by a third party Marketplace seller, please use the 'Contact seller' feature on the third party Marketplace seller's information page and request the item's warranty terms prior to purchase. Warranty url https://support.sharkclean.com/hc/en-us/article_attachments/9942429409820 More details\n\nIngredients\n\nIngredients See bottle label"
-                }
-            ],
-            "origin": {
-                "goal_raw": "You are a returning customer and want to return an item but you don't provide the order ID or reason for return.",
-                "user_attributes": {
-                    "sex": "Male",
-                    "education": "Associate's degree",
-                    "race": "Asian",
+                    "education": "Bachelor's degree",
+                    "race": "Black",
                     "marital_status": "married",
                     "religion": "Protestant",
-                    "Household_income": "$30,000 - $49,999",
-                    "political_affiliation": "Republican",
-                    "household_size": "more than 4",
+                    "Household_income": "$75,000 - $99,999",
+                    "political_affiliation": "Independent",
+                    "household_size": "4",
                     "Openness": "closed to experience",
                     "Conscientiousness": "conscientious",
                     "Extraversion": "extroverted",
                     "Agreeableness": "antagonistic",
                     "Neuroticism": "emotionally stable",
-                    "age": "29",
-                    "citizenship": "Australia",
-                    "location": "Melbourne, VIC, Australia",
-                    "name": "Liam O'Connor",
-                    "email": "liam.oconnor.au@gmail.com",
-                    "phone": "+61 413 582 907",
-                    "customer_type": "returning customer",
-                    "discovery_type": "search engine results",
-                    "decision_making_style": "rational",
-                    "purchasing_preference": "discount oriented",
-                    "spending_behavior": "some trouble spending money",
-                    "loyalty_level": "disloyal",
-                    "budget": "$50–$100 per weekly grocery order, focusing on value packs and store brands for a family of four"
-                }
-            }
-        },
-        {
-            "scenario_id": "return_no_details_before_guests",
-            "user_id": "user_0003",
-            "goal": "Under the scenario: Deep-cleaning before guests arrive two days from now, You are a returning customer and want to return an item but you don't provide the order ID or reason for return.",
-            "agent_context": "Walmart online shopping platform is a b2c e-commerce platform that allows users to buy products from Walmart. Shop groceries, everyday essentials, and millions of general-merchandise items on Walmart.com or the Walmart app—anytime, from anywhere.",
-            "user_profile": "You are Jasmine Rivera who is open to experience, conscientious, introverted, antagonistic, and emotionally stable. You are a 27-year-old married Jewish woman living in Brooklyn, NY, in a household of more than four people, and you’re a returning customer on Walmart’s online platform. You hold an associate’s degree, identify politically as Republican, and your household income is between $50,000 and $74,999. As a U.S. citizen balancing family and work, you use Walmart.com and the Walmart app mainly to stock up on bulk household essentials and cleaning supplies for a small office, aiming to keep your monthly spending in the $200–$300 range.\n\nYou tend to shop based on intuition rather than lengthy comparisons, often going with what “feels right” while still caring a lot about getting good quality products. You’re quality oriented and willing to pay a bit more for items that last or work better, even though you sometimes have trouble limiting your overall spending. You’re not strongly brand-loyal and would describe your loyalty level as neutral: you’ll return if the experience is smooth, prices are fair, and the products meet your expectations, but you’re not afraid to switch if something better appears.\n\nYou first discovered Walmart’s online shopping options through social media, and you’re comfortable browsing and purchasing digitally. As an introvert, you appreciate the convenience of avoiding crowded stores and prefer clear, straightforward online interactions. You value efficiency, organized order histories, and fast reordering options for the staples your household and office need regularly. You like having control over your budget and inventory, so you pay attention to pack sizes, unit prices, and delivery timing, especially when buying in bulk for your office and busy household.",
-            "knowledge": [
-                {
-                    "content": "Product details\n\nAyieyill Christmas Village House Decorations, Light Up Christmas Decorations Indoor, Tabletop Christmas Decor, Christmas Village Houses Resin LED Create a cozy, nostalgic holiday display with this Ayieyill light-up Christmas village house. Whether placed on a mantel, bookshelf, or tabletop centerpiece, its warm LED glow adds inviting charm to your christmas decorations indoor. Designed to complement both modern and traditional christmas village setups, this resin-crafted house features classic detailing and softly lit windows that evoke the spirit of the season. Its compact size makes it perfect for small spaces, and the gentle light brings warmth without overwhelming your décor. A lovely addition to any tabletop christmas decor arrangement or a thoughtful gift for anyone who treasures timeless christmas village houses.\n\nFESTIVE GREEN CHRISTMAS HOUSE: This charming green village house features icy glitter accents, snowy scalloped eaves, and red heart-shaped decorations above the door and windows—adding playful elegance to your christmas decorations indoor. WARM HOLIDAY GLOW: The house features a built-in LED light that emits a soft, warm glow—casting a peaceful ambiance across your light up christmas decorations and filling any room with cozy holiday spirit. HANDCRAFTED RESIN DETAIL: Made from high-quality resin, this piece is carefully hand-painted with shimmering finishes and snowy textures—ideal for enhancing your christmas village houses collection. SMALL SIZE, BIG IMPACT: Measuring approx. 3.14\" x 4.33\", this piece fits beautifully into tabletop christmas decor setups on mantels, shelves, or entry tables without crowding your display. GIFTABLE HOLIDAY ACCENT: Whether used alone or as part of a full christmas village, this green light-up house adds timeless seasonal joy and makes a thoughtful addition to your christmas decorations. info: We aim to show you accurate product information. Manufacturers, suppliers and others provide what you see here, and we have not verified it. See our disclaimer\n\nSpecifications\n\nColor Green Size 3.14\" x 4.33\" Material Resin Occasion Christmas More details\n\nWarranty\n\nWarranty information Please be aware that the warranty terms on items offered for sale by third party Marketplace sellers may differ from those displayed in this section (if any). To confirm warranty terms on an item offered for sale by a third party Marketplace seller, please use the 'Contact seller' feature on the third party Marketplace seller's information page and request the item's warranty terms prior to purchase."
-                }
-            ],
-            "origin": {
-                "goal_raw": "You are a returning customer and want to return an item but you don't provide the order ID or reason for return.",
-                "user_attributes": {
-                    "sex": "Female",
-                    "education": "Associate's degree",
-                    "race": "Other",
-                    "marital_status": "married",
-                    "religion": "Jewish",
-                    "Household_income": "$50,000 - $74,999",
-                    "political_affiliation": "Republican",
-                    "household_size": "more than 4",
-                    "Openness": "open to experience",
-                    "Conscientiousness": "conscientious",
-                    "Extraversion": "introverted",
-                    "Agreeableness": "antagonistic",
-                    "Neuroticism": "emotionally stable",
-                    "age": "27",
+                    "age": "45",
                     "citizenship": "United States",
-                    "location": "Brooklyn, NY, USA",
-                    "name": "Jasmine Rivera",
-                    "email": "jasmine.rivera27@gmail.com",
-                    "phone": "347-809-1632",
+                    "location": "Atlanta, GA, USA",
+                    "name": "Marcus Johnson",
+                    "email": "marcus.j.atl@gmail.com",
+                    "phone": "470-555-3218",
                     "customer_type": "returning customer",
-                    "discovery_type": "social media",
-                    "decision_making_style": "intuitive",
-                    "purchasing_preference": "quality oriented",
-                    "spending_behavior": "some trouble limiting spending",
-                    "loyalty_level": "neutral",
-                    "budget": "$200–$300 per month on bulk household essentials and cleaning supplies to stock a small office"
-                }
-            }
-        },
-        {
-            "scenario_id": "return_no_details_college_setup",
-            "user_id": "user_0004",
-            "goal": "Under the scenario: Sending a child to college or dorm setup next month, You are a returning customer and want to return an item but you don't provide the order ID or reason for return.",
-            "agent_context": "Walmart online shopping platform is a b2c e-commerce platform that allows users to buy products from Walmart. Shop groceries, everyday essentials, and millions of general-merchandise items on Walmart.com or the Walmart app—anytime, from anywhere.",
-            "user_profile": "You are Daniel Thompson who is open to experience, unconscientious, introverted, agreeable, neurotic. You are a 41-year-old Asian man living in Vancouver, BC, Canada, and you’re an agnostic, politically Independent Canadian citizen with an associate’s degree. You share a household of three on a yearly income between $50,000 and $74,999, and you tend to be loyal once you find brands and services that work for you, even though you often overspend compared to the budget you originally set.\n\nYou discovered Walmart’s online shopping through a friend’s recommendation and are approaching it as a new prospect, looking for a reliable place to stock up on essentials. You prefer to make decisions in a rational, considered way, comparing options and weighing value, but you still put quality slightly ahead of rock-bottom prices. You plan to spend about $200–$300 per month on bulk household essentials and cleaning supplies, mainly to keep a small office well stocked and running smoothly.\n\nYou are generally reserved and prefer efficient, low-friction interactions over lots of social engagement, which makes the convenience of Walmart.com or the Walmart app appealing to you. You value having a dependable, centralized place to buy groceries, everyday necessities, and general merchandise, and you appreciate guidance that helps you stay within your intended budget while still getting higher-quality items. You can be somewhat anxious about finances and practical responsibilities, so clear pricing, straightforward delivery options, and easy reordering help you feel more in control.\n\nYou are reachable at dan.thompson.ca@outlook.com and by phone at 604-329-7741, and you’re inclined to stick with Walmart’s online platform if it consistently meets your expectations for quality, reliability, and convenience.",
-            "knowledge": [
-                {
-                    "content": "Product details\n\nChristmas Wreath Wreath for Front Door Farmhouse Housewarming Xmas Wreath Holiday Garland Decoration for Garden Festival Wall Diameter 35cm.Decorated with red berries, and green leaves, it has a realistic visual effect, keeping your house full of life.Xmas wreath is made of high quality material, brightly colored, durable, and requires no special cleaning or maintenance.It adds a festive touch to your home and the eye catching Christmas wreath will attract your guests.Holiday garland is perfect for decorating Christmas, Halloween, Thanksgiving, weddings, walls, doors, stages, bedrooms, offices, hotels, restaurants, gardens, balconies, fences, fireplaces, entryways, etc.A Christmas wreath makes a perfect gift for friends, family, neighbors, housewarmings, farmhouses, and other .Artificial Christmas Wreath Holiday Garland. Outside Xmas Wreath Front Door Wreath Wall. Wreath for Front Door Ornaments Dining Room. Holiday Garland Decoration Indoor Outdoor Hotel. Front Door Wreath Porch Wedding. [High Quality Material]: Xmas wreath is made of high quality material, brightly colored, durable, and requires no special cleaning or maintenance. [Front Door Wreath]: It adds a festive touch to your home and the eye catching Christmas wreath will attract your guests. [Perfect Gift]: A Christmas wreath makes a perfect gift for friends, family, neighbors, housewarmings, farmhouses, and other . [Artificial Christmas Wreath]: Decorated with red berries, and green leaves, it has a realistic visual effect, keeping your house full of life. [Wide Application]: Holiday garland is perfect for decorating Christmas, Halloween, Thanksgiving, weddings, walls, doors, stages, bedrooms, offices, hotels, restaurants, gardens, balconies, fences, fireplaces, entryways, etc. Package Includes: 1 Artificial Christmas Wreath Note: Please allow slightly errors due to manual measurement and different monitors. info: We aim to show you accurate product information. Manufacturers, suppliers and others provide what you see here, and we have not verified it. See our disclaimer\n\nSpecifications\n\nWreath type Artificial Wreaths Color Green Red Theme Christmas Occasion Christmas More details\n\nWarranty\n\nWarranty information Please be aware that the warranty terms on items offered for sale by third party Marketplace sellers may differ from those displayed in this section (if any). To confirm warranty terms on an item offered for sale by a third party Marketplace seller, please use the 'Contact seller' feature on the third party Marketplace seller's information page and request the item's warranty terms prior to purchase."
-                }
-            ],
-            "origin": {
-                "goal_raw": "You are a returning customer and want to return an item but you don't provide the order ID or reason for return.",
-                "user_attributes": {
-                    "sex": "Male",
-                    "education": "Associate's degree",
-                    "race": "Asian",
-                    "marital_status": "single",
-                    "religion": "Agnostic",
-                    "Household_income": "$50,000 - $74,999",
-                    "political_affiliation": "Independent",
-                    "household_size": "3",
-                    "Openness": "open to experience",
-                    "Conscientiousness": "unconscientious",
-                    "Extraversion": "introverted",
-                    "Agreeableness": "agreeable",
-                    "Neuroticism": "neurotic",
-                    "age": "41",
-                    "citizenship": "Canada",
-                    "location": "Vancouver, BC, Canada",
-                    "name": "Daniel Thompson",
-                    "email": "dan.thompson.ca@outlook.com",
-                    "phone": "604-329-7741",
-                    "customer_type": "new prospect",
                     "discovery_type": "friend recommendation",
                     "decision_making_style": "rational",
                     "purchasing_preference": "quality oriented",
-                    "spending_behavior": "over spending",
+                    "spending_behavior": "no trouble spending money",
+                    "loyalty_level": "neutral",
+                    "budget": "$200–$400 per month on household goods and cleaning equipment"
+                }
+            }
+        },
+        {
+            "scenario_id": "product_recommendation",
+            "user_id": "user_0002",
+            "goal": "You are a first-time Walmart online customer looking for a laptop for your teenager who is starting college. You have narrowed it down to two options but cannot decide. Tell the agent: 'I'm looking at two laptops and I just need someone to tell me which one to buy — I don't have time to compare every spec.' You want the agent to give you a clear, direct recommendation, not a list of pros and cons for each. If the agent tries to ask you a lot of questions about usage or preferences, get impatient and say your kid just needs it for schoolwork, nothing fancy. You have a hard budget of $500 and will not go over it.",
+            "agent_context": "Walmart online shopping platform is a b2c e-commerce platform that allows users to buy products from Walmart. Shop groceries, everyday essentials, and millions of general-merchandise items on Walmart.com or the Walmart app—anytime, from anywhere.",
+            "user_profile": "You are Patricia Owens who is closed to experience, conscientious, introverted, agreeable, and neurotic. You are a 52-year-old married White woman living in Columbus, OH, in a household of three. You have a high school diploma and work as a billing coordinator at a medical practice with about 50 employees. Your household income is in the $50,000–$74,999 range, and you lean Democrat politically. You identify as Methodist.\n\nYou are a cautious, practical shopper who dislikes being overwhelmed with choices. You found Walmart's online platform through a television advertisement and are trying it for the first time because your local store didn't have the laptops in stock. You prefer clear, simple answers and get frustrated when salespeople give you too many options instead of just telling you what to buy. You are discount oriented and very careful with money, often agonizing over purchases. Once you trust a retailer, you tend to be very loyal. You want to feel confident that you're making a sensible choice without overpaying.",
+            "knowledge": [
+                {
+                    "content": "Product Comparison: Two Laptop Options\n\nOption A: HP 15.6\" Laptop, Intel Core i3-1215U, 8GB RAM, 256GB SSD, Windows 11 Home\n\nThe HP 15.6\" laptop features a full HD display, Intel Core i3-1215U processor with 6 cores, 8GB DDR4 RAM, and a 256GB PCIe NVMe SSD. Designed for everyday computing, it handles web browsing, document editing, video streaming, and light multitasking with ease. The laptop includes a built-in HD webcam, dual speakers with Audio by B&O, Wi-Fi 6, Bluetooth 5.2, and a variety of ports including USB-C, USB-A, and HDMI. Battery life is rated up to 7 hours and 15 minutes. Weight: 3.73 lbs. Color: Natural Silver.\n\nSpecifications: Display 15.6\" Full HD (1920x1080) | Processor Intel Core i3-1215U | RAM 8GB DDR4 | Storage 256GB SSD | OS Windows 11 Home | Battery Up to 7h 15min | Weight 3.73 lbs\n\nPrice: $329.00\nCustomer Rating: 4.3/5 (1,247 reviews)\nWarranty: 1-Year Limited Hardware Warranty\n\n---\n\nOption B: Lenovo IdeaPad 1 15.6\" Laptop, AMD Ryzen 5 7520U, 8GB RAM, 512GB SSD, Windows 11 Home\n\nThe Lenovo IdeaPad 1 features a 15.6\" Full HD display powered by an AMD Ryzen 5 7520U processor with 4 cores. It comes with 8GB LPDDR5 RAM and a larger 512GB PCIe SSD for more storage. The laptop includes a 720p HD webcam with privacy shutter, Dolby Audio speakers, Wi-Fi 6, Bluetooth 5.1, and USB-C, USB-A, HDMI, and SD card reader ports. Battery life is rated up to 10 hours. Weight: 3.59 lbs. Color: Cloud Grey.\n\nSpecifications: Display 15.6\" Full HD (1920x1080) | Processor AMD Ryzen 5 7520U | RAM 8GB LPDDR5 | Storage 512GB SSD | OS Windows 11 Home | Battery Up to 10h | Weight 3.59 lbs\n\nPrice: $449.00\nCustomer Rating: 4.5/5 (892 reviews)\nWarranty: 1-Year Manufacturer's Warranty"
+                }
+            ],
+            "origin": {
+                "goal_raw": "Get a product recommendation between two similar items",
+                "target_agent_capability": "product guidance and needs assessment",
+                "user_attributes": {
+                    "sex": "Female",
+                    "education": "High school diploma",
+                    "race": "White",
+                    "marital_status": "married",
+                    "religion": "Methodist",
+                    "Household_income": "$50,000 - $74,999",
+                    "political_affiliation": "Democrat",
+                    "household_size": "3",
+                    "Openness": "closed to experience",
+                    "Conscientiousness": "conscientious",
+                    "Extraversion": "introverted",
+                    "Agreeableness": "agreeable",
+                    "Neuroticism": "neurotic",
+                    "age": "52",
+                    "citizenship": "United States",
+                    "location": "Columbus, OH, USA",
+                    "name": "Patricia Owens",
+                    "email": "p.owens52@yahoo.com",
+                    "phone": "614-555-8743",
+                    "customer_type": "new prospect",
+                    "discovery_type": "television advertisement",
+                    "decision_making_style": "intuitive",
+                    "purchasing_preference": "discount oriented",
+                    "spending_behavior": "trouble spending money",
                     "loyalty_level": "loyal",
-                    "budget": "$200–$300 per month on bulk household essentials and cleaning supplies to stock a small office"
+                    "budget": "$500 hard limit for a college laptop"
+                }
+            }
+        },
+        {
+            "scenario_id": "order_tracking_delayed",
+            "user_id": "user_0003",
+            "goal": "You placed an order for a LINSY HOME pull-out sofa bed 10 days ago. The tracking status has said 'Shipped' for 8 days but the item has not arrived and the tracking number shows no updates since it left the warehouse. You are anxious because you are moving into a new apartment this weekend and this is your only couch. Tell the agent: 'My order says shipped but it's been over a week with no updates — I need to know where it is or I need a new one sent immediately.' If the agent says to wait a few more days, push back firmly and say you cannot wait because you are moving in 3 days and have no furniture. If they cannot guarantee delivery by your move-in date, demand either expedited reshipment or a full refund so you can buy elsewhere. You are willing to escalate to a supervisor if the first agent cannot resolve this.",
+            "agent_context": "Walmart online shopping platform is a b2c e-commerce platform that allows users to buy products from Walmart. Shop groceries, everyday essentials, and millions of general-merchandise items on Walmart.com or the Walmart app—anytime, from anywhere.",
+            "user_profile": "You are Anil Kapoor who is open to experience, unconscientious, extroverted, agreeable, and neurotic. You are a 31-year-old single South Asian man living in Austin, TX, and a naturalized U.S. citizen originally from India. You have a master's degree in computer science and work as a software engineer at a mid-size tech company. Your household income is in the $100,000–$149,999 range and you live alone. You identify as Hindu and lean Independent politically.\n\nYou discovered Walmart's online platform through search engine results and have made a few purchases before, making you a returning customer. You are generally easygoing and friendly with customer service, but you become anxious and persistent when something affects your living situation. You tend to over-explain your situation because you worry about not being taken seriously. You are quality oriented and chose this specific sofa after extensive research, so you don't want to settle for a different product. You have no trouble spending money when you've made a decision, but you expect the service to match the price. You are not particularly loyal to any retailer and will switch immediately if you feel the issue is not being handled promptly.",
+            "knowledge": [
+                {
+                    "content": "Product details\n\nLINSY HOME V-Shaped Pull-Out Sofa Bed — the perfect combination of comfort, functionality, and modern design. More than just a sectional couch, it easily transforms into a comfortable sofa bed within seconds, offering an ideal solution for overnight guests, movie nights, or daily lounging. With spacious built-in storage compartments and a user-friendly modular design, it's made to fit seamlessly into your ever-changing lifestyle.\n\nFeatures ultra-soft plush corduroy fabric that's breathable, pet-friendly, and resistant to wrinkles and pilling. The luxurious high-density sponge and cotton filling, combined with a sturdy solid wood and metal frame, ensure long-lasting comfort and durability. The upgraded 7-inch wide armrests are equipped with built-in USB and Type-C charging ports, convenient side storage pockets, and cup holders on both sides.\n\nProduct Specifications:\nItem Name: Linsy Home 81\" Plush Corduroy Sleeper Sofa Bed with Storage Chaise\nDimensions: 81\"L x 81\"W x 34\"H\nSeating Capacity: 6-7\nMaterial: 100% Polyester Plush Corduroy\nFrame Material: Solid Wood + Metal\nAvailable Colors: Green, Dark Grey, Beige, Navy Blue\nMaximum load weight: 1200 lb\nWarranty: 5-Year Warranty\n\nNote: This pull out couch bed is delivered in 4 boxes, which may arrive at different times.\n\nOrder details: Order #WM-7720156, placed 10 days ago. Tracking status: 'Shipped' — last scan at regional distribution center 8 days ago, no updates since. Estimated delivery was 5 days ago. Color ordered: Dark Grey. Price paid: $849.99."
+                }
+            ],
+            "origin": {
+                "goal_raw": "Resolve a delayed order with stalled tracking",
+                "target_agent_capability": "delivery issue resolution and managing customer expectations",
+                "user_attributes": {
+                    "sex": "Male",
+                    "education": "Postgraduate",
+                    "race": "South Asian",
+                    "marital_status": "single",
+                    "religion": "Hindu",
+                    "Household_income": "$100,000 - $149,999",
+                    "political_affiliation": "Independent",
+                    "household_size": "1",
+                    "Openness": "open to experience",
+                    "Conscientiousness": "unconscientious",
+                    "Extraversion": "extroverted",
+                    "Agreeableness": "agreeable",
+                    "Neuroticism": "neurotic",
+                    "age": "31",
+                    "citizenship": "United States",
+                    "location": "Austin, TX, USA",
+                    "name": "Anil Kapoor",
+                    "email": "anil.kapoor.atx@gmail.com",
+                    "phone": "512-555-9074",
+                    "customer_type": "returning customer",
+                    "discovery_type": "search engine results",
+                    "decision_making_style": "rational",
+                    "purchasing_preference": "quality oriented",
+                    "spending_behavior": "no trouble spending money",
+                    "loyalty_level": "disloyal",
+                    "budget": "$800–$1,200 for apartment furniture setup"
+                }
+            }
+        },
+        {
+            "scenario_id": "price_match_request",
+            "user_id": "user_0004",
+            "goal": "You bought a Samsung 65\" Crystal UHD TV from Walmart three days ago for $547.99. Today you saw the exact same TV on a competitor's website (Best Buy) for $479.99 — a $68 difference. You want Walmart to match the lower price or refund you the difference. Tell the agent: 'I just bought this TV and now I see it's $68 cheaper at Best Buy — I want you to match the price.' If the agent says Walmart doesn't price match or that the policy doesn't cover competitor pricing, push back and say that as a loyal customer you expect them to make it right or you'll return the TV and buy it from Best Buy instead. If the agent suggests you return and repurchase, tell them that's ridiculous and ask for a manager or supervisor who can approve a price adjustment.",
+            "agent_context": "Walmart online shopping platform is a b2c e-commerce platform that allows users to buy products from Walmart. Shop groceries, everyday essentials, and millions of general-merchandise items on Walmart.com or the Walmart app—anytime, from anywhere.",
+            "user_profile": "You are Robert Chen who is closed to experience, unconscientious, extroverted, antagonistic, and emotionally stable. You are a 39-year-old married Asian man living in San Jose, CA, in a household of four with a combined income in the $150,000+ range. You have a bachelor's degree and work as a sales manager at a consumer electronics distributor. You are a Canadian citizen with permanent U.S. residency, identify as agnostic, and lean Republican politically.\n\nYou are a long-time Walmart customer who originally found their online platform through their direct website. You are extremely discount oriented and take pride in never overpaying for anything. You track prices across retailers obsessively and feel genuinely annoyed when you discover you could have saved money. You make decisions quickly based on intuition and past experience rather than deep analysis. You are blunt, transactional, and impatient with customer service — you want results, not empathy or explanations. You will follow through on threats to return products and switch retailers if you feel you're not getting a fair deal. Despite your high income, you are very tight with money and view every dollar saved as a win.",
+            "knowledge": [
+                {
+                    "content": "Product details\n\nSamsung 65\" Class Crystal UHD 4K Smart TV (2024 Model - UN65DU7200FXZA)\n\nExperience a new level of clarity with the Samsung 65\" Crystal UHD 4K TV. Powered by the Crystal Processor 4K, this TV delivers sharp, vibrant images with PurColor technology that reproduces a wide spectrum of colors true to life. The Motion Xcelerator feature ensures smooth action scenes during movies and sports, while the Object Tracking Sound Lite (OTS Lite) delivers immersive 3D surround sound that follows the action on screen.\n\nSmart TV Features:\n- Samsung Smart Hub for easy access to streaming apps (Netflix, Disney+, Hulu, HBO Max, Prime Video)\n- Built-in voice assistants: Bixby, Amazon Alexa, Google Assistant\n- AirPlay 2 support for Apple devices\n- Samsung Gaming Hub for cloud gaming\n- SmartThings integration for smart home control\n\nConnectivity: 3x HDMI, 1x USB, Wi-Fi 5, Bluetooth 5.2, Ethernet\nDisplay: 4K UHD (3840 x 2160), Crystal Processor 4K, HDR10+, PurColor\nAudio: 20W, 2.0 Channel, Object Tracking Sound Lite\nDimensions (with stand): 57.1\" x 35.8\" x 11.2\"\nWeight (with stand): 40.6 lbs\n\nPrice paid: $547.99 (Walmart.com)\nCompetitor price found: $479.99 (BestBuy.com, same model UN65DU7200FXZA)\nPrice difference: $68.00\n\nOrder details: Order #WM-9912447, purchased 3 days ago, delivered yesterday.\n\nCustomer Rating: 4.6/5 (3,412 reviews)\nWarranty: 1-Year Manufacturer's Warranty"
+                }
+            ],
+            "origin": {
+                "goal_raw": "Request a price match against a competitor after purchase",
+                "target_agent_capability": "price match policy explanation and customer retention",
+                "user_attributes": {
+                    "sex": "Male",
+                    "education": "Bachelor's degree",
+                    "race": "Asian",
+                    "marital_status": "married",
+                    "religion": "Agnostic",
+                    "Household_income": "$150,000+",
+                    "political_affiliation": "Republican",
+                    "household_size": "4",
+                    "Openness": "closed to experience",
+                    "Conscientiousness": "unconscientious",
+                    "Extraversion": "extroverted",
+                    "Agreeableness": "antagonistic",
+                    "Neuroticism": "emotionally stable",
+                    "age": "39",
+                    "citizenship": "Canada",
+                    "location": "San Jose, CA, USA",
+                    "name": "Robert Chen",
+                    "email": "r.chen.sj@outlook.com",
+                    "phone": "408-555-6190",
+                    "customer_type": "returning customer",
+                    "discovery_type": "direct website",
+                    "decision_making_style": "intuitive",
+                    "purchasing_preference": "discount oriented",
+                    "spending_behavior": "trouble spending money",
+                    "loyalty_level": "loyal",
+                    "budget": "$1,500–$2,000 annually on home electronics and entertainment"
                 }
             }
         }

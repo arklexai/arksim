@@ -50,7 +50,7 @@ class EvaluationInput(BaseModel):
     model: str = Field(default=DEFAULT_MODEL, description="LLM model for evaluation")
     provider: str | None = Field(default=DEFAULT_PROVIDER, description="LLM provider")
     num_workers: int | str = Field(
-        default="auto",
+        default=50,
         description="Number of parallel workers (use 'auto' to default to 4)",
     )
     custom_metrics_file_paths: list[str] = Field(
@@ -91,7 +91,7 @@ class EvaluationParams(BaseModel):
     agent_name: str = "Agent"
     code_file_path: str | None = None
     entry_function: str | None = None
-    num_workers: int | str = Field(default="auto")
+    num_workers: int | str = Field(default=50)
     custom_metrics: list[QuantitativeMetric] = Field(default_factory=list)
     custom_qualitative_metrics: list[QualitativeMetric] = Field(default_factory=list)
     metrics_to_run: list[str] | None = None

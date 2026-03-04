@@ -119,7 +119,7 @@ For the full scenario schema (all fields and types), see [Schema Reference](/sch
 
 ## Writing Scenarios
 
-You can write scenario files manually. The minimum required fields are `scenario_id`, `goal`, and `user_profile`:
+You can write scenario files manually. The required fields are `scenario_id`, `user_id`, `goal`, `agent_context`, and `user_profile`:
 
 ```json
 {
@@ -127,7 +127,9 @@ You can write scenario files manually. The minimum required fields are `scenario
   "scenarios": [
     {
       "scenario_id": "my-scenario-001",
+      "user_id": "user-001",
       "goal": "You want to find out whether your home insurance policy covers water damage from a burst pipe.",
+      "agent_context": "You are a helpful home insurance assistant for XYZ Insurance.",
       "user_profile": "You are Jordan, an existing customer from Calgary, AB, Canada. You are detail-oriented and want a clear answer.",
     }
   ]
@@ -139,7 +141,6 @@ You can write scenario files manually. The minimum required fields are `scenario
 
   - Write `goal` in second person ("You want to...") so it reads naturally as a simulator instruction.
   - `knowledge` can be omitted if the simulated user has no specific background information.
-  - `user_id` defaults to `scenario_id` when omitted.
   - `origin` can be omitted for hand-authored scenarios.
 </Note>
 

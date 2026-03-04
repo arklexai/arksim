@@ -50,8 +50,8 @@ function arksim() {
       outputFilePath: '',
       numConversations: 5,
       maxTurns: 5,
-      numWorkers: 'auto',
-      evalNumWorkers: 'auto',
+      numWorkers: '50',
+      evalNumWorkers: '50',
       generateHtmlReport: true,
     },
 
@@ -61,7 +61,7 @@ function arksim() {
     provider: 'openai',
     numConversations: 5,
     maxTurns: 5,
-    numWorkers: 'auto',
+    numWorkers: '50',
     outputFilePath: '',
 
     evalAgentConfigFilePath: '',
@@ -69,7 +69,7 @@ function arksim() {
     evalProvider: 'openai',
     evalInputSource: 'auto',
     evalSimulationFilePath: '',
-    evalNumWorkers: 'auto',
+    evalNumWorkers: '50',
     generateHtmlReport: true,
     scoreThreshold: '',
     metricsToRun: [],
@@ -442,7 +442,7 @@ function arksim() {
         provider: this.provider,
         num_conversations: parseInt(this.numConversations) || this._defaults.numConversations,
         max_turns: parseInt(this.maxTurns) || this._defaults.maxTurns,
-        num_workers: this.numWorkers || 'auto',
+        num_workers: this.numWorkers || 50,
       };
       const resp = await fetch('/api/fs/config', {
         method: 'POST',
@@ -463,7 +463,7 @@ function arksim() {
         agent_config_file_path: this.evalAgentConfigFilePath || this.agentConfigFilePath,
         model: this.evalModel,
         provider: this.evalProvider,
-        num_workers: this.evalNumWorkers || 'auto',
+        num_workers: this.evalNumWorkers || 50,
         generate_html_report: this.generateHtmlReport,
         score_threshold: this.scoreThreshold ? parseFloat(this.scoreThreshold) : undefined,
       };

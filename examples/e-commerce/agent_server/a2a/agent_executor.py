@@ -8,8 +8,8 @@ from a2a.utils import new_agent_text_message
 from ..core.agent import Agent  # noqa: TID252
 
 
-class BankInsuranceAgentExecutor(AgentExecutor):
-    """Bank-Insurance Agent Executor."""
+class EcommerceAgentExecutor(AgentExecutor):
+    """E-commerce Agent Executor."""
 
     def __init__(self) -> None:
         self.agent_cache: dict[str, Agent] = {}

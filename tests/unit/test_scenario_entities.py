@@ -43,3 +43,11 @@ class TestScenarioValidator:
         data["user_profile"] = ""
         s = Scenario(**data)
         assert s.user_profile == ""
+
+    def test_without_knowledge_and_origin(self) -> None:
+        data = self._base()
+        del data["knowledge"]
+        del data["origin"]
+        s = Scenario(**data)
+        assert s.knowledge == []
+        assert s.origin == {}

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel, Field, model_validator
 
 from arksim.utils.output import load_json_file
 
@@ -19,9 +19,9 @@ class Scenario(BaseModel):
     user_id: str
     goal: str
     agent_context: str
-    knowledge: list[KnowledgeItem]
+    knowledge: list[KnowledgeItem] = []
     user_profile: str
-    origin: dict
+    origin: dict = Field(default_factory=dict)
 
     @model_validator(mode="before")
     @classmethod
