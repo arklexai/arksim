@@ -108,11 +108,11 @@ This agent is a RAG-based shopping assistant built with OpenAI Agents SDK, backe
         Run from the repository root (or the directory that contains the `examples` package). If your layout differs, use the module path that resolves to `agent_server/a2a/server.py` under the e-commerce example.
       </Tab>
       <Tab title="Chat Completions">
-        Exposes an OpenAI Chat Completions-compatible endpoint on port `8080` at `/chat/completions`. Run from the repository root:
+        Exposes an OpenAI Chat Completions-compatible endpoint on port `8888` at `/chat/completions`. Run from the repository root:
 
         ```bash
         export AGENT_API_KEY=<YOUR_AGENT_API_KEY>
-        python -m examples.e_commerce.agent_server.chat_completions.server
+        python -m examples.e-commerce.agent_server.chat_completions.server
         ```
       </Tab>
     </Tabs>
