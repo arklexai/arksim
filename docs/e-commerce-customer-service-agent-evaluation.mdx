@@ -248,15 +248,10 @@ num_workers: auto
 
 ## Output
 
-When run from `examples/e-commerce`, paths are relative to that directory (as set in `config.yaml`).
+Results are written under the example directory:
 
-**Simulation** writes to `results/simulation/`:
-
-- `simulation.json`: full simulation output, including transcripts of every simulated conversation and the resolved goals used to drive each simulated user
-
-**Evaluation** writes to `results/evaluation/`:
-
-| File                | Contents                                                                                                   |
-| ------------------- | ---------------------------------------------------------------------------------------------------------- |
-| `evaluation.json`   | Full evaluation results: per-turn and per-conversation scores, unique error patterns, and metric reasoning |
-| `final_report.html` | Interactive HTML report for browsing and sharing results (when `generate_html_report: true`)               |
+| Location                                 | Contents                                                                 |
+| ---------------------------------------- | ------------------------------------------------------------------------ |
+| `./results/simulation/simulation.json`   | Simulated conversations from the simulation step                         |
+| `./results/evaluation/evaluation.json`   | Evaluation results (per-turn and per-conversation scores, unique errors) |
+| `./results/evaluation/final_report.html` | Interactive HTML report for browsing and sharing results                 |
