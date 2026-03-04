@@ -80,8 +80,10 @@ def resolve_model_paths(
             )
             if resolved is not None and resolved != path:
                 logger.debug("%s resolved to: %s", attr, resolved)
-                setattr(model, attr, resolved)
+                object.__setattr__(model, attr, resolved)
 
+    # List path overrides are per-field, not per-element: if the CLI
+    # overrides the field, all elements are left as cwd-relative.
     for attr in list_path_attrs:
         paths = getattr(model, attr)
         if paths:
@@ -93,4 +95,4 @@ def resolve_model_paths(
                 resolved_list.append(resolved if resolved is not None else p)
             if resolved_list != paths:
                 logger.debug("%s resolved to: %s", attr, resolved_list)
-                setattr(model, attr, resolved_list)
+                object.__setattr__(model, attr, resolved_list)
