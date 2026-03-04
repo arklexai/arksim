@@ -1,3 +1,24 @@
+<!--
+  PR title must follow Conventional Commits: <type>(<scope>): <description>
+
+  Type        | When to use                          | Changelog section
+  ----------- | ------------------------------------ | -----------------
+  feat        | New user-facing feature               | Added
+  fix         | Bug fix                              | Fixed
+  docs        | Documentation only                   | Documentation
+  refactor    | Code restructuring, no behavior change| Changed
+  chore       | Maintenance, deps, CI config         | Changed
+  ci          | CI/CD pipeline changes               | Changed
+  build       | Build system or dependency changes    | Changed
+  perf        | Performance improvement              | Changed
+  test        | Adding or updating tests             | Changed
+  style       | Formatting, whitespace               | Changed
+  revert      | Reverting a previous commit          | Reverted
+
+  Append ! for breaking changes: feat!: remove legacy API
+  Scope is optional: fix(evaluator): handle empty list
+-->
+
 ## Summary
 
 <!-- Brief description of what this PR does and why. Link any related issues. -->
