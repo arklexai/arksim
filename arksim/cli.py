@@ -10,6 +10,7 @@ import time
 
 import yaml
 
+from arksim import __version__
 from arksim.evaluator import Evaluation, EvaluationInput, run_evaluation
 from arksim.simulation_engine import SimulationInput, run_simulation
 from arksim.utils.logger import get_logger
@@ -238,6 +239,13 @@ def build_parser(valid_commands: list[str] | None = None) -> argparse.ArgumentPa
         epilog=f"\nCommands: {commands_str}\n\nExamples:\n{examples_str}\n",
     )
 
+    parser.add_argument(
+        "-v",
+        "--version",
+        action="version",
+        version=f"%(prog)s {__version__}",
+        help="Show version",
+    )
     parser.add_argument(
         "command",
         type=str,

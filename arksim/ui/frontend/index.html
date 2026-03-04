@@ -69,7 +69,7 @@
   <!-- ═══ Sidebar ═══ -->
   <aside class="w-60 t-surface border-r t-border flex flex-col shrink-0">
     <div class="px-5 py-3 border-b t-border">
-      <span class="font-bold text-lg" :style="'color:' + (darkMode ? '#8EC1D6' : '#035E7B')">Arksim</span>
+      <span class="font-bold text-lg" :style="'color:' + (darkMode ? '#8EC1D6' : '#035E7B')">Arksim</span><span x-show="version" class="text-sm t-caption ml-1" x-text="'v' + version"></span>
       <p x-show="projectRoot" class="text-[10px] t-muted font-mono mt-0.5 truncate" :title="projectRoot" x-text="projectRoot"></p>
     </div>
 

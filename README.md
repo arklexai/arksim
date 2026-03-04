@@ -73,18 +73,18 @@ export OPENAI_API_KEY="your-key"
 ```yaml
 # config.yaml
 agent_config:
-  agent_type: chat_completions
-  agent_name: my-agent
-  api_config:
-    endpoint: https://api.openai.com/v1/chat/completions
-    headers:
-      Content-Type: application/json
-      Authorization: "Bearer ${OPENAI_API_KEY}"
-    body:
-      model: gpt-5.1
-      messages:
-        - role: system
-          content: "You are a helpful assistant."
+    agent_type: chat_completions
+    agent_name: my-agent
+    api_config:
+        endpoint: https://api.openai.com/v1/chat/completions
+        headers:
+            Content-Type: application/json
+            Authorization: "Bearer ${OPENAI_API_KEY}"
+        body:
+            model: gpt-5.1
+            messages:
+                - role: system
+                  content: "You are a helpful assistant."
 
 scenario_file_path: ./scenarios.json
 model: gpt-5.1
@@ -123,27 +123,27 @@ Agent configuration tells Arksim how to connect to your agent. It is specified d
 
 ```yaml
 agent_config:
-  agent_type: chat_completions
-  agent_name: my-agent
-  api_config:
-    endpoint: http://localhost:8888/chat/completions
-    headers:
-      Content-Type: application/json
-      Authorization: "Bearer ${AGENT_API_KEY}"
-    body:
-      messages:
-        - role: system
-          content: "You are a helpful assistant."
+    agent_type: chat_completions
+    agent_name: my-agent
+    api_config:
+        endpoint: http://localhost:8888/chat/completions
+        headers:
+            Content-Type: application/json
+            Authorization: "Bearer ${AGENT_API_KEY}"
+        body:
+            messages:
+                - role: system
+                  content: "You are a helpful assistant."
 ```
 
 ### A2A (Agent-to-Agent) Protocol
 
 ```yaml
 agent_config:
-  agent_type: a2a
-  agent_name: my-agent
-  api_config:
-    endpoint: http://localhost:9000/agent
+    agent_type: a2a
+    agent_name: my-agent
+    api_config:
+        endpoint: http://localhost:9000/agent
 ```
 
 Environment variables in headers are resolved at runtime using `${VAR_NAME}` syntax.
@@ -152,15 +152,15 @@ Environment variables in headers are resolved at runtime using `${VAR_NAME}` syn
 
 ### Built-in metrics
 
-| Metric | Type | Scale | What it measures |
-|--------|------|-------|------------------|
-| Helpfulness | Quantitative | 1-5 | How effectively the agent addresses user needs |
-| Coherence | Quantitative | 1-5 | Logical flow and consistency of responses |
-| Relevance | Quantitative | 1-5 | How on-topic the agent's responses are |
-| Faithfulness | Quantitative | 1-5 | Accuracy against provided knowledge (penalizes contradictions only) |
-| Verbosity | Quantitative | 1-5 | Whether response length is appropriate |
-| Goal Completion | Quantitative | 0/1 | Whether the user's stated goal was achieved |
-| Agent Behavior Failure | Qualitative | Category | Classifies errors: false information, disobeying requests, repetition, lack of specificity, failure to clarify |
+| Metric                 | Type         | Scale    | What it measures                                                                                               |
+| ---------------------- | ------------ | -------- | -------------------------------------------------------------------------------------------------------------- |
+| Helpfulness            | Quantitative | 1-5      | How effectively the agent addresses user needs                                                                 |
+| Coherence              | Quantitative | 1-5      | Logical flow and consistency of responses                                                                      |
+| Relevance              | Quantitative | 1-5      | How on-topic the agent's responses are                                                                         |
+| Faithfulness           | Quantitative | 1-5      | Accuracy against provided knowledge (penalizes contradictions only)                                            |
+| Verbosity              | Quantitative | 1-5      | Whether response length is appropriate                                                                         |
+| Goal Completion        | Quantitative | 0/1      | Whether the user's stated goal was achieved                                                                    |
+| Agent Behavior Failure | Qualitative  | Category | Classifies errors: false information, disobeying requests, repetition, lack of specificity, failure to clarify |
 
 ### Custom metrics
 
@@ -213,7 +213,7 @@ Add to your config:
 
 ```yaml
 custom_metrics_file_paths:
-  - ./my_metrics.py
+    - ./my_metrics.py
 ```
 
 See the [bank-insurance example](examples/bank-insurance/custom_metrics.py) for a full implementation with LLM-as-judge custom metrics.
@@ -224,8 +224,8 @@ All settings can be specified in YAML and overridden via CLI flags (`--key value
 
 ### Simulation settings
 
-| Setting | Type | Default | Description |
-|---------|------|---------|-------------|
+| Setting        | Type   | Default  | Description                                                    |
+| -------------- | ------ | -------- | -------------------------------------------------------------- |
 | `agent_config` | object | required | Inline agent config (`agent_type`, `agent_name`, `api_config`) |
 
 | `scenario_file_path` | string | required | Path to scenarios JSON |
@@ -239,21 +239,22 @@ All settings can be specified in YAML and overridden via CLI flags (`--key value
 
 ### Evaluation settings
 
-| Setting | Type | Default | Description |
-|---------|------|---------|-------------|
-| `simulation_file_path` | string | required | Path to simulation output |
-| `output_dir` | string | required | Directory for evaluation results |
-| `model` | string | `gpt-5.1` | LLM model for evaluation |
-| `provider` | string | `openai` | LLM provider |
-| `metrics_to_run` | list | all metrics | Which metrics to run |
-| `custom_metrics_file_paths` | list | `[]` | Paths to custom metric files |
-| `generate_html_report` | bool | `true` | Generate an HTML report |
-| `score_threshold` | float | null | Fail (exit 1) if any conversation scores below this |
-| `num_workers` | int/string | `auto` | Parallel workers |
+| Setting                     | Type       | Default     | Description                                         |
+| --------------------------- | ---------- | ----------- | --------------------------------------------------- |
+| `simulation_file_path`      | string     | required    | Path to simulation output                           |
+| `output_dir`                | string     | required    | Directory for evaluation results                    |
+| `model`                     | string     | `gpt-5.1`   | LLM model for evaluation                            |
+| `provider`                  | string     | `openai`    | LLM provider                                        |
+| `metrics_to_run`            | list       | all metrics | Which metrics to run                                |
+| `custom_metrics_file_paths` | list       | `[]`        | Paths to custom metric files                        |
+| `generate_html_report`      | bool       | `true`      | Generate an HTML report                             |
+| `score_threshold`           | float      | null        | Fail (exit 1) if any conversation scores below this |
+| `num_workers`               | int/string | `auto`      | Parallel workers                                    |
 
 ## CLI Reference
 
 ```
+arksim --version                        Show version
 arksim simulate <config.yaml>           Run agent simulations
 arksim evaluate <config.yaml>           Evaluate simulation results
 arksim simulate-evaluate <config.yaml>  Simulate then evaluate
@@ -280,11 +281,11 @@ Opens a local web app at `http://localhost:8080` where you can browse config fil
 
 ## Examples
 
-| Example | Description |
-|---------|-------------|
+| Example                                    | Description                                                                                                   |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
 | [bank-insurance](examples/bank-insurance/) | Financial services agent with custom compliance metrics, adversarial scenarios, and a Chat Completions server |
-| [e-commerce](examples/e-commerce/) | E-commerce product recommendation agent with custom metrics |
-| [openclaw](examples/openclaw/) | Integration with the OpenClaw agent framework |
+| [e-commerce](examples/e-commerce/)         | E-commerce product recommendation agent with custom metrics                                                   |
+| [openclaw](examples/openclaw/)             | Integration with the OpenClaw agent framework                                                                 |
 
 ## Development
 
