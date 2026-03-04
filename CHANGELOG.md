@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - `SCORE_NOT_COMPUTED` display label changed from "N/A (Evaluation Failed)" to "N/A (Not computed)"
+- Removed stale `{chat_id}` placeholder reference from `ChatCompletionsConfig.body` field description
 
 - UI auto-loads scenarios from config on startup instead of always showing the demo
 - File browser shows a hint that browsing is scoped to the launch directory

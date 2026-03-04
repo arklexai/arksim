@@ -48,7 +48,7 @@ class ChatCompletionsConfig(BaseModel):
     )
     body: dict[str, Any] | None = Field(
         None,
-        description="Request body template (may contain messages array with {chat_id} placeholder)",
+        description="Request body template for chat completion requests",
     )
 
     # Optional fields for Azure OpenAI
