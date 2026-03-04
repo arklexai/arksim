@@ -155,15 +155,24 @@ def _parse_value(value: str) -> bool | int | float | str:
 
 def _coerce_list_overrides(overrides: dict, model_cls: type) -> None:
     """Wrap scalar CLI values in lists for model fields that expect list types."""
-    from typing import get_origin
+    import types
+    from typing import Union, get_args, get_origin
 
     for key in list(overrides):
         if key not in model_cls.model_fields:
             continue
         annotation = model_cls.model_fields[key].annotation
-        if get_origin(annotation) is not list:
+        # Unwrap Optional/Union (e.g. list[str] | None) to find the inner list type.
+        origin = get_origin(annotation)
+        if origin is Union or isinstance(annotation, types.UnionType):
+            for arg in get_args(annotation):
+                if get_origin(arg) is list or arg is list:
+                    origin = list
+                    break
+        if origin is not list:
             continue
         val = overrides[key]
+        # Comma-separated values are split into a list (e.g. "a.py,b.py" → ["a.py", "b.py"]).
         if isinstance(val, str):
             overrides[key] = [v.strip() for v in val.split(",")]
         elif not isinstance(val, list):

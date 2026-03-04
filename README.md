@@ -21,9 +21,9 @@
 
 ---
 
-
-<iframe src="https://images.arklex.ai/arksim/demo.mp4" width="100%" height="450" frameborder="0" allowfullscreen></iframe>
-
+<p align="center">
+  <em>Demo video coming soon</em>
+</p>
 
 ---
 
