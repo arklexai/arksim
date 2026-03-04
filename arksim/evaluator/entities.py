@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import os
 import sys
 
 if sys.version_info >= (3, 11):
@@ -8,8 +9,9 @@ if sys.version_info >= (3, 11):
 else:
     from typing_extensions import Self
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, model_validator
 
+from arksim.config.utils import resolve_model_paths
 from arksim.constants import DEFAULT_MODEL, DEFAULT_PROVIDER
 from arksim.utils.concurrency import validate_num_workers
 
@@ -76,9 +78,26 @@ class EvaluationInput(BaseModel):
     )
 
     @model_validator(mode="after")
-    def validate_evaluation_input(self) -> Self:
+    def validate_evaluation_input(self, info: ValidationInfo) -> Self:
         """Validate evaluation input fields."""
         validate_num_workers(self.num_workers)
+
+        # Paths from config.yaml are resolved relative to the config file's
+        # directory. Paths set via CLI are left as-is (cwd-relative).
+        config_path = info.context and info.context.get("config_path")
+        if config_path:
+            resolve_model_paths(
+                self,
+                path_attrs=(
+                    "scenario_file_path",
+                    "simulation_file_path",
+                    "output_dir",
+                ),
+                list_path_attrs=("custom_metrics_file_paths",),
+                config_dir=os.path.dirname(config_path),
+                cli_overrides=(info.context and info.context.get("cli_overrides"))
+                or set(),
+            )
 
         return self
 

@@ -5,6 +5,7 @@ from __future__ import annotations
 
 from arksim.cli import (
     _check_score_threshold,
+    _coerce_list_overrides,
     _merge_cli_overrides,
     _parse_value,
     parse_extra_args,
@@ -88,6 +89,48 @@ class TestParseValue:
 
     def test_string_passthrough(self) -> None:
         assert _parse_value("hello") == "hello"
+
+
+class TestCoerceListOverrides:
+    def test_string_split_into_list(self) -> None:
+        """Scalar string is comma-split into a list."""
+        from arksim.evaluator.entities import EvaluationInput
+
+        overrides = {"custom_metrics_file_paths": "a.py,b.py"}
+        _coerce_list_overrides(overrides, EvaluationInput)
+        assert overrides["custom_metrics_file_paths"] == ["a.py", "b.py"]
+
+    def test_single_string_wrapped(self) -> None:
+        from arksim.evaluator.entities import EvaluationInput
+
+        overrides = {"custom_metrics_file_paths": "a.py"}
+        _coerce_list_overrides(overrides, EvaluationInput)
+        assert overrides["custom_metrics_file_paths"] == ["a.py"]
+
+    def test_already_list_unchanged(self) -> None:
+        from arksim.evaluator.entities import EvaluationInput
+
+        overrides = {"custom_metrics_file_paths": ["a.py", "b.py"]}
+        _coerce_list_overrides(overrides, EvaluationInput)
+        assert overrides["custom_metrics_file_paths"] == ["a.py", "b.py"]
+
+    def test_non_list_field_ignored(self) -> None:
+        from arksim.evaluator.entities import EvaluationInput
+
+        overrides = {"model": "gpt-4"}
+        _coerce_list_overrides(overrides, EvaluationInput)
+        assert overrides["model"] == "gpt-4"
+
+    def test_optional_list_field_coerced(self) -> None:
+        """Fields annotated as list[str] | None are still detected as list types."""
+        from pydantic import BaseModel, Field
+
+        class _Model(BaseModel):
+            items: list[str] | None = Field(default=None)
+
+        overrides = {"items": "x,y"}
+        _coerce_list_overrides(overrides, _Model)
+        assert overrides["items"] == ["x", "y"]
 
 
 class TestParseExtraArgs:

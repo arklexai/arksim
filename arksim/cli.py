@@ -153,6 +153,32 @@ def _parse_value(value: str) -> bool | int | float | str:
     return value
 
 
+def _coerce_list_overrides(overrides: dict, model_cls: type) -> None:
+    """Wrap scalar CLI values in lists for model fields that expect list types."""
+    import types
+    from typing import Union, get_args, get_origin
+
+    for key in list(overrides):
+        if key not in model_cls.model_fields:
+            continue
+        annotation = model_cls.model_fields[key].annotation
+        # Unwrap Optional/Union (e.g. list[str] | None) to find the inner list type.
+        origin = get_origin(annotation)
+        if origin is Union or isinstance(annotation, types.UnionType):
+            for arg in get_args(annotation):
+                if get_origin(arg) is list or arg is list:
+                    origin = list
+                    break
+        if origin is not list:
+            continue
+        val = overrides[key]
+        # Comma-separated values are split into a list (e.g. "a.py,b.py" → ["a.py", "b.py"]).
+        if isinstance(val, str):
+            overrides[key] = [v.strip() for v in val.split(",")]
+        elif not isinstance(val, list):
+            overrides[key] = [val]
+
+
 def validate_overrides(overrides: dict, valid_keys: set) -> None:
     invalid_keys = set(overrides.keys()) - valid_keys
     if invalid_keys:
@@ -435,18 +461,30 @@ def main() -> None:
     # Extract verbose flag before building model inputs
     verbose = overrides.pop("verbose", False)
 
+    config_path = os.path.abspath(args.config_file) if use_config_file else None
+
+    cli_overrides = set(overrides.keys())
+
     if args.command == "simulate":
         valid_keys = set(SimulationInput.model_fields.keys())
         validate_overrides(overrides, valid_keys)
+        _coerce_list_overrides(overrides, SimulationInput)
         settings = _merge_cli_overrides(settings, overrides)
-        simulation_input = SimulationInput(**settings)
+        simulation_input = SimulationInput.model_validate(
+            settings,
+            context={"config_path": config_path, "cli_overrides": cli_overrides},
+        )
         _log_config_summary("Simulation", simulation_input.model_dump())
         asyncio.run(run_simulation(simulation_input, verbose=verbose))
     elif args.command == "evaluate":
         valid_keys = set(EvaluationInput.model_fields.keys())
         validate_overrides(overrides, valid_keys)
+        _coerce_list_overrides(overrides, EvaluationInput)
         settings = _merge_cli_overrides(settings, overrides)
-        evaluation_input = EvaluationInput(**settings)
+        evaluation_input = EvaluationInput.model_validate(
+            settings,
+            context={"config_path": config_path, "cli_overrides": cli_overrides},
+        )
         if not evaluation_input.simulation_file_path:
             raise ValueError("simulation_file_path is required.")
         if not os.path.isfile(evaluation_input.simulation_file_path):
@@ -467,12 +505,17 @@ def main() -> None:
             EvaluationInput.model_fields.keys()
         )
         validate_overrides(overrides, valid_keys)
+        _coerce_list_overrides(overrides, SimulationInput)
+        _coerce_list_overrides(overrides, EvaluationInput)
         settings = _merge_cli_overrides(settings, overrides)
 
         simulation_settings = {
             k: v for k, v in settings.items() if k in SimulationInput.model_fields
         }
-        simulation_input = SimulationInput(**simulation_settings)
+        simulation_input = SimulationInput.model_validate(
+            simulation_settings,
+            context={"config_path": config_path, "cli_overrides": cli_overrides},
+        )
         _log_config_summary("Simulation", simulation_input.model_dump())
 
         sim_start = time.time()
@@ -485,7 +528,10 @@ def main() -> None:
         evaluation_settings = {
             k: v for k, v in settings.items() if k in EvaluationInput.model_fields
         }
-        evaluation_input = EvaluationInput(**evaluation_settings)
+        evaluation_input = EvaluationInput.model_validate(
+            evaluation_settings,
+            context={"config_path": config_path, "cli_overrides": cli_overrides},
+        )
         _log_config_summary("Evaluation", evaluation_input.model_dump())
 
         eval_start = time.time()

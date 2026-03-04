@@ -39,3 +39,60 @@ def resolve_env_vars(headers: dict[str, str]) -> dict[str, str]:
         resolved_headers[key] = resolved_value
 
     return resolved_headers
+
+
+def resolve_config_relative_path(
+    path: str,
+    config_dir: str,
+    cli_overrides: set,
+    attr_name: str,
+) -> str | None:
+    """Return config-relative path for config-sourced paths, None for CLI-sourced.
+
+    Paths from config.yaml are resolved relative to the config file's directory.
+    Paths provided via CLI (in cli_overrides) are left as-is (cwd-relative).
+    Absolute paths pass through unchanged.
+    """
+    if attr_name in cli_overrides:
+        return None
+    if os.path.isabs(path):
+        return None
+    return os.path.normpath(os.path.join(config_dir, path))
+
+
+def resolve_model_paths(
+    model: object,
+    path_attrs: tuple[str, ...],
+    list_path_attrs: tuple[str, ...],
+    config_dir: str,
+    cli_overrides: set,
+) -> None:
+    """Resolve file-path attributes on a Pydantic model in place.
+
+    Single-value path attributes in *path_attrs* are resolved individually.
+    List-of-paths attributes in *list_path_attrs* have each element resolved.
+    """
+    for attr in path_attrs:
+        path = getattr(model, attr)
+        if path:
+            resolved = resolve_config_relative_path(
+                path, config_dir, cli_overrides, attr
+            )
+            if resolved is not None and resolved != path:
+                logger.debug("%s resolved to: %s", attr, resolved)
+                object.__setattr__(model, attr, resolved)
+
+    # List path overrides are per-field, not per-element: if the CLI
+    # overrides the field, all elements are left as cwd-relative.
+    for attr in list_path_attrs:
+        paths = getattr(model, attr)
+        if paths:
+            resolved_list = []
+            for p in paths:
+                resolved = resolve_config_relative_path(
+                    p, config_dir, cli_overrides, attr
+                )
+                resolved_list.append(resolved if resolved is not None else p)
+            if resolved_list != paths:
+                logger.debug("%s resolved to: %s", attr, resolved_list)
+                object.__setattr__(model, attr, resolved_list)

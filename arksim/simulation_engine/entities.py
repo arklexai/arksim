@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import os
 import sys
 import uuid
 from datetime import datetime, timezone
@@ -14,6 +15,7 @@ else:
 from pydantic import BaseModel, Field, ValidationInfo, model_validator
 
 from arksim.config.core.agent import AgentConfig
+from arksim.config.utils import resolve_model_paths
 from arksim.constants import DEFAULT_MODEL, DEFAULT_PROVIDER
 from arksim.utils.concurrency import validate_num_workers
 
@@ -62,9 +64,24 @@ class SimulationInput(BaseModel):
         """Validate simulation input fields."""
         validate_num_workers(self.num_workers)
 
-        # Skip validation if context indicates pipeline mode
-        skip = info.context and info.context.get("skip_input_dir_validation")
-        if not skip and not self.agent_config and not self.agent_config_file_path:
+        # Paths from config.yaml are resolved relative to the config file's
+        # directory. Paths set via CLI are left as-is (cwd-relative).
+        config_path = info.context and info.context.get("config_path")
+        if config_path:
+            resolve_model_paths(
+                self,
+                path_attrs=(
+                    "scenario_file_path",
+                    "output_file_path",
+                    "agent_config_file_path",
+                ),
+                list_path_attrs=(),
+                config_dir=os.path.dirname(config_path),
+                cli_overrides=(info.context and info.context.get("cli_overrides"))
+                or set(),
+            )
+
+        if not self.agent_config and not self.agent_config_file_path:
             raise ValueError(
                 "Either inline agent_config or agent_config_file_path must be provided."
             )
