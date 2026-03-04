@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 21 new unit test files covering evaluator metrics, CLI utilities, LLM factory, concurrency workers, simulation utilities, and error detection
 - `from __future__ import annotations` to all source files for consistent typing
 - Path traversal protection on filesystem and results API endpoints
+- Generic error messages in API endpoints to prevent server path leakage
 - Shared evaluation constants (`SCORE_NOT_COMPUTED`, `BEHAVIOR_FAILURE_THRESHOLD`)
 
 ### Changed

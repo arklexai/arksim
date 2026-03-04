@@ -145,8 +145,8 @@ def load_config(path: str) -> dict:
     """Load and return a YAML config file."""
     try:
         resolved = _resolve_path(path)
-    except ValueError as e:
-        return {"error": str(e)}
+    except ValueError:
+        return {"error": "Invalid path: outside project directory"}
     if not resolved or not os.path.exists(resolved):
         return {"error": f"File not found: {path}"}
 
@@ -192,6 +192,9 @@ def save_config(body: SaveConfigRequest) -> dict:
 
     try:
         save_path = _validate_write_path(raw_path)
+    except ValueError:
+        return {"error": "Invalid path: outside project directory"}
+    try:
         with open(save_path, "w") as f:
             yaml.dump(
                 cfg,
@@ -200,8 +203,8 @@ def save_config(body: SaveConfigRequest) -> dict:
                 sort_keys=False,
             )
         return {"path": save_path}
-    except Exception as e:
-        return {"error": str(e)}
+    except OSError:
+        return {"error": "Failed to save config file"}
 
 
 @router.get("/fs/scenario/demo")
@@ -233,8 +236,8 @@ def load_scenario(path: str) -> dict:
 
     try:
         resolved = _resolve_path(path)
-    except ValueError as e:
-        return {"error": str(e)}
+    except ValueError:
+        return {"error": "Invalid path: outside project directory"}
     if not resolved or not os.path.exists(resolved):
         return {"error": f"File not found: {path}"}
 
@@ -242,8 +245,8 @@ def load_scenario(path: str) -> dict:
         with open(resolved) as f:
             data = json.load(f)
         return data
-    except Exception as e:
-        return {"error": str(e)}
+    except (OSError, json.JSONDecodeError):
+        return {"error": f"Failed to load scenario: {path}"}
 
 
 class SaveScenarioRequest(BaseModel):
@@ -260,10 +263,13 @@ def save_scenario(body: SaveScenarioRequest) -> dict:
 
     try:
         save_path = _validate_write_path(body.path)
+    except ValueError:
+        return {"error": "Invalid path: outside project directory"}
+    try:
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
         with open(save_path, "w") as f:
             json.dump(body.data, f, indent=2)
             f.write("\n")
         return {"path": body.path}
-    except Exception as e:
-        return {"error": str(e)}
+    except OSError:
+        return {"error": "Failed to save scenario file"}
