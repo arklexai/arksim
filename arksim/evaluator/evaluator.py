@@ -14,6 +14,7 @@ from datetime import datetime, timezone
 from tqdm import tqdm
 
 from arksim.llms.chat import LLM
+from arksim.scenario import Scenarios
 from arksim.simulation_engine import Conversation, Simulation
 from arksim.utils.concurrency import resolve_num_workers
 from arksim.utils.output import load_json_file, save_json_file
@@ -590,16 +591,24 @@ def _load_custom_metrics(
 def run_evaluation(
     settings: EvaluationInput,
     simulation: Simulation | None = None,
+    scenarios: Scenarios | None = None,
     on_progress: Callable[[int, int], None] | None = None,
 ) -> Evaluation:
     """Evaluate simulation using EvaluationInput settings.
 
     Args:
         settings: EvaluationInput with evaluation settings
-        simulation: Optional simulation output from run_simulation if
-        not provided, load from simulation_file_path in settings
+        simulation: Optional in-memory simulation output from run_simulation.
+            If not provided, load from settings.simulation_file_path.
+        scenarios: Optional in-memory scenarios for HTML report context.
+            If not provided, load from settings.scenario_file_path.
     """
     if simulation is None:
+        if not settings.simulation_file_path:
+            raise ValueError(
+                "Either pass Simulation object or set "
+                "simulation_file_path in EvaluationInput"
+            )
         simulation = Simulation.model_validate(
             load_json_file(settings.simulation_file_path)
         )
@@ -639,13 +648,12 @@ def run_evaluation(
 
         logger.info("Generating HTML report...")
 
-        scenarios = None
-        if settings.scenario_file_path:
+        if scenarios is None and settings.scenario_file_path:
             try:
                 scenarios = Scenarios.load(settings.scenario_file_path)
             except Exception:
                 logger.warning(
-                    "Could not load scenarios; goal/attributes will be empty in report"
+                    "Could not load scenarios; scenarios will be empty in report"
                 )
         all_custom = list(custom_metrics) + list(custom_qualitative_metrics)
         metric_descriptions = {

@@ -288,7 +288,7 @@ def build_parser() -> argparse.ArgumentParser:
     """Build the CLI argument parser with subcommands."""
     parser = argparse.ArgumentParser(
         prog="arksim",
-        description="Arksim CLI - Run agent simulations and evaluations",
+        description="⛵️ ArkSim - Know how your agent performs before it goes live.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=textwrap.dedent("""\
 
@@ -437,6 +437,13 @@ def main() -> None:
         validate_overrides(overrides, valid_keys)
         settings = _merge_cli_overrides(settings, overrides)
         evaluation_input = EvaluationInput(**settings)
+        if not evaluation_input.simulation_file_path:
+            raise ValueError("simulation_file_path is required.")
+        if not os.path.isfile(evaluation_input.simulation_file_path):
+            raise ValueError(
+                f"simulation_file_path does not exist: "
+                f"{evaluation_input.simulation_file_path}"
+            )
         _log_config_summary("Evaluation", evaluation_input.model_dump())
         evaluator_output = run_evaluation(evaluation_input)
 
@@ -468,10 +475,7 @@ def main() -> None:
         evaluation_settings = {
             k: v for k, v in settings.items() if k in EvaluationInput.model_fields
         }
-        evaluation_input = EvaluationInput.model_validate(
-            evaluation_settings,
-            context={"skip_input_dir_validation": True},
-        )
+        evaluation_input = EvaluationInput(**evaluation_settings)
         _log_config_summary("Evaluation", evaluation_input.model_dump())
 
         eval_start = time.time()

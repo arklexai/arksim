@@ -1,7 +1,7 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
-  "name": "Arksim Docs",
+  "name": "ArkSim Docs",
   "colors": {
     "primary": "#035E7B",
     "light": "#8EC1D6",
