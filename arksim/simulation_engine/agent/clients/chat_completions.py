@@ -51,7 +51,17 @@ class ChatCompletionsAgent(BaseAgent):
                 )
 
         response = await _raw_post()
-        return response.json()
+        data = response.json()
+
+        # Surface API error payloads (e.g. OpenAI "error", Anthropic "error")
+        if response.status_code >= 400:
+            err_msg = data.get("error", data)
+            if isinstance(err_msg, dict):
+                err_msg = err_msg.get("message", err_msg)
+            logger.error(f"Chat API HTTP {response.status_code}: {err_msg}")
+            raise RuntimeError(f"Chat API error: {err_msg}")
+
+        return data
 
     async def execute(self, user_query: str, **kwargs: object) -> str:
         """Execute user query using chat completions API."""
@@ -73,10 +83,61 @@ class ChatCompletionsAgent(BaseAgent):
                     )
 
             result = await self._post_request(payload_data)
-            answer = result["choices"][0]["message"]["content"]
+            answer = self._extract_content(result)
             self.conversation_history.append({"role": "assistant", "content": answer})
             return answer
 
         except Exception as e:
             logger.error(f"Error: Error calling chat completions API: {str(e)}")
             raise
+
+    def _extract_content(self, result: dict[str, Any]) -> str:
+        """Extract assistant text from API response.
+
+        Supports:
+        - OpenAI-style: result["choices"][0]["message"]["content"]
+        - Anthropic-style: result["content"] as list of { "type": "text", "text": "..." }
+        - Gemini-style: result["candidates"][0]["content"]["parts"][*]["text"]
+        """
+        # OpenAI-compatible format
+        if "choices" in result:
+            choices = result["choices"]
+            if not choices:
+                raise ValueError("API response has empty 'choices'")
+            msg = choices[0].get("message") or choices[0].get("delta")
+            if not msg:
+                raise ValueError("API response choice has no 'message' or 'delta'")
+            content = msg.get("content")
+            if content is None and "delta" in choices[0]:
+                content = choices[0]["delta"].get("content")
+            if content is not None:
+                return content if isinstance(content, str) else str(content)
+
+        # Anthropic Messages API format: content = [{"type": "text", "text": "..."}]
+        if "content" in result and isinstance(result["content"], list):
+            parts = []
+            for block in result["content"]:
+                if isinstance(block, dict) and block.get("type") == "text":
+                    parts.append(block.get("text", ""))
+            if parts:
+                return "".join(parts)
+
+        # Google Gemini API format: candidates[0].content.parts[*].text
+        if "candidates" in result:
+            candidates = result["candidates"]
+            if not candidates:
+                raise ValueError("API response has empty 'candidates'")
+            content = candidates[0].get("content")
+            if content and isinstance(content, dict):
+                parts = content.get("parts") or []
+                if isinstance(parts, list):
+                    text_parts = [
+                        p.get("text", "") if isinstance(p, dict) else "" for p in parts
+                    ]
+                    return "".join(text_parts)
+
+        raise ValueError(
+            "Unsupported response format: expected 'choices' (OpenAI), "
+            "'content' list (Anthropic), or 'candidates' (Gemini). "
+            f"Keys present: {list(result.keys())}"
+        )
