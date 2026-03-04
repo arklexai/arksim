@@ -17,8 +17,8 @@ The example includes two ready-to-run agent setups you can test against out of t
   <Card icon="bolt" title="Option 1: OpenAI API">
     A lightweight agent that calls the OpenAI API directly. Quick start with minimal setup; default agent_config.json is preconfigured.
   </Card>
-  <Card icon="diagram-project" title="Option 2: LangGraph RAG">
-    RAG-based agent with OpenAI Agents SDK, backed by an e-commerce knowledge base; supports A2A or Chat Completions.
+  <Card icon="diagram-project" title="Option 2: OpenAI Agents SDK RAG">
+    RAG-based agent built with the OpenAI Agents SDK, backed by an e-commerce knowledge base. Supports A2A or Chat Completions; use agent_config.json when running.
   </Card>
 </CardGroup>
 
@@ -61,9 +61,9 @@ This agent calls the OpenAI API directly, with no server setup required.
 
 ---
 
-## Example Agent 2: RAG Agent
+## Option 2: In-house Agent (`agent_server`)
 
-This agent is a RAG-based shopping assistant built with OpenAI Agents SDK, backed by an e-commerce knowledge base. It can be exposed via either the A2A Protocol or a Chat Completions-compatible endpoint.
+This agent is a RAG-based shopping assistant built with the OpenAI Agents SDK, backed by an e-commerce knowledge base. It can be exposed via either the A2A Protocol or a Chat Completions-compatible endpoint.
 
 <Steps>
   <Step title="Select agent config">
@@ -100,17 +100,17 @@ This agent is a RAG-based shopping assistant built with OpenAI Agents SDK, backe
 
         ```bash
         export A2A_API_KEY=<YOUR_A2A_API_KEY>
-        python -m examples.e_commerce.agent_server.a2a.server
+        python -m examples.e-commerce.agent_server.a2a.server
         ```
 
         Run from the repository root (or the directory that contains the `examples` package). If your layout differs, use the module path that resolves to `agent_server/a2a/server.py` under the e-commerce example.
       </Tab>
       <Tab title="Chat Completions">
-        Exposes an OpenAI Chat Completions-compatible endpoint on port `8080` at `/chat/completions`. Run from the repository root:
+        Exposes an OpenAI Chat Completions-compatible endpoint on port `8888` at `/chat/completions`. Run from the repository root:
 
         ```bash
         export AGENT_API_KEY=<YOUR_AGENT_API_KEY>
-        python -m examples.e_commerce.agent_server.chat_completions.server
+        python -m examples.e-commerce.agent_server.chat_completions.server
         ```
       </Tab>
     </Tabs>
@@ -131,9 +131,12 @@ This agent is a RAG-based shopping assistant built with OpenAI Agents SDK, backe
 
 ## Running with Your Own Agent
 
-To test your own backend agent against these scenarios, follow the `#TODO` comments in `chat_completion_wrapper.py` to call your backend instead of the sample agent.
+To test your own backend agent against these scenarios:
 
-Once your server is running on a Chat Completions–compatible endpoint, point `agent_config.json` at it and run simulation and evaluation as normal.
+- **Chat Completions:** Follow the comments in `agent_server/chat_completions/server.py` to swap in your own backend logic or point to your endpoint.
+- **A2A:** Implement your own A2A executor in `agent_server/a2a/`.
+
+Ensure `agent_config.json` points to your endpoint (or use the appropriate pre-made config as a template). Then run simulation and evaluation as above.
 
 <Tip>
   See [Agent configuration](/simulate-conversation#agent-configuration) for supported protocols and how to configure agent connections.

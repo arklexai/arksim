@@ -1,6 +1,5 @@
-# Simulate + Evaluate Configuration File
-# Configuration for 'arksim simulate-evaluate' command
-# Runs simulation followed by evaluation in a single pipeline.
+# Simulation Configuration File
+# Configuration for 'arksim simulate' command
 
 # ── AGENT CONFIGURATION ────────────────────────────────────────────────────
 
@@ -27,8 +26,6 @@ agent_config:
             2. Avoid using bullet points or lists.
             3. Never exceed 80 words.
 
-# ── SIMULATION SETTINGS ──────────────────────────────────────────────────────
-
 # Path to the scenarios file
 scenario_file_path: ./examples/bank-insurance/scenarios.json
 
@@ -43,32 +40,6 @@ output_file_path: ./examples/bank-insurance/results/simulation/simulation.json
 
 # Jinja template for the simulated user's system prompt
 simulated_user_prompt_template: null
-
-# ── EVALUATION SETTINGS ──────────────────────────────────────────────────────
-
-# Output directory for evaluation results
-output_dir: ./examples/bank-insurance/results
-
-# Paths to Python files defining custom QuantitativeMetric or QualitativeMetric subclasses
-custom_metrics_file_paths: []
-
-# Built-in metrics to run; if empty, all built-in metrics run
-metrics_to_run:
-  - faithfulness
-  - helpfulness
-  - coherence
-  - verbosity
-  - relevance
-  - goal_completion
-  - agent_behavior_failure
-
-# Generate HTML report
-generate_html_report: true
-
-# Exit with non-zero if any score is below this (0.0–1.0); null to disable
-score_threshold: null
-
-# ── SHARED SETTINGS ──────────────────────────────────────────────────────────
 
 # LLM model
 model: gpt-5.1
