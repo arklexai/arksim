@@ -102,7 +102,7 @@ This agent is a RAG-based shopping assistant built with OpenAI Agents SDK, backe
 
         ```bash
         export A2A_API_KEY=<YOUR_A2A_API_KEY>
-        python -m examples.e_commerce.agent_server.a2a.server
+        python -m examples.e-commerce.agent_server.a2a.server
         ```
 
         Run from the repository root (or the directory that contains the `examples` package). If your layout differs, use the module path that resolves to `agent_server/a2a/server.py` under the e-commerce example.
@@ -232,7 +232,7 @@ When run from `examples/e-commerce`, paths are relative to that directory (as se
 
 **Evaluation** writes to `results/evaluation/`:
 
-| File                | Contents                                                                 |
-| ------------------- | ------------------------------------------------------------------------ |
+| File                | Contents                                                                                                   |
+| ------------------- | ---------------------------------------------------------------------------------------------------------- |
 | `evaluation.json`   | Full evaluation results: per-turn and per-conversation scores, unique error patterns, and metric reasoning |
-| `final_report.html` | Interactive HTML report for browsing and sharing results (when `generate_html_report: true`) |
+| `final_report.html` | Interactive HTML report for browsing and sharing results (when `generate_html_report: true`)               |
