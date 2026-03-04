@@ -95,7 +95,7 @@ ignore = [
 source = ["arksim"]
 
 [tool.coverage.report]
-fail_under = 30
+fail_under = 60
 
 [tool.bandit]
 exclude_dirs = ["tests"]
