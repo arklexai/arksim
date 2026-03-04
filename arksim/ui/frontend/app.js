@@ -116,7 +116,7 @@ function arksim() {
       openai:  'OPENAI_API_KEY',
       azure:   'AZURE_CLIENT_ID, AZURE_OPENAI_ENDPOINT, AZURE_OPENAI_API_VERSION',
       anthropic:  'ANTHROPIC_API_KEY',
-      google:  'GEMINI_API_KEY',
+      google:  'GEMINI_API_KEY (Google Gemini API key)',
     },
 
     envHint(provider) {

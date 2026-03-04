@@ -122,7 +122,7 @@ class ChatCompletionsAgent(BaseAgent):
             if parts:
                 return "".join(parts)
 
-        # Google API format: candidates[0].content.parts[*].text
+        # Google Gemini API format: candidates[0].content.parts[*].text
         if "candidates" in result:
             candidates = result["candidates"]
             if not candidates:
