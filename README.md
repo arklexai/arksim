@@ -103,8 +103,8 @@ generate_html_report: true
 arksim simulate-evaluate config.yaml
 
 # Or run each step separately
-arksim simulate config.yaml
-arksim evaluate config.yaml
+arksim simulate config_simulate.yaml
+arksim evaluate config_evaluate.yaml
 ```
 
 ### View results
@@ -143,7 +143,7 @@ agent_config:
   agent_type: a2a
   agent_name: my-agent
   api_config:
-    endpoint: http://localhost:9000/agent
+    endpoint: http://localhost:9999/agent
 ```
 
 Environment variables in headers are resolved at runtime using `${VAR_NAME}` syntax.
@@ -257,14 +257,15 @@ arksim simulate <config.yaml>           Run agent simulations
 arksim evaluate <config.yaml>           Evaluate simulation results
 arksim simulate-evaluate <config.yaml>  Simulate then evaluate
 arksim show-prompts [--category NAME]   Display evaluation prompts
+arksim examples                         Download examples folder
 arksim ui [--port PORT]                 Launch web UI (default: 8080)
 ```
 
 Any config setting can be passed as a CLI flag:
 
 ```bash
-arksim simulate config.yaml --max-turns 10 --num-workers 4 --verbose
-arksim evaluate config.yaml --score-threshold 0.7
+arksim simulate config_simulate.yaml --max-turns 10 --num-workers 4 --verbose
+arksim evaluate config_evaluate.yaml --score-threshold 0.7
 ```
 
 ## Web UI
