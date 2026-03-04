@@ -13,7 +13,7 @@ The example includes two ready-to-run agent setups you can test against out of t
 
 ## Example Agents
 
-You can run the example in two ways: **Option 1** uses the OpenAI API directly (no server, minimal setup). **Option 2** runs a local RAG agent (OpenAI Agents SDK, e-commerce knowledge base) via A2A or Chat Completions. Before following either path, ensure [Arksim is installed](/installation) (`pip install arksim`).
+You can run the example in two ways: **Option 1** uses the OpenAI API directly (no server, minimal setup). **Option 2** runs a local RAG agent (OpenAI Agents SDK, e-commerce knowledge base) via A2A or Chat Completions. 
 
 <CardGroup cols={2}>
   <Card icon="bolt" title="Option 1: OpenAI API">
@@ -40,6 +40,10 @@ Sample goals include:
 Scenarios are defined in `scenarios.json` in the example directory and can be edited or extended to reflect your own use case.
 
 ---
+
+<Note>
+  Before following either path, ensure [Arksim is installed](/installation) (`pip install arksim`).
+</Note>
 
 ## Option 1: OpenAI Agent
 
@@ -159,10 +163,26 @@ Once your server is running on a Chat Completions–compatible endpoint, use a c
 The example uses a single config file for both simulation and evaluation.
 
 ```yaml
-# SIMULATION SETTINGS
+# AGENT CONFIGURATION
 
-# Path to agent api configuration file
-agent_config_file_path: ./agent_config.json
+agent_config:
+  agent_type: chat_completions
+  agent_name: e-commerce
+  api_config:
+    endpoint: https://api.openai.com/v1/chat/completions
+    headers:
+      Content-Type: application/json
+      Authorization: "Bearer ${OPENAI_API_KEY}"
+    body:
+      model: gpt-5.1
+      messages:
+        - role: system
+          content: >-
+            You are a shopping assistant. Please provide a complete answer
+            to the user's question based on your knowledge. Response within
+            50 words.
+
+# SIMULATION SETTINGS 
 
 # Path to the scenarios file
 scenario_file_path: ./scenarios.json
@@ -184,17 +204,12 @@ simulated_user_prompt_template: null
 # Output directory for evaluation results
 output_dir: ./results/evaluation
 
-# Provide paths to Python files that define your custom metrics.
-# Custom quantitative metrics should subclass QuantitativeMetric
-# and implement score(); qualitative metrics should subclass
-# QualitativeMetric and implement evaluate().
-# (from arksim.evaluator import QuantitativeMetric, QualitativeMetric)
+# Paths to Python files defining custom 
+# QuantitativeMetric or QualitativeMetric subclasses
 custom_metrics_file_paths:
   - ./custom_metrics.py
 
-# Provide the built-in metrics to be run during evaluation.
-# If empty, all built-in metrics run. Custom metrics defined in
-# custom_metrics_file_paths always run regardless of this list.
+# Built-in metrics to run; if empty, all built-in metrics run
 metrics_to_run:
   - faithfulness
   - helpfulness
@@ -207,10 +222,7 @@ metrics_to_run:
 # Generate HTML report
 generate_html_report: true
 
-# Score threshold for per-conversation final scores (0.0 to 1.0)
-# If any conversation's final score is below this threshold,
-# exit with non-zero code.
-# Set to null to disable threshold checking
+# Exit with non-zero if any score is below this (0.0–1.0); null to disable
 score_threshold: null
 
 # SHARED SETTINGS
@@ -221,9 +233,7 @@ model: gpt-5.1
 # LLM provider
 provider: openai
 
-# Number of workers for parallel processing. "auto" uses all
-# available threads; on large runs this can trigger LLM rate
-# limits — set an explicit integer to cap concurrency.
+# Workers for parallel processing; "auto" uses all available threads
 num_workers: auto
 ```
 
