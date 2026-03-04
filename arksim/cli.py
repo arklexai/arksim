@@ -294,7 +294,6 @@ def build_parser() -> argparse.ArgumentParser:
         epilog=textwrap.dedent("""\
 
             Examples:
-              arksim -v
               arksim --version
               arksim simulate config.yaml
               arksim evaluate config.yaml
@@ -400,11 +399,6 @@ def main() -> None:
         from arksim.ui.app import launch_ui
 
         launch_ui(port=args.port)
-        return
-
-    # Handle --version when passed after command (e.g. arksim simulate config.yaml --version)
-    if "--version" in (args.additional_args or []):
-        print(f"arksim {__version__}")
         return
 
     use_config_file = (

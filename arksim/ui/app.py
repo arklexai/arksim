@@ -25,6 +25,11 @@ from arksim.ui.api.ws_logs import router as ws_router
 
 FRONTEND_DIR = Path(__file__).parent / "frontend"
 
+version_router = APIRouter()
+
+@version_router.get("/api/version")
+async def _version() -> dict[str, str]:
+    return {"version": __version__}
 
 def create_app(evaluate_router: APIRouter | None = None) -> FastAPI:
     """Create the FastAPI application."""
@@ -44,10 +49,7 @@ def create_app(evaluate_router: APIRouter | None = None) -> FastAPI:
     app.include_router(results_router, prefix="/api")
     app.include_router(fs_router, prefix="/api")
     app.include_router(ws_router, prefix="/api")
-
-    @app.get("/api/version")
-    async def _version() -> dict[str, str]:
-        return {"version": __version__}
+    app.include_router(version_router)
 
     # Serve frontend files explicitly (avoids catch-all
     # mount that intercepts WebSocket routes)
