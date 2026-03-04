@@ -23,7 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Bandit security scanning in CI pipeline
-- Test coverage threshold (30% minimum) enforced in CI
+- Test coverage threshold (60% minimum) enforced in CI
+- 21 new unit test files covering evaluator metrics, CLI utilities, LLM factory, concurrency workers, simulation utilities, and error detection
 - `from __future__ import annotations` to all source files for consistent typing
 
 ### Changed
