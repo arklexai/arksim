@@ -1,6 +1,6 @@
 # Agent Evaluation Example - Personal AI Assistant
 
-This directory gives an example of running Arksim with a personal AI assistant agent for the **OpenClaw use case**. You can follow the example to evaluate your own OpenClaw agent.
+This directory gives an example of running ArkSim with a personal AI assistant agent for the **OpenClaw use case**. You can follow the example to evaluate your own OpenClaw agent.
 
 ## Overview
 
@@ -64,7 +64,7 @@ curl -sS "http://127.0.0.1:18789/v1/chat/completions" \
 
 ## Configuration
 
-For more information on configuration, see the [Arksim documentation](https://docs.arklex.ai/overview).
+For more information on configuration, see the [ArkSim documentation](https://docs.arklex.ai/overview).
 
 ## Files
 

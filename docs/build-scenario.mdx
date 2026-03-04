@@ -8,7 +8,7 @@ description: "Define who your simulated user is, what they want, and what they k
 A scenario is a test case that describes who the simulated user is, what they want to accomplish, and what they already know going into the conversation with the agent.
 
 <Frame>
-  ![Arksim Workflow](/images/scenarios.svg)
+  ![ArkSim Workflow](/images/scenarios.svg)
 </Frame>
 
 ## The Three Core Pillars
@@ -38,9 +38,9 @@ Provides context that shapes the simulated user's questions and expectations. Al
   Think of a scenario as answering three questions: **Who** is this user? **What** do they want? **What** do they know?
 </Tip>
 
-## Why Arksim Scenarios?
+## Why ArkSim Scenarios?
 
-Arksim Scenarios let you test and evaluate your agent using realistic, profile-driven simulations of user interactions. Each scenario is built around clearly defined goals and behaviors, enabling structured performance evaluation without requiring a real-world dataset.
+ArkSim Scenarios let you test and evaluate your agent using realistic, profile-driven simulations of user interactions. Each scenario is built around clearly defined goals and behaviors, enabling structured performance evaluation without requiring a real-world dataset.
 
 By using synthetic users, you can run consistent and reproducible tests across a wide range of interaction types, making it easy to scale evaluations and understand how your agent performs before deploying it to real users.
 
@@ -174,8 +174,8 @@ Understanding how each field is used helps you decide what to include.
 | `goal`                         | Simulator & Evaluator | Directly used in the simulator prompt; the most important field.     |
 | `knowledge[].content`          | Simulator & Evaluator | Provides simulated user's background knowledge for the conversation. |
 | `user_profile`                 | Simulator             | Used as-is in the simulated user prompt to define the persona.       |
-| `knowledge[].metadata`         | Not used by Arksim    | For labeling and traceability only.                                  |
-| `origin`                       | Not used by Arksim    | Tracks scenario provenance; reference only.                          |
+| `knowledge[].metadata`         | Not used by ArkSim    | For labeling and traceability only.                                  |
+| `origin`                       | Not used by ArkSim    | Tracks scenario provenance; reference only.                          |
 
 ## Next Steps
 

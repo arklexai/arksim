@@ -1,5 +1,5 @@
 name: Bug Report
-description: Report a bug in Arksim
+description: Report a bug in ArkSim
 labels: ["bug"]
 body:
   - type: textarea
@@ -35,7 +35,7 @@ body:
   - type: input
     id: version
     attributes:
-      label: Arksim version
+      label: ArkSim version
       placeholder: "0.0.1"
     validations:
       required: true

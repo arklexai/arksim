@@ -1,6 +1,6 @@
 ---
 title: "Quickstart"
-description: "Get started with Arksim in minutes. This guide walks you through your first agent evaluation using pre-built scenarios and a config for your agent."
+description: "Get started with ArkSim in minutes. This guide walks you through your first agent evaluation using pre-built scenarios and a config for your agent."
 ---
 
 ## Prerequisites
@@ -11,7 +11,7 @@ description: "Get started with Arksim in minutes. This guide walks you through y
 ## Get started
 
 <Steps>
-  <Step title="Install Arksim">
+  <Step title="Install ArkSim">
     ```bash
     pip install arksim
     ```
@@ -129,9 +129,13 @@ description: "Get started with Arksim in minutes. This guide walks you through y
         Run simulation and evaluation from Python using the bank-insurance example:
 
         ```python
+        import asyncio
         from arksim.simulation_engine import run_simulation, SimulationInput
         from arksim.evaluator import run_evaluation, EvaluationInput
         from arksim.config import AgentConfig
+        from arksim.scenario import Scenarios
+
+        BANK_INSURANCE_DIR = "./examples/bank-insurance"
 
         # Example agent config (OpenAI; match bank-insurance config.yaml)
         agent_config = AgentConfig(
@@ -152,28 +156,37 @@ description: "Get started with Arksim in minutes. This guide walks you through y
             },
         )
 
-        simulation = run_simulation(SimulationInput(
+        scenarios = Scenarios.load(f"{BANK_INSURANCE_DIR}/scenarios.json")
+
+        simulation = asyncio.run(run_simulation(SimulationInput(
             agent_config=agent_config,
-            scenario_file_path="examples/bank-insurance/scenarios.json",
             num_conversations_per_scenario=1,
             max_turns=5,
-            num_workers=50,
-            output_file_path="./simulation.json",
-        ))
+            num_workers="50",
+            output_file_path=f"{BANK_INSURANCE_DIR}/results/simulation.json",
+        )))
 
         evaluation = run_evaluation(EvaluationInput(
-            simulation_file_path="./simulation.json",
-            scenario_file_path="examples/bank-insurance/scenarios.json",
-            output_dir="./evaluation",
+            scenario_file_path=f"{BANK_INSURANCE_DIR}/scenarios.json",
+            output_dir=f"{BANK_INSURANCE_DIR}/results",
+            custom_metrics_file_paths=[f"{BANK_INSURANCE_DIR}/custom_metrics.py"],
+            metrics_to_run=[
+                "faithfulness",
+                "helpfulness",
+                "coherence",
+                "relevance",
+                "goal_completion",
+                "agent_behavior_failure",
+            ],
             model="gpt-5.1",
             provider="openai",
             num_workers=50,
             generate_html_report=True,
-        ))
+        ), simulation=simulation, scenarios=scenarios)
 
         print("Simulation and evaluation complete.")
         print(f"Simulated {len(simulation.conversations)} conversations.")
-        print("Evaluation results saved to ./evaluation")
+        print(f"Evaluation results saved to {BANK_INSURANCE_DIR}/results")
         ```
       </Tab>
       <Tab title="UI">
@@ -204,4 +217,4 @@ description: "Get started with Arksim in minutes. This guide walks you through y
 Now that you've run your first simulation and evaluation, here's where to go next.
 
 - **Explore the core concepts:** Dive deeper into [Scenarios](/build-scenario), [Simulation](/simulate-conversation), and [Evaluation](/evaluate-conversation) to understand how each piece works and how to configure them for your agent.
-- **Explore the examples:** Run Arksim against [E-commerce](/e-commerce-customer-service-agent-evaluation), [Insurance](/insurance-customer-service-agent-evaluation), and [Personal AI assistant (OpenClaw)](/personal-ai-assistant-openclaw-evaluation) to see different use cases and configs.
+- **Explore the examples:** Run ArkSim against [E-commerce](/e-commerce-customer-service-agent-evaluation), [Insurance](/insurance-customer-service-agent-evaluation), and [Personal AI assistant (OpenClaw)](/personal-ai-assistant-openclaw-evaluation) to see different use cases and configs.

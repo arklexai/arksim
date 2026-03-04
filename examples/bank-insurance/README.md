@@ -1,6 +1,6 @@
 # Agent Evaluation Example - Insurance Company
 
-This directory gives an example of running Arksim with an example customer service agent for the **insurance company use case**. You can follow the example to evaluate your own agent.
+This directory gives an example of running ArkSim with an example customer service agent for the **insurance company use case**. You can follow the example to evaluate your own agent.
 
 > This example includes two types of agents:
 >
