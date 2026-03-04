@@ -230,6 +230,9 @@ def evaluate_goal_completion(
             + goal_completion_score * GOAL_COMPLETION_SCORE_WEIGHT
         )
 
+    # Note: overall_agent_score cannot be SCORE_NOT_COMPUTED (-1) here because
+    # if goal_completion is skipped (score < 0), we fall back to turn_success_ratio
+    # which is always in [0.0, 1.0].
     if overall_agent_score == 1.0:
         status = EvaluationStatus.DONE.value
     elif overall_agent_score >= EVALUATION_PARTIAL_FAILURE_THRESHOLD:

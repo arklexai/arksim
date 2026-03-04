@@ -118,7 +118,7 @@ def parse_extra_args(extra_args: list) -> dict:
                 overrides[key] = _parse_value(value)
                 i += 1
             elif i + 1 < len(extra_args) and not extra_args[i + 1].startswith("--"):
-                # --key value format (allows negative numbers like -0.5)
+                # --key value format; single-dash values like -0.5 are treated as values
                 value = extra_args[i + 1]
                 overrides[key] = _parse_value(value)
                 i += 2

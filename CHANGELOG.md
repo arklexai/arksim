@@ -25,11 +25,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Expanded SECURITY.md with response process, scope, and disclosure guidelines
 - Azure OpenAI provider now raises `ValueError` instead of silently returning a raw string when structured output parsing fails
 - `validate_num_workers` rejects zero and negative values
-- Removed dead code: unused error message constants, `METRIC_THRESHOLD`, `UNIQUE_BUGS` enum, `flip_hist_content_only`, `LLMConfig`
 
 ### Removed
 
 - Project root path from the UI sidebar header
+- Dead code: unused error message constants, `METRIC_THRESHOLD`, `UNIQUE_BUGS` enum, `flip_hist_content_only`, `LLMConfig`
 
 ## [0.0.4] - 2026-03-03
 

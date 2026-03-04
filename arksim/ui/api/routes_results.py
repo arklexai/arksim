@@ -4,13 +4,14 @@
 from __future__ import annotations
 
 import os
+from pathlib import Path
 
 from fastapi import APIRouter, Request
 from fastapi.responses import FileResponse, JSONResponse
 
-router = APIRouter(tags=["results"])
+from arksim.ui.api.routes_filesystem import PROJECT_ROOT
 
-_PROJECT_ROOT = os.getcwd()
+router = APIRouter(tags=["results"])
 
 
 def _validate_results_dir(dir_path: str) -> str | None:
@@ -19,8 +20,8 @@ def _validate_results_dir(dir_path: str) -> str | None:
     Returns the resolved path or None if invalid.
     """
     resolved = os.path.abspath(dir_path)
-    root = os.path.abspath(_PROJECT_ROOT)
-    if not resolved.startswith(root + os.sep) and resolved != root:
+    root = os.path.abspath(PROJECT_ROOT)
+    if not Path(resolved).is_relative_to(root):
         return None
     return resolved
 

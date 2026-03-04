@@ -42,7 +42,7 @@ def _resolve_path(path: str) -> str:
     else:
         resolved = os.path.abspath(os.path.join(PROJECT_ROOT, path))
     root = os.path.abspath(PROJECT_ROOT)
-    if not resolved.startswith(root + os.sep) and resolved != root:
+    if not Path(resolved).is_relative_to(root):
         raise ValueError(f"Path must be within the project directory: {root}")
     return resolved
 
@@ -55,7 +55,7 @@ def _validate_write_path(path: str) -> str:
     """
     resolved = os.path.abspath(os.path.expanduser(path))
     root = os.path.abspath(PROJECT_ROOT)
-    if not resolved.startswith(root + os.sep) and resolved != root:
+    if not Path(resolved).is_relative_to(root):
         raise ValueError(f"Write path must be within the project directory: {root}")
     return resolved
 

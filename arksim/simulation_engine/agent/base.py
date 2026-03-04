@@ -20,5 +20,5 @@ class BaseAgent(ABC):
     async def execute(self, user_query: str, **kwargs: object) -> str:
         """Execute the user query. Must be implemented by subclasses."""
 
-    async def close(self) -> None:  # noqa: B027
+    async def close(self) -> None:  # noqa: B027 - intentional non-abstract no-op
         """Clean up and close the agent. Override to release resources."""
