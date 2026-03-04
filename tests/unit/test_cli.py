@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 """Tests for CLI argument parsing and utility functions."""
 
+from __future__ import annotations
+
 import io
 import os
 import sys

@@ -21,6 +21,8 @@ To create a qualitative metric (categorical label):
      and (optionally) add the metric name to ``metrics_to_run``.
 """
 
+from __future__ import annotations
+
 from pydantic import BaseModel
 
 from arksim.evaluator import (

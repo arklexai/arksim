@@ -32,7 +32,10 @@ Fork the repository and create a branch from `main`.
 </Step>
 
 <Step title="Set up your environment">
-Follow the Developer Install instructions in the README.
+Follow the Developer Install instructions in the README, then install pre-commit hooks:
+```bash
+make install-dev   # installs editable package + pre-commit hooks
+```
 </Step>
 
 <Step title="Make your changes">
@@ -94,6 +97,8 @@ fix typo in readme
 - **Python:** Follow PEP 8. Use type hints on function signatures where practical.
 - **Imports:** Group stdlib, third-party, and local imports separated by a blank line. Prefer absolute imports.
 - **Naming:** `PascalCase` for classes, `snake_case` for functions and variables, `SCREAMING_SNAKE_CASE` for constants; prefix private names with `_`.
+- **License header:** Every `.py` file must start with `# SPDX-License-Identifier: Apache-2.0`. The `insert-license` pre-commit hook adds it automatically.
+- **Future annotations:** Every `.py` file must include `from __future__ import annotations` (enforced by ruff rule FA100).
 - **Formatting:** 4 spaces, no tabs; no trailing whitespace; single newline at end of file. Run `ruff format .` and `ruff check .` to stay consistent.
 
 ---

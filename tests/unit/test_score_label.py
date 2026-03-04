@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 """Tests for arksim.evaluator.utils.constants.score_label."""
 
+from __future__ import annotations
+
 from arksim.evaluator.utils.constants import score_label
 
 

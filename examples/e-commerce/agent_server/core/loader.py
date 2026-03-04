@@ -8,6 +8,8 @@ file formats and provides utilities for handling different types of content sour
 ensuring consistent processing and storage of loaded content.
 """
 
+from __future__ import annotations
+
 import base64
 import contextlib
 import json
@@ -118,7 +120,7 @@ class CrawledObject(DocObject):
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> "CrawledObject":
+    def from_dict(cls, data: dict) -> CrawledObject:
         return cls(
             id=data["id"],
             source=data["source"],

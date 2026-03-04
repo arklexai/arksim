@@ -78,6 +78,7 @@ packages = ["arksim"]
 select = [
   "E",   # pycodestyle (formatting errors)
   "F",   # pyflakes (undefined names, etc.)
+  "FA",  # flake8-future-annotations (require `from __future__ import annotations`)
   "I",   # isort (import sorting)
   "UP",  # pyupgrade (modernizes syntax)
   "ANN", # flake8-annotations (type hints)

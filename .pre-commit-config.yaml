@@ -12,6 +12,15 @@ repos:
       - id: check-json
         files: \.json$
 
+  - repo: https://github.com/lucas-c/pre-commit-hooks
+    rev: v1.5.6
+    hooks:
+      - id: insert-license
+        files: \.py$
+        args:
+          - --license-filepath=.license-header
+          - --comment-style=#
+
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.11.2
     hooks:

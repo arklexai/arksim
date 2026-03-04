@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 """Tests for agent configuration models."""
 
+from __future__ import annotations
+
 import json
 import os
 from unittest.mock import patch
