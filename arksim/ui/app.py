@@ -27,9 +27,11 @@ FRONTEND_DIR = Path(__file__).parent / "frontend"
 
 version_router = APIRouter()
 
+
 @version_router.get("/api/version")
 async def _version() -> dict[str, str]:
     return {"version": __version__}
+
 
 def create_app(evaluate_router: APIRouter | None = None) -> FastAPI:
     """Create the FastAPI application."""
