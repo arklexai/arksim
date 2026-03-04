@@ -168,8 +168,32 @@ Use a config YAML that points to your endpoint (inline `agent_config` or `agent_
 The example uses a single config file for both simulation and evaluation.
 
 ```yaml
-# SIMULATION SETTINGS
+# AGENT CONFIGURATION
 
+agent_config:
+  agent_type: chat_completions
+  agent_name: bank-insurance
+  api_config:
+    endpoint: https://api.openai.com/v1/chat/completions
+    headers:
+      Content-Type: application/json
+      Authorization: "Bearer ${OPENAI_API_KEY}"
+    body:
+      model: gpt-5.1
+      messages:
+        - role: system
+          content: >-
+            You are a customer service chatbot for XYZ Bank insurance.
+            XYZ Insurance—a core business within XYZ Bank Group—is one of
+            Canada's leading providers of life, health, home, auto, and
+            travel insurance.
+
+            Rules:
+            1. Do not flip roles.
+            2. Avoid using bullet points or lists.
+            3. Never exceed 80 words.
+
+# SIMULATION SETTINGS
 # Path to the scenarios file
 scenario_file_path: ./scenarios.json
 
@@ -190,17 +214,12 @@ simulated_user_prompt_template: null
 # Output directory for evaluation results
 output_dir: ./results/evaluation
 
-# Provide paths to Python files that define your custom metrics.
-# Custom quantitative metrics should subclass QuantitativeMetric
-# and implement score(); qualitative metrics should subclass
-# QualitativeMetric and implement evaluate().
-# (from arksim.evaluator import QuantitativeMetric, QualitativeMetric)
+# Paths to Python files defining custom 
+#QuantitativeMetric or QualitativeMetric subclasses
 custom_metrics_file_paths:
   - ./custom_metrics.py
 
-# Provide the built-in metrics to be run during evaluation.
-# If empty, all built-in metrics run. Custom metrics defined in
-# custom_metrics_file_paths always run regardless of this list.
+# Built-in metrics to run; if empty, all built-in metrics run
 metrics_to_run:
   - faithfulness
   - helpfulness
@@ -212,10 +231,7 @@ metrics_to_run:
 # Generate HTML report
 generate_html_report: true
 
-# Score threshold for per-conversation final scores (0.0 to 1.0)
-# If any conversation's final score is below this threshold,
-# exit with non-zero code.
-# Set to null to disable threshold checking
+# Exit with non-zero if any score is below this (0.0–1.0); null to disable
 score_threshold: null
 
 # SHARED SETTINGS
@@ -226,9 +242,7 @@ model: gpt-5.1
 # LLM provider
 provider: openai
 
-# Number of workers for parallel processing. "auto" uses all
-# available threads; on large runs this can trigger LLM rate
-# limits — set an explicit integer to cap concurrency.
+# Workers for parallel processing; "auto" uses all available threads
 num_workers: auto
 ```
 
