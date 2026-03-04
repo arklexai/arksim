@@ -6,7 +6,7 @@ description: "Get started with ArkSim in minutes. This guide walks you through y
 ## Prerequisites
 
 - Python 3.10–3.13
-- An API key from a supported provider (e.g. [OpenAI](https://developers.openai.com/api/docs), [Anthropic](https://platform.claude.com/docs/en/home), or [Gemini](https://ai.google.dev/gemini-api/docs/api-key))
+- An API key from a supported provider (e.g. [OpenAI](https://developers.openai.com/api/docs), [Anthropic](https://platform.claude.com/docs/en/home), or [Google Gemini](https://ai.google.dev/gemini-api/docs/api-key))
 
 ## Get started
 
@@ -64,10 +64,10 @@ description: "Get started with ArkSim in minutes. This guide walks you through y
         model: claude-opus-4-6
 
         # LLM provider
-        provider: claude
+        provider: anthropic
         ```
 
-        **Google Gemini**: Set your API key. You can use Gemini as the evaluation LLM and optionally as the agent (Gemini exposes an OpenAI-compatible endpoint).
+        **Google Gemini**: Set your API key. You can use Google Gemini as the evaluation LLM and optionally as the agent (Google Gemini exposes an OpenAI-compatible endpoint).
 
         ```bash
         export GEMINI_API_KEY="your-api-key"
@@ -99,7 +99,7 @@ description: "Get started with ArkSim in minutes. This guide walks you through y
         model: gemini-2.5-flash
 
         # LLM provider
-        provider: gemini
+        provider: google
 
         ```
       </Tab>
