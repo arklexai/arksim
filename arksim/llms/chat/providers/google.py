@@ -14,7 +14,7 @@ from arksim.llms.chat.utils import retry
 T = TypeVar("T", bound=BaseModel)
 
 
-class GeminiLLM(BaseLLM):
+class GoogleLLM(BaseLLM):
     def __init__(
         self,
         model: str,
@@ -29,9 +29,9 @@ class GeminiLLM(BaseLLM):
         self,
         messages: str | list[LLMMessage],
     ) -> tuple[str | None, list[types.Content] | str]:
-        """Convert messages to Gemini format.
+        """Convert messages to Google format.
 
-        Gemini uses "model" instead of "assistant"
+        Google uses "model" instead of "assistant"
         and handles system instructions separately.
         """
         if isinstance(messages, str):
