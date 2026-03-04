@@ -18,7 +18,7 @@ The example includes two ready-to-run agent implementations you can test against
     A lightweight agent that calls the OpenAI API directly. Quick start with minimal setup; default `agent_config.json` is preconfigured.
   </Card>
   <Card icon="diagram-project" title="Option 2: OpenAI Agents SDK RAG">
-    RAG-based agent with OpenAI Agents SDK, backed by an e-commerce knowledge base; supports A2A or Chat Completions.
+    RAG-based agent with OpenAI Agents SDK, backed by an insurance knowledge base; supports A2A or Chat Completions.
   </Card>
 </CardGroup>
 
@@ -100,40 +100,43 @@ This agent is a RAG-based customer service agent built with the OpenAI Agents SD
         Exposes an A2A-compatible agent on port `9999`. Run from the repository root:
 
         ```bash
-        export A2A_API_KEY=<YOUR_A2A_API_KEY>
+        export A2A_API_KEY=1234-4567-8910
         python -m examples.bank-insurance.agent_server.a2a.server
         ```
 
         Run from the repository root (or the directory that contains the `examples` package). If your layout differs, use the module path that resolves to `agent_server/a2a/server.py` under the bank-insurance example.
       </Tab>
       <Tab title="Chat Completions">
-        Exposes an OpenAI Chat Completions-compatible endpoint on port `8888` at `/chat/completions`. Run from the repository root:
+        Exposes a Chat Completions–compatible endpoint on port `8888` at `/chat/completions`. Run from the repository root:
 
         ```bash
-        export AGENT_API_KEY=<YOUR_AGENT_API_KEY>
+        export AGENT_API_KEY=123456
         python -m examples.bank-insurance.agent_server.chat_completions.server
         ```
+
+        Run from the repository root (or the directory that contains the `examples` package). If your layout differs, use the module path that resolves to `agent_server/chat_completions/server.py` under the bank-insurance example.
       </Tab>
     </Tabs>
   </Step>
   <Step title="Run simulation and evaluation">
-    In a new terminal, run from the `examples/bank-insurance` directory. Set the key that matches your interface (AGENT_API_KEY for Chat Completions, A2A_API_KEY for A2A), then run with the matching config:
+    In a **new terminal**, from `examples/bank-insurance`, run the commands for the same interface you used in step 3. Use the same API key you set there.
 
-    **Chat Completions:**
-
-    ```bash
-    cd examples/e-commerce
-    export AGENT_API_KEY="<YOUR_AGENT_API_KEY>"
-    arksim simulate-evaluate config_chat_completions.yaml
-    ```
-
-    **A2A:**
-
-    ```bash
-    cd examples/e-commerce
-    export A2A_API_KEY="<YOUR_A2A_API_KEY>"
-    arksim simulate-evaluate config_a2a.yaml
-    ```
+    <Tabs>
+      <Tab title="A2A">
+        ```bash
+        cd examples/bank-insurance
+        export A2A_API_KEY=1234-4567-8910
+        arksim simulate-evaluate config_a2a.yaml
+        ```
+      </Tab>
+      <Tab title="Chat Completions">
+        ```bash
+        cd examples/bank-insurance
+        export AGENT_API_KEY=123456
+        arksim simulate-evaluate config_chat_completions.yaml
+        ```
+      </Tab>
+    </Tabs>
   </Step>
 </Steps>
 
