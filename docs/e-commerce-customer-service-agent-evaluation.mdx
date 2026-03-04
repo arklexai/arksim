@@ -68,8 +68,8 @@ This agent calls the OpenAI API directly, with no server setup required.
 This agent is a RAG-based shopping assistant built with OpenAI Agents SDK, backed by an e-commerce knowledge base. It exposes a Chat Completions–compatible endpoint.
 
 <Steps>
-  <Step title="Select agent config">
-    In the example directory, copy `agent_config_chat_completions.json` to `agent_config.json`. If `agent_config.json` already exists, rename or remove it first. The config supports environment variable substitution (e.g. `${AGENT_API_KEY}`).
+  <Step title="Use the Chat Completions config">
+    Use `config_chat_completions.yaml`; it has the agent endpoint and auth inline. Set `AGENT_API_KEY` in your environment; the config uses `${AGENT_API_KEY}` for the request header.
   </Step>
   <Step title="Install agent dependencies">
     <Tabs>
