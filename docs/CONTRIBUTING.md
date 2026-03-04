@@ -1,14 +1,14 @@
 ---
 title: "Contributing"
-description: "How to contribute to Arksim: bugs, features, pull requests, and code style."
+description: "How to contribute to ArkSim: bugs, features, pull requests, and code style."
 ---
 
 ### Contributing
 
 ## Getting Started
 
-- **Local development:** Follow the Developer Install section in the README to set up a Python 3.10–3.13 environment and install Arksim in editable mode.
-- **Documentation:** For simulator configuration and usage, see the [Arksim docs](/quickstart).
+- **Local development:** Follow the Developer Install section in the README to set up a Python 3.10–3.13 environment and install ArkSim in editable mode.
+- **Documentation:** For simulator configuration and usage, see the [ArkSim docs](/quickstart).
 
 ## Repository Layout
 

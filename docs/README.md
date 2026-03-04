@@ -1,16 +1,16 @@
-# Arksim
+# ArkSim
 
 **Test and evaluate your AI agents with realistic, user-driven simulations.**
 
-Arksim lets you define who your users are, what they want, and what they know, then runs them as live multi-turn conversations against your agent. The result is structured performance data you can actually act on.
+ArkSim lets you define who your users are, what they want, and what they know, then runs them as live multi-turn conversations against your agent. The result is structured performance data you can actually act on.
 
 <img src="https://img.shields.io/badge/python-3.10+-blue.svg" alt="Python" /> <img src="https://img.shields.io/badge/license-Apache--2.0-blue.svg" alt="License" /> <img src="https://img.shields.io/pypi/v/arksim.svg" alt="PyPI" />
 
 ---
 
-## Why Arksim?
+## Why ArkSim?
 
-Most agent testing is either manual (slow, inconsistent) or based on static Q&A pairs (shallow, unrealistic). Arksim sits in between — giving you repeatable, persona-driven simulations that behave like real users and evaluate like a structured test suite.
+Most agent testing is either manual (slow, inconsistent) or based on static Q&A pairs (shallow, unrealistic). ArkSim sits in between — giving you repeatable, persona-driven simulations that behave like real users and evaluate like a structured test suite.
 
 - **Scenario-driven** — define user goals, personas, and background knowledge
 - **Multi-turn** — simulated users drive full conversations, not single prompts
@@ -26,7 +26,7 @@ Scenarios → Simulation → Evaluation
 ```
 
 1. **Scenarios** — define who the simulated user is, what they want, and what they know
-2. **Simulation** — Arksim runs each scenario as a live conversation against your agent
+2. **Simulation** — ArkSim runs each scenario as a live conversation against your agent
 3. **Evaluation** — every agent response is scored per turn, with failures categorized and deduplicated across conversations
 
 ---

@@ -1,6 +1,6 @@
 ---
 title: "Quickstart"
-description: "Get started with Arksim in minutes. This guide walks you through your first agent evaluation using pre-built scenarios and a config for your agent."
+description: "Get started with ArkSim in minutes. This guide walks you through your first agent evaluation using pre-built scenarios and a config for your agent."
 ---
 
 ## Prerequisites
@@ -11,98 +11,132 @@ description: "Get started with Arksim in minutes. This guide walks you through y
 ## Get started
 
 <Steps>
-  <Step title="Install Arksim">
+  <Step title="Install ArkSim">
     ```bash
     pip install arksim
     ```
   </Step>
-  <Step title="Set your API key">
-    Set the key for the provider your config uses (e.g. OpenAI):
-
-    ```bash
-    export OPENAI_API_KEY="your-api-key"
-    ```
-
-    For other providers:
-
-    ```bash
-    export ANTHROPIC_API_KEY="your-api-key"
-    export GEMINI_API_KEY="your-api-key"
-    ```
-  </Step>
-  <Step title="Run Simulation & Evaluation">
-    You can simulate conversations with your agent and evaluate them via the CLI, Python, or the web UI.
-
+  <Step title="Set your API key and config">
     <Tabs>
-      <Tab title="CLI">
-        This command simulates conversations against your agent, evaluates them, and saves results to the specified output location.
+      <Tab title="OpenAI (default)">
+        Set your API key:
 
         ```bash
-        arksim simulate-evaluate <path/to/config.yaml>
+        export OPENAI_API_KEY="your-api-key"
         ```
-
-        Example:
+      </Tab>
+      <Tab title="Other providers">
+        **Anthropic (Claude)**: Set your API key.
 
         ```bash
-        arksim simulate-evaluate ./config.yaml
+        export ANTHROPIC_API_KEY="your-api-key"
         ```
 
-        Your config should define:
-
-        **Agent Configuration**
+        In your `config.yaml`:
 
         ```yaml
         agent_config:
           agent_type: chat_completions
-          agent_name: my-agent
+          agent_name: bank-insurance
           api_config:
-            endpoint: https://api.openai.com/v1/chat/completions
+            endpoint: https://api.anthropic.com/v1/messages
             headers:
               Content-Type: application/json
-              Authorization: "Bearer ${OPENAI_API_KEY}"
+              x-api-key: "${ANTHROPIC_API_KEY}"
+              anthropic-version: "2023-06-01"
             body:
-              model: gpt-5.1
+              model: claude-opus-4-6
+              max_tokens: 1024
+              system: |
+                You are a customer service chatbot for XYZ Bank insurance.
+                XYZ Insurance—a core business within XYZ Bank Group—is one of
+                Canada's leading providers of life, health, home, auto, and
+                travel insurance.
+
+                Rules:
+                1. Do not flip roles.
+                2. Avoid using bullet points or lists.
+                3. Never exceed 80 words.
+
+        # LLM model
+        model: claude-opus-4-6
+
+        # LLM provider
+        provider: claude
+        ```
+
+        **Google Gemini**: Set your API key. You can use Gemini as the evaluation LLM and optionally as the agent (Gemini exposes an OpenAI-compatible endpoint).
+
+        ```bash
+        export GEMINI_API_KEY="your-api-key"
+        ```
+
+        In your `config.yaml`:
+
+        ```yaml
+        agent_config:
+          agent_type: chat_completions
+          agent_name: e-commerce
+          api_config:
+            endpoint: https://generativelanguage.googleapis.com/v1beta/openai/chat/completions
+            headers:
+              Content-Type: application/json
+              Authorization: "Bearer ${GEMINI_API_KEY}"
+            body:
+              model: gemini-2.5-flash
               messages:
                 - role: system
-                  content: "You are a helpful assistant."
+                  content: >-
+                    You are a shopping assistant. Please provide a complete answer
+                    to the user's question based on your knowledge. Response within
+                    50 words.
+
+        # ...
+
+        # LLM model
+        model: gemini-2.5-flash
+
+        # LLM provider
+        provider: gemini
+
+        ```
+      </Tab>
+    </Tabs>
+  </Step>
+  <Step title="Run Simulation & Evaluation">
+    Download the examples, then run simulation and evaluation via  CLI, Python, or the web UI.
+
+    **Download examples:** From your project directory, run:
+
+    ```bash
+    arksim examples
+    ```
+
+    This creates an `examples/` folder with three projects you can experiment.
+
+    <Tabs>
+      <Tab title="CLI">
+        From the bank-insurance example directory  run:
+
+        ```bash
+        cd examples/bank-insurance
+        arksim simulate-evaluate config.yaml
         ```
 
-        **Pre-built Scenario**
-
-        ```yaml
-        scenario_file_path: ./path/to/scenario/scenario.json
-        ```
-
-        Path to the `scenario.json` file used to simulate conversations.
-
-        **Simulation Output**
-
-        ```yaml
-        output_file_path: ./path/to/results/conversations.json
-        ```
-
-        Where the simulated conversation transcripts will be saved.
-
-        **Evaluation Output**
-
-        ```yaml
-        output_dir: ./path/to/results/evaluation/
-        ```
-
-        Directory where evaluation scores, metrics, and reports will be written.
+        This uses the example's `config.yaml` (OpenAI) and `scenarios.json`. Ensure `OPENAI_API_KEY` is set from Step 2.
       </Tab>
       <Tab title="Python">
-        You can also simulate and evaluate conversations programmatically inside your own codebase.
+        Run simulation and evaluation from Python using the bank-insurance example:
 
         ```python
         from arksim.simulation_engine import run_simulation, SimulationInput
         from arksim.evaluator import run_evaluation, EvaluationInput
         from arksim.config import AgentConfig
 
-        # Define your agent configuration
+        # Example agent config (OpenAI; match bank-insurance config.yaml)
         agent_config = AgentConfig(
             agent_type="chat_completions",
-            agent_name="my-agent",
+            agent_name="bank-insurance",
             api_config={
                 "endpoint": "https://api.openai.com/v1/chat/completions",
                 "headers": {
@@ -112,26 +146,24 @@ description: "Get started with Arksim in minutes. This guide walks you through y
                 "body": {
                     "model": "gpt-5.1",
                     "messages": [
-                        {"role": "system", "content": "You are a helpful assistant."}
+                        {"role": "system", "content": "You are a customer service chatbot for XYZ Bank insurance."}
                     ],
                 },
             },
         )
 
-        # Run simulation
         simulation = run_simulation(SimulationInput(
             agent_config=agent_config,
-            scenario_file_path="examples/path/to/scenario.json",
-            num_conversations_per_scenario=30,
-            max_turns=10,
+            scenario_file_path="examples/bank-insurance/scenarios.json",
+            num_conversations_per_scenario=1,
+            max_turns=5,
             num_workers="auto",
             output_file_path="./simulation.json",
         ))
 
-        # Evaluate simulated agent conversations
         evaluation = run_evaluation(EvaluationInput(
             simulation_file_path="./simulation.json",
-            scenario_file_path="examples/path/to/scenario.json",
+            scenario_file_path="examples/bank-insurance/scenarios.json",
             output_dir="./evaluation",
             model="gpt-5.1",
             provider="openai",
@@ -151,17 +183,15 @@ description: "Get started with Arksim in minutes. This guide walks you through y
         arksim ui
         ```
 
-        Your browser opens at [**http://localhost:8080**](http://localhost:8080).
-
-        <Tip>
-          Set your API key in the environment before starting `arksim ui` (e.g. `OPENAI_API_KEY`).
-        </Tip>
+        Your browser opens at [**http://localhost:8080**](http://localhost:8080). Set your API key in the environment before starting (e.g. `OPENAI_API_KEY`). Then open `examples/bank-insurance/config.yaml` or create a config that points at your chosen example.
       </Tab>
     </Tabs>
+    <Note>
+      You can run **e-commerce** and **openclaw** the same way from `examples/e-commerce` and `examples/openclaw`. See the example guides in Next Steps below.
+    </Note>
   </Step>
   <Step title="View Results">
-    - **Conversations:** Open `conversations.json` in your simulation output directory for full transcripts.
-    - **Evaluation:** Open `final_report.html` or `final_report.md` and the CSV files in your evaluation output directory for metrics and failure analysis.
+    Open `final_report.html` or `evaluation.json`  in your `results/evaluation`  directory for metrics and failure analysis.
 
     Use these to see how your agent performed and where it failed or could be improved.
   </Step>
@@ -174,12 +204,4 @@ description: "Get started with Arksim in minutes. This guide walks you through y
 Now that you've run your first simulation and evaluation, here's where to go next.
 
 - **Explore the core concepts:** Dive deeper into [Scenarios](/build-scenario), [Simulation](/simulate-conversation), and [Evaluation](/evaluate-conversation) to understand how each piece works and how to configure them for your agent.
-
-<CardGroup cols={2}>
-  <Card icon="cart-shopping" href="/e-commerce-customer-service-agent-evaluation" title="E-commerce customer service">
-    Run scenarios and evaluation for a retail/support agent with OpenAI or LangGraph RAG.
-  </Card>
-  <Card icon="shield" href="/insurance-customer-service-agent-evaluation" title="Insurance customer service">
-    Bank/insurance agent with custom compliance metrics, disclosures, and escalation behavior.
-  </Card>
-</CardGroup>
+- **Explore the examples:** Run ArkSim against [E-commerce](/e-commerce-customer-service-agent-evaluation), [Insurance](/insurance-customer-service-agent-evaluation), and [Personal AI assistant (OpenClaw)](/personal-ai-assistant-openclaw-evaluation) to see different use cases and configs.

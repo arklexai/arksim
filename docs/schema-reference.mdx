@@ -1,9 +1,9 @@
 ---
 title: "Schema Reference"
-description: "JSON and YAML schemas used by Arksim for scenarios, simulation output, evaluation output, and run configuration."
+description: "JSON and YAML schemas used by ArkSim for scenarios, simulation output, evaluation output, and run configuration."
 ---
 
-This page documents the structure of the main artifacts used and produced by Arksim: scenario files, simulation output, evaluation output, and the run configuration file. Use it when building integrations, writing custom tooling, or debugging pipeline outputs.
+This page documents the structure of the main artifacts used and produced by ArkSim: scenario files, simulation output, evaluation output, and the run configuration file. Use it when building integrations, writing custom tooling, or debugging pipeline outputs.
 
 <Tip>
   For agent connection details (Chat Completions, A2A, and config), see [Agent configuration](/simulate-conversation#agent-configuration).
@@ -36,15 +36,15 @@ The scenario file is a single JSON document that lists scenario objects. Each sc
     <ResponseField name="agent_context" type="string" required>
       Context about the agent (e.g. company or product overview) supplied to the simulated user.
     </ResponseField>
-    <ResponseField name="user_profile" type="string">
+    <ResponseField name="user_profile" type="string" required>
       Natural-language persona description for the simulated user. Used directly in the simulation prompt. Write in second person ("You are...").
     </ResponseField>
-    <ResponseField name="knowledge" type="list[KnowledgeItem]" required>
+    <ResponseField name="knowledge" type="list[KnowledgeItem]">
       Knowledge items injected into the simulated user's context. Can be an empty list. Each item has:
 
       - `content` (string, required): Text used as the user's background knowledge. (Additional keys such as `metadata` may be present in the file for traceability but are not part of the loaded model.)
     </ResponseField>
-    <ResponseField name="origin" type="dict[string, Any]" required>
+    <ResponseField name="origin" type="dict[string, Any]">
       Provenance metadata (e.g. `target_agent_capability`, `goal_raw`, `user_attributes`). Not used by the simulator or evaluator.
     </ResponseField>
   </Expandable>
@@ -63,7 +63,7 @@ Written by `arksim simulate` or the simulation step of `arksim simulate-evaluate
 </ResponseField>
 
 <ResponseField name="simulator_version" type="string" required>
-  Arksim package version that produced this file.
+  ArkSim package version that produced this file.
 </ResponseField>
 
 <ResponseField name="simulation_id" type="string" required>
@@ -115,7 +115,7 @@ Written by `arksim evaluate` or the evaluation step of `arksim simulate-evaluate
 </ResponseField>
 
 <ResponseField name="evaluator_version" type="string" required>
-  Arksim package version that produced this file.
+  ArkSim package version that produced this file.
 </ResponseField>
 
 <ResponseField name="evaluation_id" type="string" required>
