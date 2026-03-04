@@ -273,30 +273,31 @@ class Simulator:
         results: list[ConversationState] = []
 
         for scenario in scenarios.scenarios:
-            if len(running_tasks) >= num_workers:
-                done, running_tasks = await asyncio.wait(
-                    running_tasks, return_when=asyncio.FIRST_COMPLETED
-                )
-                for task in done:
-                    try:
-                        result = task.result()
-                        if result is not None:
-                            results.append(result)
-                    except Exception as e:
-                        logger.error(f"Error processing conversation: {str(e)}")
-                        logger.error(traceback.format_exc())
+            for _ in range(self.simulator_params.num_convos_per_scenario):
+                if len(running_tasks) >= num_workers:
+                    done, running_tasks = await asyncio.wait(
+                        running_tasks, return_when=asyncio.FIRST_COMPLETED
+                    )
+                    for task in done:
+                        try:
+                            result = task.result()
+                            if result is not None:
+                                results.append(result)
+                        except Exception as e:
+                            logger.error(f"Error processing conversation: {str(e)}")
+                            logger.error(traceback.format_exc())
 
-            coro = self._run_single_conversation(
-                scenario.user_profile,
-                scenario.goal,
-                scenario.knowledge,
-                scenario.agent_context,
-                max_turns,
-                scenario_id=scenario.scenario_id,
-                on_turn_complete=on_turn_complete,
-                on_turn_display=on_turn_display,
-            )
-            running_tasks.add(asyncio.create_task(coro))
+                coro = self._run_single_conversation(
+                    scenario.user_profile,
+                    scenario.goal,
+                    scenario.knowledge,
+                    scenario.agent_context,
+                    max_turns,
+                    scenario_id=scenario.scenario_id,
+                    on_turn_complete=on_turn_complete,
+                    on_turn_display=on_turn_display,
+                )
+                running_tasks.add(asyncio.create_task(coro))
 
         if running_tasks:
             done, _ = await asyncio.wait(running_tasks)
