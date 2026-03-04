@@ -30,10 +30,21 @@ _LIST_PATH_KEYS = {
 
 
 def _resolve_path(path: str) -> str:
-    """Resolve a relative path against PROJECT_ROOT."""
-    if not path or os.path.isabs(path):
+    """Resolve a relative path against PROJECT_ROOT.
+
+    The resolved path must remain within PROJECT_ROOT to
+    prevent directory traversal attacks.
+    """
+    if not path:
         return path
-    return os.path.abspath(os.path.join(PROJECT_ROOT, path))
+    if os.path.isabs(path):
+        resolved = os.path.abspath(path)
+    else:
+        resolved = os.path.abspath(os.path.join(PROJECT_ROOT, path))
+    root = os.path.abspath(PROJECT_ROOT)
+    if not resolved.startswith(root + os.sep) and resolved != root:
+        raise ValueError(f"Path must be within the project directory: {root}")
+    return resolved
 
 
 def _validate_write_path(path: str) -> str:
@@ -132,7 +143,10 @@ def list_configs() -> dict:
 @router.get("/fs/config")
 def load_config(path: str) -> dict:
     """Load and return a YAML config file."""
-    resolved = _resolve_path(path)
+    try:
+        resolved = _resolve_path(path)
+    except ValueError as e:
+        return {"error": str(e)}
     if not resolved or not os.path.exists(resolved):
         return {"error": f"File not found: {path}"}
 
@@ -217,7 +231,10 @@ def load_scenario(path: str) -> dict:
     """Load a scenario.json file."""
     import json
 
-    resolved = _resolve_path(path)
+    try:
+        resolved = _resolve_path(path)
+    except ValueError as e:
+        return {"error": str(e)}
     if not resolved or not os.path.exists(resolved):
         return {"error": f"File not found: {path}"}
 

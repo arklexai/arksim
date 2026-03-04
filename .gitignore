@@ -55,3 +55,6 @@ uv.lock
 
 # Local config overrides
 config_simulate.yaml
+
+# AI tool local config
+.claude/

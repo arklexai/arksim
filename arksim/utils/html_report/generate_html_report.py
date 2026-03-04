@@ -3,7 +3,7 @@
 Generate a standalone HTML report by embedding data into the template.
 This allows the HTML to be opened directly without needing an HTTP server.
 
-This module is called directly from arksim.py with data objects.
+This module is called from the evaluator with data objects.
 """
 
 from __future__ import annotations

@@ -10,27 +10,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - `arksim examples` CLI command to download example projects from GitHub without cloning
+- Bandit security scanning in CI pipeline
+- Test coverage threshold (60% minimum) enforced in CI
+- 21 new unit test files covering evaluator metrics, CLI utilities, LLM factory, concurrency workers, simulation utilities, and error detection
+- `from __future__ import annotations` to all source files for consistent typing
+- Path traversal protection on filesystem and results API endpoints
+- Shared evaluation constants (`SCORE_NOT_COMPUTED`, `BEHAVIOR_FAILURE_THRESHOLD`)
 
 ### Changed
 
 - UI auto-loads scenarios from config on startup instead of always showing the demo
 - File browser shows a hint that browsing is scoped to the launch directory
+- Coverage badge switched from Codecov-hosted to shields.io for reliability
+- Expanded SECURITY.md with response process, scope, and disclosure guidelines
+- Azure OpenAI provider now raises `ValueError` instead of silently returning a raw string when structured output parsing fails
+- `validate_num_workers` rejects zero and negative values
+- Removed dead code: unused error message constants, `METRIC_THRESHOLD`, `UNIQUE_BUGS` enum, `flip_hist_content_only`, `LLMConfig`
 
 ### Removed
 
 - Project root path from the UI sidebar header
-
-### Added
-
-- Bandit security scanning in CI pipeline
-- Test coverage threshold (60% minimum) enforced in CI
-- 21 new unit test files covering evaluator metrics, CLI utilities, LLM factory, concurrency workers, simulation utilities, and error detection
-- `from __future__ import annotations` to all source files for consistent typing
-
-### Changed
-
-- Coverage badge switched from Codecov-hosted to shields.io for reliability
-- Expanded SECURITY.md with response process, scope, and disclosure guidelines
 
 ## [0.0.4] - 2026-03-03
 
