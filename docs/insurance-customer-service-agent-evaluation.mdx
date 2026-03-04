@@ -104,6 +104,7 @@ This agent is a RAG-based customer service agent built with the OpenAI Agents SD
         Exposes an A2A-compatible agent on port `9999`. Run from the repository root:
 
         ```bash
+        export OPENAI_API_KEY="<YOUR_OPENAI_API_KEY>"
         export A2A_API_KEY=1234-4567-8910
         python -m examples.bank-insurance.agent_server.a2a.server
         ```
@@ -114,6 +115,7 @@ This agent is a RAG-based customer service agent built with the OpenAI Agents SD
         Exposes a Chat Completions–compatible endpoint on port `8888` at `/chat/completions`. Run from the repository root:
 
         ```bash
+        export OPENAI_API_KEY="<YOUR_OPENAI_API_KEY>"
         export AGENT_API_KEY=123456
         python -m examples.bank-insurance.agent_server.chat_completions.server
         ```
