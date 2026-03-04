@@ -1,6 +1,6 @@
 ---
 title: "Personal AI Assistant (OpenClaw)"
-description: "A walkthrough of running Arksim against an OpenClaw personal AI assistant."
+description: "Running Arksim against an OpenClaw personal AI assistant."
 ---
 
 ## Overview
@@ -103,6 +103,8 @@ Scenarios are defined in `scenarios.json` in the example directory and can be ed
 The example uses a single config file for both simulation and evaluation. Agent configuration is specified inline under the `agent_config` key:
 
 ```yaml
+# AGENT CONFIGURATION
+
 agent_config:
   agent_type: chat_completions
   agent_name: openclaw
@@ -117,18 +119,35 @@ agent_config:
       messages:
         - role: system
           content: "You are a helpful personal assistant."
+      enable_metadata: false
 
+# SIMULATION SETTINGS
+
+# Path to the scenarios file
 scenario_file_path: ./scenarios.json
 
-# Simulation
+# Number of conversations per scenario to generate
 num_conversations_per_scenario: 1
+
+# Maximum turns per conversation
 max_turns: 5
+
+# Output file path for simulation results
 output_file_path: ./results/simulation/simulation.json
 
-# Evaluation
+# Jinja template for the simulated user's system prompt
+simulated_user_prompt_template: null
+
+# EVALUATION SETTINGS
+
+# Output directory for evaluation results
 output_dir: ./results/evaluation
+
+# Paths to Python files defining custom 
+#QuantitativeMetric or QualitativeMetric subclasses
 custom_metrics_file_paths: []
 
+# Built-in metrics to run; if empty, all built-in metrics run
 metrics_to_run:
   - faithfulness
   - helpfulness
@@ -137,11 +156,21 @@ metrics_to_run:
   - relevance
   - goal_completion
   - agent_behavior_failure
+
+# Generate HTML report
 generate_html_report: true
 
-# Shared
+# Exit with non-zero if any score is below this (0.0–1.0); null to disable
+score_threshold: null
+
+# SHARED SETTINGS
+# LLM model
 model: gpt-5.1
+
+# LLM provider
 provider: openai
+
+# Workers for parallel processing; "auto" uses all available threads
 num_workers: auto
 ```
 
@@ -157,20 +186,20 @@ The config also defines a `simulated_user_prompt_template` (Jinja) that uses `sc
 
 Results are written under the example directory:
 
-| Location | Contents |
-| -------- | -------- |
-| `./results/simulation/simulation.json` | Simulated conversations from the simulation step |
-| `./results/evaluation/evaluation.json` | Evaluation results (per-turn and per-conversation scores, unique errors) |
-| `./results/evaluation/final_report.html` | Interactive HTML report for browsing and sharing results |
+| Location                                 | Contents                                                                 |
+| ---------------------------------------- | ------------------------------------------------------------------------ |
+| `./results/simulation/simulation.json`   | Simulated conversations from the simulation step                         |
+| `./results/evaluation/evaluation.json`   | Evaluation results (per-turn and per-conversation scores, unique errors) |
+| `./results/evaluation/final_report.html` | Interactive HTML report for browsing and sharing results                 |
 
 ---
 
 ## Example Files
 
-| File | Description |
-| -------- | -------- |
-| `config.yaml` | Simulate and evaluate configuration with inline OpenClaw agent config. |
-| `scenarios.json` | Pre-built scenarios for the personal assistant. |
+| File             | Description                                                            |
+| ---------------- | ---------------------------------------------------------------------- |
+| `config.yaml`    | Simulate and evaluate configuration with inline OpenClaw agent config. |
+| `scenarios.json` | Pre-built scenarios for the personal assistant.                        |
 
 ---
 
