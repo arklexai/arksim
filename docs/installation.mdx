@@ -6,7 +6,7 @@ title: "Installation"
 ## Requirements
 
 - Python 3.10 or later (up to 3.13)
-- An API key from a supported LLM provider ([OpenAI](https://developers.openai.com/api/docs), [Anthropic](https://platform.claude.com/docs/en/home), or [Gemini](https://ai.google.dev/gemini-api/docs/api-key))
+- An API key from a supported LLM provider ([OpenAI](https://developers.openai.com/api/docs), [Anthropic](https://platform.claude.com/docs/en/home), or [Google](https://ai.google.dev/gemini-api/docs/api-key))
 
 ## Install from PyPI
 
@@ -19,11 +19,11 @@ pip install arksim
 ArkSim uses OpenAI by default. To use other providers, install the corresponding extra:
 
 ```bash
-# Anthropic (Claude)
+# Anthropic
 pip install "arksim[anthropic]"
 
-# Google Gemini
-pip install "arksim[gemini]"
+# Google
+pip install "arksim[google]"
 
 # All providers
 pip install "arksim[all]"
