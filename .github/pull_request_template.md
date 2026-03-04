@@ -10,14 +10,13 @@ Closes #
 
 -
 
-## Documentation and Changelog
+## Documentation
 
-<!-- All PRs must account for docs and changelog. Check every box that applies. -->
+<!-- Check every box that applies. -->
 
-- [ ] Added an entry to `CHANGELOG.md` under the `[Unreleased]` section
 - [ ] Updated relevant docs in `docs/` (if behavior, config, or API changed)
 - [ ] Updated `README.md` (if installation, quickstart, or usage changed)
-- [ ] No docs or changelog needed (explain why below)
+- [ ] No docs needed (explain why below)
 
 <!-- If "no docs needed", briefly explain: e.g. "internal refactor, no user-facing change" -->
 
