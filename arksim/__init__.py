@@ -1,5 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
-"""Arksim: open-source agent simulation and evaluation toolkit."""
+"""⛵️ ArkSim: know how your agent performs before it goes live."""
+
+from __future__ import annotations
 
 import importlib
 

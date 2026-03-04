@@ -32,7 +32,7 @@ class SimulateRequest(BaseModel):
     provider: str = DEFAULT_PROVIDER
     num_conversations: int = 3
     max_turns: int = 5
-    num_workers: int | str = "auto"
+    num_workers: int | str = 50
     scenario_file: str | None = None
     output_file_path: str | None = None
 

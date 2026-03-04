@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 """Tests for arksim.utils.concurrency.workers."""
 
+from __future__ import annotations
+
 import pytest
 
 from arksim.utils.concurrency.workers import resolve_num_workers, validate_num_workers
@@ -32,7 +34,7 @@ class TestValidateNumWorkers:
 
 class TestResolveNumWorkers:
     def test_auto_returns_auto_value(self) -> None:
-        assert resolve_num_workers("auto", 8) == 8
+        assert resolve_num_workers("auto", 100) == 100
 
     def test_int_returns_itself(self) -> None:
         assert resolve_num_workers(4, 8) == 4

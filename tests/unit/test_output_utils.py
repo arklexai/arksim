@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 """Tests for output utilities."""
 
+from __future__ import annotations
+
 import json
 import os
 

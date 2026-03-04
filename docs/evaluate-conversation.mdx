@@ -77,7 +77,7 @@ provider: openai
 model: gpt-5.1
 
 # Execution
-num_workers: auto
+num_workers: 50
 score_threshold: null
 
 # Metrics
@@ -180,7 +180,7 @@ score_input.knowledge      # Retrieved knowledge / context passed to the agent
 ## Running Evaluation
 
 <Steps>
-  <Step title="Install Arksim">
+  <Step title="Install ArkSim">
     ```bash
     pip install arksim
     ```
@@ -194,16 +194,34 @@ score_input.knowledge      # Retrieved knowledge / context passed to the agent
       </Tab>
       <Tab title="Python (from file)">
         ```python
-        import arksim
+        from arksim.evaluator import run_evaluation, EvaluationInput
 
-        evaluation_results = arksim.evaluate(
+        evaluation_results = run_evaluation(EvaluationInput(
             simulation_file_path="./simulation.json",
+            scenario_file_path="./scenarios.json",
             output_dir="./evaluation",
             model="gpt-5.1",
-            provider="open-ai",
+            provider="openai",
+            num_workers=50,
+            generate_html_report=True,
+        ))
+        ```
+      </Tab>
+      <Tab title="Python (in memory)">
+        ```python
+        from arksim.scenario import Scenarios
+        from arksim.evaluator import run_evaluation, EvaluationInput
+
+        # simulation comes from run_simulation(...)
+        scenarios = Scenarios.load("./scenarios.json")
+
+        evaluation_results = run_evaluation(EvaluationInput(
+            output_dir="./evaluation",
+            model="gpt-5.1",
+            provider="openai",
             num_workers="auto",
             generate_html_report=True,
-        )
+        ), simulation=simulation, scenarios=scenarios)
         ```
       </Tab>
     </Tabs>

@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 """Tests for arksim.llms.utils.azure.check_azure_env_vars."""
 
+from __future__ import annotations
+
 import os
 from unittest.mock import patch
 

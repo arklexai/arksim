@@ -8,7 +8,7 @@ if sys.version_info >= (3, 11):
 else:
     from typing_extensions import Self
 
-from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from arksim.constants import DEFAULT_MODEL, DEFAULT_PROVIDER
 from arksim.utils.concurrency import validate_num_workers
@@ -40,7 +40,7 @@ class EvaluationInput(BaseModel):
         description="Path to the scenario file",
     )
     simulation_file_path: str | None = Field(
-        default="./simulation.json",
+        default=None,
         description="Path to the simulation output file",
     )
     output_dir: str | None = Field(
@@ -50,7 +50,7 @@ class EvaluationInput(BaseModel):
     model: str = Field(default=DEFAULT_MODEL, description="LLM model for evaluation")
     provider: str | None = Field(default=DEFAULT_PROVIDER, description="LLM provider")
     num_workers: int | str = Field(
-        default="auto",
+        default=50,
         description="Number of parallel workers (use 'auto' to default to 4)",
     )
     custom_metrics_file_paths: list[str] = Field(
@@ -76,14 +76,9 @@ class EvaluationInput(BaseModel):
     )
 
     @model_validator(mode="after")
-    def validate_evaluation_input(self, info: ValidationInfo) -> Self:
-        """Validate simulation_file_path and num_workers."""
+    def validate_evaluation_input(self) -> Self:
+        """Validate evaluation input fields."""
         validate_num_workers(self.num_workers)
-
-        # Skip validation if context indicates pipeline mode
-        skip = info.context and info.context.get("skip_input_dir_validation")
-        if not skip and not self.simulation_file_path:
-            raise ValueError("simulation_file_path of simulation output is required")
 
         return self
 
@@ -96,7 +91,7 @@ class EvaluationParams(BaseModel):
     agent_name: str = "Agent"
     code_file_path: str | None = None
     entry_function: str | None = None
-    num_workers: int | str = Field(default="auto")
+    num_workers: int | str = Field(default=50)
     custom_metrics: list[QuantitativeMetric] = Field(default_factory=list)
     custom_qualitative_metrics: list[QualitativeMetric] = Field(default_factory=list)
     metrics_to_run: list[str] | None = None

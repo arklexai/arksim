@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 """Tests for simulation engine entities."""
 
+from __future__ import annotations
+
 import pytest
 from pydantic import ValidationError
 
@@ -19,7 +21,7 @@ class TestSimulationParams:
 
         assert params.num_convos_per_scenario == 1
         assert params.max_turns == 5
-        assert params.num_workers == "auto"
+        assert params.num_workers == 50
         assert params.output_file_path == "./simulation.json"
         assert params.simulated_user_prompt_template is None
 

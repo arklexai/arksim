@@ -1,7 +1,7 @@
 <p align="center">
-  <h1 align="center">Arksim</h1>
+  <h1 align="center">⛵️ ArkSim</h1>
   <p align="center">
-    Open-source framework for simulating and evaluating conversational AI agents
+    Know how your agent performs before it goes live.
   </p>
   <p align="center">
     <a href="https://github.com/arklexai/arksim/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/arklexai/arksim/actions/workflows/ci.yml/badge.svg"></a>
@@ -27,15 +27,15 @@
 
 ---
 
-## What is Arksim?
+## What is ArkSim?
 
-Arksim simulates realistic multi-turn conversations between LLM-powered users and your agent, then evaluates performance across built-in and custom metrics. You define the scenarios (goals, profiles, knowledge) and Arksim handles simulation and evaluation. Works with any agent that exposes a Chat Completions API or A2A protocol endpoint.
+ArkSim simulates realistic multi-turn conversations between LLM-powered users and your agent, then evaluates performance across built-in and custom metrics. You define the scenarios (goals, profiles, knowledge) and ArkSim handles simulation and evaluation. Works with any agent that exposes a Chat Completions API or A2A protocol endpoint.
 
 <p align="center">
-  <img src="docs/assets/arksim-flow.svg" alt="Arksim flow: Scenarios → Simulation → Evaluation → Reports" width="100%">
+  <img src="docs/assets/arksim-flow.svg" alt="ArkSim flow: Scenarios → Simulation → Evaluation → Reports" width="100%">
 </p>
 
-### Why Arksim?
+### Why ArkSim?
 
 - **Realistic simulations**: LLM-powered users with distinct profiles, goals, and personality traits
 - **Comprehensive evaluation**: 7 built-in metrics covering helpfulness, coherence, faithfulness, goal completion, and more
@@ -57,9 +57,9 @@ pip install arksim
 For additional LLM providers:
 
 ```bash
-pip install arksim[all]        # All providers
-pip install arksim[anthropic]  # Anthropic Claude only
-pip install arksim[gemini]     # Google Gemini only
+pip install "arksim[all]"        # All providers
+pip install "arksim[anthropic]"  # Anthropic Claude only
+pip install "arksim[gemini]"     # Google Gemini only
 ```
 
 ### Set up credentials
@@ -103,8 +103,8 @@ generate_html_report: true
 arksim simulate-evaluate config.yaml
 
 # Or run each step separately
-arksim simulate config.yaml
-arksim evaluate config.yaml
+arksim simulate config_simulate.yaml
+arksim evaluate config_evaluate.yaml
 ```
 
 ### View results
@@ -117,7 +117,7 @@ arksim ui
 
 ## Agent Configuration
 
-Agent configuration tells Arksim how to connect to your agent. It is specified directly in your YAML config file. Arksim supports two protocols:
+Agent configuration tells ArkSim how to connect to your agent. It is specified directly in your YAML config file. ArkSim supports two protocols:
 
 ### Chat Completions API
 
@@ -143,7 +143,7 @@ agent_config:
   agent_type: a2a
   agent_name: my-agent
   api_config:
-    endpoint: http://localhost:9000/agent
+    endpoint: http://localhost:9999/agent
 ```
 
 Environment variables in headers are resolved at runtime using `${VAR_NAME}` syntax.
@@ -232,7 +232,7 @@ All settings can be specified in YAML and overridden via CLI flags (`--key value
 | `provider` | string | `openai` | LLM provider: `openai`, `claude`, `gemini` |
 | `num_conversations_per_scenario` | int | `5` | Conversations to generate per scenario |
 | `max_turns` | int | `5` | Maximum turns per conversation |
-| `num_workers` | int/string | `auto` | Parallel workers |
+| `num_workers` | int/string | `50` | Parallel workers |
 | `output_file_path` | string | `./simulation.json` | Where to save simulation results |
 | `simulated_user_prompt_template` | string | null | Custom Jinja2 template for simulated user prompt |
 
@@ -248,7 +248,7 @@ All settings can be specified in YAML and overridden via CLI flags (`--key value
 | `custom_metrics_file_paths` | list | `[]` | Paths to custom metric files |
 | `generate_html_report` | bool | `true` | Generate an HTML report |
 | `score_threshold` | float | null | Fail (exit 1) if any conversation scores below this |
-| `num_workers` | int/string | `auto` | Parallel workers |
+| `num_workers` | int/string | `50` | Parallel workers |
 
 ## CLI Reference
 
@@ -258,14 +258,15 @@ arksim simulate <config.yaml>           Run agent simulations
 arksim evaluate <config.yaml>           Evaluate simulation results
 arksim simulate-evaluate <config.yaml>  Simulate then evaluate
 arksim show-prompts [--category NAME]   Display evaluation prompts
+arksim examples                         Download examples folder
 arksim ui [--port PORT]                 Launch web UI (default: 8080)
 ```
 
 Any config setting can be passed as a CLI flag:
 
 ```bash
-arksim simulate config.yaml --max-turns 10 --num-workers 4 --verbose
-arksim evaluate config.yaml --score-threshold 0.7
+arksim simulate config_simulate.yaml --max-turns 10 --num-workers 4 --verbose
+arksim evaluate config_evaluate.yaml --score-threshold 0.7
 ```
 
 ## Web UI

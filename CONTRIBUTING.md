@@ -1,6 +1,6 @@
-# Contributing to Arksim
+# Contributing to ArkSim
 
-Thank you for your interest in contributing to Arksim! This guide will help you get started.
+Thank you for your interest in contributing to ArkSim! This guide will help you get started.
 
 ## Getting Started
 

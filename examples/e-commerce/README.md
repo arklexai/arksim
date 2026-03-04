@@ -1,18 +1,17 @@
 # Agent Evaluation Example - E-commerce
 
-This directory gives an example of running Arksim with an example shopping assistant agent for the **e-commerce use case**. You can follow the example to evaluate your own agent.
+This directory gives an example of running ArkSim with an example shopping assistant agent for the **e-commerce use case**. You can follow the example to evaluate your own agent.
 
 > This example includes two types of agents:
 >
 > - **Option 1**: OpenAI agent that directly uses the OpenAI API to interact with the user simulator.
-> - **Option 2**: Customized in-house agent exposed through a Chat Completions-compatible interface to interact with the user simulator.
+> - **Option 2**: Customized in-house agent exposed through A2A Protocol or Chat Completions-compatible interface to interact with the user simulator.
 
 ## Option 1: OpenAI Agent
 
 Steps to run:
 
-1. Set your API keys as environment variables:
-
+1. Set the following environment variables:
    ```bash
    export OPENAI_API_KEY="<YOUR_OPENAI_API_KEY>"
    ```
@@ -21,12 +20,12 @@ Steps to run:
 
 3. From this example directory, run:
    ```bash
-   arksim simulate-evaluate path/to/examples/e-commerce/config.yaml
+   arksim simulate-evaluate config.yaml
    ```
 
 ## Option 2: In-house Agent (`agent_server`)
 
-In the `./examples/e-commerce/agent_server` folder, we provide a sample RAG-based agent implemented with OpenAI Agents SDK that can be exposed through a Chat Completions-compatible interface.
+In the `./examples/e-commerce/agent_server` folder, we provide a sample RAG-based agent implemented with OpenAI Agents SDK that can be exposed with A2A Protocol or through Chat Completions interface.
 
 Steps to run:
 
@@ -43,30 +42,39 @@ Steps to run:
         pip install -r requirements.txt
         ```
 
-2. Start the sample agent (run all commands below from the **parent directory of the `examples` folder**):
-   - **2.1 Chat Completions wrapper**
+2. Start one of the sample agents (run all commands below from the **parent directory of the `examples` folder**):
+   - **2.1 A2A agent server**
+
+     This exposes an A2A-compatible agent on port `9999`.
+
+     ```bash
+     export OPENAI_API_KEY="<YOUR_OPENAI_API_KEY>"
+     export A2A_API_KEY=1234-4567-8910
+     python -m examples.e-commerce.agent_server.a2a.server
+     ```
+
+   - **2.2 Chat Completions wrapper**
 
      This exposes an OpenAI Chat Completions-compatible endpoint on port `8888` at `/chat/completions`.
 
      ```bash
      export OPENAI_API_KEY="<YOUR_OPENAI_API_KEY>"
-     export AGENT_API_KEY="<YOUR_AGENT_API_KEY>"
+     export AGENT_API_KEY=123456
      python -m examples.e-commerce.agent_server.chat_completions.server
      ```
 
-   - **2.2 Your own agent**
+   You can also adapt these servers to call your own backend agent by following the comments in `agent_server/chat_completions/server.py` (for Chat Completions) or by implementing your own A2A-compatible executor in `agent_server/a2a`.
 
-     If you have your own agent, wrap it in the OpenAI Chat Completions request and response format. You can follow the `#TODO` comments in `agent_server/chat_completions/server.py` to integrate it, then start the server:
-
+3. From this example directory, run with the appropriate config:
+   - **A2A agent**:
      ```bash
+     export A2A_API_KEY=1234-4567-8910
      export OPENAI_API_KEY="<YOUR_OPENAI_API_KEY>"
-     export AGENT_API_KEY="<YOUR_AGENT_API_KEY>"
-     python -m examples.e-commerce.agent_server.chat_completions.server
+     arksim simulate-evaluate config_a2a.yaml
      ```
-
-3. From this example directory, run:
-   ```bash
-   export AGENT_API_KEY="<YOUR_AGENT_API_KEY>"
-   export OPENAI_API_KEY="<YOUR_OPENAI_API_KEY>"
-   arksim simulate-evaluate config_chat_completions.yaml
-   ```
+   - **Chat Completions agent**:
+     ```bash
+     export AGENT_API_KEY=123456
+     export OPENAI_API_KEY="<YOUR_OPENAI_API_KEY>"
+     arksim simulate-evaluate config_chat_completions.yaml
+     ```

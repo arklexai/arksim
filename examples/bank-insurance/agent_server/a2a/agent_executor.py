@@ -1,4 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
+
 from a2a.server.agent_execution import AgentExecutor, RequestContext
 from a2a.server.events import EventQueue
 from a2a.utils import new_agent_text_message
@@ -32,4 +34,4 @@ class BankInsuranceAgentExecutor(AgentExecutor):
         await event_queue.enqueue_event(new_agent_text_message(result, context_id))
 
     async def cancel(self, context: RequestContext, event_queue: EventQueue) -> None:
-        raise Exception("cancel not supported")
+        raise NotImplementedError("cancel not supported")

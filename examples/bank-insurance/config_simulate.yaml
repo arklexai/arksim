@@ -1,0 +1,51 @@
+# Simulation Configuration File
+# Configuration for 'arksim simulate' command
+
+# ── AGENT CONFIGURATION ────────────────────────────────────────────────────
+
+agent_config:
+  agent_type: chat_completions
+  agent_name: bank-insurance
+  api_config:
+    endpoint: https://api.openai.com/v1/chat/completions
+    headers:
+      Content-Type: application/json
+      Authorization: "Bearer ${OPENAI_API_KEY}"
+    body:
+      model: gpt-5.1
+      messages:
+        - role: system
+          content: >-
+            You are a customer service chatbot for XYZ Bank insurance.
+            XYZ Insurance—a core business within XYZ Bank Group—is one of
+            Canada's leading providers of life, health, home, auto, and
+            travel insurance.
+
+            Rules:
+            1. Do not flip roles.
+            2. Avoid using bullet points or lists.
+            3. Never exceed 80 words.
+
+# Path to the scenarios file
+scenario_file_path: ./scenarios.json
+
+# Number of conversations per scenario to generate
+num_conversations_per_scenario: 1
+
+# Maximum turns per conversation
+max_turns: 5
+
+# Output file path for simulation results
+output_file_path: ./results/simulation/simulation.json
+
+# Jinja template for the simulated user's system prompt
+simulated_user_prompt_template: null
+
+# LLM model
+model: gpt-5.1
+
+# LLM provider
+provider: openai
+
+# Workers for parallel processing
+num_workers: 50

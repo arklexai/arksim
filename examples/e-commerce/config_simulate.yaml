@@ -1,0 +1,45 @@
+# Simulation Configuration File
+# Configuration for 'arksim simulate' command
+
+# ── AGENT CONFIGURATION ────────────────────────────────────────────────────
+
+agent_config:
+  agent_type: chat_completions
+  agent_name: e-commerce
+  api_config:
+    endpoint: https://api.openai.com/v1/chat/completions
+    headers:
+      Content-Type: application/json
+      Authorization: "Bearer ${OPENAI_API_KEY}"
+    body:
+      model: gpt-5.1
+      messages:
+        - role: system
+          content: >-
+            You are a shopping assistant. Please provide a complete answer
+            to the user's question based on your knowledge. Response within
+            50 words.
+
+# Path to the scenarios file
+scenario_file_path: ./scenarios.json
+
+# Number of conversations per scenario to generate
+num_conversations_per_scenario: 1
+
+# Maximum turns per conversation
+max_turns: 5
+
+# Output file path for simulation results
+output_file_path: ./results/simulation/simulation.json
+
+# Jinja template for the simulated user's system prompt
+simulated_user_prompt_template: null
+
+# LLM model
+model: gpt-5.1
+
+# LLM provider
+provider: openai
+
+# Workers for parallel processing
+num_workers: 50

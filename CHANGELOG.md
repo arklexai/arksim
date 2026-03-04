@@ -1,11 +1,50 @@
 # Changelog
 
-All notable changes to Arksim will be documented in this file.
+All notable changes to ArkSim will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.6](https://github.com/arklexai/arksim/compare/v0.0.5...v0.0.6) (2026-03-04)
+
+
+### Fixed
+
+* multi-provider chat completions and config-driven LLM ([#60](https://github.com/arklexai/arksim/issues/60)) ([4b8ce23](https://github.com/arklexai/arksim/commit/4b8ce23f6aaefaea6b8f6c87735f408f35ecd01b))
+* respect num_conversations_per_scenario in simulator ([#55](https://github.com/arklexai/arksim/issues/55)) ([28b65b3](https://github.com/arklexai/arksim/commit/28b65b35ffc554ceb22b3ee4db2f9726a80039db))
+
+
+### Documentation
+
+* update quickstart to use examples command, fix examples ([#44](https://github.com/arklexai/arksim/issues/44)) ([97a27db](https://github.com/arklexai/arksim/commit/97a27db762c57d8eb7152de66b856d9dd0802efe))
+
+
+### Changed
+
+* trigger PyPI publish on release instead of tag push ([#62](https://github.com/arklexai/arksim/issues/62)) ([c086aea](https://github.com/arklexai/arksim/commit/c086aea0ac8a66d11c7adfb82cd79183f2e7d747))
+
+## [0.0.5](https://github.com/arklexai/arksim/compare/v0.0.4...v0.0.5) (2026-03-04)
+
+
+### Fixed
+
+* remove stale token from Codecov coverage badge ([#49](https://github.com/arklexai/arksim/issues/49)) ([b2ac7fd](https://github.com/arklexai/arksim/commit/b2ac7fddf9dfac77e2bd4b4466e654cdf29e9bde))
+
+
+### Changed
+
+* add Codecov token to coverage upload ([#45](https://github.com/arklexai/arksim/issues/45)) ([0d25132](https://github.com/arklexai/arksim/commit/0d251324b2b498bfba0d853eaa75a70bf0bf2859))
+* add OSS hardening for security, coverage, and annotations ([#46](https://github.com/arklexai/arksim/issues/46)) ([aa7fa77](https://github.com/arklexai/arksim/commit/aa7fa77b4c0db302cf8bd0104dcd7b076d134d0b))
+* add release-please for automated releases and changelog ([#47](https://github.com/arklexai/arksim/issues/47)) ([92f48cc](https://github.com/arklexai/arksim/commit/92f48cc05241f7c741d97c3a7fa48eb7da6996a4))
+* code quality audit fixes ([#52](https://github.com/arklexai/arksim/issues/52)) ([b7295c2](https://github.com/arklexai/arksim/commit/b7295c218637a4579d8a1f190b4460039259b86c))
+* improve unit test coverage from 44% to 62% ([#51](https://github.com/arklexai/arksim/issues/51)) ([a3f8f42](https://github.com/arklexai/arksim/commit/a3f8f4213637939f0377b963fba632a2cc024f04))
+* trigger CI on release-please branches ([#59](https://github.com/arklexai/arksim/issues/59)) ([71ba01b](https://github.com/arklexai/arksim/commit/71ba01b1c6611dc5763093ff69c2c958b385e5a8))
+
 ## [Unreleased]
+
+### Fixed
+
+- Simulator now respects `num_conversations_per_scenario`, previously only 1 conversation was generated per scenario
 
 ### Added
 
@@ -16,6 +55,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Test coverage threshold (60% minimum) enforced in CI
 - 26 new unit test files covering evaluator metrics, CLI utilities, LLM factory, concurrency workers, simulation utilities, error detection, API endpoints, and path validation
 - `from __future__ import annotations` to all source files for consistent typing
+- Ruff `FA100` rule to enforce `from __future__ import annotations` on every Python file
+- `insert-license` pre-commit hook to enforce `SPDX-License-Identifier: Apache-2.0` headers
 - Path traversal protection on filesystem and results API endpoints
 - Generic error messages in API endpoints to prevent server path leakage
 - Shared evaluation constants (`SCORE_NOT_COMPUTED`, `BEHAVIOR_FAILURE_THRESHOLD`)
@@ -24,6 +65,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Project display name from "Arksim" to "ArkSim" with ⛵️ emoji and slogan across all docs, CLI, and metadata
 - `SCORE_NOT_COMPUTED` display label changed from "N/A (Evaluation Failed)" to "N/A (Not computed)"
 - Removed stale `{chat_id}` placeholder reference from `ChatCompletionsConfig.body` field description
 
@@ -33,6 +75,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Expanded SECURITY.md with response process, scope, and disclosure guidelines
 - Azure OpenAI provider now raises `ValueError` instead of silently returning a raw string when structured output parsing fails
 - `validate_num_workers` rejects zero and negative values
+- `run_evaluation` now accepts optional in-memory `simulation` and `scenarios` inputs, while still supporting file-based loading
+- Evaluation docs and quickstart examples now show direct Python usage of `run_simulation` and `run_evaluation` with in-memory handoff between steps
 
 ### Removed
 

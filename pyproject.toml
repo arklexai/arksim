@@ -1,7 +1,7 @@
 [project]
 name = "arksim"
 dynamic = ["version"]
-description = "Open-source framework for simulating and evaluating conversational AI agents"
+description = "⛵️ Know how your agent performs before it goes live."
 readme = "README.md"
 license = "Apache-2.0"
 authors = [{name = "Arklex", email = "support@arklex.ai"}]
@@ -42,10 +42,10 @@ azure = [
     "azure-identity>=1.20.0",
 ]
 anthropic = [
-    "anthropic",
+    "anthropic>=0.77.1",
 ]
 gemini = [
-    "google-genai",
+    "google-genai>=1.26.0",
 ]
 all = [
     "arksim[azure,anthropic,gemini]",
@@ -78,6 +78,7 @@ packages = ["arksim"]
 select = [
   "E",   # pycodestyle (formatting errors)
   "F",   # pyflakes (undefined names, etc.)
+  "FA",  # flake8-future-annotations (require `from __future__ import annotations`)
   "I",   # isort (import sorting)
   "UP",  # pyupgrade (modernizes syntax)
   "ANN", # flake8-annotations (type hints)

@@ -1,0 +1,39 @@
+# Evaluation Configuration File
+# Configuration for 'arksim evaluate' command
+
+# Path to the scenarios file
+scenario_file_path: ./scenarios.json
+
+# Path to the simulation output file
+simulation_file_path: ./results/simulation/simulation.json
+
+# Output directory for evaluation results
+output_dir: ./results/evaluation
+
+# Paths to Python files defining custom QuantitativeMetric or QualitativeMetric subclasses
+custom_metrics_file_paths:
+  - ./custom_metrics.py
+
+# Built-in metrics to run; if empty, all built-in metrics run
+metrics_to_run:
+  - faithfulness
+  - helpfulness
+  - coherence
+  - relevance
+  - goal_completion
+  - agent_behavior_failure
+
+# Generate HTML report
+generate_html_report: true
+
+# Exit with non-zero if any score is below this (0.0–1.0); null to disable
+score_threshold: null
+
+# LLM model
+model: gpt-5.1
+
+# LLM provider
+provider: openai
+
+# Workers for parallel processing
+num_workers: 50

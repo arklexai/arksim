@@ -47,7 +47,7 @@ simulated_user_prompt_template: null
 # ── EVALUATION SETTINGS ──────────────────────────────────────────────────────
 
 # Output directory for evaluation results
-output_dir: ./examples/bank-insurance/results
+output_dir: ./examples/bank-insurance/results/evaluation
 
 # Paths to Python files defining custom QuantitativeMetric or QualitativeMetric subclasses
 custom_metrics_file_paths: []
@@ -76,5 +76,5 @@ model: gpt-5.1
 # LLM provider
 provider: openai
 
-# Workers for parallel processing; "auto" uses all available threads
-num_workers: auto
+# Workers for parallel processing
+num_workers: 50

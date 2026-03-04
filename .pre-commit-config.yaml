@@ -12,18 +12,18 @@ repos:
       - id: check-json
         files: \.json$
 
+  - repo: https://github.com/lucas-c/pre-commit-hooks
+    rev: v1.5.6
+    hooks:
+      - id: insert-license
+        files: \.py$
+        args:
+          - --license-filepath=.license-header
+          - --comment-style=#
+
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.11.2
     hooks:
       - id: ruff
         args: [--fix]
       - id: ruff-format
-
-  - repo: local
-    hooks:
-      - id: changelog-reminder
-        name: Check CHANGELOG.md updated
-        entry: scripts/check-changelog.sh
-        language: script
-        pass_filenames: false
-        always_run: true

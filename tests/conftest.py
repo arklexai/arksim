@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 """Pytest configuration and fixtures for simulator tests."""
 
+from __future__ import annotations
+
 import os
 import tempfile
 from unittest.mock import patch

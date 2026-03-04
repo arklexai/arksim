@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 """Tests for error_detection: collect_agent_behavior_failure_reasoning."""
 
+from __future__ import annotations
+
 from arksim.evaluator.entities import ConversationEvaluation, TurnEvaluation
 from arksim.evaluator.error_detection import collect_agent_behavior_failure_reasoning
 from arksim.evaluator.utils.enums import EvaluationOutcomes
