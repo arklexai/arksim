@@ -70,7 +70,6 @@
   <aside class="w-60 t-surface border-r t-border flex flex-col shrink-0">
     <div class="px-5 py-3 border-b t-border">
       <span class="font-bold text-lg" :style="'color:' + (darkMode ? '#8EC1D6' : '#035E7B')">Arksim</span>
-      <p x-show="projectRoot" class="text-[10px] t-muted font-mono mt-0.5 truncate" :title="projectRoot" x-text="projectRoot"></p>
     </div>
 
     <div class="px-3 pt-4 pb-2">
@@ -752,6 +751,7 @@
       <div class="p-4 border-b t-border">
         <h3 class="font-semibold t-heading" x-text="browserMode === 'file' ? 'Select File' : 'Select Directory'"></h3>
         <p class="text-xs t-caption font-mono mt-1 break-all" x-text="browserPath"></p>
+        <p class="text-xs t-muted mt-1">Scoped to the directory where you launched the UI.</p>
       </div>
       <div class="flex-1 overflow-y-auto p-2 min-h-[300px]">
         <!-- Parent -->

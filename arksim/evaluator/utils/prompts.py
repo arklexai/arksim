@@ -1,4 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
+
 #### Agent Performance Metrics Prompt ####
 helpfulness_system_prompt = """
 You are given a conversation between user and AI assistant. Please evaluate the last message from the AI assistant based on the following criteria, assigning a score from 1 to 5. Use the detailed descriptions below to guide your assessment:

@@ -1,4 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
+
 from pydantic import BaseModel, model_validator
 
 from arksim.utils.output import load_json_file
@@ -46,6 +48,6 @@ class Scenarios(BaseModel):
     scenarios: list[Scenario]
 
     @classmethod
-    def load(cls, path: str) -> "Scenarios":
+    def load(cls, path: str) -> Scenarios:
         """Load scenarios from a JSON file."""
         return cls.model_validate(load_json_file(path))

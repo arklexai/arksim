@@ -176,7 +176,7 @@ function arksim() {
       this._connectWs();
       await this._fetchProjectRoot();
       await this._loadConfigs();
-      await this._loadDemoScenario();
+      if (this.scenarios.length === 0) await this._loadDemoScenario();
     },
 
     async _fetchProjectRoot() {
@@ -360,7 +360,7 @@ function arksim() {
       this.outputFilePath = path ? path.substring(0, path.lastIndexOf('/')) : '';
       if (s.scenario_file_path) {
         this.scenarioFilePath = s.scenario_file_path;
-        this.validateScenarioFile();
+        await this.loadScenarioFile();
       }
       this.generateHtmlReport = s.generate_html_report !== undefined ? s.generate_html_report : d.generateHtmlReport;
       this.scoreThreshold = s.score_threshold != null ? String(s.score_threshold) : '';

@@ -90,3 +90,13 @@ ignore = [
   "E501",  # Line too long (if you're using Black)
   "UP045", # Use X | None instead of Optional[X] - keep for compatibility
 ]
+
+[tool.coverage.run]
+source = ["arksim"]
+
+[tool.coverage.report]
+fail_under = 30
+
+[tool.bandit]
+exclude_dirs = ["tests"]
+skips = ["B101", "B110"]
