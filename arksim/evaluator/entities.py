@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import logging
 import os
 import sys
 
@@ -12,7 +11,7 @@ else:
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, model_validator
 
-from arksim.config.utils import resolve_config_relative_path
+from arksim.config.utils import resolve_model_paths
 from arksim.constants import DEFAULT_MODEL, DEFAULT_PROVIDER
 from arksim.utils.concurrency import validate_num_workers
 
@@ -23,8 +22,6 @@ from .base_metric import (
     QuantitativeMetric,
     QuantResult,
 )
-
-logger = logging.getLogger(__name__)
 
 _DEFAULT_METRICS_TO_RUN = [
     "faithfulness",
@@ -88,31 +85,19 @@ class EvaluationInput(BaseModel):
         # Paths from config.yaml are resolved relative to the config file's
         # directory. Paths set via CLI are left as-is (cwd-relative).
         config_path = info.context and info.context.get("config_path")
-        cli_overrides = (info.context and info.context.get("cli_overrides")) or set()
         if config_path:
-            config_dir = os.path.dirname(config_path)
-            for attr in ("scenario_file_path", "simulation_file_path", "output_dir"):
-                path = getattr(self, attr)
-                if path:
-                    resolved = resolve_config_relative_path(
-                        path, config_dir, cli_overrides, attr
-                    )
-                    if resolved is not None and resolved != path:
-                        logger.debug("%s resolved to: %s", attr, resolved)
-                        setattr(self, attr, resolved)
-
-            if self.custom_metrics_file_paths:
-                resolved_list = []
-                for p in self.custom_metrics_file_paths:
-                    resolved = resolve_config_relative_path(
-                        p, config_dir, cli_overrides, "custom_metrics_file_paths"
-                    )
-                    resolved_list.append(resolved if resolved is not None else p)
-                if resolved_list != self.custom_metrics_file_paths:
-                    logger.debug(
-                        "custom_metrics_file_paths resolved to: %s", resolved_list
-                    )
-                    self.custom_metrics_file_paths = resolved_list
+            resolve_model_paths(
+                self,
+                path_attrs=(
+                    "scenario_file_path",
+                    "simulation_file_path",
+                    "output_dir",
+                ),
+                list_path_attrs=("custom_metrics_file_paths",),
+                config_dir=os.path.dirname(config_path),
+                cli_overrides=(info.context and info.context.get("cli_overrides"))
+                or set(),
+            )
 
         return self
 

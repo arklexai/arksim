@@ -153,6 +153,23 @@ def _parse_value(value: str) -> bool | int | float | str:
     return value
 
 
+def _coerce_list_overrides(overrides: dict, model_cls: type) -> None:
+    """Wrap scalar CLI values in lists for model fields that expect list types."""
+    from typing import get_origin
+
+    for key in list(overrides):
+        if key not in model_cls.model_fields:
+            continue
+        annotation = model_cls.model_fields[key].annotation
+        if get_origin(annotation) is not list:
+            continue
+        val = overrides[key]
+        if isinstance(val, str):
+            overrides[key] = [v.strip() for v in val.split(",")]
+        elif not isinstance(val, list):
+            overrides[key] = [val]
+
+
 def validate_overrides(overrides: dict, valid_keys: set) -> None:
     invalid_keys = set(overrides.keys()) - valid_keys
     if invalid_keys:
@@ -442,6 +459,7 @@ def main() -> None:
     if args.command == "simulate":
         valid_keys = set(SimulationInput.model_fields.keys())
         validate_overrides(overrides, valid_keys)
+        _coerce_list_overrides(overrides, SimulationInput)
         settings = _merge_cli_overrides(settings, overrides)
         simulation_input = SimulationInput.model_validate(
             settings,
@@ -452,6 +470,7 @@ def main() -> None:
     elif args.command == "evaluate":
         valid_keys = set(EvaluationInput.model_fields.keys())
         validate_overrides(overrides, valid_keys)
+        _coerce_list_overrides(overrides, EvaluationInput)
         settings = _merge_cli_overrides(settings, overrides)
         evaluation_input = EvaluationInput.model_validate(
             settings,
@@ -477,6 +496,8 @@ def main() -> None:
             EvaluationInput.model_fields.keys()
         )
         validate_overrides(overrides, valid_keys)
+        _coerce_list_overrides(overrides, SimulationInput)
+        _coerce_list_overrides(overrides, EvaluationInput)
         settings = _merge_cli_overrides(settings, overrides)
 
         simulation_settings = {
@@ -500,11 +521,7 @@ def main() -> None:
         }
         evaluation_input = EvaluationInput.model_validate(
             evaluation_settings,
-            context={
-                "skip_input_dir_validation": True,
-                "config_path": config_path,
-                "cli_overrides": cli_overrides,
-            },
+            context={"config_path": config_path, "cli_overrides": cli_overrides},
         )
         _log_config_summary("Evaluation", evaluation_input.model_dump())
 

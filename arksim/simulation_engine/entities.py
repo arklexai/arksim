@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import logging
 import os
 import sys
 import uuid
@@ -16,11 +15,9 @@ else:
 from pydantic import BaseModel, Field, ValidationInfo, model_validator
 
 from arksim.config.core.agent import AgentConfig
-from arksim.config.utils import resolve_config_relative_path
+from arksim.config.utils import resolve_model_paths
 from arksim.constants import DEFAULT_MODEL, DEFAULT_PROVIDER
 from arksim.utils.concurrency import validate_num_workers
-
-logger = logging.getLogger(__name__)
 
 
 class SimulationInput(BaseModel):
@@ -70,26 +67,21 @@ class SimulationInput(BaseModel):
         # Paths from config.yaml are resolved relative to the config file's
         # directory. Paths set via CLI are left as-is (cwd-relative).
         config_path = info.context and info.context.get("config_path")
-        cli_overrides = (info.context and info.context.get("cli_overrides")) or set()
         if config_path:
-            config_dir = os.path.dirname(config_path)
-            for attr in (
-                "scenario_file_path",
-                "output_file_path",
-                "agent_config_file_path",
-            ):
-                path = getattr(self, attr)
-                if path:
-                    resolved = resolve_config_relative_path(
-                        path, config_dir, cli_overrides, attr
-                    )
-                    if resolved is not None and resolved != path:
-                        logger.debug("%s resolved to: %s", attr, resolved)
-                        setattr(self, attr, resolved)
+            resolve_model_paths(
+                self,
+                path_attrs=(
+                    "scenario_file_path",
+                    "output_file_path",
+                    "agent_config_file_path",
+                ),
+                list_path_attrs=(),
+                config_dir=os.path.dirname(config_path),
+                cli_overrides=(info.context and info.context.get("cli_overrides"))
+                or set(),
+            )
 
-        # Skip validation if context indicates pipeline mode
-        skip = info.context and info.context.get("skip_input_dir_validation")
-        if not skip and not self.agent_config and not self.agent_config_file_path:
+        if not self.agent_config and not self.agent_config_file_path:
             raise ValueError(
                 "Either inline agent_config or agent_config_file_path must be provided."
             )

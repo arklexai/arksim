@@ -21,11 +21,9 @@ class TestSimulationInputValidator:
         with pytest.raises(ValidationError, match="agent_config"):
             SimulationInput()
 
-    def test_skip_validation_context(self) -> None:
-        si = SimulationInput.model_validate(
-            {}, context={"skip_input_dir_validation": True}
-        )
-        assert si.agent_config is None
+    def test_no_agent_config_always_raises(self) -> None:
+        with pytest.raises(ValidationError, match="agent_config"):
+            SimulationInput.model_validate({}, context={})
 
     def test_invalid_num_workers_string(self) -> None:
         with pytest.raises(ValidationError, match="num_workers"):
@@ -42,7 +40,7 @@ class TestSimulationInputPathResolution:
         return {"config_path": str(tmp_path / "config.yaml"), **kwargs}
 
     def test_scenario_resolves_to_config_relative(self, tmp_path: Path) -> None:
-        """scenario_file_path is always resolved relative to config dir."""
+        """scenario_file_path is resolved relative to config dir."""
         si = SimulationInput.model_validate(
             self._base_data(scenario_file_path="./scenarios.json"),
             context=self._ctx(tmp_path),
@@ -65,8 +63,8 @@ class TestSimulationInputPathResolution:
         )
         assert si.scenario_file_path == "./scenarios.json"
 
-    def test_output_resolves_independently_of_scenario(self, tmp_path: Path) -> None:
-        """output_file_path resolves config-relatively even when scenario is None."""
+    def test_output_resolves_to_config_relative(self, tmp_path: Path) -> None:
+        """output_file_path resolves config-relatively (including defaults)."""
         si = SimulationInput.model_validate(
             self._base_data(),
             context=self._ctx(tmp_path),
@@ -90,3 +88,11 @@ class TestSimulationInputPathResolution:
             context=self._ctx(tmp_path),
         )
         assert si.scenario_file_path == abs_path
+
+    def test_agent_config_file_path_resolves(self, tmp_path: Path) -> None:
+        """agent_config_file_path is resolved config-relatively."""
+        si = SimulationInput.model_validate(
+            self._base_data(),
+            context=self._ctx(tmp_path),
+        )
+        assert si.agent_config_file_path == str(tmp_path / "agent.json")

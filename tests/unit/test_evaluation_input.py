@@ -14,7 +14,7 @@ class TestEvaluationInputPathResolution:
         return {"config_path": str(tmp_path / "config.yaml"), **kwargs}
 
     def test_scenario_resolves_to_config_relative(self, tmp_path: Path) -> None:
-        """scenario_file_path is always resolved relative to config dir."""
+        """scenario_file_path is resolved relative to config dir."""
         ei = EvaluationInput.model_validate(
             {"scenario_file_path": "./scenarios.json"},
             context=self._ctx(tmp_path),
@@ -22,15 +22,15 @@ class TestEvaluationInputPathResolution:
         assert ei.scenario_file_path == str(tmp_path / "scenarios.json")
 
     def test_simulation_file_resolves_to_config_relative(self, tmp_path: Path) -> None:
-        """simulation_file_path is always resolved relative to config dir."""
+        """simulation_file_path is resolved relative to config dir."""
         ei = EvaluationInput.model_validate(
             {"simulation_file_path": "./simulation.json"},
             context=self._ctx(tmp_path),
         )
         assert ei.simulation_file_path == str(tmp_path / "simulation.json")
 
-    def test_output_dir_resolves_independently(self, tmp_path: Path) -> None:
-        """output_dir resolves config-relatively regardless of other paths."""
+    def test_output_dir_resolves_to_config_relative(self, tmp_path: Path) -> None:
+        """output_dir resolves config-relatively (including defaults)."""
         ei = EvaluationInput.model_validate(
             {"output_dir": "./evaluation"},
             context=self._ctx(tmp_path),
@@ -79,3 +79,22 @@ class TestEvaluationInputPathResolution:
             context=self._ctx(tmp_path),
         )
         assert ei.output_dir == abs_dir
+
+    def test_custom_metrics_file_paths_resolve(self, tmp_path: Path) -> None:
+        """custom_metrics_file_paths are resolved config-relatively."""
+        ei = EvaluationInput.model_validate(
+            {"custom_metrics_file_paths": ["./m1.py", "./m2.py"]},
+            context=self._ctx(tmp_path),
+        )
+        assert ei.custom_metrics_file_paths == [
+            str(tmp_path / "m1.py"),
+            str(tmp_path / "m2.py"),
+        ]
+
+    def test_default_custom_metrics_not_touched(self, tmp_path: Path) -> None:
+        """Default empty custom_metrics_file_paths is not touched."""
+        ei = EvaluationInput.model_validate(
+            {},
+            context=self._ctx(tmp_path),
+        )
+        assert ei.custom_metrics_file_paths == []

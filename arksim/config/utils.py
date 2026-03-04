@@ -55,4 +55,42 @@ def resolve_config_relative_path(
     """
     if attr_name in cli_overrides:
         return None
+    if os.path.isabs(path):
+        return None
     return os.path.normpath(os.path.join(config_dir, path))
+
+
+def resolve_model_paths(
+    model: object,
+    path_attrs: tuple[str, ...],
+    list_path_attrs: tuple[str, ...],
+    config_dir: str,
+    cli_overrides: set,
+) -> None:
+    """Resolve file-path attributes on a Pydantic model in place.
+
+    Single-value path attributes in *path_attrs* are resolved individually.
+    List-of-paths attributes in *list_path_attrs* have each element resolved.
+    """
+    for attr in path_attrs:
+        path = getattr(model, attr)
+        if path:
+            resolved = resolve_config_relative_path(
+                path, config_dir, cli_overrides, attr
+            )
+            if resolved is not None and resolved != path:
+                logger.debug("%s resolved to: %s", attr, resolved)
+                setattr(model, attr, resolved)
+
+    for attr in list_path_attrs:
+        paths = getattr(model, attr)
+        if paths:
+            resolved_list = []
+            for p in paths:
+                resolved = resolve_config_relative_path(
+                    p, config_dir, cli_overrides, attr
+                )
+                resolved_list.append(resolved if resolved is not None else p)
+            if resolved_list != paths:
+                logger.debug("%s resolved to: %s", attr, resolved_list)
+                setattr(model, attr, resolved_list)
