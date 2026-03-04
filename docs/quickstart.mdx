@@ -31,39 +31,50 @@ description: "Get started with Arksim in minutes. This guide walks you through y
     ```
   </Step>
   <Step title="Run Simulation & Evaluation">
-    Use the **bank example** so you don't have to write your own scenarios or config. The example includes ready-made scenarios and a config that calls the OpenAI API.
+    Download the example projects (scenarios and configs included), then run simulation and evaluation via the CLI, Python, or the web UI.
 
-    **Get the examples:** Use the `examples/` folder in your cloned repository.
+    **Download examples:** From your project directory, run:
 
-    Then run simulation and evaluation via the CLI, Python, or the web UI.
+    ```bash
+    arksim examples
+    ```
+
+    This creates an `examples/` folder with three projects: **bank-insurance**, **e-commerce**, and **openclaw**. To list or download a single example: `arksim examples --list`, then `arksim examples <name>`.
 
     <Tabs>
       <Tab title="CLI">
-        From the **bank example** directory, run:
+        From the directory of the example you want to run, use that example's config (e.g. `config.yaml`). Replace `<example>` with one of: `bank-insurance`, `e-commerce`, `openclaw`.
+
+        ```bash
+        cd examples/<example>
+        arksim simulate-evaluate config.yaml
+        ```
+
+        Example for the bank-insurance quick path (OpenAI only, no local server):
 
         ```bash
         cd examples/bank-insurance
         arksim simulate-evaluate config.yaml
         ```
 
-        This uses the example's `config.yaml` (OpenAI) and `scenarios.json`. No local agent server is required—just ensure `OPENAI_API_KEY` is set from Step 2.
+        Ensure the API key required by that example's config is set from Step 2 (e.g. `OPENAI_API_KEY` for bank-insurance and e-commerce `config.yaml`).
 
         <Tip>
-          To learn what goes in a config (agent, scenario path, outputs), see [Scenarios](/build-scenario), [Simulation](/simulate-conversation), and [Evaluation](/evaluate-conversation). To run against the sample local agent instead of OpenAI, see [Insurance customer service](/insurance-customer-service-agent-evaluation).
+          To learn what goes in a config (agent, scenario path, outputs), see [Scenarios](/build-scenario), [Simulation](/simulate-conversation), and [Evaluation](/evaluate-conversation). For e-commerce or bank-insurance with a local RAG agent, see [E-commerce customer service](/e-commerce-customer-service-agent-evaluation) and [Insurance customer service](/insurance-customer-service-agent-evaluation).
         </Tip>
       </Tab>
       <Tab title="Python">
-        You can also run simulation and evaluation from Python. Use paths from the bank example (e.g. after cloning the repo):
+        Run simulation and evaluation from Python. Use paths under the example you downloaded; the snippet below uses `bank-insurance`—change the example directory name to use `e-commerce` or `openclaw`.
 
         ```python
         from arksim.simulation_engine import run_simulation, SimulationInput
         from arksim.evaluator import run_evaluation, EvaluationInput
         from arksim.config import AgentConfig
-        
-        # Example agent config (OpenAI, same idea as bank example config.yaml)
+
+        # Example agent config (OpenAI; match the example's config.yaml)
         agent_config = AgentConfig(
             agent_type="chat_completions",
-            agent_name="bank-insurance",
+            agent_name="bank-insurance",  # or e-commerce, openclaw
             api_config={
                 "endpoint": "https://api.openai.com/v1/chat/completions",
                 "headers": {
@@ -78,27 +89,26 @@ description: "Get started with Arksim in minutes. This guide walks you through y
                 },
             },
         )
-        
-        # Run from examples/bank-insurance directory so scenario path resolves
+
         simulation = run_simulation(SimulationInput(
             agent_config=agent_config,
-            scenario_file_path="examples/bank-insurance/scenarios.json",
+            scenario_file_path="examples/bank-insurance/scenarios.json",  # or e-commerce, openclaw
             num_conversations_per_scenario=1,
             max_turns=5,
             num_workers="auto",
             output_file_path="./simulation.json",
         ))
-        
+
         evaluation = run_evaluation(EvaluationInput(
             simulation_file_path="./simulation.json",
-            scenario_file_path="examples/bank-insurance/scenarios.json",
+            scenario_file_path="examples/bank-insurance/scenarios.json",  # or e-commerce, openclaw
             output_dir="./evaluation",
             model="gpt-5.1",
             provider="openai",
             num_workers="auto",
             generate_html_report=True,
         ))
-        
+
         print("Simulation and evaluation complete.")
         print(f"Simulated {len(simulation.conversations)} conversations.")
         print("Evaluation results saved to ./evaluation")
@@ -111,11 +121,7 @@ description: "Get started with Arksim in minutes. This guide walks you through y
         arksim ui
         ```
 
-        Your browser opens at [**http://localhost:8080**](http://localhost:8080).
-
-        <Tip>
-          Set your API key in the environment before starting `arksim ui` (e.g. `OPENAI_API_KEY`).
-        </Tip>
+        Your browser opens at [**http://localhost:8080**](http://localhost:8080). Set your API key in the environment before starting (e.g. `OPENAI_API_KEY`). Then open or create a config that points at one of your downloaded examples (e.g. `examples/bank-insurance/config.yaml`).
       </Tab>
     </Tabs>
   </Step>
