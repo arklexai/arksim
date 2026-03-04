@@ -7,6 +7,8 @@ Usage:
     python run_pipeline.py
 """
 
+from __future__ import annotations
+
 import asyncio
 import os
 

@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 """Tests for arksim.utils.concurrency.workers."""
 
+from __future__ import annotations
+
 import pytest
 
 from arksim.utils.concurrency.workers import resolve_num_workers, validate_num_workers

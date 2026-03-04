@@ -1,15 +1,9 @@
+# SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
+
 import os
 
 import uvicorn
-from starlette.authentication import (
-    AuthCredentials,
-    AuthenticationBackend,
-    AuthenticationError,
-    SimpleUser,
-)
-from starlette.middleware.authentication import AuthenticationMiddleware
-from starlette.requests import HTTPConnection
-
 from a2a.server.apps import A2AStarletteApplication
 from a2a.server.request_handlers import DefaultRequestHandler
 from a2a.server.tasks import InMemoryTaskStore
@@ -21,6 +15,14 @@ from a2a.types import (
     In,
     SecurityScheme,
 )
+from starlette.authentication import (
+    AuthCredentials,
+    AuthenticationBackend,
+    AuthenticationError,
+    SimpleUser,
+)
+from starlette.middleware.authentication import AuthenticationMiddleware
+from starlette.requests import HTTPConnection
 
 from .agent_executor import (
     EcommerceAgentExecutor,
