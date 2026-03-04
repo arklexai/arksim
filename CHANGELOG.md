@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Generic error messages in API endpoints to prevent server path leakage
 - Shared evaluation constants (`SCORE_NOT_COMPUTED`, `BEHAVIOR_FAILURE_THRESHOLD`)
 - Quality gates section in CONTRIBUTING.md documenting coverage ratchet policy
+- `codecov.yml` with patch target of 50% to avoid false-positive CI failures on infra changes
 
 ### Changed
 
