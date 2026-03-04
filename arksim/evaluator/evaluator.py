@@ -15,6 +15,7 @@ from tqdm import tqdm
 
 from arksim.llms.chat import LLM
 from arksim.simulation_engine import Conversation, Simulation
+from arksim.utils.concurrency import resolve_num_workers
 from arksim.utils.output import load_json_file, save_json_file
 
 from .base_metric import ChatMessage, QualitativeMetric, QuantitativeMetric
@@ -128,12 +129,13 @@ class Evaluator:
 
         logger.info(f"Preprocessing complete: {total_turns} total turns to evaluate")
 
-        # When auto: enough workers for all turns + goal_completion calls at once.
-        # When explicit int: use that value as-is.
-        if self.params.num_workers == "auto":
-            num_workers = total_turns + len(conversations)
-        else:
-            num_workers = self.params.num_workers
+        # Resolve worker count.  For "auto" the ideal parallelism is one
+        # worker per turn + one per conversation (for goal-completion), but
+        # resolve_num_workers caps "auto" at MAX_WORKERS to avoid spawning
+        # hundreds of threads that stall on API rate-limits.
+        num_workers = resolve_num_workers(
+            self.params.num_workers, total_turns + len(conversations)
+        )
 
         post_processing_steps = 1  # detect errors
         pbar = tqdm(
@@ -160,8 +162,9 @@ class Evaluator:
             with ThreadPoolExecutor(
                 max_workers=min(num_workers, len(all_turn_tasks))
             ) as executor:
-                # auto → unlimited inner parallelism (0 = unlimited).
-                # explicit int → metrics capped at min(num_workers, num_metrics).
+                # Inner parallelism: 0 means "one thread per metric" (bounded
+                # only by the metric count, which is small).  When the user
+                # gave an explicit int we reuse it as a cap for inner threads.
                 inner_workers = 0 if self.params.num_workers == "auto" else num_workers
                 turn_futures = {
                     executor.submit(
