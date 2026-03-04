@@ -16,19 +16,62 @@ description: "Get started with Arksim in minutes. This guide walks you through y
     pip install arksim
     ```
   </Step>
-  <Step title="Set your API key">
-    Set the key for the provider (e.g. OpenAI):
+  <Step title="Set your API key and config">
+    <Tabs>
+      <Tab title="OpenAI (default)">
+        Set your API key:
 
-    ```bash
-    export OPENAI_API_KEY="your-api-key"
-    ```
+        ```bash
+        export OPENAI_API_KEY="your-api-key"
+        ```
+      </Tab>
+      <Tab title="Other providers">
+        **Anthropic (Claude)**: Set your API key.
 
-    For other providers:
+        ```bash
+        export ANTHROPIC_API_KEY="your-api-key"
+        ```
 
-    ```bash
-    export ANTHROPIC_API_KEY="your-api-key"
-    export GEMINI_API_KEY="your-api-key"
-    ```
+        In your `config.yaml`:
+
+        ```yaml
+        agent_config:
+          api_config:
+            endpoint: https://api.anthropic.com/v1/messages
+            headers:
+              Content-Type: application/json
+              x-api-key: "${ANTHROPIC_API_KEY}"
+              anthropic-version: "2023-06-01"
+            body:
+              model: claude-3-5-sonnet-20241022
+        # ...
+        model: claude-3-5-sonnet-20241022
+        provider: claude
+        ```
+
+        **Google Gemini**: Set your API key. You can use Gemini as the evaluation LLM and optionally as the agent (Gemini exposes an OpenAI-compatible endpoint).
+
+        ```bash
+        export GEMINI_API_KEY="your-api-key"
+        ```
+
+        In your `config.yaml`:
+
+        ```yaml
+        agent_config:
+          api_config:
+            endpoint: https://generativelanguage.googleapis.com/v1beta/openai/chat/completions
+            headers:
+              Content-Type: application/json
+              Authorization: "Bearer ${GEMINI_API_KEY}"
+            body:
+              model: gemini-2.0-flash
+        # ...
+        model: gemini-2.0-flash
+        provider: gemini
+        ```
+      </Tab>
+    </Tabs>
   </Step>
   <Step title="Run Simulation & Evaluation">
     Download the examples, then run simulation and evaluation via  CLI, Python, or the web UI.
