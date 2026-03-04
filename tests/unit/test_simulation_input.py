@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 """Tests for arksim.simulation_engine.entities.SimulationInput validator."""
 
+from __future__ import annotations
+
 import pytest
 from pydantic import ValidationError
 

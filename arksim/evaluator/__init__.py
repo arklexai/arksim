@@ -3,6 +3,8 @@
 Evaluator package for agent and user evaluation.
 """
 
+from __future__ import annotations
+
 from .base_metric import (
     ChatMessage,
     QualitativeMetric,

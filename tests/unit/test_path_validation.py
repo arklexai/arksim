@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 """Tests for UI API path validation functions."""
 
+from __future__ import annotations
+
 import os
 
 import pytest

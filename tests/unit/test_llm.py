@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 """Tests for LLM provider abstraction."""
 
+from __future__ import annotations
+
 import os
 from unittest.mock import patch
 
