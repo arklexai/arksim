@@ -75,6 +75,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Expanded SECURITY.md with response process, scope, and disclosure guidelines
 - Azure OpenAI provider now raises `ValueError` instead of silently returning a raw string when structured output parsing fails
 - `validate_num_workers` rejects zero and negative values
+- `run_evaluation` now accepts optional in-memory `simulation` and `scenarios` inputs, while still supporting file-based loading
+- Evaluation docs and quickstart examples now show direct Python usage of `run_simulation` and `run_evaluation` with in-memory handoff between steps
+- Resolve input file paths to config-relative if read from config.yaml and resolve as cwd-relative if cli overriden.
 
 ### Removed
 
