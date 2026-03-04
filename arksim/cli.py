@@ -437,6 +437,13 @@ def main() -> None:
         validate_overrides(overrides, valid_keys)
         settings = _merge_cli_overrides(settings, overrides)
         evaluation_input = EvaluationInput(**settings)
+        if not evaluation_input.simulation_file_path:
+            raise ValueError("simulation_file_path is required.")
+        if not os.path.isfile(evaluation_input.simulation_file_path):
+            raise ValueError(
+                f"simulation_file_path does not exist: "
+                f"{evaluation_input.simulation_file_path}"
+            )
         _log_config_summary("Evaluation", evaluation_input.model_dump())
         evaluator_output = run_evaluation(evaluation_input)
 

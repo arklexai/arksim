@@ -40,7 +40,7 @@ class EvaluationInput(BaseModel):
         description="Path to the scenario file",
     )
     simulation_file_path: str | None = Field(
-        default="./simulation.json",
+        default=None,
         description="Path to the simulation output file",
     )
     output_dir: str | None = Field(
@@ -77,7 +77,7 @@ class EvaluationInput(BaseModel):
 
     @model_validator(mode="after")
     def validate_evaluation_input(self) -> Self:
-        """Validate num_workers."""
+        """Validate evaluation input fields."""
         validate_num_workers(self.num_workers)
 
         return self
