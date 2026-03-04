@@ -15,6 +15,7 @@ import uvicorn
 from fastapi import APIRouter, FastAPI
 from fastapi.responses import FileResponse
 
+from arksim import __version__
 from arksim.ui.api.routes_evaluate import router as _oss_evaluate_router
 from arksim.ui.api.routes_filesystem import router as fs_router
 from arksim.ui.api.routes_results import router as results_router
@@ -43,6 +44,10 @@ def create_app(evaluate_router: APIRouter | None = None) -> FastAPI:
     app.include_router(results_router, prefix="/api")
     app.include_router(fs_router, prefix="/api")
     app.include_router(ws_router, prefix="/api")
+
+    @app.get("/api/version")
+    async def _version() -> dict[str, str]:
+        return {"version": __version__}
 
     # Serve frontend files explicitly (avoids catch-all
     # mount that intercepts WebSocket routes)
