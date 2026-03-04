@@ -7,6 +7,8 @@ Index layout inside the knowledge base directory:
         docs.pkl      — list[dict] of {content, metadata} matching index rows
 """
 
+from __future__ import annotations
+
 import logging
 import os
 import pickle
@@ -105,7 +107,7 @@ class FaissRetriever:
         return results
 
     @classmethod
-    def load(cls, database_path: str) -> "FaissRetriever":
+    def load(cls, database_path: str) -> FaissRetriever:
         """Load a FaissRetriever from a pre-built knowledge base directory.
 
         Reads ``agent_knowledge.pkl`` produced by :func:`build_rag` and either

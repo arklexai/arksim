@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 """Tests for evaluator entities and enums."""
 
+from __future__ import annotations
+
 import pytest
 from pydantic import ValidationError
 
