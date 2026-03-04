@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
@@ -52,10 +51,10 @@ def _patch_conversation(monkeypatch: pytest.MonkeyPatch) -> Callable[[], int]:
     call_count = 0
 
     async def fake_run(
-        self: Any,
+        self: Simulator,
         profile: str,
         goal: str,
-        knowledge: Any,
+        knowledge: list[KnowledgeItem],
         agent_context: str,
         max_turns: int,
         scenario_id: str = "",
