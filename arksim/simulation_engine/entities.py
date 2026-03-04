@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import os
 import sys
 import uuid
 from datetime import datetime, timezone
@@ -61,6 +62,29 @@ class SimulationInput(BaseModel):
     def validate_simulation_input(self, info: ValidationInfo) -> Self:
         """Validate simulation input fields."""
         validate_num_workers(self.num_workers)
+
+        # If scenario_file_path doesn't exist at cwd, fall back to path relative
+        # to the config file's directory (passed as absolute path via context).
+        # If the fallback is used, resolve output_file_path the same way for
+        # consistency.
+        config_path = info.context and info.context.get("config_path")
+        cli_overrides = (info.context and info.context.get("cli_overrides")) or set()
+        if (
+            self.scenario_file_path
+            and config_path
+            and "scenario_file_path" not in cli_overrides
+            and not os.path.exists(self.scenario_file_path)
+        ):
+            config_dir = os.path.dirname(config_path)
+            scenario_path_relative_to_config = os.path.join(
+                config_dir, self.scenario_file_path
+            )
+            if os.path.exists(scenario_path_relative_to_config):
+                self.scenario_file_path = scenario_path_relative_to_config
+                if "output_file_path" not in cli_overrides:
+                    self.output_file_path = os.path.join(
+                        config_dir, self.output_file_path
+                    )
 
         # Skip validation if context indicates pipeline mode
         skip = info.context and info.context.get("skip_input_dir_validation")

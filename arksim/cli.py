@@ -435,18 +435,28 @@ def main() -> None:
     # Extract verbose flag before building model inputs
     verbose = overrides.pop("verbose", False)
 
+    config_path = os.path.abspath(args.config_file) if use_config_file else None
+
+    cli_overrides = set(overrides.keys())
+
     if args.command == "simulate":
         valid_keys = set(SimulationInput.model_fields.keys())
         validate_overrides(overrides, valid_keys)
         settings = _merge_cli_overrides(settings, overrides)
-        simulation_input = SimulationInput(**settings)
+        simulation_input = SimulationInput.model_validate(
+            settings,
+            context={"config_path": config_path, "cli_overrides": cli_overrides},
+        )
         _log_config_summary("Simulation", simulation_input.model_dump())
         asyncio.run(run_simulation(simulation_input, verbose=verbose))
     elif args.command == "evaluate":
         valid_keys = set(EvaluationInput.model_fields.keys())
         validate_overrides(overrides, valid_keys)
         settings = _merge_cli_overrides(settings, overrides)
-        evaluation_input = EvaluationInput(**settings)
+        evaluation_input = EvaluationInput.model_validate(
+            settings,
+            context={"config_path": config_path, "cli_overrides": cli_overrides},
+        )
         if not evaluation_input.simulation_file_path:
             raise ValueError("simulation_file_path is required.")
         if not os.path.isfile(evaluation_input.simulation_file_path):
@@ -472,7 +482,10 @@ def main() -> None:
         simulation_settings = {
             k: v for k, v in settings.items() if k in SimulationInput.model_fields
         }
-        simulation_input = SimulationInput(**simulation_settings)
+        simulation_input = SimulationInput.model_validate(
+            simulation_settings,
+            context={"config_path": config_path, "cli_overrides": cli_overrides},
+        )
         _log_config_summary("Simulation", simulation_input.model_dump())
 
         sim_start = time.time()
@@ -485,7 +498,14 @@ def main() -> None:
         evaluation_settings = {
             k: v for k, v in settings.items() if k in EvaluationInput.model_fields
         }
-        evaluation_input = EvaluationInput(**evaluation_settings)
+        evaluation_input = EvaluationInput.model_validate(
+            evaluation_settings,
+            context={
+                "skip_input_dir_validation": True,
+                "config_path": config_path,
+                "cli_overrides": cli_overrides,
+            },
+        )
         _log_config_summary("Evaluation", evaluation_input.model_dump())
 
         eval_start = time.time()

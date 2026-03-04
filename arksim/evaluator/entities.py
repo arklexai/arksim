@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import os
 import sys
 
 if sys.version_info >= (3, 11):
@@ -79,6 +80,24 @@ class EvaluationInput(BaseModel):
     def validate_evaluation_input(self) -> Self:
         """Validate evaluation input fields."""
         validate_num_workers(self.num_workers)
+
+        # If input file paths don't exist at cwd, fall back to paths relative to
+        # the config file's directory (passed as absolute path via context).
+        # If any fallback is used, resolve output_dir the same way for consistency.
+        config_path = info.context and info.context.get("config_path")
+        cli_overrides = (info.context and info.context.get("cli_overrides")) or set()
+        if config_path:
+            config_dir = os.path.dirname(config_path)
+            used_config_relative = False
+            for attr in ("scenario_file_path", "simulation_file_path"):
+                path = getattr(self, attr)
+                if path and attr not in cli_overrides and not os.path.exists(path):
+                    config_relative = os.path.join(config_dir, path)
+                    if os.path.exists(config_relative):
+                        setattr(self, attr, config_relative)
+                        used_config_relative = True
+            if used_config_relative and self.output_dir and "output_dir" not in cli_overrides:
+                self.output_dir = os.path.join(config_dir, self.output_dir)
 
         return self
 
