@@ -14,18 +14,20 @@ class TestValidateNumWorkers:
         validate_num_workers("auto")
 
     def test_invalid_string_raises(self) -> None:
-        with pytest.raises(ValueError, match="num_workers must be an integer"):
+        with pytest.raises(ValueError, match="num_workers must be a positive integer"):
             validate_num_workers("fast")
 
     def test_float_raises(self) -> None:
-        with pytest.raises(ValueError, match="num_workers must be an integer"):
+        with pytest.raises(ValueError, match="num_workers must be a positive integer"):
             validate_num_workers(3.5)
 
-    def test_zero(self) -> None:
-        validate_num_workers(0)
+    def test_zero_raises(self) -> None:
+        with pytest.raises(ValueError, match="num_workers must be a positive integer"):
+            validate_num_workers(0)
 
-    def test_negative(self) -> None:
-        validate_num_workers(-1)
+    def test_negative_raises(self) -> None:
+        with pytest.raises(ValueError, match="num_workers must be a positive integer"):
+            validate_num_workers(-1)
 
 
 class TestResolveNumWorkers:
@@ -35,5 +37,5 @@ class TestResolveNumWorkers:
     def test_int_returns_itself(self) -> None:
         assert resolve_num_workers(4, 8) == 4
 
-    def test_zero_returns_zero(self) -> None:
-        assert resolve_num_workers(0, 8) == 0
+    def test_one_returns_one(self) -> None:
+        assert resolve_num_workers(1, 8) == 1

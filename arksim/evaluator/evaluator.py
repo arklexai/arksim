@@ -33,7 +33,7 @@ from .evaluate import (
     evaluate_goal_completion,
     evaluate_turn,
 )
-from .utils.constants import score_label
+from .utils.constants import SCORE_NOT_COMPUTED, score_label
 from .utils.enums import AgentBehaviorFailureType, EvaluationOutcomes
 
 logger = logging.getLogger(__name__)
@@ -190,9 +190,8 @@ class Evaluator:
         # Phase 2: goal_completion for each conversation (parallel)
         convo_score_list: list[ConversationEvaluation] = []
 
-        with ThreadPoolExecutor(
-            max_workers=min(num_workers, len(processed_entries))
-        ) as executor:
+        gc_max_workers = max(1, min(num_workers, len(processed_entries)))
+        with ThreadPoolExecutor(max_workers=gc_max_workers) as executor:
             gc_futures = {
                 executor.submit(
                     evaluate_goal_completion,
@@ -414,9 +413,9 @@ class Evaluator:
         )
 
     def _format_metric_score(self, value: float, use_label: bool = True) -> str:
-        """Format a metric score, handling -1 as evaluation failure."""
-        if value == -1:
-            return "N/A (Evaluation Failed)"
+        """Format a metric score, handling not-computed sentinel."""
+        if value == SCORE_NOT_COMPUTED:
+            return "N/A (Not computed)"
         if use_label:
             return f"{value:.1f} ({score_label(value)})"
         return f"{value:.1f}"
@@ -491,7 +490,9 @@ class Evaluator:
             "faithfulness",
         ]
         valid_scores = [
-            averages[m] for m in builtin_metrics if m in averages and averages[m] != -1
+            averages[m]
+            for m in builtin_metrics
+            if m in averages and averages[m] != SCORE_NOT_COMPUTED
         ]
 
         if valid_scores:
@@ -502,7 +503,7 @@ class Evaluator:
                 "performance and 5 indicates excellent performance.\n"
             )
             for metric in builtin_metrics:
-                if metric in averages and averages[metric] != -1:
+                if metric in averages and averages[metric] != SCORE_NOT_COMPUTED:
                     logger.info(
                         f"• {metric.title()}: "
                         f"{self._format_metric_score(averages[metric])}"
@@ -510,7 +511,7 @@ class Evaluator:
 
             # Custom metrics
             for name, score in averages.items():
-                if name not in builtin_metrics and score != -1:
+                if name not in builtin_metrics and score != SCORE_NOT_COMPUTED:
                     logger.info(
                         f"• {name.replace('_', ' ').title()}: "
                         f"{self._format_metric_score(score, use_label=False)}"

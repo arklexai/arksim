@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """
 Example custom metrics for e-commerce agent evaluation.
 

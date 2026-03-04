@@ -3,7 +3,10 @@
 
 import importlib
 
-__version__ = "0.0.1"
+try:
+    from arksim._version import __version__
+except ImportError:  # editable install or no build
+    __version__ = "0.0.0+unknown"
 
 __all__ = [
     "__version__",
