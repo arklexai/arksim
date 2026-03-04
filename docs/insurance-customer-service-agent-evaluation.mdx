@@ -1,6 +1,6 @@
 ---
 title: "Insurance Customer Service Agent"
-description: "A walkthrough of running Arksim against a customer service agent for an insurance company use case."
+description: "Running Arksim against a customer service agent for an insurance company use case."
 ---
 
 ## Overview
@@ -15,10 +15,10 @@ The example includes two ready-to-run agent implementations you can test against
 
 <CardGroup cols={2}>
   <Card icon="bolt" title="Option 1: OpenAI API">
-    A lightweight agent that calls the OpenAI API directly. Quick start with minimal setup; default agent_config.json is preconfigured.
+    A lightweight agent that calls the OpenAI API directly. Quick start with minimal setup.
   </Card>
-  <Card icon="diagram-project" title="Option 2: OpenAI Agents SDK RAG">
-    RAG-based agent built with the OpenAI Agents SDK, backed by an insurance knowledge base. Supports A2A or Chat Completions; use agent_config.json when running.
+  <Card icon="diagram-project" title="Option 2: OpenAI Agents SDK">
+    Agent built with the OpenAI Agents SDK, backed by an insurance knowledge base; supports A2A or Chat Completions.
   </Card>
 </CardGroup>
 
@@ -39,6 +39,10 @@ The scenario goals are:
 Scenarios are defined in `scenarios.json` in the example directory and can be edited or extended to reflect your own use case.
 
 ---
+
+<Note>
+  Before following either path, ensure [Arksim is installed](/installation) (`pip install arksim`).
+</Note>
 
 ## Option 1: OpenAI Agent
 
@@ -62,18 +66,18 @@ This agent calls the OpenAI API directly, with no server setup required.
 
 ---
 
-## Option 2: In-house Agent (OpenAI Agents SDK RAG)
+## Option 2: In-house Agent (OpenAI Agents SDK)
 
-This agent is a RAG-based customer service agent built with the OpenAI Agents SDK, backed by an insurance knowledge base. It can be exposed via either the A2A Protocol or a Chat Completions-compatible endpoint.
+This agent is a customer service agent built with the OpenAI Agents SDK, backed by an insurance knowledge base. It can be exposed via either the A2A Protocol or a Chat Completions-compatible endpoint.
 
 <Steps>
   <Step title="Select agent config">
-    In the example directory, use the agent config for your chosen interface. If `agent_config.json` already exists, rename or remove it first.
+    In the example directory, use the config file for your chosen interface:
 
-    - **A2A:** Copy `agent_config_a2a.json` to `agent_config.json`
-    - **Chat Completions:** Copy `agent_config_chat_completions.json` to `agent_config.json`
+    - **A2A:** `config_a2a.yaml` (inline agent config; uses `${A2A_API_KEY}`)
+    - **Chat Completions:** `config_chat_completions.yaml` (inline agent config; uses `${AGENT_API_KEY}`)
 
-    Agent configs support environment variable substitution (e.g. `${AGENT_API_KEY}` for Chat Completions, `${A2A_API_KEY}` for A2A).
+    Set the matching environment variable before running.
   </Step>
   <Step title="Install agent dependencies">
     <Tabs>
@@ -100,31 +104,45 @@ This agent is a RAG-based customer service agent built with the OpenAI Agents SD
         Exposes an A2A-compatible agent on port `9999`. Run from the repository root:
 
         ```bash
-        export A2A_API_KEY=<YOUR_A2A_API_KEY>
+        export OPENAI_API_KEY="<YOUR_OPENAI_API_KEY>"
+        export A2A_API_KEY=1234-4567-8910
         python -m examples.bank-insurance.agent_server.a2a.server
         ```
 
         Run from the repository root (or the directory that contains the `examples` package). If your layout differs, use the module path that resolves to `agent_server/a2a/server.py` under the bank-insurance example.
       </Tab>
       <Tab title="Chat Completions">
-        Exposes an OpenAI Chat Completions-compatible endpoint on port `8888` at `/chat/completions`. Run from the repository root:
+        Exposes a Chat Completions–compatible endpoint on port `8888` at `/chat/completions`. Run from the repository root:
 
         ```bash
-        export AGENT_API_KEY=<YOUR_AGENT_API_KEY>
+        export OPENAI_API_KEY="<YOUR_OPENAI_API_KEY>"
+        export AGENT_API_KEY=123456
         python -m examples.bank-insurance.agent_server.chat_completions.server
         ```
+
+        Run from the repository root (or the directory that contains the `examples` package). If your layout differs, use the module path that resolves to `agent_server/chat_completions/server.py` under the bank-insurance example.
       </Tab>
     </Tabs>
   </Step>
   <Step title="Run simulation and evaluation">
-    In a new terminal, run from the `examples/bank-insurance` directory. Set the key that matches your agent config (AGENT_API_KEY for Chat Completions, A2A_API_KEY for A2A), then run:
+    In a **new terminal**, from `examples/bank-insurance`, run the commands for the same interface you used in step 3. Use the same API key you set there.
 
-    ```bash
-    cd examples/bank-insurance
-    export AGENT_API_KEY="<YOUR_AGENT_API_KEY>"   # for Chat Completions
-    # export A2A_API_KEY="<YOUR_A2A_API_KEY>"     # for A2A
-    arksim simulate-evaluate config.yaml
-    ```
+    <Tabs>
+      <Tab title="A2A">
+        ```bash
+        cd examples/bank-insurance
+        export A2A_API_KEY=1234-4567-8910
+        arksim simulate-evaluate config_a2a.yaml
+        ```
+      </Tab>
+      <Tab title="Chat Completions">
+        ```bash
+        cd examples/bank-insurance
+        export AGENT_API_KEY=123456
+        arksim simulate-evaluate config_chat_completions.yaml
+        ```
+      </Tab>
+    </Tabs>
   </Step>
 </Steps>
 
@@ -135,9 +153,9 @@ This agent is a RAG-based customer service agent built with the OpenAI Agents SD
 To test your own backend agent against these scenarios:
 
 - **Chat Completions:** Follow the comments in `agent_server/chat_completions/server.py` to swap in your own backend logic or point to your endpoint.
-- **A2A:** Implement your own A2A executor in `agent_server/a2a/`.
+- **A2A:** Implement your own A2A executor in `agent_server/a2a/agent_executor.py`.
 
-Ensure `agent_config.json` points to your endpoint (or use the appropriate pre-made config as a template). Then run simulation and evaluation as above.
+Make sure the `agent_config` field in the `config.yaml`is updated. Then run simulation and evaluation as above.
 
 <Tip>
   See [Agent configuration](/simulate-conversation#agent-configuration) for supported protocols and how to configure agent connections.
@@ -150,11 +168,32 @@ Ensure `agent_config.json` points to your endpoint (or use the appropriate pre-m
 The example uses a single config file for both simulation and evaluation.
 
 ```yaml
+# AGENT CONFIGURATION
+
+agent_config:
+  agent_type: chat_completions
+  agent_name: bank-insurance
+  api_config:
+    endpoint: https://api.openai.com/v1/chat/completions
+    headers:
+      Content-Type: application/json
+      Authorization: "Bearer ${OPENAI_API_KEY}"
+    body:
+      model: gpt-5.1
+      messages:
+        - role: system
+          content: >-
+            You are a customer service chatbot for XYZ Bank insurance.
+            XYZ Insurance—a core business within XYZ Bank Group—is one of
+            Canada's leading providers of life, health, home, auto, and
+            travel insurance.
+
+            Rules:
+            1. Do not flip roles.
+            2. Avoid using bullet points or lists.
+            3. Never exceed 80 words.
+
 # SIMULATION SETTINGS
-
-# Path to agent api configuration file
-agent_config_file_path: ./agent_config.json
-
 # Path to the scenarios file
 scenario_file_path: ./scenarios.json
 
@@ -175,17 +214,12 @@ simulated_user_prompt_template: null
 # Output directory for evaluation results
 output_dir: ./results/evaluation
 
-# Provide paths to Python files that define your custom metrics.
-# Custom quantitative metrics should subclass QuantitativeMetric
-# and implement score(); qualitative metrics should subclass
-# QualitativeMetric and implement evaluate().
-# (from arksim.evaluator import QuantitativeMetric, QualitativeMetric)
+# Paths to Python files defining custom
+# QuantitativeMetric or QualitativeMetric subclasses
 custom_metrics_file_paths:
   - ./custom_metrics.py
 
-# Provide the built-in metrics to be run during evaluation.
-# If empty, all built-in metrics run. Custom metrics defined in
-# custom_metrics_file_paths always run regardless of this list.
+# Built-in metrics to run; if empty, all built-in metrics run
 metrics_to_run:
   - faithfulness
   - helpfulness
@@ -197,10 +231,7 @@ metrics_to_run:
 # Generate HTML report
 generate_html_report: true
 
-# Score threshold for per-conversation final scores (0.0 to 1.0)
-# If any conversation's final score is below this threshold,
-# exit with non-zero code.
-# Set to null to disable threshold checking
+# Exit with non-zero if any score is below this (0.0–1.0); null to disable
 score_threshold: null
 
 # SHARED SETTINGS
@@ -211,17 +242,9 @@ model: gpt-5.1
 # LLM provider
 provider: openai
 
-# Number of workers for parallel processing. "auto" uses all
-# available threads; on large runs this can trigger LLM rate
-# limits — set an explicit integer to cap concurrency.
+# Workers for parallel processing; "auto" uses all available threads
 num_workers: auto
 ```
-
-The config also defines a `simulated_user_prompt_template` (Jinja) that uses `scenario.agent_context`, `scenario.goal`, `scenario.knowledge`, and `scenario.user_profile` to drive the simulated user.
-
-<Note>
-  The example directory contains `agent_config.json` (default OpenAI), `agent_config_a2a.json`, and `agent_config_chat_completions.json`, the insurance knowledge base under `agent_server/data/`, and the scenario file `scenarios.json`.
-</Note>
 
 ---
 
