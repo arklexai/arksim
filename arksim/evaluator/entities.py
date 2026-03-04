@@ -10,7 +10,7 @@ if sys.version_info >= (3, 11):
 else:
     from typing_extensions import Self
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, model_validator
 
 from arksim.config.utils import resolve_config_relative_path
 from arksim.constants import DEFAULT_MODEL, DEFAULT_PROVIDER
@@ -81,7 +81,7 @@ class EvaluationInput(BaseModel):
     )
 
     @model_validator(mode="after")
-    def validate_evaluation_input(self) -> Self:
+    def validate_evaluation_input(self, info: ValidationInfo) -> Self:
         """Validate evaluation input fields."""
         validate_num_workers(self.num_workers)
 
