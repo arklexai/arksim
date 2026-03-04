@@ -52,17 +52,17 @@ description: "Get started with ArkSim in minutes. This guide walks you through y
                 XYZ Insurance—a core business within XYZ Bank Group—is one of
                 Canada's leading providers of life, health, home, auto, and
                 travel insurance.
-        
+
                 Rules:
                 1. Do not flip roles.
                 2. Avoid using bullet points or lists.
                 3. Never exceed 80 words.
-        
+
         # ...
-        
+
         # LLM model
         model: claude-opus-4-6
-        
+
         # LLM provider
         provider: claude
         ```
@@ -92,15 +92,15 @@ description: "Get started with ArkSim in minutes. This guide walks you through y
                     You are a shopping assistant. Please provide a complete answer
                     to the user's question based on your knowledge. Response within
                     50 words.
-        
+
         # ...
-        
+
         # LLM model
         model: gemini-2.5-flash
-        
+
         # LLM provider
         provider: gemini
-        
+
         ```
       </Tab>
     </Tabs>
@@ -134,7 +134,7 @@ description: "Get started with ArkSim in minutes. This guide walks you through y
         from arksim.simulation_engine import run_simulation, SimulationInput
         from arksim.evaluator import run_evaluation, EvaluationInput
         from arksim.config import AgentConfig
-        
+
         # Example agent config (OpenAI; match bank-insurance config.yaml)
         agent_config = AgentConfig(
             agent_type="chat_completions",
@@ -153,7 +153,7 @@ description: "Get started with ArkSim in minutes. This guide walks you through y
                 },
             },
         )
-        
+
         simulation = run_simulation(SimulationInput(
             agent_config=agent_config,
             scenario_file_path="examples/bank-insurance/scenarios.json",
@@ -162,7 +162,7 @@ description: "Get started with ArkSim in minutes. This guide walks you through y
             num_workers="auto",
             output_file_path="./simulation.json",
         ))
-        
+
         evaluation = run_evaluation(EvaluationInput(
             simulation_file_path="./simulation.json",
             scenario_file_path="examples/bank-insurance/scenarios.json",
@@ -172,7 +172,7 @@ description: "Get started with ArkSim in minutes. This guide walks you through y
             num_workers="auto",
             generate_html_report=True,
         ))
-        
+
         print("Simulation and evaluation complete.")
         print(f"Simulated {len(simulation.conversations)} conversations.")
         print("Evaluation results saved to ./evaluation")
