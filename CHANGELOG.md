@@ -22,7 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Project display name from "Arksim" to "ArkSim" across all docs, CLI, and metadata
+- Project display name from "Arksim" to "ArkSim" with ⛵️⚙️ emoji and slogan across all docs, CLI, and metadata
 - `SCORE_NOT_COMPUTED` display label changed from "N/A (Evaluation Failed)" to "N/A (Not computed)"
 - Removed stale `{chat_id}` placeholder reference from `ChatCompletionsConfig.body` field description
 

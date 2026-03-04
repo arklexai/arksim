@@ -1,7 +1,7 @@
 <p align="center">
   <h1 align="center">⛵️⚙️ ArkSim</h1>
   <p align="center">
-    Open-source framework for simulating and evaluating conversational AI agents
+    Know how your agent performs before it goes live.
   </p>
   <p align="center">
     <a href="https://github.com/arklexai/arksim/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/arklexai/arksim/actions/workflows/ci.yml/badge.svg"></a>
