@@ -21,7 +21,7 @@ class EvaluateRequest(BaseModel):
     scenario_file_path: str | None = None
     model: str = DEFAULT_MODEL
     provider: str = DEFAULT_PROVIDER
-    num_workers: int | str = "auto"
+    num_workers: int | str = 50
     custom_metrics_file_paths: list[str] = []
     metrics_to_run: list[str] | None = None
     generate_html_report: bool = True

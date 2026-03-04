@@ -25,7 +25,7 @@ from starlette.middleware.authentication import AuthenticationMiddleware
 from starlette.requests import HTTPConnection
 
 from .agent_executor import (
-    BankInsuranceAgentExecutor,
+    EcommerceAgentExecutor,
 )
 
 API_KEY = os.environ.get("A2A_API_KEY")
@@ -52,26 +52,26 @@ class APIKeyAuthBackend(AuthenticationBackend):
 if __name__ == "__main__":
     # --8<-- [start:AgentSkill]
     skill = AgentSkill(
-        id="bank-insurance_customer_service",
-        name="Bank-Insurance customer service assistant",
+        id="e-commerce_customer_service",
+        name="E-commerce customer service assistant",
         description=(
-            "A conversational assistant that answers about Insurance and banking "
+            "A conversational assistant that answers e-commerce and shopping "
             "customer questions using a retrieval-augmented knowledge base."
         ),
-        tags=["customer service", "banking", "insurance", "rag"],
+        tags=["customer service", "e-commerce", "shopping", "rag"],
         examples=[
-            "What insurance products do you offer?",
-            "How do I file an auto claim?",
-            "Can you explain Insurance coverage options?",
+            "What products do you have for home cleaning?",
+            "Can you recommend a good desk lamp?",
+            "Do you have any pet food options?",
         ],
     )
 
     # This will be the public-facing agent card
     public_agent_card = AgentCard(
-        name="Bank-Insurance Customer Service Agent",
+        name="E-commerce Customer Service Agent",
         description=(
-            "A RAG-powered Insurance and banking customer service agent that "
-            "provides concise, accurate answers based on internal documentation."
+            "A RAG-powered e-commerce customer service agent that "
+            "provides concise, accurate answers based on product documentation."
         ),
         url=os.getenv("A2A_SERVER_URL", "http://localhost:9999/"),
         version="1.0.0",
@@ -96,7 +96,7 @@ if __name__ == "__main__":
     )
 
     request_handler = DefaultRequestHandler(
-        agent_executor=BankInsuranceAgentExecutor(),
+        agent_executor=EcommerceAgentExecutor(),
         task_store=InMemoryTaskStore(),
     )
 

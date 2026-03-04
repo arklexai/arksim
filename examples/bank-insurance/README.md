@@ -49,7 +49,7 @@ Steps to run:
 
      ```bash
      export OPENAI_API_KEY="<YOUR_OPENAI_API_KEY>"
-     export A2A_API_KEY="<YOUR_A2A_API_KEY>"
+     export A2A_API_KEY=1234-4567-8910
      python -m examples.bank-insurance.agent_server.a2a.server
      ```
 
@@ -59,7 +59,7 @@ Steps to run:
 
      ```bash
      export OPENAI_API_KEY="<YOUR_OPENAI_API_KEY>"
-     export AGENT_API_KEY="<YOUR_AGENT_API_KEY>"
+     export AGENT_API_KEY=123456
      python -m examples.bank-insurance.agent_server.chat_completions.server
      ```
 
@@ -68,13 +68,13 @@ Steps to run:
 3. From this example directory, run with the appropriate config:
    - **A2A agent**:
      ```bash
-     export A2A_API_KEY="<YOUR_A2A_API_KEY>"
+     export A2A_API_KEY=1234-4567-8910
      export OPENAI_API_KEY="<YOUR_OPENAI_API_KEY>"
      arksim simulate-evaluate config_a2a.yaml
      ```
    - **Chat Completions agent**:
      ```bash
-     export AGENT_API_KEY="<YOUR_AGENT_API_KEY>"
+     export AGENT_API_KEY=123456
      export OPENAI_API_KEY="<YOUR_OPENAI_API_KEY>"
      arksim simulate-evaluate config_chat_completions.yaml
      ```

@@ -42,7 +42,7 @@ class SimulationInput(BaseModel):
     )
     max_turns: int = Field(default=5, description="Maximum turns per conversation")
     num_workers: int | str = Field(
-        default="auto",
+        default=50,
         description=(
             "Number of parallel workers (use 'auto' to default to "
             "num_conversations_per_scenario * number of scenarios)"
@@ -77,7 +77,7 @@ class SimulationParams(BaseModel):
 
     num_convos_per_scenario: int = Field(default=1)
     max_turns: int = Field(default=5)
-    num_workers: int | str = Field(default="auto")
+    num_workers: int | str = Field(default=50)
     output_file_path: str = Field(default="./simulation.json")
     simulated_user_prompt_template: str | None = None
 

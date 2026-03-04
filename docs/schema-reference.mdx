@@ -203,7 +203,7 @@ Used by `simulate` and the simulation phase of `simulate-evaluate`.
 | `simulated_user_prompt_template` | string        | Optional. Jinja template for the simulated user system prompt. |
 | `model`                          | string        | LLM model (e.g. `gpt-5.1`).                                    |
 | `provider`                       | string        | LLM provider (e.g. `openai`).                                  |
-| `num_workers`                    | string \| int | Parallel workers; use `"auto"` to auto-scale.                  |
+| `num_workers`                    | string \| int | Parallel workers (default `50`). Set `"auto"` to auto-scale.   |
 
 ### Evaluation keys
 
@@ -220,7 +220,7 @@ Used by `evaluate` and the evaluation phase of `simulate-evaluate`.
 | `score_threshold`           | float \| null | If set, exit with non-zero code when any conversation score is below this value.                                   |
 | `model`                     | string        | LLM model for scoring.                                                                                             |
 | `provider`                  | string        | LLM provider.                                                                                                      |
-| `num_workers`               | string \| int | Parallel workers; use `"auto"` for auto-scale.                                                                     |
+| `num_workers`               | string \| int | Parallel workers (default `50`). Set `"auto"` to auto-scale.                                                       |
 
 <Note>
   `model`, `provider`, and `num_workers` are shared across simulation and evaluation when both run from the same config.

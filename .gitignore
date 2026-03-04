@@ -53,8 +53,5 @@ results/
 # Lock files (generated per environment)
 uv.lock
 
-# Local config overrides
-config_simulate.yaml
-
 # AI tool local config
 .claude/
