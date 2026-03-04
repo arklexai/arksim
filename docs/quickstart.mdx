@@ -31,7 +31,7 @@ description: "Get started with Arksim in minutes. This guide walks you through y
     ```
   </Step>
   <Step title="Run Simulation & Evaluation">
-    Download the example projects (scenarios and configs included), then run simulation and evaluation via the CLI, Python, or the web UI.
+    Download the example projects, then run simulation and evaluation via the CLI, Python, or the web UI.
 
     **Download examples:** From your project directory, run:
 
@@ -39,7 +39,7 @@ description: "Get started with Arksim in minutes. This guide walks you through y
     arksim examples
     ```
 
-    This creates an `examples/` folder with three projects: **bank-insurance**, **e-commerce**, and **openclaw**. To list or download a single example: `arksim examples --list`, then `arksim examples <name>`.
+    This creates an `examples/` folder with three projects you can experiment. 
 
     <Tabs>
       <Tab title="CLI">
@@ -70,7 +70,7 @@ description: "Get started with Arksim in minutes. This guide walks you through y
         from arksim.simulation_engine import run_simulation, SimulationInput
         from arksim.evaluator import run_evaluation, EvaluationInput
         from arksim.config import AgentConfig
-
+        
         # Example agent config (OpenAI; match the example's config.yaml)
         agent_config = AgentConfig(
             agent_type="chat_completions",
@@ -89,7 +89,7 @@ description: "Get started with Arksim in minutes. This guide walks you through y
                 },
             },
         )
-
+        
         simulation = run_simulation(SimulationInput(
             agent_config=agent_config,
             scenario_file_path="examples/bank-insurance/scenarios.json",  # or e-commerce, openclaw
@@ -98,7 +98,7 @@ description: "Get started with Arksim in minutes. This guide walks you through y
             num_workers="auto",
             output_file_path="./simulation.json",
         ))
-
+        
         evaluation = run_evaluation(EvaluationInput(
             simulation_file_path="./simulation.json",
             scenario_file_path="examples/bank-insurance/scenarios.json",  # or e-commerce, openclaw
@@ -108,7 +108,7 @@ description: "Get started with Arksim in minutes. This guide walks you through y
             num_workers="auto",
             generate_html_report=True,
         ))
-
+        
         print("Simulation and evaluation complete.")
         print(f"Simulated {len(simulation.conversations)} conversations.")
         print("Evaluation results saved to ./evaluation")
