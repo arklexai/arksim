@@ -96,7 +96,11 @@ class EvaluationInput(BaseModel):
                     if os.path.exists(config_relative):
                         setattr(self, attr, config_relative)
                         used_config_relative = True
-            if used_config_relative and self.output_dir and "output_dir" not in cli_overrides:
+            if (
+                used_config_relative
+                and self.output_dir
+                and "output_dir" not in cli_overrides
+            ):
                 self.output_dir = os.path.join(config_dir, self.output_dir)
 
         return self
