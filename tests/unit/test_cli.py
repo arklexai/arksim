@@ -7,6 +7,7 @@ import io
 import os
 import sys
 import tarfile
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -17,6 +18,7 @@ from arksim.cli import (
     _parse_value,
     _run_examples,
     build_parser,
+    main,
     parse_extra_args,
     validate_overrides,
 )
@@ -388,3 +390,35 @@ class TestRunExamples:
                 assert call.kwargs.get("filter") == "data"
             else:
                 assert "filter" not in call.kwargs
+
+
+class TestMainEvaluateValidation:
+    """Focused tests for standalone evaluate path validation."""
+
+    def test_evaluate_missing_simulation_file_path_error(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        """Raises clear error when simulation_file_path is missing."""
+        cfg_path = tmp_path / "config.yaml"
+        cfg_path.write_text("model: gpt-5.1\nprovider: openai\n")
+        monkeypatch.setattr(sys, "argv", ["arksim", "evaluate", str(cfg_path)])
+
+        with pytest.raises(ValueError, match=r"simulation_file_path is required\."):
+            main()
+
+    def test_evaluate_nonexistent_simulation_file_path_error(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        """Raises clear error when simulation_file_path does not exist."""
+        missing_path = tmp_path / "missing_simulation.json"
+        cfg_path = tmp_path / "config.yaml"
+        cfg_path.write_text(
+            f"simulation_file_path: {missing_path}\nmodel: gpt-5.1\nprovider: openai\n"
+        )
+        monkeypatch.setattr(sys, "argv", ["arksim", "evaluate", str(cfg_path)])
+
+        with pytest.raises(
+            ValueError,
+            match=rf"simulation_file_path does not exist: {str(missing_path)}",
+        ):
+            main()
