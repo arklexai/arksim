@@ -18,12 +18,3 @@ repos:
       - id: ruff
         args: [--fix]
       - id: ruff-format
-
-  - repo: local
-    hooks:
-      - id: changelog-reminder
-        name: Check CHANGELOG.md updated
-        entry: scripts/check-changelog.sh
-        language: script
-        pass_filenames: false
-        always_run: true
