@@ -8,7 +8,7 @@ if sys.version_info >= (3, 11):
 else:
     from typing_extensions import Self
 
-from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from arksim.constants import DEFAULT_MODEL, DEFAULT_PROVIDER
 from arksim.utils.concurrency import validate_num_workers
@@ -76,14 +76,9 @@ class EvaluationInput(BaseModel):
     )
 
     @model_validator(mode="after")
-    def validate_evaluation_input(self, info: ValidationInfo) -> Self:
-        """Validate simulation_file_path and num_workers."""
+    def validate_evaluation_input(self) -> Self:
+        """Validate num_workers."""
         validate_num_workers(self.num_workers)
-
-        # Skip validation if context indicates pipeline mode
-        skip = info.context and info.context.get("skip_input_dir_validation")
-        if not skip and not self.simulation_file_path:
-            raise ValueError("simulation_file_path of simulation output is required")
 
         return self
 

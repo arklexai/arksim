@@ -468,10 +468,7 @@ def main() -> None:
         evaluation_settings = {
             k: v for k, v in settings.items() if k in EvaluationInput.model_fields
         }
-        evaluation_input = EvaluationInput.model_validate(
-            evaluation_settings,
-            context={"skip_input_dir_validation": True},
-        )
+        evaluation_input = EvaluationInput(**evaluation_settings)
         _log_config_summary("Evaluation", evaluation_input.model_dump())
 
         eval_start = time.time()
