@@ -39,11 +39,11 @@ description: "Get started with Arksim in minutes. This guide walks you through y
     arksim examples
     ```
 
-    This creates an `examples/` folder with three projects you can experiment. 
+    This creates an `examples/` folder with three projects you can experiment.
 
     <Tabs>
       <Tab title="CLI">
-        From the bank-insurance example directory (`examples/bank-insurance`), run:
+        From the bank-insurance example directory  run:
 
         ```bash
         cd examples/bank-insurance
@@ -59,7 +59,7 @@ description: "Get started with Arksim in minutes. This guide walks you through y
         from arksim.simulation_engine import run_simulation, SimulationInput
         from arksim.evaluator import run_evaluation, EvaluationInput
         from arksim.config import AgentConfig
-
+        
         # Example agent config (OpenAI; match bank-insurance config.yaml)
         agent_config = AgentConfig(
             agent_type="chat_completions",
@@ -113,7 +113,6 @@ description: "Get started with Arksim in minutes. This guide walks you through y
         Your browser opens at [**http://localhost:8080**](http://localhost:8080). Set your API key in the environment before starting (e.g. `OPENAI_API_KEY`). Then open `examples/bank-insurance/config.yaml` or create a config that points at your chosen example.
       </Tab>
     </Tabs>
-
     <Note>
       You can experiment with the other two examples (**e-commerce** and **openclaw**) the same way—use their directories and configs from `examples/e-commerce` and `examples/openclaw`. See [E-commerce customer service](/e-commerce-customer-service-agent-evaluation), [Insurance customer service](/insurance-customer-service-agent-evaluation), and [Personal AI assistant (OpenClaw)](/personal-ai-assistant-openclaw-evaluation) for details.
     </Note>
