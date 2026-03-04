@@ -67,5 +67,5 @@ model: gpt-5.1
 # LLM provider
 provider: openai
 
-# Workers for parallel processing; "auto" uses all available threads
+# Workers for parallel processing; "auto" picks a suitable count (capped at 8)
 num_workers: auto

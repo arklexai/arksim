@@ -26,7 +26,7 @@ from .agent_executor import (
     EcommerceAgentExecutor,
 )
 
-API_KEY = os.environ.get("A2A_API_KEY", "")
+API_KEY = os.environ.get("A2A_API_KEY")
 PUBLIC_PATHS = {
     "/.well-known/agent.json",
     "/.well-known/agent-card.json",
@@ -41,7 +41,7 @@ class APIKeyAuthBackend(AuthenticationBackend):
             return AuthCredentials([]), SimpleUser("public-agent-card")
 
         api_key = conn.headers.get("api-key")
-        if api_key != API_KEY:
+        if not API_KEY or api_key != API_KEY:
             raise AuthenticationError("Invalid or missing API key")
 
         return AuthCredentials(["authenticated"]), SimpleUser("api-key-user")
@@ -75,7 +75,7 @@ if __name__ == "__main__":
         version="1.0.0",
         default_input_modes=["text"],
         default_output_modes=["text"],
-        capabilities=AgentCapabilities(streaming=True),
+        capabilities=AgentCapabilities(streaming=False),
         skills=[skill],
         security=[
             {

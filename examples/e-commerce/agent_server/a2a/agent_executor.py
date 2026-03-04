@@ -31,4 +31,4 @@ class EcommerceAgentExecutor(AgentExecutor):
         await event_queue.enqueue_event(new_agent_text_message(result, context_id))
 
     async def cancel(self, context: RequestContext, event_queue: EventQueue) -> None:
-        raise Exception("cancel not supported")
+        raise NotImplementedError("cancel not supported")
