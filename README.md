@@ -57,9 +57,9 @@ pip install arksim
 For additional LLM providers:
 
 ```bash
-pip install arksim[all]        # All providers
-pip install arksim[anthropic]  # Anthropic Claude only
-pip install arksim[gemini]     # Google Gemini only
+pip install "arksim[all]"        # All providers
+pip install "arksim[anthropic]"  # Anthropic Claude only
+pip install "arksim[gemini]"     # Google Gemini only
 ```
 
 ### Set up credentials
