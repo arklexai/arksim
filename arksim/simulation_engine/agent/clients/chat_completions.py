@@ -97,7 +97,7 @@ class ChatCompletionsAgent(BaseAgent):
         Supports:
         - OpenAI-style: result["choices"][0]["message"]["content"]
         - Anthropic-style: result["content"] as list of { "type": "text", "text": "..." }
-        - Gemini-style: result["candidates"][0]["content"]["parts"][*]["text"]
+        - Google-style: result["candidates"][0]["content"]["parts"][*]["text"]
         """
         # OpenAI-compatible format
         if "choices" in result:
@@ -122,7 +122,7 @@ class ChatCompletionsAgent(BaseAgent):
             if parts:
                 return "".join(parts)
 
-        # Google Gemini API format: candidates[0].content.parts[*].text
+        # Google API format: candidates[0].content.parts[*].text
         if "candidates" in result:
             candidates = result["candidates"]
             if not candidates:
@@ -138,6 +138,6 @@ class ChatCompletionsAgent(BaseAgent):
 
         raise ValueError(
             "Unsupported response format: expected 'choices' (OpenAI), "
-            "'content' list (Anthropic), or 'candidates' (Gemini). "
+            "'content' list (Anthropic), or 'candidates' (Google). "
             f"Keys present: {list(result.keys())}"
         )

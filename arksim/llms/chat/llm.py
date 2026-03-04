@@ -28,13 +28,13 @@ class LLM(BaseLLM):
             from arksim.llms.chat.providers.azure_openai import AzureOpenAILLM
 
             return AzureOpenAILLM
-        elif provider == "claude":
-            from arksim.llms.chat.providers.claude import ClaudeLLM
+        elif provider == "anthropic":
+            from arksim.llms.chat.providers.anthropic import AnthropicLLM
 
-            return ClaudeLLM
-        elif provider == "gemini":
-            from arksim.llms.chat.providers.gemini import GeminiLLM
+            return AnthropicLLM
+        elif provider == "google":
+            from arksim.llms.chat.providers.google import GoogleLLM
 
-            return GeminiLLM
+            return GoogleLLM
         else:
             raise ValueError(f"Provider {provider} is not supported")
