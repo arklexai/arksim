@@ -1,7 +1,7 @@
 <p align="center">
-  <h1 align="center">Arksim</h1>
+  <h1 align="center">⛵️ ArkSim</h1>
   <p align="center">
-    Open-source framework for simulating and evaluating conversational AI agents
+    Know how your agent performs before it goes live.
   </p>
   <p align="center">
     <a href="https://github.com/arklexai/arksim/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/arklexai/arksim/actions/workflows/ci.yml/badge.svg"></a>
@@ -27,15 +27,15 @@
 
 ---
 
-## What is Arksim?
+## What is ArkSim?
 
-Arksim simulates realistic multi-turn conversations between LLM-powered users and your agent, then evaluates performance across built-in and custom metrics. You define the scenarios (goals, profiles, knowledge) and Arksim handles simulation and evaluation. Works with any agent that exposes a Chat Completions API or A2A protocol endpoint.
+ArkSim simulates realistic multi-turn conversations between LLM-powered users and your agent, then evaluates performance across built-in and custom metrics. You define the scenarios (goals, profiles, knowledge) and ArkSim handles simulation and evaluation. Works with any agent that exposes a Chat Completions API or A2A protocol endpoint.
 
 <p align="center">
-  <img src="docs/assets/arksim-flow.svg" alt="Arksim flow: Scenarios → Simulation → Evaluation → Reports" width="100%">
+  <img src="docs/assets/arksim-flow.svg" alt="ArkSim flow: Scenarios → Simulation → Evaluation → Reports" width="100%">
 </p>
 
-### Why Arksim?
+### Why ArkSim?
 
 - **Realistic simulations**: LLM-powered users with distinct profiles, goals, and personality traits
 - **Comprehensive evaluation**: 7 built-in metrics covering helpfulness, coherence, faithfulness, goal completion, and more
@@ -117,7 +117,7 @@ arksim ui
 
 ## Agent Configuration
 
-Agent configuration tells Arksim how to connect to your agent. It is specified directly in your YAML config file. Arksim supports two protocols:
+Agent configuration tells ArkSim how to connect to your agent. It is specified directly in your YAML config file. ArkSim supports two protocols:
 
 ### Chat Completions API
 

@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to Arksim will be documented in this file.
+All notable changes to ArkSim will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -61,6 +61,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Project display name from "Arksim" to "ArkSim" with ⛵️ emoji and slogan across all docs, CLI, and metadata
 - `SCORE_NOT_COMPUTED` display label changed from "N/A (Evaluation Failed)" to "N/A (Not computed)"
 - Removed stale `{chat_id}` placeholder reference from `ChatCompletionsConfig.body` field description
 

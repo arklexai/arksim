@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-"""Arksim Control Plane — FastAPI application."""
+"""ArkSim Control Plane — FastAPI application."""
 
 from __future__ import annotations
 
@@ -34,7 +34,7 @@ def create_app(evaluate_router: APIRouter | None = None) -> FastAPI:
         app.state.arksim.loop = asyncio.get_running_loop()
         yield
 
-    app = FastAPI(title="Arksim", lifespan=lifespan)
+    app = FastAPI(title="ArkSim", lifespan=lifespan)
     app.state.arksim = AppState()
 
     # API routes — must be registered before the frontend
@@ -67,7 +67,7 @@ def create_app(evaluate_router: APIRouter | None = None) -> FastAPI:
 
 
 def launch_ui(port: int = 8080) -> None:
-    """Launch the Arksim web UI."""
+    """Launch the ArkSim web UI."""
     for name in ("uvicorn.access", "uvicorn.error"):
         logging.getLogger(name).setLevel(logging.WARNING)
 
