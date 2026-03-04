@@ -78,14 +78,14 @@ class TestExtractContentAnthropic:
         assert chat_completions_agent._extract_content(result) == "Only this."
 
 
-class TestExtractContentGemini:
-    """Tests for Gemini-style response format."""
+class TestExtractContentGoogle:
+    """Tests for Google-style response format."""
 
     def test_single_part(self, chat_completions_agent: ChatCompletionsAgent) -> None:
         result = {
-            "candidates": [{"content": {"parts": [{"text": "Gemini response."}]}}]
+            "candidates": [{"content": {"parts": [{"text": "Google response."}]}}]
         }
-        assert chat_completions_agent._extract_content(result) == "Gemini response."
+        assert chat_completions_agent._extract_content(result) == "Google response."
 
     def test_multiple_parts(self, chat_completions_agent: ChatCompletionsAgent) -> None:
         result = {

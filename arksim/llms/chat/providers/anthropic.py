@@ -15,7 +15,7 @@ T = TypeVar("T", bound=BaseModel)
 DEFAULT_MAX_TOKENS = 8192
 
 
-class ClaudeLLM(BaseLLM):
+class AnthropicLLM(BaseLLM):
     def __init__(
         self,
         model: str,
@@ -33,7 +33,7 @@ class ClaudeLLM(BaseLLM):
     ) -> tuple[str | None, list[dict[str, str]]]:
         """Separate system message from conversation messages.
 
-        Claude's API takes system as a top-level parameter
+        Anthropic's API takes system as a top-level parameter
         rather than a message role.
         """
         if isinstance(messages, str):

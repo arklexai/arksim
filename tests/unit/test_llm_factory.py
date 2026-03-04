@@ -31,17 +31,17 @@ class TestGetProvider:
         cls = LLM._get_provider("azure")
         assert cls.__name__ == "AzureOpenAILLM"
 
-    def test_claude_provider(self) -> None:
+    def test_anthropic_provider(self) -> None:
         try:
-            cls = LLM._get_provider("claude")
-            assert cls.__name__ == "ClaudeLLM"
+            cls = LLM._get_provider("anthropic")
+            assert cls.__name__ == "AnthropicLLM"
         except ModuleNotFoundError:
             pytest.skip("anthropic not installed")
 
-    def test_gemini_provider(self) -> None:
+    def test_google_provider(self) -> None:
         try:
-            cls = LLM._get_provider("gemini")
-            assert cls.__name__ == "GeminiLLM"
+            cls = LLM._get_provider("google")
+            assert cls.__name__ == "GoogleLLM"
         except (ModuleNotFoundError, ImportError):
             pytest.skip("google-genai not installed")
 

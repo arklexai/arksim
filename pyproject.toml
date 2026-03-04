@@ -44,11 +44,11 @@ azure = [
 anthropic = [
     "anthropic>=0.77.1",
 ]
-gemini = [
+google = [
     "google-genai>=1.26.0",
 ]
 all = [
-    "arksim[azure,anthropic,gemini]",
+    "arksim[azure,anthropic,google]",
 ]
 dev = [
     "pytest",
