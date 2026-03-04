@@ -6,6 +6,7 @@ import asyncio
 import logging
 import os
 import sys
+import textwrap
 import time
 
 import yaml
@@ -21,6 +22,9 @@ logging.getLogger("azure").setLevel(logging.WARNING)
 logging.getLogger("httpx").setLevel(logging.WARNING)
 logging.getLogger("openai").setLevel(logging.WARNING)
 logging.getLogger("a2a.client.card_resolver").setLevel(logging.WARNING)
+
+_EXAMPLES_REPO_URL = "https://github.com/arklexai/arksim/archive/main.tar.gz"
+_EXAMPLES_PREFIX = "examples/"
 
 
 def _check_score_threshold(
@@ -189,73 +193,175 @@ def _run_show_prompts(category: str | None) -> None:
             print()
 
 
-def build_parser(valid_commands: list[str] | None = None) -> argparse.ArgumentParser:
-    """Build the CLI argument parser.
+def _run_examples(
+    name: str | None = None,
+    list_only: bool = False,
+) -> None:
+    """Download example projects from the arksim GitHub repo."""
+    import io
+    import tarfile
+    from urllib.request import urlopen
 
-    Args:
-        valid_commands: List of valid command names.
-            Defaults to ["simulate", "evaluate",
-            "simulate-evaluate"].
+    logger.info("Fetching examples from arksim GitHub repo...")
+    with urlopen(_EXAMPLES_REPO_URL) as resp:  # nosec B310
+        data = resp.read()
+
+    with tarfile.open(fileobj=io.BytesIO(data), mode="r:gz") as tar:
+        top = tar.getmembers()[0].name.split("/")[0]
+        example_root = f"{top}/{_EXAMPLES_PREFIX}"
+
+        available = sorted(
+            {
+                m.name.removeprefix(example_root).split("/")[0]
+                for m in tar.getmembers()
+                if m.name.startswith(example_root)
+                and m.name != example_root.rstrip("/")
+            }
+        )
+
+        if list_only:
+            print("Available examples:")
+            for ex in available:
+                print(f"  {ex}")
+            return
+
+        if name and name not in available:
+            logger.error(f"Unknown example '{name}'. Available: {', '.join(available)}")
+            sys.exit(1)
+
+        if name:
+            filter_prefix = f"{top}/{_EXAMPLES_PREFIX}{name}/"
+            dest_path = os.path.join("examples", name)
+        else:
+            filter_prefix = example_root
+            dest_path = "examples"
+
+        if os.path.exists(dest_path):
+            logger.error(
+                f"'{dest_path}' already exists. "
+                "Remove it first or choose a "
+                "different directory."
+            )
+            sys.exit(1)
+
+        for member in tar.getmembers():
+            if member.name.startswith(filter_prefix):
+                member.name = member.name.removeprefix(f"{top}/")
+                # Block path traversal (CVE-2007-4559)
+                if os.path.isabs(member.name) or ".." in member.name.split("/"):
+                    continue
+                if sys.version_info >= (3, 12):
+                    tar.extract(member, ".", filter="data")
+                else:
+                    tar.extract(member, ".")
+
+    logger.info(f"Downloaded to {os.path.abspath(dest_path)}")
+
+
+def _add_config_subparser(
+    subparsers: argparse._SubParsersAction,
+    name: str,
+    help_text: str,
+) -> argparse.ArgumentParser:
+    """Add a subparser for config-based commands.
+
+    These commands accept a YAML config file and
+    arbitrary --key value overrides.
     """
-    if valid_commands is None:
-        valid_commands = [
-            "simulate",
-            "evaluate",
-            "simulate-evaluate",
-            "show-prompts",
-            "ui",
-        ]
-
-    commands_str = ", ".join(valid_commands)
-
-    examples = []
-    if "simulate" in valid_commands:
-        examples.append(
-            "  arksim simulate config.yaml --scenario-file-path ./scenario.json  # Simulate conversations"
-        )
-    if "evaluate" in valid_commands:
-        examples.append(
-            "  arksim evaluate config.yaml --simulation-file-path ./results/simulation/simulation.json  # Evaluate results"
-        )
-    if "simulate-evaluate" in valid_commands:
-        examples.append(
-            "  arksim simulate-evaluate config.yaml                           # Simulate then evaluate"
-        )
-    if "show-prompts" in valid_commands:
-        examples.append(
-            "  arksim show-prompts --category agent_behavior_failure          # Show prompts by category"
-        )
-    if "ui" in valid_commands:
-        examples.append(
-            "  arksim ui                                                      # Launch web UI control plane"
-        )
-    examples_str = "\n".join(examples)
-
-    parser = argparse.ArgumentParser(
-        prog="arksim",
-        description="Arksim CLI - Run agent simulations and evaluations",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog=f"\nCommands: {commands_str}\n\nExamples:\n{examples_str}\n",
-    )
-
-    parser.add_argument(
-        "command",
-        type=str,
-        nargs="?",
-        default="",
-        help=f"Command to execute ({commands_str})",
-    )
-    parser.add_argument(
+    sp = subparsers.add_parser(name, help=help_text)
+    sp.add_argument(
         "config_file",
         type=str,
         nargs="?",
         default=None,
         help="Path to YAML config file",
     )
-    parser.add_argument(
+    sp.add_argument(
         "additional_args",
         nargs=argparse.REMAINDER,
-        help="Additional arguments (e.g. --seed 42 --enable-topic-modeling false)",
+        help="Additional --key value overrides",
+    )
+    return sp
+
+
+def build_parser() -> argparse.ArgumentParser:
+    """Build the CLI argument parser with subcommands."""
+    parser = argparse.ArgumentParser(
+        prog="arksim",
+        description="Arksim CLI - Run agent simulations and evaluations",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=textwrap.dedent("""\
+
+            Examples:
+              arksim simulate config.yaml
+              arksim evaluate config.yaml
+              arksim simulate-evaluate config.yaml
+              arksim show-prompts --category agent_behavior_failure
+              arksim examples --list
+              arksim examples bank-insurance
+              arksim ui --port 9090
+        """),
+    )
+
+    sub = parser.add_subparsers(dest="command")
+
+    # Config-based commands (YAML + --key value overrides)
+    _add_config_subparser(
+        sub,
+        "simulate",
+        "Run agent simulations",
+    )
+    _add_config_subparser(
+        sub,
+        "evaluate",
+        "Evaluate simulation results",
+    )
+    _add_config_subparser(
+        sub,
+        "simulate-evaluate",
+        "Simulate then evaluate",
+    )
+
+    # show-prompts
+    sp_prompts = sub.add_parser(
+        "show-prompts",
+        help="Display evaluation prompts",
+    )
+    sp_prompts.add_argument(
+        "--category",
+        type=str,
+        default=None,
+        help="Filter prompts by category",
+    )
+
+    # examples
+    sp_examples = sub.add_parser(
+        "examples",
+        help="Download example projects from GitHub",
+    )
+    sp_examples.add_argument(
+        "name",
+        nargs="?",
+        default=None,
+        help="Example to download (e.g. bank-insurance)",
+    )
+    sp_examples.add_argument(
+        "--list",
+        action="store_true",
+        dest="list_only",
+        help="List available examples",
+    )
+
+    # ui
+    sp_ui = sub.add_parser(
+        "ui",
+        help="Launch web UI control plane",
+    )
+    sp_ui.add_argument(
+        "--port",
+        type=int,
+        default=8080,
+        help="Port to serve on (default: 8080)",
     )
 
     return parser
@@ -267,31 +373,22 @@ def main() -> None:
     parser = build_parser()
     args = parser.parse_args()
 
-    valid_commands = [
-        "simulate",
-        "evaluate",
-        "simulate-evaluate",
-        "show-prompts",
-        "ui",
-    ]
-
-    # Check execution command and config file
-    if not args.command or args.command not in valid_commands:
+    if not args.command:
         parser.print_help()
         sys.exit(1)
 
     if args.command == "show-prompts":
-        overrides = parse_extra_args(args.additional_args)
-        category = overrides.get("category")
-        _run_show_prompts(category)
+        _run_show_prompts(args.category)
+        return
+
+    if args.command == "examples":
+        _run_examples(name=args.name, list_only=args.list_only)
         return
 
     if args.command == "ui":
         from arksim.ui.app import launch_ui
 
-        overrides = parse_extra_args(args.additional_args)
-        port = int(overrides.get("port", 8080))
-        launch_ui(port=port)
+        launch_ui(port=args.port)
         return
 
     use_config_file = (
@@ -343,9 +440,9 @@ def main() -> None:
         _log_config_summary("Evaluation", evaluation_input.model_dump())
         evaluator_output = run_evaluation(evaluation_input)
 
-        # Check score threshold if specified
         if not _check_score_threshold(
-            evaluator_output, evaluation_input.score_threshold
+            evaluator_output,
+            evaluation_input.score_threshold,
         ):
             sys.exit(1)
     elif args.command == "simulate-evaluate":
@@ -385,7 +482,8 @@ def main() -> None:
         logger.info(f"Evaluation completed in {eval_elapsed:.2f} seconds")
 
         if not _check_score_threshold(
-            evaluator_output, evaluation_input.score_threshold
+            evaluator_output,
+            evaluation_input.score_threshold,
         ):
             sys.exit(1)
 

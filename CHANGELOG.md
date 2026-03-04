@@ -7,8 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-<!-- Add your changes here under the appropriate heading. -->
-<!-- Use: Added, Changed, Deprecated, Removed, Fixed, Security -->
+### Added
+
+- `arksim examples` CLI command to download example projects from GitHub without cloning
+
+### Changed
+
+- UI auto-loads scenarios from config on startup instead of always showing the demo
+- File browser shows a hint that browsing is scoped to the launch directory
+
+### Removed
+
+- Project root path from the UI sidebar header
 
 ### Added
 
