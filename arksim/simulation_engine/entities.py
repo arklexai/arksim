@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import logging
 import os
 import sys
 import uuid
@@ -15,8 +16,11 @@ else:
 from pydantic import BaseModel, Field, ValidationInfo, model_validator
 
 from arksim.config.core.agent import AgentConfig
+from arksim.config.utils import _resolve_config_relative_path
 from arksim.constants import DEFAULT_MODEL, DEFAULT_PROVIDER
 from arksim.utils.concurrency import validate_num_workers
+
+logger = logging.getLogger(__name__)
 
 
 class SimulationInput(BaseModel):
@@ -63,28 +67,21 @@ class SimulationInput(BaseModel):
         """Validate simulation input fields."""
         validate_num_workers(self.num_workers)
 
-        # If scenario_file_path doesn't exist at cwd, fall back to path relative
-        # to the config file's directory (passed as absolute path via context).
-        # If the fallback is used, resolve output_file_path the same way for
-        # consistency.
+        # Paths from config.yaml are resolved relative to the config file's
+        # directory. Paths set via CLI are left as-is (cwd-relative).
         config_path = info.context and info.context.get("config_path")
         cli_overrides = (info.context and info.context.get("cli_overrides")) or set()
-        if (
-            self.scenario_file_path
-            and config_path
-            and "scenario_file_path" not in cli_overrides
-            and not os.path.exists(self.scenario_file_path)
-        ):
+        if config_path:
             config_dir = os.path.dirname(config_path)
-            scenario_path_relative_to_config = os.path.join(
-                config_dir, self.scenario_file_path
-            )
-            if os.path.exists(scenario_path_relative_to_config):
-                self.scenario_file_path = scenario_path_relative_to_config
-                if "output_file_path" not in cli_overrides:
-                    self.output_file_path = os.path.join(
-                        config_dir, self.output_file_path
+            for attr in ("scenario_file_path", "output_file_path"):
+                path = getattr(self, attr)
+                if path:
+                    resolved = _resolve_config_relative_path(
+                        path, config_dir, cli_overrides, attr
                     )
+                    if resolved is not None and resolved != path:
+                        logger.debug("%s resolved to: %s", attr, resolved)
+                        setattr(self, attr, resolved)
 
         # Skip validation if context indicates pipeline mode
         skip = info.context and info.context.get("skip_input_dir_validation")

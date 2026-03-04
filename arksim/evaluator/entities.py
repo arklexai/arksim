@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import logging
 import os
 import sys
 
@@ -11,6 +12,7 @@ else:
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from arksim.config.utils import _resolve_config_relative_path
 from arksim.constants import DEFAULT_MODEL, DEFAULT_PROVIDER
 from arksim.utils.concurrency import validate_num_workers
 
@@ -21,6 +23,8 @@ from .base_metric import (
     QuantitativeMetric,
     QuantResult,
 )
+
+logger = logging.getLogger(__name__)
 
 _DEFAULT_METRICS_TO_RUN = [
     "faithfulness",
@@ -81,27 +85,21 @@ class EvaluationInput(BaseModel):
         """Validate evaluation input fields."""
         validate_num_workers(self.num_workers)
 
-        # If input file paths don't exist at cwd, fall back to paths relative to
-        # the config file's directory (passed as absolute path via context).
-        # If any fallback is used, resolve output_dir the same way for consistency.
+        # Paths from config.yaml are resolved relative to the config file's
+        # directory. Paths set via CLI are left as-is (cwd-relative).
         config_path = info.context and info.context.get("config_path")
         cli_overrides = (info.context and info.context.get("cli_overrides")) or set()
         if config_path:
             config_dir = os.path.dirname(config_path)
-            used_config_relative = False
-            for attr in ("scenario_file_path", "simulation_file_path"):
+            for attr in ("scenario_file_path", "simulation_file_path", "output_dir"):
                 path = getattr(self, attr)
-                if path and attr not in cli_overrides and not os.path.exists(path):
-                    config_relative = os.path.join(config_dir, path)
-                    if os.path.exists(config_relative):
-                        setattr(self, attr, config_relative)
-                        used_config_relative = True
-            if (
-                used_config_relative
-                and self.output_dir
-                and "output_dir" not in cli_overrides
-            ):
-                self.output_dir = os.path.join(config_dir, self.output_dir)
+                if path:
+                    resolved = _resolve_config_relative_path(
+                        path, config_dir, cli_overrides, attr
+                    )
+                    if resolved is not None and resolved != path:
+                        logger.debug("%s resolved to: %s", attr, resolved)
+                        setattr(self, attr, resolved)
 
         return self
 

@@ -39,3 +39,20 @@ def resolve_env_vars(headers: dict[str, str]) -> dict[str, str]:
         resolved_headers[key] = resolved_value
 
     return resolved_headers
+
+
+def _resolve_config_relative_path(
+    path: str,
+    config_dir: str,
+    cli_overrides: set,
+    attr_name: str,
+) -> str | None:
+    """Return config-relative path for config-sourced paths, None for CLI-sourced.
+
+    Paths from config.yaml are resolved relative to the config file's directory.
+    Paths provided via CLI (in cli_overrides) are left as-is (cwd-relative).
+    Absolute paths pass through unchanged.
+    """
+    if attr_name in cli_overrides:
+        return None
+    return os.path.normpath(os.path.join(config_dir, path))
