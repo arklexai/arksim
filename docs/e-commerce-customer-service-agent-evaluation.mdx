@@ -105,7 +105,7 @@ This agent is a RAG-based shopping assistant built with OpenAI Agents SDK, backe
         Exposes an A2A-compatible agent on port `9999`. Run from the repository root:
 
         ```bash
-        export A2A_API_KEY=<YOUR_A2A_API_KEY>
+        export A2A_API_KEY=1234-4567-8910
         python -m examples.e-commerce.agent_server.a2a.server
         ```
 
@@ -115,7 +115,7 @@ This agent is a RAG-based shopping assistant built with OpenAI Agents SDK, backe
         Exposes a Chat Completions–compatible endpoint on port `8888` at `/chat/completions`. Run from the repository root:
 
         ```bash
-        export AGENT_API_KEY=<YOUR_AGENT_API_KEY>
+        export AGENT_API_KEY=123456 
         python -m examples.e-commerce.agent_server.chat_completions.server
         ```
 
@@ -124,13 +124,13 @@ This agent is a RAG-based shopping assistant built with OpenAI Agents SDK, backe
     </Tabs>
   </Step>
   <Step title="Run simulation and evaluation">
-    In a **new terminal**, run from the `examples/e-commerce` directory. Set the key that matches your agent config (AGENT_API_KEY for Chat Completions, A2A_API_KEY for A2A), then run with the matching config.
+    In a **new terminal**, run from the `examples/e-commerce` directory. Set the key for the agebt server that matches your agent config (AGENT_API_KEY for Chat Completions, A2A_API_KEY for A2A), then run with the matching config.
 
     **Chat Completions:**
 
     ```bash
     cd examples/e-commerce
-    export AGENT_API_KEY="<YOUR_AGENT_API_KEY>"
+    export AGENT_API_KEY=123456
     arksim simulate-evaluate config_chat_completions.yaml
     ```
 
@@ -138,7 +138,7 @@ This agent is a RAG-based shopping assistant built with OpenAI Agents SDK, backe
 
     ```bash
     cd examples/e-commerce
-    export A2A_API_KEY="<YOUR_A2A_API_KEY>"
+    export A2A_API_KEY=1234-4567-8910
     arksim simulate-evaluate config_a2a.yaml
     ```
   </Step>
