@@ -22,7 +22,7 @@
 ---
 
 <p align="center">
-  <em>Demo video coming soon</em>
+  <video src="https://images.arklex.ai/arksim/demo.mp4" controls width="100%"></video>
 </p>
 
 ---
