@@ -223,8 +223,8 @@
                 <label class="block text-sm font-medium t-label mb-1">Provider</label>
                 <select x-show="providers.includes(provider)" x-model="provider" @change="if (provider === '__custom__') { provider = ''; $nextTick(() => $refs.simProviderCustom.focus()); } else { const ms = modelsForProvider(provider); if (!ms.includes(model)) model = ms[0] || model; }" class="w-full border t-input rounded-lg px-3 py-2 text-sm">
                   <option value="openai">openai</option>
-                  <option value="claude">claude</option>
-                  <option value="gemini">gemini</option>
+                  <option value="anthropic">anthropic</option>
+                  <option value="google">google</option>
                   <option value="__custom__">Custom...</option>
                 </select>
                 <div x-show="!providers.includes(provider)" class="flex gap-1">
@@ -240,10 +240,10 @@
                   <option value="gpt-4.1-mini" :hidden="provider !== 'openai'">gpt-4.1-mini</option>
                   <option value="o3" :hidden="provider !== 'openai'">o3</option>
                   <option value="o4-mini" :hidden="provider !== 'openai'">o4-mini</option>
-                  <option value="claude-sonnet-4-20250514" :hidden="provider !== 'claude'">claude-sonnet-4-20250514</option>
-                  <option value="claude-haiku-4-5-20251001" :hidden="provider !== 'claude'">claude-haiku-4-5-20251001</option>
-                  <option value="gemini-2.5-flash" :hidden="provider !== 'gemini'">gemini-2.5-flash</option>
-                  <option value="gemini-2.5-pro" :hidden="provider !== 'gemini'">gemini-2.5-pro</option>
+                  <option value="claude-sonnet-4-20250514" :hidden="provider !== 'anthropic'">claude-sonnet-4-20250514</option>
+                  <option value="claude-haiku-4-5-20251001" :hidden="provider !== 'anthropic'">claude-haiku-4-5-20251001</option>
+                  <option value="gemini-2.5-flash" :hidden="provider !== 'google'">gemini-2.5-flash</option>
+                  <option value="gemini-2.5-pro" :hidden="provider !== 'google'">gemini-2.5-pro</option>
                   <option value="__custom__">Custom...</option>
                 </select>
                 <div x-show="!isKnownModel(model)" class="flex gap-1">
@@ -357,8 +357,8 @@
                 <label class="block text-sm font-medium t-label mb-1">Provider</label>
                 <select x-show="providers.includes(evalProvider)" x-model="evalProvider" @change="if (evalProvider === '__custom__') { evalProvider = ''; $nextTick(() => $refs.evalProviderCustom.focus()); } else { const ms = modelsForProvider(evalProvider); if (!ms.includes(evalModel)) evalModel = ms[0] || evalModel; }" class="w-full border t-input rounded-lg px-3 py-2 text-sm">
                   <option value="openai">openai</option>
-                  <option value="claude">claude</option>
-                  <option value="gemini">gemini</option>
+                  <option value="anthropic">anthropic</option>
+                  <option value="google">google</option>
                   <option value="__custom__">Custom...</option>
                 </select>
                 <div x-show="!providers.includes(evalProvider)" class="flex gap-1">
@@ -374,10 +374,10 @@
                   <option value="gpt-4.1-mini" :hidden="evalProvider !== 'openai'">gpt-4.1-mini</option>
                   <option value="o3" :hidden="evalProvider !== 'openai'">o3</option>
                   <option value="o4-mini" :hidden="evalProvider !== 'openai'">o4-mini</option>
-                  <option value="claude-sonnet-4-20250514" :hidden="evalProvider !== 'claude'">claude-sonnet-4-20250514</option>
-                  <option value="claude-haiku-4-5-20251001" :hidden="evalProvider !== 'claude'">claude-haiku-4-5-20251001</option>
-                  <option value="gemini-2.5-flash" :hidden="evalProvider !== 'gemini'">gemini-2.5-flash</option>
-                  <option value="gemini-2.5-pro" :hidden="evalProvider !== 'gemini'">gemini-2.5-pro</option>
+                  <option value="claude-sonnet-4-20250514" :hidden="evalProvider !== 'anthropic'">claude-sonnet-4-20250514</option>
+                  <option value="claude-haiku-4-5-20251001" :hidden="evalProvider !== 'anthropic'">claude-haiku-4-5-20251001</option>
+                  <option value="gemini-2.5-flash" :hidden="evalProvider !== 'google'">gemini-2.5-flash</option>
+                  <option value="gemini-2.5-pro" :hidden="evalProvider !== 'google'">gemini-2.5-pro</option>
                   <option value="__custom__">Custom...</option>
                 </select>
                 <div x-show="!isKnownModel(evalModel)" class="flex gap-1">
