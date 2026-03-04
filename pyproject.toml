@@ -1,7 +1,7 @@
 [project]
 name = "arksim"
 dynamic = ["version"]
-description = "⛵️⚙️ Know how your agent performs before it goes live."
+description = "⛵️ Know how your agent performs before it goes live."
 readme = "README.md"
 license = "Apache-2.0"
 authors = [{name = "Arklex", email = "support@arklex.ai"}]
