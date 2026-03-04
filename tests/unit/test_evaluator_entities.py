@@ -68,7 +68,6 @@ class TestAgentMetrics:
             "faithfulness",
             "goal_completion",
             "agent_behavior_failure",
-            "unique_bugs",
         ]
         assert set(metrics) == set(expected)
 

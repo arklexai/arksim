@@ -99,7 +99,10 @@ class AzureOpenAILLM(BaseLLM):
             )
             if response.choices[0].message.parsed:
                 return response.choices[0].message.parsed
-            return response.choices[0].message.content
+            raise ValueError(
+                f"Failed to parse response into {schema.__name__}: "
+                f"{response.choices[0].message.content}"
+            )
         else:
             response = self.client.chat.completions.create(**params)
             return response.choices[0].message.content
@@ -129,7 +132,10 @@ class AzureOpenAILLM(BaseLLM):
             )
             if response.choices[0].message.parsed:
                 return response.choices[0].message.parsed
-            return response.choices[0].message.content
+            raise ValueError(
+                f"Failed to parse response into {schema.__name__}: "
+                f"{response.choices[0].message.content}"
+            )
         else:
             response = await self.async_client.chat.completions.create(**params)
             return response.choices[0].message.content

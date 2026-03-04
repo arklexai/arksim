@@ -30,10 +30,21 @@ _LIST_PATH_KEYS = {
 
 
 def _resolve_path(path: str) -> str:
-    """Resolve a relative path against PROJECT_ROOT."""
-    if not path or os.path.isabs(path):
+    """Resolve a relative path against PROJECT_ROOT.
+
+    The resolved path must remain within PROJECT_ROOT to
+    prevent directory traversal attacks.
+    """
+    if not path:
         return path
-    return os.path.abspath(os.path.join(PROJECT_ROOT, path))
+    if os.path.isabs(path):
+        resolved = os.path.abspath(path)
+    else:
+        resolved = os.path.abspath(os.path.join(PROJECT_ROOT, path))
+    root = os.path.abspath(PROJECT_ROOT)
+    if not Path(resolved).is_relative_to(root):
+        raise ValueError(f"Path must be within the project directory: {root}")
+    return resolved
 
 
 def _validate_write_path(path: str) -> str:
@@ -44,7 +55,7 @@ def _validate_write_path(path: str) -> str:
     """
     resolved = os.path.abspath(os.path.expanduser(path))
     root = os.path.abspath(PROJECT_ROOT)
-    if not resolved.startswith(root + os.sep) and resolved != root:
+    if not Path(resolved).is_relative_to(root):
         raise ValueError(f"Write path must be within the project directory: {root}")
     return resolved
 
@@ -132,7 +143,10 @@ def list_configs() -> dict:
 @router.get("/fs/config")
 def load_config(path: str) -> dict:
     """Load and return a YAML config file."""
-    resolved = _resolve_path(path)
+    try:
+        resolved = _resolve_path(path)
+    except ValueError:
+        return {"error": "Invalid path: outside project directory"}
     if not resolved or not os.path.exists(resolved):
         return {"error": f"File not found: {path}"}
 
@@ -178,6 +192,9 @@ def save_config(body: SaveConfigRequest) -> dict:
 
     try:
         save_path = _validate_write_path(raw_path)
+    except ValueError:
+        return {"error": "Invalid path: outside project directory"}
+    try:
         with open(save_path, "w") as f:
             yaml.dump(
                 cfg,
@@ -186,8 +203,8 @@ def save_config(body: SaveConfigRequest) -> dict:
                 sort_keys=False,
             )
         return {"path": save_path}
-    except Exception as e:
-        return {"error": str(e)}
+    except OSError:
+        return {"error": "Failed to save config file"}
 
 
 @router.get("/fs/scenario/demo")
@@ -217,7 +234,10 @@ def load_scenario(path: str) -> dict:
     """Load a scenario.json file."""
     import json
 
-    resolved = _resolve_path(path)
+    try:
+        resolved = _resolve_path(path)
+    except ValueError:
+        return {"error": "Invalid path: outside project directory"}
     if not resolved or not os.path.exists(resolved):
         return {"error": f"File not found: {path}"}
 
@@ -225,8 +245,8 @@ def load_scenario(path: str) -> dict:
         with open(resolved) as f:
             data = json.load(f)
         return data
-    except Exception as e:
-        return {"error": str(e)}
+    except (OSError, json.JSONDecodeError):
+        return {"error": f"Failed to load scenario: {path}"}
 
 
 class SaveScenarioRequest(BaseModel):
@@ -243,10 +263,13 @@ def save_scenario(body: SaveScenarioRequest) -> dict:
 
     try:
         save_path = _validate_write_path(body.path)
+    except ValueError:
+        return {"error": "Invalid path: outside project directory"}
+    try:
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
         with open(save_path, "w") as f:
             json.dump(body.data, f, indent=2)
             f.write("\n")
         return {"path": body.path}
-    except Exception as e:
-        return {"error": str(e)}
+    except OSError:
+        return {"error": "Failed to save scenario file"}

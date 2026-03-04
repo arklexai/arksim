@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """RAG-powered banking insurance customer service agent using the OpenAI Agents SDK."""
 
 import uuid
