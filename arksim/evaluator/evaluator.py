@@ -129,10 +129,6 @@ class Evaluator:
 
         logger.info(f"Preprocessing complete: {total_turns} total turns to evaluate")
 
-        # Resolve worker count.  For "auto" the ideal parallelism is one
-        # worker per turn + one per conversation (for goal-completion), but
-        # resolve_num_workers caps "auto" at MAX_WORKERS to avoid spawning
-        # hundreds of threads that stall on API rate-limits.
         num_workers = resolve_num_workers(
             self.params.num_workers, total_turns + len(conversations)
         )

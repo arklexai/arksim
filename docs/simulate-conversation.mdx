@@ -51,7 +51,7 @@ scenario_file_path: ./scenarios.json
 # Simulation parameters
 num_conversations_per_scenario: 5    # Number of conversations per scenario
 max_turns: 5                         # Maximum turns per conversation
-num_workers: auto                    # Parallel workers
+num_workers: 50                      # Parallel workers
 
 # Output
 output_file_path: ./simulation.json
@@ -65,7 +65,7 @@ provider: openai
 ```
 
 <Tip>
-  Set `num_workers: auto` to automatically parallelize across all conversations, or specify a fixed number to control load on your agent endpoint.
+  The default `num_workers` is `50`. Set `num_workers: auto` to automatically parallelize across all conversations, or specify a fixed number to control load on your agent endpoint.
 </Tip>
 
 ### Advanced: Custom simulated user prompt
@@ -224,7 +224,7 @@ Both types support `${ENV_VAR}` substitution in header values (and in the endpoi
     scenario_file_path: ./scenarios.json
     num_conversations_per_scenario: 5
     max_turns: 5
-    num_workers: auto
+    num_workers: 50
     output_file_path: ./simulation.json
     model: gpt-5.1
     provider: openai
@@ -274,7 +274,7 @@ Both types support `${ENV_VAR}` substitution in header values (and in the endpoi
             scenario_file_path="./scenarios.json",
             num_conversations_per_scenario=1,
             max_turns=10,
-            num_workers="auto",
+            num_workers=50,
             output_file_path="./simulation.json",
         )))
         ```

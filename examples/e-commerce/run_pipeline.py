@@ -70,7 +70,7 @@ async def main() -> None:
     simulation_params = SimulationParams(
         num_convos_per_scenario=1,
         max_turns=max_turns,
-        num_workers="auto",
+        num_workers=50,
         output_file_path=simulation_output_file,
     )
 
@@ -89,7 +89,7 @@ async def main() -> None:
 
     evaluator_params = EvaluationParams(
         output_dir=evaluation_output_dir,
-        num_workers="auto",
+        num_workers=50,
         custom_metrics=[
             ConversionMetric(),
             # Add more custom metrics here...

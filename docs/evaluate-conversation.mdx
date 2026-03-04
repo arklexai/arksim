@@ -77,7 +77,7 @@ provider: openai
 model: gpt-5.1
 
 # Execution
-num_workers: auto
+num_workers: 50
 score_threshold: null
 
 # Metrics
@@ -201,7 +201,7 @@ score_input.knowledge      # Retrieved knowledge / context passed to the agent
             output_dir="./evaluation",
             model="gpt-5.1",
             provider="open-ai",
-            num_workers="auto",
+            num_workers=50,
             generate_html_report=True,
         )
         ```

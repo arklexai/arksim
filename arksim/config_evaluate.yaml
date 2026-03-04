@@ -16,8 +16,8 @@ model: gpt-5.1
 # LLM provider
 provider: openai
 
-# Workers for parallel processing; "auto" picks a suitable count (capped at 8)
-num_workers: auto
+# Workers for parallel processing
+num_workers: 50
 
 # Paths to Python files defining custom QuantitativeMetric or QualitativeMetric subclasses
 custom_metrics_file_paths: []

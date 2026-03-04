@@ -232,7 +232,7 @@ All settings can be specified in YAML and overridden via CLI flags (`--key value
 | `provider` | string | `openai` | LLM provider: `openai`, `claude`, `gemini` |
 | `num_conversations_per_scenario` | int | `5` | Conversations to generate per scenario |
 | `max_turns` | int | `5` | Maximum turns per conversation |
-| `num_workers` | int/string | `auto` | Parallel workers |
+| `num_workers` | int/string | `50` | Parallel workers |
 | `output_file_path` | string | `./simulation.json` | Where to save simulation results |
 | `simulated_user_prompt_template` | string | null | Custom Jinja2 template for simulated user prompt |
 
@@ -248,7 +248,7 @@ All settings can be specified in YAML and overridden via CLI flags (`--key value
 | `custom_metrics_file_paths` | list | `[]` | Paths to custom metric files |
 | `generate_html_report` | bool | `true` | Generate an HTML report |
 | `score_threshold` | float | null | Fail (exit 1) if any conversation scores below this |
-| `num_workers` | int/string | `auto` | Parallel workers |
+| `num_workers` | int/string | `50` | Parallel workers |
 
 ## CLI Reference
 
