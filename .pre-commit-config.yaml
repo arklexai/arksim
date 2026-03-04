@@ -7,6 +7,10 @@ repos:
       - id: check-yaml
       - id: check-added-large-files
         args: ["--maxkb=500"]
+      - id: check-merge-conflict
+      - id: detect-private-key
+      - id: check-json
+        files: \.json$
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.11.2
@@ -14,12 +18,3 @@ repos:
       - id: ruff
         args: [--fix]
       - id: ruff-format
-
-  - repo: local
-    hooks:
-      - id: changelog-reminder
-        name: Check CHANGELOG.md updated
-        entry: scripts/check-changelog.sh
-        language: script
-        pass_filenames: false
-        always_run: true

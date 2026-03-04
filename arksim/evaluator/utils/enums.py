@@ -22,7 +22,6 @@ class AgentMetrics(str, Enum):
     FAITHFULNESS = "faithfulness"
     GOAL_COMPLETION = "goal_completion"
     AGENT_BEHAVIOR_FAILURE = "agent_behavior_failure"
-    UNIQUE_BUGS = "unique_bugs"
 
 
 class EvaluationOutcomes(str, Enum):

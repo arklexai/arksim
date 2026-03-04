@@ -5,32 +5,55 @@ All notable changes to Arksim will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.5](https://github.com/arklexai/arksim/compare/v0.0.4...v0.0.5) (2026-03-04)
+
+
+### Fixed
+
+* remove stale token from Codecov coverage badge ([#49](https://github.com/arklexai/arksim/issues/49)) ([b2ac7fd](https://github.com/arklexai/arksim/commit/b2ac7fddf9dfac77e2bd4b4466e654cdf29e9bde))
+
+
+### Changed
+
+* add Codecov token to coverage upload ([#45](https://github.com/arklexai/arksim/issues/45)) ([0d25132](https://github.com/arklexai/arksim/commit/0d251324b2b498bfba0d853eaa75a70bf0bf2859))
+* add OSS hardening for security, coverage, and annotations ([#46](https://github.com/arklexai/arksim/issues/46)) ([aa7fa77](https://github.com/arklexai/arksim/commit/aa7fa77b4c0db302cf8bd0104dcd7b076d134d0b))
+* add release-please for automated releases and changelog ([#47](https://github.com/arklexai/arksim/issues/47)) ([92f48cc](https://github.com/arklexai/arksim/commit/92f48cc05241f7c741d97c3a7fa48eb7da6996a4))
+* code quality audit fixes ([#52](https://github.com/arklexai/arksim/issues/52)) ([b7295c2](https://github.com/arklexai/arksim/commit/b7295c218637a4579d8a1f190b4460039259b86c))
+* improve unit test coverage from 44% to 62% ([#51](https://github.com/arklexai/arksim/issues/51)) ([a3f8f42](https://github.com/arklexai/arksim/commit/a3f8f4213637939f0377b963fba632a2cc024f04))
+* trigger CI on release-please branches ([#59](https://github.com/arklexai/arksim/issues/59)) ([71ba01b](https://github.com/arklexai/arksim/commit/71ba01b1c6611dc5763093ff69c2c958b385e5a8))
+
 ## [Unreleased]
 
 ### Added
 
 - `arksim examples` CLI command to download example projects from GitHub without cloning
+- Bandit security scanning in CI pipeline
+- Test coverage threshold (60% minimum) enforced in CI
+- 26 new unit test files covering evaluator metrics, CLI utilities, LLM factory, concurrency workers, simulation utilities, error detection, API endpoints, and path validation
+- `from __future__ import annotations` to all source files for consistent typing
+- Path traversal protection on filesystem and results API endpoints
+- Generic error messages in API endpoints to prevent server path leakage
+- Shared evaluation constants (`SCORE_NOT_COMPUTED`, `BEHAVIOR_FAILURE_THRESHOLD`)
+- Quality gates section in CONTRIBUTING.md documenting coverage ratchet policy
+- `codecov.yml` with patch target of 50% to avoid false-positive CI failures on infra changes
 
 ### Changed
 
+- `SCORE_NOT_COMPUTED` display label changed from "N/A (Evaluation Failed)" to "N/A (Not computed)"
+- Removed stale `{chat_id}` placeholder reference from `ChatCompletionsConfig.body` field description
+
 - UI auto-loads scenarios from config on startup instead of always showing the demo
 - File browser shows a hint that browsing is scoped to the launch directory
+- Coverage badge switched from Codecov-hosted to shields.io for reliability
+- Expanded SECURITY.md with response process, scope, and disclosure guidelines
+- Azure OpenAI provider now raises `ValueError` instead of silently returning a raw string when structured output parsing fails
+- `validate_num_workers` rejects zero and negative values
 
 ### Removed
 
 - Project root path from the UI sidebar header
-
-### Added
-
-- Bandit security scanning in CI pipeline
-- Test coverage threshold (60% minimum) enforced in CI
-- 21 new unit test files covering evaluator metrics, CLI utilities, LLM factory, concurrency workers, simulation utilities, and error detection
-- `from __future__ import annotations` to all source files for consistent typing
-
-### Changed
-
-- Coverage badge switched from Codecov-hosted to shields.io for reliability
-- Expanded SECURITY.md with response process, scope, and disclosure guidelines
+- Dead code: unused error message constants, `METRIC_THRESHOLD`, `UNIQUE_BUGS` enum, `flip_hist_content_only`, `LLMConfig`
+- Hidden Unicode characters (U+200C zero-width non-joiner) from e-commerce example data files
 
 ## [0.0.4] - 2026-03-03
 
