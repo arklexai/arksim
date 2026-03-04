@@ -21,9 +21,9 @@
 
 ---
 
-<p align="center">
-  <video src="https://images.arklex.ai/arksim/demo.mp4" controls width="100%"></video>
-</p>
+
+<iframe src="https://images.arklex.ai/arksim/demo.mp4" width="100%" height="450" frameborder="0" allowfullscreen></iframe>
+
 
 ---
 
