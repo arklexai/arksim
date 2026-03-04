@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 """Built-in evaluation metrics implemented as QuantitativeMetric subclasses."""
 
+from __future__ import annotations
+
 from arksim.llms.chat import LLM
 
 from .base_metric import (

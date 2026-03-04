@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 """Simulation API endpoints."""
 
+from __future__ import annotations
+
 import asyncio
 import threading
 

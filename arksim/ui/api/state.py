@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 """Server-side state manager for arksim UI jobs."""
 
+from __future__ import annotations
+
 import asyncio
 import contextlib
 import logging

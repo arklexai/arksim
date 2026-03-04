@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 """Evaluation API endpoints."""
 
+from __future__ import annotations
+
 import threading
 
 from fastapi import APIRouter, Request
