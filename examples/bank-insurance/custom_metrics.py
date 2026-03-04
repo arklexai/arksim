@@ -21,6 +21,9 @@ To create a qualitative metric (categorical label):
      and (optionally) add the metric name to ``metrics_to_run``.
 """
 
+from pathlib import Path
+
+import yaml
 from pydantic import BaseModel
 
 from arksim.evaluator import (
@@ -33,10 +36,21 @@ from arksim.evaluator import (
 )
 from arksim.llms.chat import LLM
 
-# Custom metrics use their own LLM; this is independent of the
-# evaluator's model/provider config. Feel free to swap in any
-# model, provider, or LLM package that suits your needs.
-llm = LLM(model="gpt-5.1", provider="openai")
+
+def _load_llm_from_config() -> LLM:
+    """Load model and provider from config.yaml in the same directory as this file."""
+    config_path = Path(__file__).resolve().parent / "config.yaml"
+    if not config_path.exists():
+        raise FileNotFoundError(f"config.yaml not found: {config_path}")
+    with open(config_path) as f:
+        data = yaml.safe_load(f) or {}
+    model = data["model"]
+    provider = data["provider"]
+    return LLM(model=model, provider=provider)
+
+
+# LLM for custom metrics; model and provider from config.yaml (same directory).
+llm = _load_llm_from_config()
 
 
 # ── Quantitative metrics
