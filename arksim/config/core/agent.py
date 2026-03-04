@@ -41,17 +41,14 @@ class A2AConfig(BaseModel):
 class ChatCompletionsConfig(BaseModel):
     """API configuration for chat completion agent type."""
 
-    # New format fields (optional for new format support)
-    endpoint: str | None = Field(
-        None, description="Chat completion endpoint URL (new format)"
-    )
+    endpoint: str | None = Field(None, description="Chat completion endpoint URL")
     headers: dict[str, str] | None = Field(
         None,
-        description="HTTP headers for chat requests (new format). Values can use ${ENV_VAR} syntax for env var substitution.",
+        description="HTTP headers for chat requests. Values can use ${ENV_VAR} syntax for env var substitution.",
     )
     body: dict[str, Any] | None = Field(
         None,
-        description="Request body template (new format, may contain messages array with {chat_id} placeholder)",
+        description="Request body template (may contain messages array with {chat_id} placeholder)",
     )
 
     # Optional fields for Azure OpenAI
@@ -70,10 +67,10 @@ class ChatCompletionsConfig(BaseModel):
         return self
 
     def get_endpoint(self) -> str:
-        """Get endpoint URL."""
-        base_endpoint = self.endpoint
-        # resolve environment variables in the endpoint
-        resolved = resolve_env_vars({"endpoint": base_endpoint})
+        """Get endpoint URL with environment variable substitution."""
+        if not self.endpoint:
+            raise ValueError("ChatCompletions endpoint is not configured")
+        resolved = resolve_env_vars({"endpoint": self.endpoint})
         return resolved["endpoint"]
 
     def get_headers(self) -> dict[str, str]:

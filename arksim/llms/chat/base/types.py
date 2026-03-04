@@ -3,7 +3,6 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import BaseModel
 from typing_extensions import TypedDict
 
 
@@ -12,9 +11,3 @@ class LLMMessage(TypedDict):
 
     role: Literal["user", "assistant", "system"]
     content: str
-
-
-class LLMConfig(BaseModel):
-    model: str
-    temperature: float
-    provider: str | None = None

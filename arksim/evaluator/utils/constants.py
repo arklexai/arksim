@@ -1,8 +1,11 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-# Quantitative Metric Threshold (1-5 scale)
-METRIC_THRESHOLD = 3
+# Sentinel value for metrics that were not computed
+SCORE_NOT_COMPUTED = -1
+
+# Threshold ratio for triggering behavior failure analysis
+BEHAVIOR_FAILURE_THRESHOLD = 0.6
 
 # Turn Success Ratio Score Weight
 TURN_SUCCESS_RATIO_SCORE_WEIGHT = 0.75

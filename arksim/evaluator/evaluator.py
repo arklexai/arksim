@@ -190,9 +190,8 @@ class Evaluator:
         # Phase 2: goal_completion for each conversation (parallel)
         convo_score_list: list[ConversationEvaluation] = []
 
-        with ThreadPoolExecutor(
-            max_workers=min(num_workers, len(processed_entries))
-        ) as executor:
+        gc_max_workers = max(1, min(num_workers, len(processed_entries)))
+        with ThreadPoolExecutor(max_workers=gc_max_workers) as executor:
             gc_futures = {
                 executor.submit(
                     evaluate_goal_completion,

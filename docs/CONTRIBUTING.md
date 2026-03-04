@@ -125,4 +125,4 @@ AI-assisted contributions are welcome. Please:
 
 ---
 
-Have questions? Open a [GitHub discussion](https://github.com/arklex/arksim/discussions) or an issue and we'll do our best to help.
+Have questions? Open a [GitHub discussion](https://github.com/arklexai/arksim/discussions) or an issue and we'll do our best to help.

@@ -31,8 +31,10 @@ from .entities import (
     TurnItem,
 )
 from .utils.constants import (
+    BEHAVIOR_FAILURE_THRESHOLD,
     EVALUATION_PARTIAL_FAILURE_THRESHOLD,
     GOAL_COMPLETION_SCORE_WEIGHT,
+    SCORE_NOT_COMPUTED,
     TURN_SUCCESS_RATIO_SCORE_WEIGHT,
 )
 from .utils.enums import (
@@ -157,10 +159,14 @@ def evaluate_turn(
 
     metric_max = {m.name: m.score_range[1] for m in all_metrics}
     has_threshold_failure = any(
-        s.value < 0.6 * metric_max[s.name] for s in scores if s.name in metric_max
+        s.value < BEHAVIOR_FAILURE_THRESHOLD * metric_max[s.name]
+        for s in scores
+        if s.name in metric_max
     )
 
-    turn_score = sum(s.value for s in scores) / len(scores) if scores else -1
+    turn_score = (
+        sum(s.value for s in scores) / len(scores) if scores else SCORE_NOT_COMPUTED
+    )
 
     if _should_run("agent_behavior_failure", metrics_to_run) and has_threshold_failure:
         qual = AgentBehaviorFailureMetric(llm).evaluate(score_input)
@@ -204,7 +210,7 @@ def evaluate_goal_completion(
         goal_completion_score = result.value
         goal_completion_reason = result.reason
     else:
-        goal_completion_score = -1
+        goal_completion_score = SCORE_NOT_COMPUTED
         goal_completion_reason = ""
 
     behavior_failures = sum(
@@ -224,9 +230,7 @@ def evaluate_goal_completion(
             + goal_completion_score * GOAL_COMPLETION_SCORE_WEIGHT
         )
 
-    if overall_agent_score == -1:
-        status = EvaluationStatus.EVALUATION_FAILED.value
-    elif overall_agent_score == 1.0:
+    if overall_agent_score == 1.0:
         status = EvaluationStatus.DONE.value
     elif overall_agent_score >= EVALUATION_PARTIAL_FAILURE_THRESHOLD:
         status = EvaluationStatus.PARTIAL_FAILURE.value
