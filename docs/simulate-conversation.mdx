@@ -5,12 +5,12 @@ description: "Run scenarios against your agent and collect chats for evaluation.
 
 ## What is Simulation?
 
-Simulation is the process where Arksim runs your pre-built scenarios as live conversations against your agent. Each scenario acts as a simulated user with a defined persona, goal, and prior knowledge who drives a multi-turn interaction with the agent until the user's goal is achieved or the turn limit is reached.
+Simulation is the process where ArkSim runs your pre-built scenarios as live conversations against your agent. Each scenario acts as a simulated user with a defined persona, goal, and prior knowledge who drives a multi-turn interaction with the agent until the user's goal is achieved or the turn limit is reached.
 
 The **output** is a set of conversation transcripts you can inspect directly or pass into Evaluation.
 
 <Frame>
-  ![Arksim Simulation Workflow](/images/simulation.svg)
+  ![ArkSim Simulation Workflow](/images/simulation.svg)
 </Frame>
 
 ---
@@ -22,7 +22,7 @@ Before running a simulation, you need three things in place:
 | Input            | Description                                                                                                                                  |
 | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Scenarios**    | A `scenarios.json` file defining user attributes, goals, knowledge, and scenario metadata. [Learn how to write scenarios →](/build-scenario) |
-| **Agent config** | Inline `agent_config` in your config YAML. Defines how Arksim connects to your agent. See [Agent configuration](#agent-configuration) below. |
+| **Agent config** | Inline `agent_config` in your config YAML. Defines how ArkSim connects to your agent. See [Agent configuration](#agent-configuration) below. |
 | **Config file**  | `config.yaml` controlling simulation parameters such as number of conversations, max turns, workers, and model settings.                     |
 
 ---
@@ -70,7 +70,7 @@ provider: openai
 
 ### Advanced: Custom simulated user prompt
 
-By default, Arksim uses a built-in system prompt to drive the simulated user. You can override it by setting `simulated_user_prompt_template` in your config to a **Jinja2** template string. The template is rendered per conversation with these variables:
+By default, ArkSim uses a built-in system prompt to drive the simulated user. You can override it by setting `simulated_user_prompt_template` in your config to a **Jinja2** template string. The template is rendered per conversation with these variables:
 
 **From the scenario file**
 
@@ -134,7 +134,7 @@ Provide agent connection by defining `agent_config` inline in your config YAML.
 
 ### API connection types
 
-Arksim supports two agent protocols:
+ArkSim supports two agent protocols:
 
 | Protocol                                                                            | When to use                                                                            |
 | ----------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |

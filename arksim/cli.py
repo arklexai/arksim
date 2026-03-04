@@ -288,7 +288,7 @@ def build_parser() -> argparse.ArgumentParser:
     """Build the CLI argument parser with subcommands."""
     parser = argparse.ArgumentParser(
         prog="arksim",
-        description="Arksim CLI - Run agent simulations and evaluations",
+        description="⛵️⚙️ ArkSim - Stress-test your AI agents before users do.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=textwrap.dedent("""\
 
