@@ -12,7 +12,7 @@ else:
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from arksim.config.utils import _resolve_config_relative_path
+from arksim.config.utils import resolve_config_relative_path
 from arksim.constants import DEFAULT_MODEL, DEFAULT_PROVIDER
 from arksim.utils.concurrency import validate_num_workers
 
@@ -94,12 +94,25 @@ class EvaluationInput(BaseModel):
             for attr in ("scenario_file_path", "simulation_file_path", "output_dir"):
                 path = getattr(self, attr)
                 if path:
-                    resolved = _resolve_config_relative_path(
+                    resolved = resolve_config_relative_path(
                         path, config_dir, cli_overrides, attr
                     )
                     if resolved is not None and resolved != path:
                         logger.debug("%s resolved to: %s", attr, resolved)
                         setattr(self, attr, resolved)
+
+            if self.custom_metrics_file_paths:
+                resolved_list = []
+                for p in self.custom_metrics_file_paths:
+                    resolved = resolve_config_relative_path(
+                        p, config_dir, cli_overrides, "custom_metrics_file_paths"
+                    )
+                    resolved_list.append(resolved if resolved is not None else p)
+                if resolved_list != self.custom_metrics_file_paths:
+                    logger.debug(
+                        "custom_metrics_file_paths resolved to: %s", resolved_list
+                    )
+                    self.custom_metrics_file_paths = resolved_list
 
         return self
 

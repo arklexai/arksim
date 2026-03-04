@@ -16,7 +16,7 @@ else:
 from pydantic import BaseModel, Field, ValidationInfo, model_validator
 
 from arksim.config.core.agent import AgentConfig
-from arksim.config.utils import _resolve_config_relative_path
+from arksim.config.utils import resolve_config_relative_path
 from arksim.constants import DEFAULT_MODEL, DEFAULT_PROVIDER
 from arksim.utils.concurrency import validate_num_workers
 
@@ -73,10 +73,14 @@ class SimulationInput(BaseModel):
         cli_overrides = (info.context and info.context.get("cli_overrides")) or set()
         if config_path:
             config_dir = os.path.dirname(config_path)
-            for attr in ("scenario_file_path", "output_file_path"):
+            for attr in (
+                "scenario_file_path",
+                "output_file_path",
+                "agent_config_file_path",
+            ):
                 path = getattr(self, attr)
                 if path:
-                    resolved = _resolve_config_relative_path(
+                    resolved = resolve_config_relative_path(
                         path, config_dir, cli_overrides, attr
                     )
                     if resolved is not None and resolved != path:

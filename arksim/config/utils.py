@@ -41,7 +41,7 @@ def resolve_env_vars(headers: dict[str, str]) -> dict[str, str]:
     return resolved_headers
 
 
-def _resolve_config_relative_path(
+def resolve_config_relative_path(
     path: str,
     config_dir: str,
     cli_overrides: set,
