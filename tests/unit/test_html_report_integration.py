@@ -6,6 +6,8 @@ the arksim.__init__.py chains that pull in heavy deps
 (langchain, azure, etc.) that may not be installed in the test env.
 """
 
+from __future__ import annotations
+
 import importlib.util
 import sys
 import tempfile

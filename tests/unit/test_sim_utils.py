@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 """Tests for arksim.simulation_engine.utils.utils."""
 
+from __future__ import annotations
+
 from arksim.simulation_engine.utils.utils import flip_hist
 
 

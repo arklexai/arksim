@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 """⛵️ ArkSim: know how your agent performs before it goes live."""
 
+from __future__ import annotations
+
 import importlib
 
 try:

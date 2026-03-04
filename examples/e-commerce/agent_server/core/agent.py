@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 """RAG-powered e-commerce customer service agent using the OpenAI Agents SDK."""
 
+from __future__ import annotations
+
 import uuid
 from pathlib import Path
 from typing import Any

@@ -1,4 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
+
 from .core import combine_knowledge
 from .entities import (
     Conversation,

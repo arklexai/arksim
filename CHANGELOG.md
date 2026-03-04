@@ -53,6 +53,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Test coverage threshold (60% minimum) enforced in CI
 - 26 new unit test files covering evaluator metrics, CLI utilities, LLM factory, concurrency workers, simulation utilities, error detection, API endpoints, and path validation
 - `from __future__ import annotations` to all source files for consistent typing
+- Ruff `FA100` rule to enforce `from __future__ import annotations` on every Python file
+- `insert-license` pre-commit hook to enforce `SPDX-License-Identifier: Apache-2.0` headers
 - Path traversal protection on filesystem and results API endpoints
 - Generic error messages in API endpoints to prevent server path leakage
 - Shared evaluation constants (`SCORE_NOT_COMPUTED`, `BEHAVIOR_FAILURE_THRESHOLD`)

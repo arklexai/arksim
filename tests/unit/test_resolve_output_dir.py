@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 """Tests for arksim.utils.output.utils.resolve_output_dir."""
 
+from __future__ import annotations
+
 import os
 
 from arksim.utils.output.utils import resolve_output_dir

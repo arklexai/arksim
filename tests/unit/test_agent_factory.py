@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 """Tests for simulation engine agent factory."""
 
+from __future__ import annotations
+
 import pytest
 
 from arksim.config import AgentConfig

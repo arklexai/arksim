@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 """Tests for arksim.simulation_engine.core.multi_knowledge_handling."""
 
+from __future__ import annotations
+
 import random
 
 import pytest
