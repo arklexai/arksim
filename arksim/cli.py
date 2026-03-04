@@ -203,7 +203,7 @@ def _run_examples(
     from urllib.request import urlopen
 
     logger.info("Fetching examples from arksim GitHub repo...")
-    with urlopen(_EXAMPLES_REPO_URL) as resp:
+    with urlopen(_EXAMPLES_REPO_URL) as resp:  # nosec B310
         data = resp.read()
 
     with tarfile.open(fileobj=io.BytesIO(data), mode="r:gz") as tar:
