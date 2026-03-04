@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed 
+
+- Simulator now respects `num_conversations_per_scenario`, previously only 1 conversation was generated per scenario
+
 ### Added
 
 - `arksim examples` CLI command to download example projects from GitHub without cloning
