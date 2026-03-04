@@ -185,10 +185,15 @@ def test_run_evaluation_passes_in_memory_scenarios_to_html_report(
     report_module = importlib.import_module(
         "arksim.utils.html_report.generate_html_report"
     )
+    sentinel_tag = "patched-html-params"
+
+    def fake_html_report_params(**kwargs: object) -> SimpleNamespace:
+        return SimpleNamespace(_sentinel=sentinel_tag, **kwargs)
+
     monkeypatch.setattr(
         report_module,
         "HtmlReportParams",
-        lambda **kwargs: SimpleNamespace(**kwargs),
+        fake_html_report_params,
     )
     monkeypatch.setattr(
         report_module,
@@ -199,4 +204,5 @@ def test_run_evaluation_passes_in_memory_scenarios_to_html_report(
     run_evaluation(settings, simulation=simulation, scenarios=scenarios)
 
     assert len(html_calls) == 1
+    assert getattr(html_calls[0], "_sentinel", None) == sentinel_tag
     assert html_calls[0].scenarios is scenarios
