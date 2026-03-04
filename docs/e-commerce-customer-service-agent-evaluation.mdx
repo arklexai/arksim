@@ -131,6 +131,7 @@ This agent is a RAG-based shopping assistant built with OpenAI Agents SDK, backe
       <Tab title="A2A">
         ```bash
         cd examples/e-commerce
+        export OPENAI_API_KEY="<YOUR_OPENAI_API_KEY>"
         export A2A_API_KEY=1234-4567-8910
         arksim simulate-evaluate config_a2a.yaml
         ```
@@ -138,6 +139,7 @@ This agent is a RAG-based shopping assistant built with OpenAI Agents SDK, backe
       <Tab title="Chat Completions">
         ```bash
         cd examples/e-commerce
+        export OPENAI_API_KEY="<YOUR_OPENAI_API_KEY>"
         export AGENT_API_KEY=123456
         arksim simulate-evaluate config_chat_completions.yaml
         ```
@@ -258,4 +260,4 @@ When run from `examples/e-commerce`, paths are relative to that directory (as se
 | File                | Contents                                                                                                   |
 | ------------------- | ---------------------------------------------------------------------------------------------------------- |
 | `evaluation.json`   | Full evaluation results: per-turn and per-conversation scores, unique error patterns, and metric reasoning |
-| `final_report.html` | Interactive HTML report for browsing and sharing results (when `generate_html_report: true`) |
+| `final_report.html` | Interactive HTML report for browsing and sharing results (when `generate_html_report: true`)               |
