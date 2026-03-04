@@ -35,10 +35,10 @@ class TestSimulationInputValidator:
 class TestSimulationInputPathResolution:
     """Tests for config-relative path resolution in SimulationInput."""
 
-    def _base_data(self, **kwargs: Any) -> dict:
+    def _base_data(self, **kwargs: Any) -> dict:  # noqa: ANN401
         return {"agent_config_file_path": "agent.json", **kwargs}
 
-    def _ctx(self, tmp_path: Path, **kwargs: Any) -> dict:
+    def _ctx(self, tmp_path: Path, **kwargs: Any) -> dict:  # noqa: ANN401
         return {"config_path": str(tmp_path / "config.yaml"), **kwargs}
 
     def test_scenario_resolves_to_config_relative(self, tmp_path: Path) -> None:

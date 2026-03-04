@@ -10,7 +10,7 @@ from arksim.evaluator.entities import EvaluationInput
 class TestEvaluationInputPathResolution:
     """Tests for config-relative path resolution in EvaluationInput."""
 
-    def _ctx(self, tmp_path: Path, **kwargs: Any) -> dict:
+    def _ctx(self, tmp_path: Path, **kwargs: Any) -> dict:  # noqa: ANN401
         return {"config_path": str(tmp_path / "config.yaml"), **kwargs}
 
     def test_scenario_resolves_to_config_relative(self, tmp_path: Path) -> None:
