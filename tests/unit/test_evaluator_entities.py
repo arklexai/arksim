@@ -8,6 +8,7 @@ from arksim.evaluator import ChatMessage, QuantResult
 from arksim.evaluator.entities import (
     ConversationEvaluation,
     ConvoItem,
+    EvaluationInput,
     EvaluationParams,
     Occurrence,
     TurnEvaluation,
@@ -91,6 +92,64 @@ class TestAgentBehaviorFailureType:
         """Test all expected failure types are defined."""
         types = [t.value for t in AgentBehaviorFailureType]
         assert len(types) == 6
+
+
+class TestEvaluationInput:
+    """Tests for EvaluationInput model (uses model_validator + Self)."""
+
+    def test_valid_defaults(self) -> None:
+        """Test creating EvaluationInput with defaults."""
+        ei = EvaluationInput()
+        assert ei.simulation_file_path == "./simulation.json"
+        assert ei.output_dir == "./evaluation"
+        assert ei.num_workers == "auto"
+        assert ei.generate_html_report is True
+
+    def test_custom_values(self) -> None:
+        """Test creating EvaluationInput with custom values."""
+        ei = EvaluationInput(
+            simulation_file_path="/data/sim.json",
+            output_dir="/data/eval",
+            model="gpt-4",
+            num_workers=4,
+            generate_html_report=False,
+            score_threshold=3.0,
+        )
+        assert ei.simulation_file_path == "/data/sim.json"
+        assert ei.output_dir == "/data/eval"
+        assert ei.model == "gpt-4"
+        assert ei.num_workers == 4
+        assert ei.generate_html_report is False
+        assert ei.score_threshold == 3.0
+
+    def test_none_simulation_file_raises(self) -> None:
+        """Test that None simulation_file_path raises without skip context."""
+        with pytest.raises(ValidationError, match="simulation_file_path"):
+            EvaluationInput(simulation_file_path=None)
+
+    def test_none_simulation_file_skipped_in_pipeline(self) -> None:
+        """Test that validation is skipped in pipeline mode."""
+        ei = EvaluationInput.model_validate(
+            {"simulation_file_path": None},
+            context={"skip_input_dir_validation": True},
+        )
+        assert ei.simulation_file_path is None
+
+    def test_invalid_num_workers(self) -> None:
+        """Test invalid num_workers string raises."""
+        with pytest.raises(ValidationError):
+            EvaluationInput(num_workers="invalid")
+
+    def test_custom_metrics_file_paths_default(self) -> None:
+        """Test custom_metrics_file_paths defaults to empty list."""
+        ei = EvaluationInput()
+        assert ei.custom_metrics_file_paths == []
+
+    def test_metrics_to_run_default(self) -> None:
+        """Test metrics_to_run has default values."""
+        ei = EvaluationInput()
+        assert "helpfulness" in ei.metrics_to_run
+        assert "coherence" in ei.metrics_to_run
 
 
 class TestEvaluationParams:

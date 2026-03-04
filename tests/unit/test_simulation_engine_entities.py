@@ -5,9 +5,128 @@ import pytest
 from pydantic import ValidationError
 
 from arksim.simulation_engine.entities import (
+    Conversation,
     ConversationState,
+    Message,
+    SimulatedUserPrompt,
+    Simulation,
+    SimulationInput,
     SimulationParams,
 )
+
+
+class TestSimulationInput:
+    """Tests for SimulationInput model (uses model_validator + Self)."""
+
+    def test_valid_with_config_file(self) -> None:
+        """Test creating SimulationInput with agent_config_file_path."""
+        si = SimulationInput(
+            agent_config_file_path="./agent.json",
+            scenario_file_path="./scenarios.json",
+        )
+        assert si.agent_config_file_path == "./agent.json"
+        assert si.scenario_file_path == "./scenarios.json"
+
+    def test_defaults(self) -> None:
+        """Test default field values."""
+        si = SimulationInput.model_validate(
+            {"agent_config_file_path": "./agent.json"},
+            context={"skip_input_dir_validation": True},
+        )
+        assert si.num_conversations_per_scenario == 5
+        assert si.max_turns == 5
+        assert si.num_workers == "auto"
+        assert si.output_file_path == "./simulation.json"
+        assert si.simulated_user_prompt_template is None
+
+    def test_missing_agent_config_raises(self) -> None:
+        """Test that missing both agent_config and agent_config_file_path raises."""
+        with pytest.raises(ValidationError):
+            SimulationInput(scenario_file_path="./scenarios.json")
+
+    def test_skip_validation_in_pipeline(self) -> None:
+        """Test validation skip in pipeline mode."""
+        si = SimulationInput.model_validate(
+            {},
+            context={"skip_input_dir_validation": True},
+        )
+        assert si.agent_config is None
+        assert si.agent_config_file_path is None
+
+    def test_invalid_num_workers(self) -> None:
+        """Test invalid num_workers raises."""
+        with pytest.raises(ValidationError):
+            SimulationInput(
+                agent_config_file_path="./agent.json",
+                num_workers="bad",
+            )
+
+    def test_custom_values(self) -> None:
+        """Test custom values."""
+        si = SimulationInput(
+            agent_config_file_path="./agent.json",
+            num_conversations_per_scenario=10,
+            max_turns=3,
+            num_workers=2,
+            output_file_path="/tmp/sim.json",
+        )
+        assert si.num_conversations_per_scenario == 10
+        assert si.max_turns == 3
+        assert si.num_workers == 2
+        assert si.output_file_path == "/tmp/sim.json"
+
+
+class TestMessage:
+    """Tests for Message model."""
+
+    def test_valid_message(self) -> None:
+        """Test creating a valid Message."""
+        msg = Message(turn_id=1, role="simulated_user", content="Hello")
+        assert msg.turn_id == 1
+        assert msg.role == "simulated_user"
+        assert msg.content == "Hello"
+        assert msg.message_id  # auto-generated UUID
+
+    def test_invalid_role(self) -> None:
+        """Test invalid role raises."""
+        with pytest.raises(ValidationError):
+            Message(turn_id=1, role="invalid", content="test")
+
+
+class TestConversation:
+    """Tests for Conversation model."""
+
+    def test_valid_conversation(self) -> None:
+        """Test creating a valid Conversation."""
+        conv = Conversation(
+            conversation_id="conv-1",
+            scenario_id="sc-1",
+            conversation_history=[
+                Message(turn_id=1, role="simulated_user", content="Hi"),
+                Message(turn_id=1, role="assistant", content="Hello!"),
+            ],
+            simulated_user_prompt=SimulatedUserPrompt(
+                simulated_user_prompt_template="template",
+                variables={"key": "val"},
+            ),
+        )
+        assert conv.conversation_id == "conv-1"
+        assert len(conv.conversation_history) == 2
+
+
+class TestSimulation:
+    """Tests for Simulation model."""
+
+    def test_valid_simulation(self) -> None:
+        """Test creating a valid Simulation."""
+        sim = Simulation(
+            schema_version="1.0",
+            simulator_version="0.1",
+            conversations=[],
+        )
+        assert sim.schema_version == "1.0"
+        assert sim.simulation_id  # auto-generated
+        assert sim.generated_at  # auto-generated
 
 
 class TestSimulationParams:
