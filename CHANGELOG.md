@@ -5,6 +5,36 @@ All notable changes to ArkSim will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.0](https://github.com/arklexai/arksim/compare/v0.0.6...v0.1.0) (2026-03-05)
+
+
+### ⚠ BREAKING CHANGES
+
+* prepare for 0.1.0 release ([#66](https://github.com/arklexai/arksim/issues/66))
+* update llm provider name ([#67](https://github.com/arklexai/arksim/issues/67))
+
+### Added
+
+* add version display to CLI and web UI ([#50](https://github.com/arklexai/arksim/issues/50)) ([7e0ec82](https://github.com/arklexai/arksim/commit/7e0ec82660ffa266b1caba1a663674b3f6b9899a))
+* prepare for 0.1.0 release ([#66](https://github.com/arklexai/arksim/issues/66)) ([2e919ce](https://github.com/arklexai/arksim/commit/2e919ce44f23029c09d4bf969d0cd5c65fcca31d))
+* support in-memory evaluation flow and refresh docs ([#63](https://github.com/arklexai/arksim/issues/63)) ([547546f](https://github.com/arklexai/arksim/commit/547546f1f587c3d1ebb0fd3c2143bd32c009e9da))
+* update llm provider name ([#67](https://github.com/arklexai/arksim/issues/67)) ([e949e58](https://github.com/arklexai/arksim/commit/e949e58bdbe449dbbe17b30b63d287d74f98a3c2))
+
+
+### Fixed
+
+* **examples:** improve sample scenario files ([#53](https://github.com/arklexai/arksim/issues/53)) ([c0448a3](https://github.com/arklexai/arksim/commit/c0448a36cfdcd37b4f78334407116e6746661d0a))
+* update installation and quickstart guides ([#65](https://github.com/arklexai/arksim/issues/65)) ([589ada7](https://github.com/arklexai/arksim/commit/589ada70ffcf31bb5d40571600139f49f997ca84))
+* update logic for resolving file paths ([#54](https://github.com/arklexai/arksim/issues/54)) ([029eda8](https://github.com/arklexai/arksim/commit/029eda8f347c45d3bab8a8f6021b65e367d1d044))
+* use absolute URL for flow diagram in README ([#69](https://github.com/arklexai/arksim/issues/69)) ([f09056f](https://github.com/arklexai/arksim/commit/f09056f4c4ded3395668983aeb982769129ca0cc))
+
+
+### Changed
+
+* add commit type reference to PR template ([#68](https://github.com/arklexai/arksim/issues/68)) ([f5974e7](https://github.com/arklexai/arksim/commit/f5974e701f1dd61b30e1996fd49c61bcf57e389f))
+* enforce SPDX headers and future annotations ([#56](https://github.com/arklexai/arksim/issues/56)) ([edb0310](https://github.com/arklexai/arksim/commit/edb03101677ff6b6592cf44679fe47485357afbe))
+* rebrand to ⛵️ ArkSim with slogan ([#57](https://github.com/arklexai/arksim/issues/57)) ([71c01ed](https://github.com/arklexai/arksim/commit/71c01ed832dd7f20acd5a9078e391eac744a1a49))
+
 ## [0.0.6](https://github.com/arklexai/arksim/compare/v0.0.5...v0.0.6) (2026-03-04)
 
 
