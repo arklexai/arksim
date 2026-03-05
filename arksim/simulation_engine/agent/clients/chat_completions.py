@@ -14,6 +14,13 @@ from arksim.config import (
     ChatCompletionsConfig,
 )
 from arksim.simulation_engine.agent.base import BaseAgent
+from arksim.simulation_engine.agent.clients.response_format import (
+    build_assistant_tool_message,
+    build_tool_results,
+    detect_format,
+    extract_content,
+    extract_tool_calls,
+)
 from arksim.simulation_engine.agent.utils import rate_limit_handler
 
 logger = logging.getLogger(__name__)
@@ -84,10 +91,11 @@ class ChatCompletionsAgent(BaseAgent):
             for _round in range(self.max_tool_call_rounds):
                 payload_data["messages"] = initial_messages + self.conversation_history
                 result = await self._post_request(payload_data)
+                fmt = detect_format(result)
 
-                tool_calls = self._extract_tool_calls(result)
+                tool_calls = extract_tool_calls(fmt, result)
                 if tool_calls is None:
-                    answer = self._extract_content(result)
+                    answer = extract_content(fmt, result)
                     self.conversation_history.append(
                         {"role": "assistant", "content": answer}
                     )
@@ -99,9 +107,11 @@ class ChatCompletionsAgent(BaseAgent):
                     _round + 1,
                 )
                 self.conversation_history.append(
-                    self._build_assistant_tool_message(result)
+                    build_assistant_tool_message(fmt, result)
                 )
-                self.conversation_history.extend(self._build_tool_results(tool_calls))
+                self.conversation_history.extend(
+                    build_tool_results(fmt, tool_calls, self.tool_call_result)
+                )
 
             raise RuntimeError(
                 f"Agent exceeded {self.max_tool_call_rounds} tool-call rounds "
@@ -111,129 +121,3 @@ class ChatCompletionsAgent(BaseAgent):
         except Exception as e:
             logger.error(f"Error: Error calling chat completions API: {str(e)}")
             raise
-
-    # ── Tool-call helpers ──
-
-    def _extract_tool_calls(
-        self, result: dict[str, Any]
-    ) -> list[dict[str, Any]] | None:
-        """Detect tool calls in an API response (OpenAI or Anthropic format).
-
-        Returns a list of tool-call dicts, or ``None`` when the response
-        contains no tool calls.
-        """
-        # OpenAI format
-        if "choices" in result:
-            msg = (result.get("choices") or [{}])[0].get("message", {})
-            tc = msg.get("tool_calls")
-            if tc:
-                return tc
-
-        # Anthropic format
-        if "content" in result and isinstance(result["content"], list):
-            tool_use_blocks = [
-                block
-                for block in result["content"]
-                if isinstance(block, dict) and block.get("type") == "tool_use"
-            ]
-            if tool_use_blocks:
-                return tool_use_blocks
-
-        return None
-
-    def _build_assistant_tool_message(self, result: dict[str, Any]) -> dict[str, Any]:
-        """Build the assistant message to append for a tool-call turn."""
-        # OpenAI format
-        if "choices" in result:
-            msg = (result.get("choices") or [{}])[0].get("message", {})
-            return {
-                "role": "assistant",
-                "content": msg.get("content"),
-                "tool_calls": msg["tool_calls"],
-            }
-
-        # Anthropic format
-        return {"role": "assistant", "content": result["content"]}
-
-    def _build_tool_results(
-        self, tool_calls: list[dict[str, Any]]
-    ) -> list[dict[str, Any]]:
-        """Build synthetic tool-result messages for each tool call."""
-        # Detect format: OpenAI tool calls have a top-level "function" key,
-        # Anthropic tool_use blocks have "type": "tool_use".
-        if tool_calls and tool_calls[0].get("type") == "tool_use":
-            # Anthropic: single user message with tool_result content blocks
-            return [
-                {
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "tool_result",
-                            "tool_use_id": tc["id"],
-                            "content": self.tool_call_result,
-                        }
-                        for tc in tool_calls
-                    ],
-                }
-            ]
-
-        # OpenAI: one tool message per call
-        return [
-            {
-                "role": "tool",
-                "tool_call_id": tc["id"],
-                "content": self.tool_call_result,
-            }
-            for tc in tool_calls
-        ]
-
-    def _extract_content(self, result: dict[str, Any]) -> str:
-        """Extract assistant text from API response.
-
-        Supports:
-        - OpenAI-style: result["choices"][0]["message"]["content"]
-        - Anthropic-style: result["content"] as list of { "type": "text", "text": "..." }
-        - Google-style: result["candidates"][0]["content"]["parts"][*]["text"]
-        """
-        # OpenAI-compatible format
-        if "choices" in result:
-            choices = result["choices"]
-            if not choices:
-                raise ValueError("API response has empty 'choices'")
-            msg = choices[0].get("message") or choices[0].get("delta")
-            if not msg:
-                raise ValueError("API response choice has no 'message' or 'delta'")
-            content = msg.get("content")
-            if content is None and "delta" in choices[0]:
-                content = choices[0]["delta"].get("content")
-            if content is not None:
-                return content if isinstance(content, str) else str(content)
-
-        # Anthropic Messages API format: content = [{"type": "text", "text": "..."}]
-        if "content" in result and isinstance(result["content"], list):
-            parts = []
-            for block in result["content"]:
-                if isinstance(block, dict) and block.get("type") == "text":
-                    parts.append(block.get("text", ""))
-            if parts:
-                return "".join(parts)
-
-        # Google Gemini API format: candidates[0].content.parts[*].text
-        if "candidates" in result:
-            candidates = result["candidates"]
-            if not candidates:
-                raise ValueError("API response has empty 'candidates'")
-            content = candidates[0].get("content")
-            if content and isinstance(content, dict):
-                parts = content.get("parts") or []
-                if isinstance(parts, list):
-                    text_parts = [
-                        p.get("text", "") if isinstance(p, dict) else "" for p in parts
-                    ]
-                    return "".join(text_parts)
-
-        raise ValueError(
-            "Unsupported response format: expected 'choices' (OpenAI), "
-            "'content' list (Anthropic), or 'candidates' (Google). "
-            f"Keys present: {list(result.keys())}"
-        )
