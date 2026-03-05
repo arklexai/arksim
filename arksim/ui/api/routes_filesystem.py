@@ -206,29 +206,6 @@ def save_config(body: SaveConfigRequest) -> dict:
     except OSError:
         return {"error": "Failed to save config file"}
 
-
-@router.get("/fs/scenario/demo")
-def load_demo_scenario() -> dict:
-    """Load the built-in demo scenario."""
-    import json
-
-    demo_path = os.path.join(
-        PROJECT_ROOT,
-        "examples",
-        "demo",
-        "results",
-        "scenario",
-        "scenario.json",
-    )
-    if not os.path.exists(demo_path):
-        return {"error": "Demo scenario not found"}
-
-    with open(demo_path) as f:
-        data = json.load(f)
-    data["_path"] = demo_path
-    return data
-
-
 @router.get("/fs/scenario")
 def load_scenario(path: str) -> dict:
     """Load a scenario.json file."""

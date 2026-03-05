@@ -82,7 +82,6 @@ function arksim() {
     scenarios: [],
     scenarioFilePath: '',
     scenarioDirty: false,
-    scenarioIsDemo: false,
     scenarioFileValid: false,
 
     // ── Model / Provider Mapping ────────────────
@@ -178,7 +177,6 @@ function arksim() {
       await this._fetchVersion();
       await this._fetchProjectRoot();
       await this._loadConfigs();
-      if (this.scenarios.length === 0) await this._loadDemoScenario();
     },
 
     async _fetchVersion() {
@@ -521,19 +519,6 @@ function arksim() {
       if (val) this._applyConfig(val);
     },
 
-    // ── Scenario Builder ─────────────────────────
-    async _loadDemoScenario() {
-      try {
-        const resp = await fetch('/api/fs/scenario/demo');
-        const data = await resp.json();
-        if (data.error || !data.items) return;
-        this._scenariosFromJson(data);
-        this.scenarioFilePath = data._path || '';
-        this.scenarioDirty = false;
-        this.scenarioIsDemo = true;
-      } catch { /* ignore — demo not available */ }
-    },
-
     _newScenario(idx) {
       return {
         scenario_id: `scenario-${String(idx).padStart(3, '0')}`,
@@ -604,7 +589,6 @@ function arksim() {
         if (data.error) { alert(data.error); this.scenarioFileValid = false; return; }
         this._scenariosFromJson(data);
         this.scenarioDirty = false;
-        this.scenarioIsDemo = false;
         this.scenarioFileValid = true;
       } catch (e) {
         alert('Failed to load: ' + e.message);
