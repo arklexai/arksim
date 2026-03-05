@@ -206,6 +206,7 @@ def save_config(body: SaveConfigRequest) -> dict:
     except OSError:
         return {"error": "Failed to save config file"}
 
+
 @router.get("/fs/scenario")
 def load_scenario(path: str) -> dict:
     """Load a scenario.json file."""
