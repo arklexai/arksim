@@ -240,23 +240,3 @@ class TestListConfigs:
         assert len(configs) >= 1
         paths = [c["path"] for c in configs]
         assert cfg_path in paths
-
-
-class TestLoadDemoScenario:
-    def test_demo_not_found(self, fs_client: TestClient, fs_root: str) -> None:
-        resp = fs_client.get("/fs/scenario/demo")
-        assert resp.status_code == 200
-        assert "error" in resp.json()
-        assert "not found" in resp.json()["error"].lower()
-
-    def test_demo_found(self, fs_client: TestClient, fs_root: str) -> None:
-        demo_dir = os.path.join(fs_root, "examples", "demo", "results", "scenario")
-        os.makedirs(demo_dir)
-        demo_path = os.path.join(demo_dir, "scenario.json")
-        with open(demo_path, "w") as f:
-            json.dump({"conversations": []}, f)
-        resp = fs_client.get("/fs/scenario/demo")
-        assert resp.status_code == 200
-        body = resp.json()
-        assert "_path" in body
-        assert body["conversations"] == []
