@@ -11,6 +11,8 @@ class BaseAgent(ABC):
 
     def __init__(self, agent_config: AgentConfig) -> None:
         self.agent_config = agent_config
+        self.tool_call_result: str = '{"status": "ok"}'
+        self.max_tool_call_rounds: int = 10
 
     @abstractmethod
     async def get_chat_id(self) -> str:

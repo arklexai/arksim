@@ -128,6 +128,9 @@ class Simulator:
         )
 
         agent = create_agent(self.agent_config)
+        if hasattr(agent, "tool_call_result"):
+            agent.tool_call_result = self.simulator_params.tool_call_result
+            agent.max_tool_call_rounds = self.simulator_params.max_tool_call_rounds
         try:
             conversation_id = await agent.get_chat_id()
             logger.info(f"Starting conversation {conversation_id} with goal: {goal}")
@@ -380,6 +383,8 @@ async def run_simulation(
         num_workers=settings.num_workers,
         output_file_path=settings.output_file_path,
         simulated_user_prompt_template=settings.simulated_user_prompt_template,
+        tool_call_result=settings.tool_call_result,
+        max_tool_call_rounds=settings.max_tool_call_rounds,
     )
 
     simulator = Simulator(

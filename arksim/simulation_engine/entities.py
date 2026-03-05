@@ -58,6 +58,14 @@ class SimulationInput(BaseModel):
         default=None,
         description="Jinja2 template for the simulated user system prompt",
     )
+    tool_call_result: str = Field(
+        default='{"status": "ok"}',
+        description="Default response returned for tool calls during simulation",
+    )
+    max_tool_call_rounds: int = Field(
+        default=10,
+        description="Maximum tool-call round-trips allowed per agent turn",
+    )
 
     @model_validator(mode="after")
     def validate_simulation_input(self, info: ValidationInfo) -> Self:
@@ -97,6 +105,8 @@ class SimulationParams(BaseModel):
     num_workers: int | str = Field(default=50)
     output_file_path: str = Field(default="./simulation.json")
     simulated_user_prompt_template: str | None = None
+    tool_call_result: str = '{"status": "ok"}'
+    max_tool_call_rounds: int = 10
 
 
 # ── Conversation state during simulation ──

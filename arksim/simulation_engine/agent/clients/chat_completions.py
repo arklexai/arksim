@@ -72,7 +72,6 @@ class ChatCompletionsAgent(BaseAgent):
             payload_data.pop("messages", None)
             enable_metadata = payload_data.pop("enable_metadata", False)
             initial_messages = copy.deepcopy(self.config.body.get("messages", []))
-            payload_data["messages"] = initial_messages + self.conversation_history
 
             if enable_metadata:
                 if metadata:
@@ -82,14 +81,111 @@ class ChatCompletionsAgent(BaseAgent):
                         "Metadata is not provided. Please provide metadata to the chat completions API."
                     )
 
-            result = await self._post_request(payload_data)
-            answer = self._extract_content(result)
-            self.conversation_history.append({"role": "assistant", "content": answer})
-            return answer
+            for _round in range(self.max_tool_call_rounds):
+                payload_data["messages"] = initial_messages + self.conversation_history
+                result = await self._post_request(payload_data)
+
+                tool_calls = self._extract_tool_calls(result)
+                if tool_calls is None:
+                    answer = self._extract_content(result)
+                    self.conversation_history.append(
+                        {"role": "assistant", "content": answer}
+                    )
+                    return answer
+
+                logger.info(
+                    "Agent responded with %d tool call(s), round %d",
+                    len(tool_calls),
+                    _round + 1,
+                )
+                self.conversation_history.append(
+                    self._build_assistant_tool_message(result)
+                )
+                self.conversation_history.extend(self._build_tool_results(tool_calls))
+
+            raise RuntimeError(
+                f"Agent exceeded {self.max_tool_call_rounds} tool-call rounds "
+                "without producing a text response"
+            )
 
         except Exception as e:
             logger.error(f"Error: Error calling chat completions API: {str(e)}")
             raise
+
+    # ── Tool-call helpers ──
+
+    def _extract_tool_calls(
+        self, result: dict[str, Any]
+    ) -> list[dict[str, Any]] | None:
+        """Detect tool calls in an API response (OpenAI or Anthropic format).
+
+        Returns a list of tool-call dicts, or ``None`` when the response
+        contains no tool calls.
+        """
+        # OpenAI format
+        if "choices" in result:
+            msg = (result.get("choices") or [{}])[0].get("message", {})
+            tc = msg.get("tool_calls")
+            if tc:
+                return tc
+
+        # Anthropic format
+        if "content" in result and isinstance(result["content"], list):
+            tool_use_blocks = [
+                block
+                for block in result["content"]
+                if isinstance(block, dict) and block.get("type") == "tool_use"
+            ]
+            if tool_use_blocks:
+                return tool_use_blocks
+
+        return None
+
+    def _build_assistant_tool_message(self, result: dict[str, Any]) -> dict[str, Any]:
+        """Build the assistant message to append for a tool-call turn."""
+        # OpenAI format
+        if "choices" in result:
+            msg = (result.get("choices") or [{}])[0].get("message", {})
+            return {
+                "role": "assistant",
+                "content": msg.get("content"),
+                "tool_calls": msg["tool_calls"],
+            }
+
+        # Anthropic format
+        return {"role": "assistant", "content": result["content"]}
+
+    def _build_tool_results(
+        self, tool_calls: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
+        """Build synthetic tool-result messages for each tool call."""
+        # Detect format: OpenAI tool calls have a top-level "function" key,
+        # Anthropic tool_use blocks have "type": "tool_use".
+        if tool_calls and tool_calls[0].get("type") == "tool_use":
+            # Anthropic: single user message with tool_result content blocks
+            return [
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "tool_result",
+                            "tool_use_id": tc["id"],
+                            "content": self.tool_call_result,
+                        }
+                        for tc in tool_calls
+                    ],
+                }
+            ]
+
+        # OpenAI: one tool message per call
+        return [
+            {
+                "role": "tool",
+                "tool_call_id": tc["id"],
+                "content": self.tool_call_result,
+            }
+            for tc in tool_calls
+        ]
 
     def _extract_content(self, result: dict[str, Any]) -> str:
         """Extract assistant text from API response.
