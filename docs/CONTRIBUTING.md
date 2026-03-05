@@ -13,7 +13,7 @@ description: "How to contribute to ArkSim: bugs, features, pull requests, and co
 ## Repository Layout
 
 - `arksim/` Core package: CLI, simulation engine, evaluators, config, LLMs, scenario handling, and Web UI.
-- `examples/` Example configs and runnable setups (e.g. openclaw, e-commerce, bank-insurance).
+- `examples/` Example configs and runnable setups (e.g. openclaw, e-commerce, bank-insurance, tool-calling).
 - `tests/` Unit and integration tests; test data lives under `tests/test_data/`.
 
 ---

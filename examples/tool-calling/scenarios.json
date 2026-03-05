@@ -1,0 +1,77 @@
+{
+    "schema_version": "v1",
+    "scenarios": [
+        {
+            "scenario_id": "weather_inquiry",
+            "user_id": "user_0000",
+            "goal": "You want to know the current weather forecast for your upcoming trip to Paris, France this weekend, including temperature, conditions, and whether you should pack an umbrella or layers.",
+            "agent_context": "A travel assistant with access to a get_weather tool that retrieves real-time weather forecasts and a search_places tool for finding points of interest. The assistant should use these tools to provide accurate, up-to-date information rather than relying on general knowledge.",
+            "user_profile": "You are Alex Chen who is open to experience, conscientious, introverted, agreeable, and emotionally stable. You are a 35-year-old single man living in San Francisco, CA, USA, with a household income of $100,000 or more. You have a postgraduate degree in computer science and work as a senior software engineer. You prefer direct, concise answers without excessive detail and get impatient with verbose responses.\n\nYou are planning a weekend trip to Paris and want practical weather information to decide what to pack. You have traveled to Europe several times before and are comfortable navigating foreign cities, but you always check weather forecasts carefully because you dislike being caught unprepared. You tend to make decisions rationally and appreciate when tools and services give you exactly the information you asked for without unnecessary extras.",
+            "knowledge": [
+                {
+                    "content": "Trip Details\n\nDestination: Paris, France\nDates: This weekend (Saturday-Sunday)\nFlight: SFO -> CDG, departing Friday 8 PM, arriving Saturday 3 PM local\nReturn: Sunday 9 PM CDG -> SFO\nHotel: Hotel Le Marais, 4th arrondissement\n\nActivities Planned\nSaturday afternoon: Walking tour of Le Marais district\nSaturday evening: Dinner at outdoor cafe near Notre-Dame\nSunday morning: Louvre Museum (indoor, but walking there)\nSunday afternoon: Tuileries Garden stroll before heading to airport\n\nPacking Concerns\nCarry-on only (no checked bag)\nUnsure whether to bring rain jacket or just a light layer\nWants to know if sunglasses are needed\nPrefers to pack light"
+                }
+            ],
+            "origin": {
+                "goal_raw": "Check weather forecast for trip destination",
+                "target_agent_capability": "weather lookup via tool calling",
+                "user_attributes": {
+                    "sex": "Male",
+                    "education": "Postgraduate",
+                    "race": "Asian",
+                    "marital_status": "single",
+                    "Household_income": "$100,000 or more",
+                    "household_size": "1",
+                    "Openness": "open to experience",
+                    "Conscientiousness": "conscientious",
+                    "Extraversion": "introverted",
+                    "Agreeableness": "agreeable",
+                    "Neuroticism": "emotionally stable",
+                    "age": "35",
+                    "citizenship": "United States",
+                    "location": "San Francisco, CA, USA",
+                    "name": "Alex Chen",
+                    "email": "alex.chen35@gmail.com",
+                    "customer_type": "returning user",
+                    "decision_making_style": "rational"
+                }
+            }
+        },
+        {
+            "scenario_id": "multi_tool_trip_planning",
+            "user_id": "user_0001",
+            "goal": "You want to plan a day in Tokyo, Japan. First ask about the weather so you know how to dress, then ask the assistant to find good restaurants (especially ramen and sushi) and major landmarks to visit. You expect the assistant to use its tools for each request rather than guessing.",
+            "agent_context": "A travel assistant with access to a get_weather tool that retrieves real-time weather forecasts and a search_places tool for finding points of interest. The assistant should use these tools to provide accurate, up-to-date information rather than relying on general knowledge.",
+            "user_profile": "You are Maria Santos who is open to experience, conscientious, extroverted, agreeable, and emotionally stable. You are a 28-year-old single woman living in Lisbon, Portugal, with a household income in the $50,000-$74,999 range. You have a college degree in journalism and work as a food and travel blogger with 45,000 followers on Instagram.\n\nYou are visiting Tokyo for the first time and are excited to discover authentic local cuisine and iconic landmarks. You love asking follow-up questions and getting specific recommendations with names and addresses. You are detail-oriented when it comes to food (you want to know specific dishes, price ranges, and atmosphere) but more relaxed about sightseeing (happy with a curated shortlist). You expect the assistant to use its lookup tools each time rather than making up recommendations, because accuracy matters for your blog content.",
+            "knowledge": [
+                {
+                    "content": "Trip Details\n\nDestination: Tokyo, Japan\nDuration: 1 full day (Wednesday)\nArriving from: Osaka (Shinkansen, arriving Tokyo Station 9 AM)\nDeparting: Haneda Airport, 10 PM flight to Lisbon\nLuggage: Stored in coin locker at Tokyo Station\n\nInterests\nFood priorities: Authentic ramen (tonkotsu or shoyu style), omakase sushi if budget allows, street food in Shibuya or Shinjuku\nLandmarks: Must-see spots for first-time visitor, especially photogenic locations for blog content\nDietary needs: No restrictions\nBudget: Moderate ($100-150 for food, flexible on landmarks if free/cheap)\n\nPreferences\nNeighborhoods of interest: Shinjuku, Shibuya, Asakusa, Akihabara\nTransport: Comfortable with Tokyo Metro and JR lines\nPhotography: Needs good lighting for food and landmark photos (prefers daytime visits)\n\nBlog Requirements\nNeeds specific restaurant names and addresses for blog posts\nPrefers places with character and story over tourist traps\nWill photograph every meal"
+                }
+            ],
+            "origin": {
+                "goal_raw": "Plan a day trip with weather and place recommendations",
+                "target_agent_capability": "multi-tool trip planning",
+                "user_attributes": {
+                    "sex": "Female",
+                    "education": "College graduate",
+                    "race": "Hispanic",
+                    "marital_status": "single",
+                    "Household_income": "$50,000 - $74,999",
+                    "household_size": "1",
+                    "Openness": "open to experience",
+                    "Conscientiousness": "conscientious",
+                    "Extraversion": "extroverted",
+                    "Agreeableness": "agreeable",
+                    "Neuroticism": "emotionally stable",
+                    "age": "28",
+                    "citizenship": "Portugal",
+                    "location": "Lisbon, Portugal",
+                    "name": "Maria Santos",
+                    "email": "maria.santos.blog@gmail.com",
+                    "customer_type": "new user",
+                    "decision_making_style": "intuitive"
+                }
+            }
+        }
+    ]
+}

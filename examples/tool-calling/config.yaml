@@ -1,0 +1,119 @@
+# Simulate + Evaluate Configuration File
+# Configuration for 'arksim simulate-evaluate' command
+# Demonstrates tool-calling support with OpenAI-compatible endpoints.
+
+# ── AGENT CONFIGURATION ────────────────────────────────────────────────────
+
+agent_config:
+  agent_type: chat_completions
+  agent_name: tool-calling-agent
+  api_config:
+    endpoint: https://api.openai.com/v1/chat/completions
+    headers:
+      Content-Type: application/json
+      Authorization: "Bearer ${OPENAI_API_KEY}"
+    body:
+      model: gpt-4.1-mini
+      messages:
+        - role: system
+          content: >-
+            You are a helpful travel assistant. When the user asks about
+            weather, use the get_weather tool. When they ask for points
+            of interest, use the search_places tool. Always use your
+            tools rather than guessing.
+      tools:
+        - type: function
+          function:
+            name: get_weather
+            description: Get the current weather forecast for a location
+            parameters:
+              type: object
+              properties:
+                location:
+                  type: string
+                  description: City and country, e.g. "Paris, France"
+                days:
+                  type: integer
+                  description: Number of forecast days (1-7)
+                  default: 3
+              required:
+                - location
+        - type: function
+          function:
+            name: search_places
+            description: Search for points of interest near a location
+            parameters:
+              type: object
+              properties:
+                location:
+                  type: string
+                  description: City and country, e.g. "Tokyo, Japan"
+                category:
+                  type: string
+                  enum: ["restaurants", "museums", "parks", "hotels", "landmarks"]
+                  description: Category of places to search
+                limit:
+                  type: integer
+                  description: Maximum number of results
+                  default: 5
+              required:
+                - location
+                - category
+
+# Tool-call settings: static mock response returned for every tool call.
+# The mock includes both weather and place fields so the model can
+# extract relevant data regardless of which tool was called.
+tool_call_result: '{"status": "success", "temperature_celsius": 22, "condition": "Partly cloudy", "humidity_pct": 65, "forecast_summary": "Mild and pleasant with a chance of light rain in the evening.", "places": [{"name": "The Golden Pavilion", "description": "A highly rated local favorite.", "rating": 4.7, "address": "123 Main Street"}, {"name": "Riverside Cafe", "description": "Popular spot known for great atmosphere.", "rating": 4.5, "address": "456 Central Avenue"}]}'
+max_tool_call_rounds: 5
+
+# ── SIMULATION SETTINGS ──────────────────────────────────────────────────────
+
+# Path to the scenarios file
+scenario_file_path: ./scenarios.json
+
+# Number of conversations per scenario to generate
+num_conversations_per_scenario: 1
+
+# Maximum turns per conversation
+max_turns: 5
+
+# Output file path for simulation results
+output_file_path: ./results/simulation/simulation.json
+
+# Jinja template for the simulated user's system prompt
+simulated_user_prompt_template: null
+
+# ── EVALUATION SETTINGS ──────────────────────────────────────────────────────
+
+# Output directory for evaluation results
+output_dir: ./results/evaluation
+
+# Paths to Python files defining custom QuantitativeMetric or QualitativeMetric subclasses
+custom_metrics_file_paths: []
+
+# Built-in metrics to run; if empty, all built-in metrics run
+metrics_to_run:
+  - faithfulness
+  - helpfulness
+  - coherence
+  - verbosity
+  - relevance
+  - goal_completion
+  - agent_behavior_failure
+
+# Generate HTML report
+generate_html_report: true
+
+# Exit with non-zero if any score is below this (0.0–1.0); null to disable
+score_threshold: null
+
+# ── SHARED SETTINGS ──────────────────────────────────────────────────────────
+
+# LLM model
+model: gpt-5.1
+
+# LLM provider
+provider: openai
+
+# Workers for parallel processing
+num_workers: 50

@@ -286,6 +286,7 @@ Opens a local web app at `http://localhost:8080` where you can browse config fil
 | [bank-insurance](examples/bank-insurance/) | Financial services agent with custom compliance metrics, adversarial scenarios, and a Chat Completions server |
 | [e-commerce](examples/e-commerce/) | E-commerce product recommendation agent with custom metrics |
 | [openclaw](examples/openclaw/) | Integration with the OpenClaw agent framework |
+| [tool-calling](examples/tool-calling/) | Tool-calling support with mock tool results and multi-round tool loops |
 
 ## Development
 
