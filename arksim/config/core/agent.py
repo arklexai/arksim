@@ -84,13 +84,28 @@ class ChatCompletionsConfig(BaseModel):
         return resolved_headers
 
 
+class CustomConfig(BaseModel):
+    """Configuration for custom Python agent type."""
+
+    module_path: str = Field(
+        ..., description="Path to a .py file or dotted module path"
+    )
+    class_name: str | None = Field(
+        None,
+        description="Class name to load. If omitted, auto-discovers the BaseAgent subclass.",
+    )
+
+
 class AgentConfig(BaseModel):
     """Agent configuration."""
 
     agent_name: str = Field(..., description="Unique identifier for the agent")
     agent_type: str = Field(..., description="Agent type identifier")
-    api_config: ChatCompletionsConfig | A2AConfig = Field(
-        ..., description="Agent configuration"
+    api_config: ChatCompletionsConfig | A2AConfig | None = Field(
+        None, description="API configuration for chat_completions or a2a agents"
+    )
+    config: CustomConfig | None = Field(
+        None, description="Configuration for custom agents"
     )
 
     @model_validator(mode="before")
@@ -99,11 +114,23 @@ class AgentConfig(BaseModel):
         """Parse config based on top-level agent_type."""
         if isinstance(data, dict):
             agent_type = data.get("agent_type")
-            config_data = data.get("api_config")
 
-            if agent_type == AgentType.CHAT_COMPLETIONS.value:
+            if agent_type == AgentType.CUSTOM.value:
+                config_data = data.get("config")
+                if not config_data:
+                    raise ValueError(
+                        "Custom agent requires 'config' with at least 'module_path'"
+                    )
+                data["config"] = CustomConfig(**config_data)
+            elif agent_type == AgentType.CHAT_COMPLETIONS.value:
+                config_data = data.get("api_config")
+                if not config_data:
+                    raise ValueError("chat_completions agent requires 'api_config'")
                 data["api_config"] = ChatCompletionsConfig(**config_data)
             elif agent_type == AgentType.A2A.value:
+                config_data = data.get("api_config")
+                if not config_data:
+                    raise ValueError("a2a agent requires 'api_config'")
                 data["api_config"] = A2AConfig(**config_data)
             else:
                 raise ValueError(f"Unsupported agent type: {agent_type}")
