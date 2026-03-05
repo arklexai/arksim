@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -85,6 +85,45 @@ def _patch_conversation(monkeypatch: pytest.MonkeyPatch) -> Callable[[], int]:
         return call_count
 
     return get_count
+
+
+class TestToolCallParamsPropagation:
+    """Verify tool_call_result and max_tool_call_rounds are
+    propagated from SimulationParams to the agent."""
+
+    @pytest.mark.asyncio
+    async def test_agent_receives_tool_call_params(self) -> None:
+        mock_agent = AsyncMock()
+        mock_agent.tool_call_result = ""
+        mock_agent.max_tool_call_rounds = 0
+        mock_agent.get_chat_id.return_value = "conv-1"
+        mock_agent.execute.return_value = "response"
+
+        mock_llm = AsyncMock()
+        mock_llm.call_async.return_value = "[STOP] done"
+
+        params = SimulationParams(
+            num_convos_per_scenario=1,
+            max_turns=1,
+            tool_call_result='{"temp": "72F"}',
+            max_tool_call_rounds=3,
+        )
+        sim = Simulator(_make_agent_config(), params, mock_llm)
+
+        with patch(
+            "arksim.simulation_engine.simulator.create_agent",
+            return_value=mock_agent,
+        ):
+            await sim._run_single_conversation(
+                profile="user",
+                goal="goal",
+                knowledge=[KnowledgeItem(content="k")],
+                agent_context="ctx",
+                max_turns=1,
+            )
+
+        assert mock_agent.tool_call_result == '{"temp": "72F"}'
+        assert mock_agent.max_tool_call_rounds == 3
 
 
 class TestNumConvosPerScenario:
