@@ -49,7 +49,14 @@ class TestExtractContentOpenAI:
 
     def test_message_content(self) -> None:
         result = {
-            "choices": [{"message": {"role": "assistant", "content": "Hello, world!"}}]
+            "choices": [
+                {
+                    "message": {
+                        "role": "assistant",
+                        "content": "Hello, world!",
+                    }
+                }
+            ]
         }
         assert extract_content(ResponseFormat.OPENAI, result) == "Hello, world!"
 
@@ -65,6 +72,13 @@ class TestExtractContentOpenAI:
     def test_choice_without_message_or_delta_raises(self) -> None:
         result = {"choices": [{"finish_reason": "stop"}]}
         with pytest.raises(ValueError, match="no 'message' or 'delta'"):
+            extract_content(ResponseFormat.OPENAI, result)
+
+    def test_null_content_raises(self) -> None:
+        """Message exists but content is None (tool-call
+        response passed to extract_content by mistake)."""
+        result = {"choices": [{"message": {"role": "assistant", "content": None}}]}
+        with pytest.raises(ValueError, match="no text content"):
             extract_content(ResponseFormat.OPENAI, result)
 
 
@@ -95,6 +109,21 @@ class TestExtractContentAnthropic:
         }
         assert extract_content(ResponseFormat.ANTHROPIC, result) == "Only this."
 
+    def test_no_text_blocks_raises(self) -> None:
+        """All blocks are non-text (e.g. only tool_use)."""
+        result = {
+            "content": [
+                {
+                    "type": "tool_use",
+                    "id": "tu_1",
+                    "name": "f",
+                    "input": {},
+                }
+            ]
+        }
+        with pytest.raises(ValueError, match="no text content"):
+            extract_content(ResponseFormat.ANTHROPIC, result)
+
 
 class TestExtractContentGemini:
     """Tests for Gemini-style response format."""
@@ -108,7 +137,15 @@ class TestExtractContentGemini:
     def test_multiple_parts(self) -> None:
         result = {
             "candidates": [
-                {"content": {"parts": [{"text": "A"}, {"text": "B"}, {"text": "C"}]}}
+                {
+                    "content": {
+                        "parts": [
+                            {"text": "A"},
+                            {"text": "B"},
+                            {"text": "C"},
+                        ]
+                    }
+                }
             ]
         }
         assert extract_content(ResponseFormat.GEMINI, result) == "ABC"
@@ -116,6 +153,27 @@ class TestExtractContentGemini:
     def test_empty_candidates_raises(self) -> None:
         result = {"candidates": []}
         with pytest.raises(ValueError, match="empty 'candidates'"):
+            extract_content(ResponseFormat.GEMINI, result)
+
+    def test_no_text_parts_raises(self) -> None:
+        """Parts contain only functionCall, no text."""
+        result = {
+            "candidates": [
+                {
+                    "content": {
+                        "parts": [
+                            {
+                                "functionCall": {
+                                    "name": "f",
+                                    "args": {},
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+        with pytest.raises(ValueError, match="no text content"):
             extract_content(ResponseFormat.GEMINI, result)
 
 
@@ -168,9 +226,16 @@ class TestExtractToolCalls:
         assert len(tc) == 1
         assert tc[0]["id"] == "tu_1"
 
-    def test_no_tool_calls_returns_none(self) -> None:
+    def test_openai_text_only_returns_none(self) -> None:
         result = {
-            "choices": [{"message": {"role": "assistant", "content": "Just text."}}]
+            "choices": [
+                {
+                    "message": {
+                        "role": "assistant",
+                        "content": "Just text.",
+                    }
+                }
+            ]
         }
         assert extract_tool_calls(ResponseFormat.OPENAI, result) is None
 
@@ -204,7 +269,12 @@ class TestExtractToolCalls:
     def test_gemini_text_only_returns_none(self) -> None:
         result = {
             "candidates": [
-                {"content": {"role": "model", "parts": [{"text": "Just text."}]}}
+                {
+                    "content": {
+                        "role": "model",
+                        "parts": [{"text": "Just text."}],
+                    }
+                }
             ]
         }
         assert extract_tool_calls(ResponseFormat.GEMINI, result) is None
@@ -236,7 +306,12 @@ class TestBuildAssistantToolMessage:
         result = {
             "content": [
                 {"type": "text", "text": "Let me check."},
-                {"type": "tool_use", "id": "tu_1", "name": "f", "input": {}},
+                {
+                    "type": "tool_use",
+                    "id": "tu_1",
+                    "name": "f",
+                    "input": {},
+                },
             ]
         }
         msg = build_assistant_tool_message(ResponseFormat.ANTHROPIC, result)
@@ -249,7 +324,14 @@ class TestBuildAssistantToolMessage:
                 {
                     "content": {
                         "role": "model",
-                        "parts": [{"functionCall": {"name": "f", "args": {}}}],
+                        "parts": [
+                            {
+                                "functionCall": {
+                                    "name": "f",
+                                    "args": {},
+                                }
+                            }
+                        ],
                     }
                 }
             ]
@@ -274,7 +356,9 @@ class TestBuildToolResults:
             }
         ]
         results = build_tool_results(
-            ResponseFormat.OPENAI, tool_calls, '{"status": "ok"}'
+            ResponseFormat.OPENAI,
+            tool_calls,
+            '{"status": "ok"}',
         )
         assert len(results) == 1
         assert results[0]["role"] == "tool"
@@ -282,9 +366,18 @@ class TestBuildToolResults:
         assert results[0]["content"] == '{"status": "ok"}'
 
     def test_anthropic_format(self) -> None:
-        tool_calls = [{"type": "tool_use", "id": "tu_1", "name": "f", "input": {}}]
+        tool_calls = [
+            {
+                "type": "tool_use",
+                "id": "tu_1",
+                "name": "f",
+                "input": {},
+            }
+        ]
         results = build_tool_results(
-            ResponseFormat.ANTHROPIC, tool_calls, '{"status": "ok"}'
+            ResponseFormat.ANTHROPIC,
+            tool_calls,
+            '{"status": "ok"}',
         )
         assert len(results) == 1
         assert results[0]["role"] == "user"
@@ -295,10 +388,17 @@ class TestBuildToolResults:
 
     def test_gemini_format(self) -> None:
         tool_calls = [
-            {"functionCall": {"name": "get_weather", "args": {"city": "NYC"}}}
+            {
+                "functionCall": {
+                    "name": "get_weather",
+                    "args": {"city": "NYC"},
+                }
+            }
         ]
         results = build_tool_results(
-            ResponseFormat.GEMINI, tool_calls, '{"status": "ok"}'
+            ResponseFormat.GEMINI,
+            tool_calls,
+            '{"status": "ok"}',
         )
         assert len(results) == 1
         assert results[0]["role"] == "user"
