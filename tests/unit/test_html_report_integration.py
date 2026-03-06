@@ -33,24 +33,37 @@ def _load_module(name: str, filepath: Path) -> types.ModuleType:
     return mod
 
 
+# Snapshot sys.modules entries that will be overwritten so we can restore them
+_MODULES_TO_RESTORE: dict[str, types.ModuleType | None] = {}
+_MODULES_LOADED: list[str] = []
+
+
+def _load_module_tracked(name: str, filepath: Path) -> types.ModuleType:
+    """Load a module and track the original sys.modules entry for cleanup."""
+    if name not in _MODULES_TO_RESTORE:
+        _MODULES_TO_RESTORE[name] = sys.modules.get(name)
+    _MODULES_LOADED.append(name)
+    return _load_module(name, filepath)
+
+
 # 1. Load lightweight dependency modules first
-_load_module(
+_load_module_tracked(
     "arksim.evaluator.utils.enums",
     _ARKSIM_ROOT / "evaluator" / "utils" / "enums.py",
 )
-_load_module(
+_load_module_tracked(
     "arksim.evaluator.base_metric",
     _ARKSIM_ROOT / "evaluator" / "base_metric.py",
 )
 
 # 2. Load entities
-_entities_mod = _load_module(
+_entities_mod = _load_module_tracked(
     "arksim.evaluator.entities",
     _ARKSIM_ROOT / "evaluator" / "entities.py",
 )
 
 # 3. Load simulation_engine.entities directly (no arksim deps)
-_sim_entities_mod = _load_module(
+_sim_entities_mod = _load_module_tracked(
     "arksim.simulation_engine.entities",
     _ARKSIM_ROOT / "simulation_engine" / "entities.py",
 )
@@ -60,6 +73,10 @@ _sim_pkg = types.ModuleType("arksim.simulation_engine")
 _sim_pkg.Conversation = _sim_entities_mod.Conversation
 _sim_pkg.Simulation = _sim_entities_mod.Simulation
 _sim_pkg.combine_knowledge = MagicMock()
+if "arksim.simulation_engine" not in _MODULES_TO_RESTORE:
+    _MODULES_TO_RESTORE["arksim.simulation_engine"] = sys.modules.get(
+        "arksim.simulation_engine"
+    )
 sys.modules["arksim.simulation_engine"] = _sim_pkg
 
 
@@ -84,29 +101,29 @@ class _Scenarios(BaseModel):
 _scenario_mod = types.ModuleType("arksim.scenario")
 _scenario_mod.Scenario = _Scenario
 _scenario_mod.Scenarios = _Scenarios
+if "arksim.scenario" not in _MODULES_TO_RESTORE:
+    _MODULES_TO_RESTORE["arksim.scenario"] = sys.modules.get("arksim.scenario")
 sys.modules["arksim.scenario"] = _scenario_mod
 
 # 6. Stub heavy deps not needed by generate_html_report but safe to stub
-_orig_llms = sys.modules.get("arksim.llms")
-_orig_llms_chat = sys.modules.get("arksim.llms.chat")
+for _stub_name in ("arksim.llms", "arksim.llms.chat"):
+    if _stub_name not in _MODULES_TO_RESTORE:
+        _MODULES_TO_RESTORE[_stub_name] = sys.modules.get(_stub_name)
 sys.modules["arksim.llms"] = MagicMock()
 sys.modules["arksim.llms.chat"] = MagicMock()
 
 # 7. Load generate_html_report (imports pandas, entities — all available now)
-_gen_report_mod = _load_module(
+_gen_report_mod = _load_module_tracked(
     "arksim.utils.html_report.generate_html_report",
     _ARKSIM_ROOT / "utils" / "html_report" / "generate_html_report.py",
 )
 
-# Restore original sys.modules to avoid polluting other test files
-if _orig_llms is None:
-    sys.modules.pop("arksim.llms", None)
-else:
-    sys.modules["arksim.llms"] = _orig_llms
-if _orig_llms_chat is None:
-    sys.modules.pop("arksim.llms.chat", None)
-else:
-    sys.modules["arksim.llms.chat"] = _orig_llms_chat
+# Restore ALL overwritten sys.modules entries to avoid polluting other test files
+for _mod_name, _orig_mod in _MODULES_TO_RESTORE.items():
+    if _orig_mod is None:
+        sys.modules.pop(_mod_name, None)
+    else:
+        sys.modules[_mod_name] = _orig_mod
 
 # Pull references
 Evaluation = _entities_mod.Evaluation
