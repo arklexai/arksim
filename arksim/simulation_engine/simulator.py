@@ -390,5 +390,12 @@ async def run_simulation(
     simulation_output = await simulator.simulate(
         scenarios, on_progress=on_progress, verbose=verbose
     )
+
+    if not simulation_output.conversations:
+        raise RuntimeError(
+            "Simulation failed: no conversations were completed successfully. "
+            "Check the errors above for details."
+        )
+
     await simulator.save()
     return simulation_output
