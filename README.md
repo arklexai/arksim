@@ -1,7 +1,7 @@
 <p align="center">
   <h1 align="center">⛵️ ArkSim</h1>
   <p align="center">
-    Know how your agent performs before it goes live.
+    Find your agent's errors before your real users do.
   </p>
   <p align="center">
     <a href="https://github.com/arklexai/arksim/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/arklexai/arksim/actions/workflows/ci.yml/badge.svg"></a>
@@ -21,7 +21,9 @@
 
 
 
-https://github.com/user-attachments/assets/04a4e0e9-f11f-4c03-a44f-584f5906a5a0
+
+https://github.com/user-attachments/assets/78706f27-cf49-41c1-8019-9dcbb8abc625
+
 
 
 
