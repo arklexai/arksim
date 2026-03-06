@@ -19,13 +19,11 @@
   </p>
 </p>
 
----
 
-<p align="center">
-  <em>Demo video coming soon</em>
-</p>
+<video width="800" controls poster="https://images.arklex.ai/arksim/testing_is_the_hard_part.png">
+  <source src="https://images.arklex.ai/arksim/arksim_oss_demo.mp4" type="video/mp4">
+</video>
 
----
 
 ## What is ArkSim?
 
