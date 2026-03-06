@@ -19,13 +19,11 @@
   </p>
 </p>
 
----
 
-<p align="center">
-  <em>Demo video coming soon</em>
-</p>
 
----
+https://github.com/user-attachments/assets/04a4e0e9-f11f-4c03-a44f-584f5906a5a0
+
+
 
 ## What is ArkSim?
 
