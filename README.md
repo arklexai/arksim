@@ -20,9 +20,9 @@
 </p>
 
 
-<video width="800" controls poster="https://images.arklex.ai/arksim/testing_is_the_hard_part.png">
-  <source src="https://images.arklex.ai/arksim/arksim_oss_demo.mp4" type="video/mp4">
-</video>
+
+https://github.com/user-attachments/assets/4ce78fdf-79cb-4331-8894-c8fb808d8fd7
+
 
 
 ## What is ArkSim?
