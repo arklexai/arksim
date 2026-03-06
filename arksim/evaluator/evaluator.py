@@ -551,16 +551,18 @@ def _load_custom_metrics(
     for path in file_paths:
         abs_path = os.path.abspath(path)
         if not os.path.exists(abs_path):
-            logger.warning(f"Custom metrics file not found: {abs_path}")
-            continue
+            raise FileNotFoundError(f"Custom metrics file not found: {abs_path}")
         module_name = os.path.splitext(os.path.basename(abs_path))[0]
         spec = importlib.util.spec_from_file_location(module_name, abs_path)
+        if spec is None or spec.loader is None:
+            raise RuntimeError(f"Cannot load module from {abs_path}")
         module = importlib.util.module_from_spec(spec)
         try:
             spec.loader.exec_module(module)
         except Exception as e:
-            logger.error(f"Failed to load custom metrics from {abs_path}: {e}")
-            continue
+            raise RuntimeError(
+                f"Failed to load custom metrics from {abs_path}: {e}"
+            ) from e
         for _, obj in inspect.getmembers(module, inspect.isclass):
             if issubclass(obj, QuantitativeMetric) and obj is not QuantitativeMetric:
                 try:
@@ -569,11 +571,11 @@ def _load_custom_metrics(
                         f"Loaded quantitative metric '{obj.__name__}' from {abs_path}"
                     )
                 except Exception as e:
-                    logger.warning(
-                        f"Could not load quantitative metric '{obj.__name__}' "
+                    raise RuntimeError(
+                        f"Could not instantiate quantitative metric '{obj.__name__}' "
                         f"from {abs_path}: {e}. "
                         f"Make sure the class can be instantiated with no arguments."
-                    )
+                    ) from e
             elif issubclass(obj, QualitativeMetric) and obj is not QualitativeMetric:
                 try:
                     qual_metrics.append(obj())
@@ -581,11 +583,11 @@ def _load_custom_metrics(
                         f"Loaded qualitative metric '{obj.__name__}' from {abs_path}"
                     )
                 except Exception as e:
-                    logger.warning(
-                        f"Could not load qualitative metric '{obj.__name__}' "
+                    raise RuntimeError(
+                        f"Could not instantiate qualitative metric '{obj.__name__}' "
                         f"from {abs_path}: {e}. "
                         f"Make sure the class can be instantiated with no arguments."
-                    )
+                    ) from e
     return metrics, qual_metrics
 
 
