@@ -5,6 +5,28 @@ All notable changes to ArkSim will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0](https://github.com/arklexai/arksim/compare/v0.1.0...v0.2.0) (2026-03-06)
+
+
+### ⚠ BREAKING CHANGES
+
+* fail early if error loading custom metrics or file not found ([#78](https://github.com/arklexai/arksim/issues/78))
+
+### Fixed
+
+* fail early if error loading custom metrics or file not found ([#78](https://github.com/arklexai/arksim/issues/78)) ([b7a4bde](https://github.com/arklexai/arksim/commit/b7a4bdea8fbe024b3ef9c5651754f23ec6332df6))
+
+
+### Documentation
+
+* add demo video ([#77](https://github.com/arklexai/arksim/issues/77)) ([8a6d2e6](https://github.com/arklexai/arksim/commit/8a6d2e6e39a2ade7ea4c7b446c198698c02e80f2))
+* update slogan and video ([#80](https://github.com/arklexai/arksim/issues/80)) ([0679f9c](https://github.com/arklexai/arksim/commit/0679f9cb3f598fa44e5dc9ffe6e6dafdfc66554b))
+
+
+### Changed
+
+* **ui:** remove demo scenario loading ([#71](https://github.com/arklexai/arksim/issues/71)) ([709e6ab](https://github.com/arklexai/arksim/commit/709e6ab953021a24f42b02aeb60f02447b782ca9))
+
 ## [0.1.0](https://github.com/arklexai/arksim/compare/v0.0.6...v0.1.0) (2026-03-05)
 
 
