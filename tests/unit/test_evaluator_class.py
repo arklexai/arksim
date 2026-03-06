@@ -6,6 +6,8 @@ from __future__ import annotations
 import os
 import textwrap
 
+import pytest
+
 from arksim.evaluator.entities import (
     ConversationEvaluation,
     EvaluationParams,
@@ -183,10 +185,9 @@ class TestDisplayHelpers:
 # _load_custom_metrics
 # ---------------------------------------------------------------------------
 class TestLoadCustomMetrics:
-    def test_missing_file_returns_empty(self) -> None:
-        quant, qual = _load_custom_metrics(["/nonexistent/metrics.py"])
-        assert quant == []
-        assert qual == []
+    def test_missing_file_raises(self) -> None:
+        with pytest.raises(FileNotFoundError, match="Custom metrics file not found"):
+            _load_custom_metrics(["/nonexistent/metrics.py"])
 
     def test_empty_list(self) -> None:
         quant, qual = _load_custom_metrics([])
@@ -237,11 +238,10 @@ class TestLoadCustomMetrics:
         if qual:
             assert qual[0].name == "my_qual"
 
-    def test_bad_file_skipped(self, temp_dir: str) -> None:
+    def test_bad_file_raises(self, temp_dir: str) -> None:
         path = os.path.join(temp_dir, "bad.py")
         with open(path, "w") as f:
             f.write("raise RuntimeError('broken')")
 
-        quant, qual = _load_custom_metrics([path])
-        assert quant == []
-        assert qual == []
+        with pytest.raises(RuntimeError, match="Failed to load custom metrics"):
+            _load_custom_metrics([path])
