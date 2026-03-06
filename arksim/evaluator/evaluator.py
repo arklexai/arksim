@@ -554,6 +554,8 @@ def _load_custom_metrics(
             raise FileNotFoundError(f"Custom metrics file not found: {abs_path}")
         module_name = os.path.splitext(os.path.basename(abs_path))[0]
         spec = importlib.util.spec_from_file_location(module_name, abs_path)
+        if spec is None or spec.loader is None:
+            raise RuntimeError(f"Cannot load module from {abs_path}")
         module = importlib.util.module_from_spec(spec)
         try:
             spec.loader.exec_module(module)

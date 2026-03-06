@@ -245,3 +245,23 @@ class TestLoadCustomMetrics:
 
         with pytest.raises(RuntimeError, match="Failed to load custom metrics"):
             _load_custom_metrics([path])
+
+    def test_uninstantiable_metric_raises(self, temp_dir: str) -> None:
+        code = textwrap.dedent("""
+            from arksim.evaluator.base_metric import QuantitativeMetric, ScoreInput, QuantResult
+
+            class BrokenMetric(QuantitativeMetric):
+                name = "broken"
+                def __init__(self):
+                    raise ValueError("cannot instantiate")
+                def score(self, input: ScoreInput) -> QuantResult:
+                    ...
+        """)
+        path = os.path.join(temp_dir, "broken_metric.py")
+        with open(path, "w") as f:
+            f.write(code)
+
+        with pytest.raises(
+            RuntimeError, match="Could not instantiate quantitative metric"
+        ):
+            _load_custom_metrics([path])
