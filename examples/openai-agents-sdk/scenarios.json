@@ -1,0 +1,17 @@
+{
+    "schema_version": "v1",
+    "scenarios": [
+        {
+            "scenario_id": "general_knowledge_qa",
+            "user_id": "user_0001",
+            "goal": "You want to learn about the history and science behind renewable energy sources. Ask about solar, wind, and hydroelectric power, including how they work, their advantages and disadvantages, and their adoption worldwide.",
+            "agent_context": "You are a helpful assistant that answers user questions clearly and accurately."
+        },
+        {
+            "scenario_id": "task_assistance",
+            "user_id": "user_0002",
+            "goal": "You need help drafting a professional email to your manager requesting time off next month for a family event. Ask the assistant to help you write the email, suggest improvements, and make it concise yet polite.",
+            "agent_context": "You are a helpful assistant that assists users with writing, planning, and everyday tasks."
+        }
+    ]
+}
