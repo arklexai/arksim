@@ -51,8 +51,9 @@ def load_module_from_file(file_path: str) -> types.ModuleType:
 
     # Add parent directory to sys.path so the loaded module can import
     # sibling packages (e.g. `from agent_server.core import ...` or
-    # `from my_metrics_helpers import ...`).  The guard prevents
-    # duplicate entries.
+    # `from my_metrics_helpers import ...`).  The entry is kept after
+    # loading to support deferred imports inside the agent (e.g. lazy
+    # imports in method bodies).  The guard prevents duplicate entries.
     parent_dir = str(path.parent)
     if parent_dir not in sys.path:
         sys.path.insert(0, parent_dir)
