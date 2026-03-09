@@ -9,3 +9,4 @@ class AgentType(Enum):
 
     CHAT_COMPLETIONS = "chat_completions"
     A2A = "a2a"
+    CUSTOM = "custom"

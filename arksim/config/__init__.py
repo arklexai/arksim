@@ -3,12 +3,13 @@
 
 from __future__ import annotations
 
-from .core.agent import A2AConfig, AgentConfig, ChatCompletionsConfig
+from .core.agent import A2AConfig, AgentConfig, ChatCompletionsConfig, CustomConfig
 from .types import AgentType
 
 __all__ = [
     "AgentConfig",
     "ChatCompletionsConfig",
     "A2AConfig",
+    "CustomConfig",
     "AgentType",
 ]

@@ -29,7 +29,7 @@
 
 ## What is ArkSim?
 
-ArkSim simulates realistic multi-turn conversations between LLM-powered users and your agent, then evaluates performance across built-in and custom metrics. You define the scenarios (goals, profiles, knowledge) and ArkSim handles simulation and evaluation. Works with any agent that exposes a Chat Completions API or A2A protocol endpoint.
+ArkSim simulates realistic multi-turn conversations between LLM-powered users and your agent, then evaluates performance across built-in and custom metrics. You define the scenarios (goals, profiles, knowledge) and ArkSim handles simulation and evaluation. Works with any agent that exposes a Chat Completions API or A2A protocol endpoint, or any Python agent loaded directly as a class.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/arklexai/arksim/main/docs/assets/arksim-flow.svg" alt="ArkSim flow: Scenarios → Simulation → Evaluation → Reports" width="100%">
@@ -41,7 +41,7 @@ ArkSim simulates realistic multi-turn conversations between LLM-powered users an
 - **Comprehensive evaluation**: 7 built-in metrics covering helpfulness, coherence, faithfulness, goal completion, and more
 - **Custom metrics**: Define your own quantitative and qualitative metrics with full access to conversation context
 - **Error detection**: Automatically categorize agent failures (false information, disobeying requests, repetition) with severity levels
-- **Protocol-agnostic**: Works with Chat Completions API, A2A protocol, or any HTTP endpoint
+- **Protocol-agnostic**: Works with Chat Completions API, A2A protocol, or any Python agent class directly
 - **Multi-provider**: Use OpenAI, Anthropic, or Google as the evaluation LLM
 - **Parallel execution**: Configurable concurrency for both simulation and evaluation
 - **Visual reports**: Interactive HTML reports with score breakdowns, error analysis, and full conversation viewer
@@ -117,7 +117,7 @@ arksim ui
 
 ## Agent Configuration
 
-Agent configuration tells ArkSim how to connect to your agent. It is specified directly in your YAML config file. ArkSim supports two protocols:
+Agent configuration tells ArkSim how to connect to your agent. It is specified directly in your YAML config file. ArkSim supports three agent types:
 
 ### Chat Completions API
 
@@ -147,6 +147,51 @@ agent_config:
 ```
 
 Environment variables in headers are resolved at runtime using `${VAR_NAME}` syntax.
+
+### Custom Agent (Python)
+
+Load your agent directly as a Python class — no HTTP server required.
+
+```yaml
+agent_config:
+  agent_type: custom
+  agent_name: my-agent
+  custom_config:
+    module_path: ./my_agent.py
+```
+
+Your agent must subclass `BaseAgent` and implement `get_chat_id()` and `execute()`:
+
+```python
+from arksim.config import AgentConfig
+from arksim.simulation_engine.agent.base import BaseAgent
+
+class MyAgent(BaseAgent):
+    def __init__(self, agent_config: AgentConfig) -> None:
+        super().__init__(agent_config)
+        # Initialize your agent here
+
+    async def get_chat_id(self) -> str:
+        return "unique-conversation-id"
+
+    async def execute(self, user_query: str, **kwargs: object) -> str:
+        # Your agent logic here
+        return "agent response"
+```
+
+For code-based usage (no YAML needed), pass the class directly:
+
+```python
+from arksim.config import AgentConfig, CustomConfig
+
+agent_config = AgentConfig(
+    agent_type="custom",
+    agent_name=MyAgent.__name__,
+    custom_config=CustomConfig(agent_class=MyAgent),
+)
+```
+
+See the [bank-insurance](examples/bank-insurance/run_pipeline.py) and [e-commerce](examples/e-commerce/run_pipeline.py) examples for full end-to-end Python scripts.
 
 ## Evaluation Metrics
 
@@ -226,7 +271,7 @@ All settings can be specified in YAML and overridden via CLI flags (`--key value
 
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
-| `agent_config` | object | required | Inline agent config (`agent_type`, `agent_name`, `api_config`) |
+| `agent_config` | object | required | Inline agent config (`agent_type`, `agent_name`, `api_config` or `custom_config`) |
 | `scenario_file_path` | string | required | Path to scenarios JSON |
 | `model` | string | `gpt-5.1` | LLM model for simulated users |
 | `provider` | string | `openai` | LLM provider: `openai`, `anthropic`, `google` |
