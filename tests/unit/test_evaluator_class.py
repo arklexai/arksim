@@ -186,7 +186,7 @@ class TestDisplayHelpers:
 # ---------------------------------------------------------------------------
 class TestLoadCustomMetrics:
     def test_missing_file_raises(self) -> None:
-        with pytest.raises(FileNotFoundError, match="Custom metrics file not found"):
+        with pytest.raises(FileNotFoundError, match="Module file not found"):
             _load_custom_metrics(["/nonexistent/metrics.py"])
 
     def test_empty_list(self) -> None:
@@ -243,7 +243,7 @@ class TestLoadCustomMetrics:
         with open(path, "w") as f:
             f.write("raise RuntimeError('broken')")
 
-        with pytest.raises(RuntimeError, match="Failed to load custom metrics"):
+        with pytest.raises(RuntimeError, match="Failed to load module from"):
             _load_custom_metrics([path])
 
     def test_uninstantiable_metric_raises(self, temp_dir: str) -> None:
