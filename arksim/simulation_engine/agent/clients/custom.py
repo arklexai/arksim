@@ -105,6 +105,8 @@ class CustomAgent(BaseAgent):
                 self.custom_config.module_path,
                 self.custom_config.class_name,
             )
+        # The inner agent receives the full agent_config (including
+        # agent_type="custom") because BaseAgent.__init__ requires it.
         return cls(self.agent_config)
 
     async def get_chat_id(self) -> str:

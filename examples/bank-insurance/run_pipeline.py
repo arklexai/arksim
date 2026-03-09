@@ -3,6 +3,9 @@
 Example script that runs the full pipeline (simulation -> evaluation)
 programmatically using a custom agent class — no HTTP server required.
 
+For HTTP-based approaches (Chat Completions or A2A), see the corresponding
+config YAML files: config_chat_completions.yaml and config_a2a.yaml.
+
 Usage:
     python run_pipeline.py
 """
