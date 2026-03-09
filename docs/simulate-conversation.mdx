@@ -129,17 +129,19 @@ Provide agent connection by defining `agent_config` inline in your config YAML.
 | Field        | Type   | Required | Description                                                                            |
 | ------------ | ------ | -------- | -------------------------------------------------------------------------------------- |
 | `agent_name` | string | Yes      | Unique identifier for your agent (e.g. lowercase, no spaces).                          |
-| `agent_type` | string | Yes      | One of `chat_completions` or `a2a`. See [API connection types](#api-connection-types). |
-| `api_config` | object | Yes      | Connection details. See [API connection types](#api-connection-types).                 |
+| `agent_type` | string | Yes      | One of `chat_completions`, `a2a`, or `custom`. See [Connection types](#connection-types). |
+| `api_config` | object | Conditional | Required for `chat_completions` and `a2a`. See [Connection types](#connection-types). |
+| `custom_config` | object | Conditional | Required for `custom`. See [Connection types](#connection-types). |
 
-### API connection types
+### Connection types
 
-ArkSim supports two agent protocols:
+ArkSim supports three ways to connect your agent:
 
-| Protocol                                                                            | When to use                                                                            |
+| Type                                                                                | When to use                                                                            |
 | ----------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
 | [**Chat Completions**](https://developers.openai.com/api/reference/resources/chat/) | Any agent that accepts OpenAI-compatible requests (OpenAI or a custom wrapper) |
 | [**A2A**](https://a2a-protocol.org/latest/)                                         | Agents exposed via the Agent-to-Agent protocol                                         |
+| **Custom**                                                                          | Any Python agent loaded directly as a class — no HTTP server required                  |
 
 <Tabs>
   <Tab title="Chat Completions">
@@ -186,6 +188,53 @@ ArkSim supports two agent protocols:
         endpoint: http://localhost:9999
         headers:
           api-key: "${A2A_AUTH_TOKEN}"
+    ```
+  </Tab>
+  <Tab title="Custom">
+    **Type:** `custom`
+
+    Loads your agent directly as a Python class — no HTTP server needed. Your agent must subclass `BaseAgent` and implement `get_chat_id()` and `execute()`.
+
+    **Required fields:** `module_path` (path to a `.py` file containing your `BaseAgent` subclass). **Optional:** `class_name` (if the file contains multiple `BaseAgent` subclasses).
+
+    **Example agent (`my_agent.py`):**
+
+    ```python
+    from arksim.config import AgentConfig
+    from arksim.simulation_engine.agent.base import BaseAgent
+
+    class MyAgent(BaseAgent):
+        def __init__(self, agent_config: AgentConfig) -> None:
+            super().__init__(agent_config)
+
+        async def get_chat_id(self) -> str:
+            return "unique-conversation-id"
+
+        async def execute(self, user_query: str, **kwargs: object) -> str:
+            return "agent response"
+    ```
+
+    **Example (YAML):**
+
+    ```yaml
+    agent_config:
+      agent_type: custom
+      agent_name: my-agent
+      custom_config:
+        module_path: ./my_agent.py
+    ```
+
+    **Example (Python — no YAML needed):**
+
+    ```python
+    from arksim.config import AgentConfig, CustomConfig
+    from my_agent import MyAgent
+
+    agent_config = AgentConfig(
+        agent_type="custom",
+        agent_name=MyAgent.__name__,
+        custom_config=CustomConfig(agent_class=MyAgent),
+    )
     ```
   </Tab>
 </Tabs>

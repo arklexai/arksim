@@ -1,0 +1,45 @@
+# Custom Agent Connector Configuration
+# Loads the bank-insurance RAG agent directly as a Python class.
+# No HTTP server required — arksim imports the agent module at runtime.
+#
+# Usage: arksim simulate-evaluate config_custom.yaml
+
+# ── AGENT CONFIGURATION ────────────────────────────────────────────────────
+
+agent_config:
+  agent_type: custom
+  agent_name: bank-insurance
+  custom_config:
+    module_path: ./custom_agent.py
+
+# ── SIMULATION SETTINGS ──────────────────────────────────────────────────────
+
+scenario_file_path: ./scenarios.json
+num_conversations_per_scenario: 1
+max_turns: 5
+output_file_path: ./results/simulation/simulation.json
+simulated_user_prompt_template: null
+
+# ── EVALUATION SETTINGS ──────────────────────────────────────────────────────
+
+output_dir: ./results/evaluation
+
+custom_metrics_file_paths:
+  - ./custom_metrics.py
+
+metrics_to_run:
+  - faithfulness
+  - helpfulness
+  - coherence
+  - relevance
+  - goal_completion
+  - agent_behavior_failure
+
+generate_html_report: true
+score_threshold: null
+
+# ── SHARED SETTINGS ──────────────────────────────────────────────────────────
+
+model: gpt-5.1
+provider: openai
+num_workers: 50

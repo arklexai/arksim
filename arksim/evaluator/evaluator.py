@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import importlib.util
 import inspect
 import logging
 import os
@@ -16,6 +15,7 @@ from tqdm import tqdm
 from arksim.llms.chat import LLM
 from arksim.scenario import Scenarios
 from arksim.simulation_engine import Conversation, Simulation
+from arksim.utils.module_loader import load_module_from_file
 from arksim.utils.output import load_json_file, save_json_file
 
 from .base_metric import ChatMessage, QualitativeMetric, QuantitativeMetric
@@ -550,19 +550,7 @@ def _load_custom_metrics(
     qual_metrics: list[QualitativeMetric] = []
     for path in file_paths:
         abs_path = os.path.abspath(path)
-        if not os.path.exists(abs_path):
-            raise FileNotFoundError(f"Custom metrics file not found: {abs_path}")
-        module_name = os.path.splitext(os.path.basename(abs_path))[0]
-        spec = importlib.util.spec_from_file_location(module_name, abs_path)
-        if spec is None or spec.loader is None:
-            raise RuntimeError(f"Cannot load module from {abs_path}")
-        module = importlib.util.module_from_spec(spec)
-        try:
-            spec.loader.exec_module(module)
-        except Exception as e:
-            raise RuntimeError(
-                f"Failed to load custom metrics from {abs_path}: {e}"
-            ) from e
+        module = load_module_from_file(abs_path)
         for _, obj in inspect.getmembers(module, inspect.isclass):
             if issubclass(obj, QuantitativeMetric) and obj is not QuantitativeMetric:
                 try:

@@ -6,6 +6,7 @@ from arksim.config import AgentConfig, AgentType
 from .base import BaseAgent
 from .clients.a2a import A2AAgent
 from .clients.chat_completions import ChatCompletionsAgent
+from .clients.custom import CustomAgent
 
 
 def create_agent(agent_config: AgentConfig) -> BaseAgent:
@@ -16,5 +17,7 @@ def create_agent(agent_config: AgentConfig) -> BaseAgent:
         return ChatCompletionsAgent(agent_config)
     elif agent_type == AgentType.A2A.value:
         return A2AAgent(agent_config)
+    elif agent_type == AgentType.CUSTOM.value:
+        return CustomAgent(agent_config)
     else:
         raise ValueError(f"Unsupported agent type: {agent_type}")

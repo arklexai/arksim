@@ -5,7 +5,7 @@ This directory gives an example of running ArkSim with an example shopping assis
 > This example includes two types of agents:
 >
 > - **Option 1**: OpenAI agent that directly uses the OpenAI API to interact with the user simulator.
-> - **Option 2**: Customized in-house agent exposed through A2A Protocol or Chat Completions-compatible interface to interact with the user simulator.
+> - **Option 2**: Customized in-house agent exposed through A2A Protocol, Chat Completions-compatible interface, or loaded directly as a Python class.
 
 ## Option 1: OpenAI Agent
 
@@ -63,6 +63,10 @@ Steps to run:
      python -m examples.e-commerce.agent_server.chat_completions.server
      ```
 
+   - **2.3 Custom agent connector**
+
+     This loads the agent directly as a Python class — no HTTP server needed. See [`custom_agent.py`](custom_agent.py) for the `BaseAgent` subclass implementation.
+
    You can also adapt these servers to call your own backend agent by following the comments in `agent_server/chat_completions/server.py` (for Chat Completions) or by implementing your own A2A-compatible executor in `agent_server/a2a`.
 
 3. From this example directory, run with the appropriate config:
@@ -77,4 +81,14 @@ Steps to run:
      export AGENT_API_KEY=123456
      export OPENAI_API_KEY="<YOUR_OPENAI_API_KEY>"
      arksim simulate-evaluate config_chat_completions.yaml
+     ```
+   - **Custom agent (CLI)**:
+     ```bash
+     export OPENAI_API_KEY="<YOUR_OPENAI_API_KEY>"
+     arksim simulate-evaluate config_custom.yaml
+     ```
+   - **Custom agent (Python script)**:
+     ```bash
+     export OPENAI_API_KEY="<YOUR_OPENAI_API_KEY>"
+     python run_pipeline.py
      ```

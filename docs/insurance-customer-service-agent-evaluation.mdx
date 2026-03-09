@@ -18,7 +18,7 @@ The example includes two ready-to-run agent implementations you can test against
     A lightweight agent that calls the OpenAI API directly. Quick start with minimal setup.
   </Card>
   <Card icon="diagram-project" title="Option 2: OpenAI Agents SDK">
-    Agent built with the OpenAI Agents SDK, backed by an insurance knowledge base; supports A2A or Chat Completions.
+    Agent built with the OpenAI Agents SDK, backed by an insurance knowledge base; supports A2A, Chat Completions, or custom agent connector.
   </Card>
 </CardGroup>
 
@@ -76,6 +76,7 @@ This agent is a customer service agent built with the OpenAI Agents SDK, backed 
 
     - **A2A:** `config_a2a.yaml` (inline agent config; uses `${A2A_API_KEY}`)
     - **Chat Completions:** `config_chat_completions.yaml` (inline agent config; uses `${AGENT_API_KEY}`)
+    - **Custom agent connector:** `config_custom.yaml` (loads agent directly as a Python class — no server needed)
 
     Set the matching environment variable before running.
   </Step>
@@ -122,6 +123,9 @@ This agent is a customer service agent built with the OpenAI Agents SDK, backed 
 
         Run from the repository root (or the directory that contains the `examples` package). If your layout differs, use the module path that resolves to `agent_server/chat_completions/server.py` under the bank-insurance example.
       </Tab>
+      <Tab title="Custom">
+        No server needed. The custom agent connector loads `custom_agent.py` directly as a Python class at runtime. Skip this step and proceed to run simulation.
+      </Tab>
     </Tabs>
   </Step>
   <Step title="Run simulation and evaluation">
@@ -142,6 +146,22 @@ This agent is a customer service agent built with the OpenAI Agents SDK, backed 
         arksim simulate-evaluate config_chat_completions.yaml
         ```
       </Tab>
+      <Tab title="Custom">
+        No separate server terminal is needed. From `examples/bank-insurance`:
+
+        ```bash
+        cd examples/bank-insurance
+        export OPENAI_API_KEY="<YOUR_OPENAI_API_KEY>"
+        arksim simulate-evaluate config_custom.yaml
+        ```
+
+        Or run the full pipeline as a Python script:
+
+        ```bash
+        export OPENAI_API_KEY="<YOUR_OPENAI_API_KEY>"
+        python run_pipeline.py
+        ```
+      </Tab>
     </Tabs>
   </Step>
 </Steps>
@@ -154,8 +174,9 @@ To test your own backend agent against these scenarios:
 
 - **Chat Completions:** Follow the comments in `agent_server/chat_completions/server.py` to swap in your own backend logic or point to your endpoint.
 - **A2A:** Implement your own A2A executor in `agent_server/a2a/agent_executor.py`.
+- **Custom:** Subclass `BaseAgent` and point `config_custom.yaml` at your module. See [Custom agent configuration](/simulate-conversation#connection-types) for details.
 
-Make sure the `agent_config` field in the `config.yaml`is updated. Then run simulation and evaluation as above.
+Make sure the `agent_config` field in the config YAML is updated. Then run simulation and evaluation as above.
 
 <Tip>
   See [Agent configuration](/simulate-conversation#agent-configuration) for supported protocols and how to configure agent connections.
