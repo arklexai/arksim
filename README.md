@@ -156,7 +156,7 @@ Load your agent directly as a Python class — no HTTP server required.
 agent_config:
   agent_type: custom
   agent_name: my-agent
-  config:
+  custom_config:
     module_path: ./my_agent.py
 ```
 
@@ -187,7 +187,7 @@ from arksim.config import AgentConfig, CustomConfig
 agent_config = AgentConfig(
     agent_type="custom",
     agent_name=MyAgent.__name__,
-    config=CustomConfig(agent_class=MyAgent),
+    custom_config=CustomConfig(agent_class=MyAgent),
 )
 ```
 
@@ -271,7 +271,7 @@ All settings can be specified in YAML and overridden via CLI flags (`--key value
 
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
-| `agent_config` | object | required | Inline agent config (`agent_type`, `agent_name`, `api_config` or `config`) |
+| `agent_config` | object | required | Inline agent config (`agent_type`, `agent_name`, `api_config` or `custom_config`) |
 | `scenario_file_path` | string | required | Path to scenarios JSON |
 | `model` | string | `gpt-5.1` | LLM model for simulated users |
 | `provider` | string | `openai` | LLM provider: `openai`, `anthropic`, `google` |

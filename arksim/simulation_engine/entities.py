@@ -92,17 +92,19 @@ class SimulationInput(BaseModel):
             #   - Already absolute → unchanged
             if (
                 self.agent_config
-                and self.agent_config.config
-                and hasattr(self.agent_config.config, "module_path")
-                and self.agent_config.config.module_path
-                and not os.path.isabs(self.agent_config.config.module_path)
+                and self.agent_config.custom_config
+                and hasattr(self.agent_config.custom_config, "module_path")
+                and self.agent_config.custom_config.module_path
+                and not os.path.isabs(self.agent_config.custom_config.module_path)
             ):
-                module_path = self.agent_config.config.module_path
+                module_path = self.agent_config.custom_config.module_path
                 if "module_path" in cli_overrides:
                     resolved = os.path.abspath(module_path)
                 else:
                     resolved = os.path.normpath(os.path.join(config_dir, module_path))
-                object.__setattr__(self.agent_config.config, "module_path", resolved)
+                object.__setattr__(
+                    self.agent_config.custom_config, "module_path", resolved
+                )
 
         if not self.agent_config and not self.agent_config_file_path:
             raise ValueError(

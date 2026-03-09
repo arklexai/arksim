@@ -9,7 +9,7 @@
 agent_config:
   agent_type: custom
   agent_name: bank-insurance
-  config:
+  custom_config:
     module_path: ./custom_agent.py
 
 # ── SIMULATION SETTINGS ──────────────────────────────────────────────────────

@@ -92,7 +92,7 @@ class CustomAgent(BaseAgent):
         if agent_config.agent_type != AgentType.CUSTOM.value:
             raise ValueError("Agent config must be of type custom")
 
-        self.custom_config: CustomConfig = agent_config.config
+        self.custom_config: CustomConfig = agent_config.custom_config
         self.chat_id = str(uuid.uuid4())
         self._inner: BaseAgent | None = None
 

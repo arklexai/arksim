@@ -52,7 +52,7 @@ async def main() -> None:
     agent_config = AgentConfig(
         agent_type="custom",
         agent_name=EcommerceCustomAgent.__name__,
-        config=CustomConfig(agent_class=EcommerceCustomAgent),
+        custom_config=CustomConfig(agent_class=EcommerceCustomAgent),
     )
     llm = LLM(model=model, provider=provider)
 

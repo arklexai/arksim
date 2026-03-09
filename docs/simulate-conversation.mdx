@@ -131,7 +131,7 @@ Provide agent connection by defining `agent_config` inline in your config YAML.
 | `agent_name` | string | Yes      | Unique identifier for your agent (e.g. lowercase, no spaces).                          |
 | `agent_type` | string | Yes      | One of `chat_completions`, `a2a`, or `custom`. See [Connection types](#connection-types). |
 | `api_config` | object | Conditional | Required for `chat_completions` and `a2a`. See [Connection types](#connection-types). |
-| `config`     | object | Conditional | Required for `custom`. See [Connection types](#connection-types). |
+| `custom_config` | object | Conditional | Required for `custom`. See [Connection types](#connection-types). |
 
 ### Connection types
 
@@ -220,7 +220,7 @@ ArkSim supports three ways to connect your agent:
     agent_config:
       agent_type: custom
       agent_name: my-agent
-      config:
+      custom_config:
         module_path: ./my_agent.py
     ```
 
@@ -233,7 +233,7 @@ ArkSim supports three ways to connect your agent:
     agent_config = AgentConfig(
         agent_type="custom",
         agent_name=MyAgent.__name__,
-        config=CustomConfig(agent_class=MyAgent),
+        custom_config=CustomConfig(agent_class=MyAgent),
     )
     ```
   </Tab>

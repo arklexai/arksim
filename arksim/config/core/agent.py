@@ -119,7 +119,7 @@ class AgentConfig(BaseModel):
     api_config: ChatCompletionsConfig | A2AConfig | None = Field(
         None, description="API configuration for chat_completions or a2a agents"
     )
-    config: CustomConfig | None = Field(
+    custom_config: CustomConfig | None = Field(
         None, description="Configuration for custom agents"
     )
 
@@ -131,15 +131,15 @@ class AgentConfig(BaseModel):
             agent_type = data.get("agent_type")
 
             if agent_type == AgentType.CUSTOM.value:
-                config_data = data.get("config")
+                config_data = data.get("custom_config")
                 if not config_data:
                     raise ValueError(
-                        "Custom agent requires 'config' with 'agent_class' or 'module_path'"
+                        "Custom agent requires 'custom_config' with 'agent_class' or 'module_path'"
                     )
                 # Allow pre-constructed CustomConfig (needed for agent_class
                 # which can't round-trip through a dict).
                 if not isinstance(config_data, CustomConfig):
-                    data["config"] = CustomConfig(**config_data)
+                    data["custom_config"] = CustomConfig(**config_data)
             elif agent_type == AgentType.CHAT_COMPLETIONS.value:
                 config_data = data.get("api_config")
                 if not config_data:
@@ -175,8 +175,8 @@ class AgentConfig(BaseModel):
             and self.api_config is None
         ):
             raise ValueError(f"'{self.agent_type}' agent requires 'api_config'")
-        if self.agent_type == AgentType.CUSTOM.value and self.config is None:
-            raise ValueError("'custom' agent requires 'config'")
+        if self.agent_type == AgentType.CUSTOM.value and self.custom_config is None:
+            raise ValueError("'custom' agent requires 'custom_config'")
         return self
 
     @classmethod

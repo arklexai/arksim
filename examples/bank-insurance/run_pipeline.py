@@ -56,7 +56,7 @@ async def main() -> None:
     agent_config = AgentConfig(
         agent_type="custom",
         agent_name=BankInsuranceCustomAgent.__name__,
-        config=CustomConfig(agent_class=BankInsuranceCustomAgent),
+        custom_config=CustomConfig(agent_class=BankInsuranceCustomAgent),
     )
     llm = LLM(model=model, provider=provider)
 

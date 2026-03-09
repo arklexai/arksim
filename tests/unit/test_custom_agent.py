@@ -96,7 +96,7 @@ def _make_custom_config(
     return {
         "agent_type": "custom",
         "agent_name": "test-custom-agent",
-        "config": config,
+        "custom_config": config,
     }
 
 
@@ -156,17 +156,17 @@ class TestAgentConfigCustom:
         config = AgentConfig(**config_data)
 
         assert config.agent_type == AgentType.CUSTOM.value
-        assert isinstance(config.config, CustomConfig)
+        assert isinstance(config.custom_config, CustomConfig)
         assert config.api_config is None
 
     def test_custom_config_without_class_name(self, base_agent_module: Path) -> None:
         config_data = _make_custom_config(str(base_agent_module))
         config = AgentConfig(**config_data)
 
-        assert config.config.class_name is None
+        assert config.custom_config.class_name is None
 
-    def test_custom_requires_config(self) -> None:
-        with pytest.raises(ValueError, match="requires 'config'"):
+    def test_custom_requires_custom_config(self) -> None:
+        with pytest.raises(ValueError, match="requires 'custom_config'"):
             AgentConfig(
                 agent_type="custom",
                 agent_name="test",
@@ -178,7 +178,7 @@ class TestAgentConfigCustom:
             AgentConfig(
                 agent_type="custom",
                 agent_name="test",
-                config={"class_name": "Agent"},
+                custom_config={"class_name": "Agent"},
             )
 
 
@@ -318,16 +318,16 @@ class TestAgentClassCodePath:
         config = AgentConfig(
             agent_type="custom",
             agent_name="inline-test",
-            config=CustomConfig(agent_class=_InlineAgent),
+            custom_config=CustomConfig(agent_class=_InlineAgent),
         )
-        assert config.config.agent_class is _InlineAgent
-        assert config.config.module_path is None
+        assert config.custom_config.agent_class is _InlineAgent
+        assert config.custom_config.module_path is None
 
     async def test_execute_with_agent_class(self) -> None:
         config = AgentConfig(
             agent_type="custom",
             agent_name="inline-test",
-            config=CustomConfig(agent_class=_InlineAgent),
+            custom_config=CustomConfig(agent_class=_InlineAgent),
         )
         agent = CustomAgent(config)
 
@@ -339,7 +339,7 @@ class TestAgentClassCodePath:
         config = AgentConfig(
             agent_type="custom",
             agent_name="inline-test",
-            config=CustomConfig(agent_class=_InlineAgent),
+            custom_config=CustomConfig(agent_class=_InlineAgent),
         )
         agent = CustomAgent(config)
 
