@@ -332,6 +332,12 @@ Opens a local web app at `http://localhost:8080` where you can browse config fil
 | [e-commerce](examples/e-commerce/) | E-commerce product recommendation agent with custom metrics |
 | [openclaw](examples/openclaw/) | Integration with the OpenClaw agent framework |
 | [tool-calling](examples/tool-calling/) | Tool-calling support with mock tool results and multi-round tool loops |
+| [claude-agent-sdk](examples/claude-agent-sdk/) | Integration with the Claude Agent SDK |
+| [google-adk](examples/google-adk/) | Integration with Google ADK |
+| [openai-agents-sdk](examples/openai-agents-sdk/) | Integration with the OpenAI Agents SDK |
+| [langchain](examples/langchain/) | Integration with LangChain/LangGraph |
+| [crewai](examples/crewai/) | Integration with CrewAI |
+| [llamaindex](examples/llamaindex/) | Integration with LlamaIndex |
 
 ## Development
 
