@@ -11,7 +11,7 @@ if sys.version_info >= (3, 11):
 else:
     from typing_extensions import Self
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from arksim.config.types import AgentType
 from arksim.config.utils import resolve_env_vars
@@ -87,13 +87,28 @@ class ChatCompletionsConfig(BaseModel):
 class CustomConfig(BaseModel):
     """Configuration for custom Python agent type."""
 
-    module_path: str = Field(
-        ..., description="Path to a .py file or dotted module path"
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+    module_path: str | None = Field(
+        None, description="Path to a .py file or dotted module path"
     )
     class_name: str | None = Field(
         None,
         description="Class name to load. If omitted, auto-discovers the BaseAgent subclass.",
     )
+    agent_class: type | None = Field(
+        None,
+        description="Direct class reference for code-based usage (not YAML-serializable).",
+    )
+
+    @model_validator(mode="after")
+    def validate_class_source(self) -> Self:
+        """Require exactly one of agent_class or module_path."""
+        if self.agent_class is None and self.module_path is None:
+            raise ValueError("Either 'agent_class' or 'module_path' must be provided")
+        if self.agent_class is not None and self.module_path is not None:
+            raise ValueError("Cannot specify both 'agent_class' and 'module_path'")
+        return self
 
 
 class AgentConfig(BaseModel):
@@ -119,9 +134,12 @@ class AgentConfig(BaseModel):
                 config_data = data.get("config")
                 if not config_data:
                     raise ValueError(
-                        "Custom agent requires 'config' with at least 'module_path'"
+                        "Custom agent requires 'config' with 'agent_class' or 'module_path'"
                     )
-                data["config"] = CustomConfig(**config_data)
+                # Allow pre-constructed CustomConfig (needed for agent_class
+                # which can't round-trip through a dict).
+                if not isinstance(config_data, CustomConfig):
+                    data["config"] = CustomConfig(**config_data)
             elif agent_type == AgentType.CHAT_COMPLETIONS.value:
                 config_data = data.get("api_config")
                 if not config_data:
@@ -138,6 +156,28 @@ class AgentConfig(BaseModel):
             raise ValueError("Agent configuration must be a dictionary")
 
         return data
+
+    @model_validator(mode="after")
+    def validate_type_config(self) -> Self:
+        """Enforce that each agent type has the required config section.
+
+        The ``mode='before'`` validator already rejects missing fields from
+        raw dicts, but this ``mode='after'`` guard catches programmatic
+        construction (e.g. ``AgentConfig(agent_type="a2a", agent_name=...)``)
+        and provides defense-in-depth.
+        """
+        if (
+            self.agent_type
+            in (
+                AgentType.CHAT_COMPLETIONS.value,
+                AgentType.A2A.value,
+            )
+            and self.api_config is None
+        ):
+            raise ValueError(f"'{self.agent_type}' agent requires 'api_config'")
+        if self.agent_type == AgentType.CUSTOM.value and self.config is None:
+            raise ValueError("'custom' agent requires 'config'")
+        return self
 
     @classmethod
     def load(cls, path: str | Path) -> AgentConfig:

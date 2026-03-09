@@ -2,7 +2,7 @@
 # Loads the bank-insurance RAG agent directly as a Python class.
 # No HTTP server required — arksim imports the agent module at runtime.
 #
-# Usage: arksim simulate-evaluate config.custom.yaml
+# Usage: arksim simulate-evaluate config_custom.yaml
 
 # ── AGENT CONFIGURATION ────────────────────────────────────────────────────
 

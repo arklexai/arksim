@@ -118,9 +118,31 @@ class TestCustomConfig:
         config = CustomConfig(module_path="./my_agent.py")
         assert config.class_name is None
 
-    def test_requires_module_path(self) -> None:
-        with pytest.raises(ValidationError):
-            CustomConfig(class_name="MyAgent")
+    def test_agent_class_valid(self) -> None:
+        """agent_class alone is sufficient — no module_path needed."""
+        config = CustomConfig(
+            agent_class=type(
+                "Dummy",
+                (BaseAgent,),
+                {
+                    "get_chat_id": lambda self: "id",
+                    "execute": lambda self, q, **kw: "ok",
+                },
+            )
+        )
+        assert config.agent_class is not None
+        assert config.module_path is None
+
+    def test_neither_source_raises(self) -> None:
+        with pytest.raises(ValidationError, match="agent_class.*module_path"):
+            CustomConfig()
+
+    def test_both_sources_raises(self) -> None:
+        with pytest.raises(ValidationError, match="Cannot specify both"):
+            CustomConfig(
+                agent_class=BaseAgent,
+                module_path="./agent.py",
+            )
 
 
 # ── AgentConfig integration tests ──────────────────────────────────────────
@@ -150,8 +172,9 @@ class TestAgentConfigCustom:
                 agent_name="test",
             )
 
-    def test_custom_requires_module_path(self) -> None:
-        with pytest.raises(ValidationError):
+    def test_custom_requires_class_source(self) -> None:
+        """config with only class_name (no agent_class or module_path) raises."""
+        with pytest.raises(ValidationError, match="agent_class.*module_path"):
             AgentConfig(
                 agent_type="custom",
                 agent_name="test",
@@ -190,7 +213,8 @@ class TestCustomAgentExecution:
 
         assert result == "response to: hello"
 
-    async def test_get_chat_id(self, base_agent_module: Path) -> None:
+    async def test_get_chat_id_before_execute(self, base_agent_module: Path) -> None:
+        """Before execute, get_chat_id returns the wrapper's own UUID."""
         config_data = _make_custom_config(str(base_agent_module), "MyTestAgent")
         config = AgentConfig(**config_data)
         agent = CustomAgent(config)
@@ -199,6 +223,23 @@ class TestCustomAgentExecution:
 
         assert isinstance(chat_id, str)
         assert len(chat_id) > 0
+        assert chat_id == agent.chat_id  # wrapper's own id
+
+    async def test_get_chat_id_delegates_after_execute(
+        self, base_agent_module: Path
+    ) -> None:
+        """After execute, get_chat_id delegates to the inner agent."""
+        config_data = _make_custom_config(str(base_agent_module), "MyTestAgent")
+        config = AgentConfig(**config_data)
+        agent = CustomAgent(config)
+
+        wrapper_id = await agent.get_chat_id()
+        await agent.execute("trigger inner agent creation")
+        inner_id = await agent.get_chat_id()
+
+        # Inner agent creates its own UUID, which differs from the wrapper's.
+        assert inner_id != wrapper_id
+        assert inner_id == await agent._inner.get_chat_id()
 
     async def test_close_delegates(self, base_agent_module: Path) -> None:
         config_data = _make_custom_config(str(base_agent_module), "MyTestAgent")
@@ -251,6 +292,61 @@ class TestAutoDiscovery:
         result = await agent.execute("auto-discovered")
 
         assert result == "response to: auto-discovered"
+
+
+# ── Code-based agent_class tests ───────────────────────────────────────────
+
+
+class _InlineAgent(BaseAgent):
+    """A BaseAgent subclass defined directly in test code (no file loading)."""
+
+    def __init__(self, agent_config: AgentConfig) -> None:
+        super().__init__(agent_config)
+        self._chat_id = str(__import__("uuid").uuid4())
+
+    async def get_chat_id(self) -> str:
+        return self._chat_id
+
+    async def execute(self, user_query: str, **kwargs: object) -> str:
+        return f"inline: {user_query}"
+
+
+class TestAgentClassCodePath:
+    """Tests for passing agent_class directly (no file loading)."""
+
+    def test_agent_config_with_agent_class(self) -> None:
+        config = AgentConfig(
+            agent_type="custom",
+            agent_name="inline-test",
+            config=CustomConfig(agent_class=_InlineAgent),
+        )
+        assert config.config.agent_class is _InlineAgent
+        assert config.config.module_path is None
+
+    async def test_execute_with_agent_class(self) -> None:
+        config = AgentConfig(
+            agent_type="custom",
+            agent_name="inline-test",
+            config=CustomConfig(agent_class=_InlineAgent),
+        )
+        agent = CustomAgent(config)
+
+        result = await agent.execute("hello")
+
+        assert result == "inline: hello"
+
+    async def test_get_chat_id_with_agent_class(self) -> None:
+        config = AgentConfig(
+            agent_type="custom",
+            agent_name="inline-test",
+            config=CustomConfig(agent_class=_InlineAgent),
+        )
+        agent = CustomAgent(config)
+
+        await agent.execute("trigger")
+        chat_id = await agent.get_chat_id()
+
+        assert chat_id == await agent._inner.get_chat_id()
 
 
 # ── Dynamic import error handling tests ─────────────────────────────────────

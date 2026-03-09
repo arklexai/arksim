@@ -68,6 +68,11 @@ class SimulationInput(BaseModel):
         # directory. Paths set via CLI are left as-is (cwd-relative).
         config_path = info.context and info.context.get("config_path")
         if config_path:
+            cli_overrides = (
+                info.context and info.context.get("cli_overrides")
+            ) or set()
+            config_dir = os.path.dirname(config_path)
+
             resolve_model_paths(
                 self,
                 path_attrs=(
@@ -76,10 +81,28 @@ class SimulationInput(BaseModel):
                     "agent_config_file_path",
                 ),
                 list_path_attrs=(),
-                config_dir=os.path.dirname(config_path),
-                cli_overrides=(info.context and info.context.get("cli_overrides"))
-                or set(),
+                config_dir=config_dir,
+                cli_overrides=cli_overrides,
             )
+
+            # Resolve custom agent module_path to an absolute path early
+            # so it is unambiguous regardless of later cwd changes.
+            #   - Config-sourced → relative to config file's directory
+            #   - CLI-sourced    → relative to cwd (where the CLI ran)
+            #   - Already absolute → unchanged
+            if (
+                self.agent_config
+                and self.agent_config.config
+                and hasattr(self.agent_config.config, "module_path")
+                and self.agent_config.config.module_path
+                and not os.path.isabs(self.agent_config.config.module_path)
+            ):
+                module_path = self.agent_config.config.module_path
+                if "module_path" in cli_overrides:
+                    resolved = os.path.abspath(module_path)
+                else:
+                    resolved = os.path.normpath(os.path.join(config_dir, module_path))
+                object.__setattr__(self.agent_config.config, "module_path", resolved)
 
         if not self.agent_config and not self.agent_config_file_path:
             raise ValueError(

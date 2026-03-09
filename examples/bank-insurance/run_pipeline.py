@@ -12,11 +12,15 @@ from __future__ import annotations
 import asyncio
 import os
 
-from custom_agent import EcommerceCustomAgent
+from custom_agent import BankInsuranceCustomAgent
 from custom_metrics import (
-    ConversionMetric,
-    ProductRecommendationMetric,
-    UpsellBehaviorMetric,
+    AdviceBoundaryMetric,
+    ClarityMetric,
+    DisclosureCompletenessMetric,
+    EscalationBehaviorMetric,
+    NeedsAssessmentMetric,
+    ProductSuitabilityMetric,
+    ProhibitedStatementsMetric,
 )
 
 from arksim.config import AgentConfig, CustomConfig
@@ -51,8 +55,8 @@ async def main() -> None:
     scenario_output = Scenarios.load(scenario_file_path)
     agent_config = AgentConfig(
         agent_type="custom",
-        agent_name=EcommerceCustomAgent.__name__,
-        config=CustomConfig(agent_class=EcommerceCustomAgent),
+        agent_name=BankInsuranceCustomAgent.__name__,
+        config=CustomConfig(agent_class=BankInsuranceCustomAgent),
     )
     llm = LLM(model=model, provider=provider)
 
@@ -80,11 +84,15 @@ async def main() -> None:
         output_dir=evaluation_output_dir,
         num_workers=50,
         custom_metrics=[
-            ConversionMetric(),
-            ProductRecommendationMetric(),
+            ProductSuitabilityMetric(),
+            NeedsAssessmentMetric(),
+            ClarityMetric(),
         ],
         custom_qualitative_metrics=[
-            UpsellBehaviorMetric(),
+            DisclosureCompletenessMetric(),
+            ProhibitedStatementsMetric(),
+            AdviceBoundaryMetric(),
+            EscalationBehaviorMetric(),
         ],
     )
 

@@ -2,41 +2,15 @@
 from __future__ import annotations
 
 import importlib
-import importlib.util
 import inspect
 import logging
-import sys
 import uuid
-from pathlib import Path
 
 from arksim.config import AgentConfig, AgentType, CustomConfig
 from arksim.simulation_engine.agent.base import BaseAgent
+from arksim.utils.module_loader import load_module_from_file
 
 logger = logging.getLogger(__name__)
-
-
-def _load_module_from_path(file_path: str) -> object:
-    """Load a Python module from a file path."""
-    path = Path(file_path).resolve()
-    if not path.suffix == ".py":
-        raise ValueError(f"Module path must be a .py file, got: {path}")
-    if not path.exists():
-        raise FileNotFoundError(f"Module file not found: {path}")
-
-    module_name = path.stem
-    spec = importlib.util.spec_from_file_location(module_name, str(path))
-    if spec is None or spec.loader is None:
-        raise ImportError(f"Cannot create module spec from: {path}")
-
-    # Add module's parent dir to sys.path so sibling packages are importable
-    parent_dir = str(path.parent)
-    if parent_dir not in sys.path:
-        sys.path.insert(0, parent_dir)
-
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[module_name] = module
-    spec.loader.exec_module(module)
-    return module
 
 
 def _load_module_from_dotted(module_path: str) -> object:
@@ -88,7 +62,7 @@ def load_custom_agent_class(
     - Dotted module: 'my_package.agent'
     """
     if module_path.endswith(".py") or "/" in module_path or "\\" in module_path:
-        module = _load_module_from_path(module_path)
+        module = load_module_from_file(module_path)
     else:
         module = _load_module_from_dotted(module_path)
 
@@ -124,14 +98,19 @@ class CustomAgent(BaseAgent):
 
     def _create_inner_agent(self) -> BaseAgent:
         """Dynamically load and instantiate the custom agent class."""
-        cls = load_custom_agent_class(
-            self.custom_config.module_path,
-            self.custom_config.class_name,
-        )
+        if self.custom_config.agent_class is not None:
+            cls = self.custom_config.agent_class
+        else:
+            cls = load_custom_agent_class(
+                self.custom_config.module_path,
+                self.custom_config.class_name,
+            )
         return cls(self.agent_config)
 
     async def get_chat_id(self) -> str:
-        """Get the chat ID."""
+        """Get the chat ID, delegating to the inner agent when available."""
+        if self._inner is not None:
+            return await self._inner.get_chat_id()
         return self.chat_id
 
     async def execute(self, user_query: str, **kwargs: object) -> str:
