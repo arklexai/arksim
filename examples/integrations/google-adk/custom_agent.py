@@ -11,6 +11,7 @@ import uuid
 
 from google.adk.agents import LlmAgent
 from google.adk.runners import InMemoryRunner
+from google.genai import types
 
 from arksim.config import AgentConfig
 from arksim.simulation_engine.agent.base import BaseAgent
@@ -33,8 +34,6 @@ class GoogleADKAgent(BaseAgent):
         return self._chat_id
 
     async def execute(self, user_query: str, **kwargs: object) -> str:
-        from google.genai import types
-
         if self._session_id is None:
             session = await self._runner.session_service.create_session(
                 app_name="arksim",

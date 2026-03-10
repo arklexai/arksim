@@ -25,7 +25,6 @@ class CrewAIAgent(BaseAgent):
             goal="Answer user questions helpfully",
             backstory="You are a helpful assistant.",
             llm="gpt-5.1",
-            memory=False,
         )
         self._history: list[dict[str, str]] = []
 
@@ -36,7 +35,7 @@ class CrewAIAgent(BaseAgent):
         self._history.append({"role": "user", "content": user_query})
         context = "\n".join(f"{m['role']}: {m['content']}" for m in self._history[:-1])
         description = (
-            f"Conversation so far:\n{context}\n\nLatest question: {user_query}"
+            f"Conversation so far:\n{context}\n\nLatest message: {user_query}"
             if context
             else user_query
         )
