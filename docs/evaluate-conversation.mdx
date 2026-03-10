@@ -78,7 +78,6 @@ model: gpt-5.1
 
 # Execution
 num_workers: 50
-score_threshold: null
 
 # Metrics
 metrics_to_run: [
@@ -95,6 +94,15 @@ custom_metrics_file_paths: []
 # Output
 output_dir: ./examples/path/to/evaluation
 generate_html_report: true
+
+# Threshold gates (optional — omit or set to null to disable)
+score_threshold: null
+numeric_thresholds:
+  faithfulness: 3.5
+  helpfulness: 3.0
+  goal_completion: 0.8
+qualitative_thresholds:
+  agent_behavior_failure: "no_failure"
 ```
 
 For all evaluation config keys, types, and defaults, see [Run configuration → Evaluation keys](/schema-reference#evaluation-keys) in the Schema Reference.
@@ -174,6 +182,49 @@ score_input.chat_history   # Full conversation turns
 score_input.user_goal      # The goal the user was trying to achieve
 score_input.knowledge      # Retrieved knowledge / context passed to the agent
 ```
+
+---
+
+## Threshold Gates
+
+Threshold gates let you fail the CLI with a non-zero exit code when evaluation results fall below acceptable levels. All three gate types are evaluated after every `arksim evaluate` or `arksim simulate-evaluate` run.
+
+### `score_threshold`
+
+A single float (0–1) applied to every conversation's `overall_agent_score`. Any conversation below the threshold fails the run.
+
+```yaml
+score_threshold: 0.6
+```
+
+### `numeric_thresholds`
+
+Per-metric minimum scores on each metric's native scale. The mean score across all turns per conversation is compared against the threshold. Every conversation must meet it.
+
+| Metric | Scale | Notes |
+| --- | --- | --- |
+| `faithfulness`, `helpfulness`, `coherence`, `verbosity`, `relevance` | 1–5 | Mean of per-turn scores |
+| `goal_completion` | 0–1 | Per-conversation score compared directly |
+| Custom quantitative metrics | Your scale | Mean of per-turn scores |
+
+```yaml
+numeric_thresholds:
+  faithfulness: 3.5
+  helpfulness: 3.0
+  goal_completion: 0.8
+```
+
+### `qualitative_thresholds`
+
+Hard-gate label requirements for qualitative metrics. Every evaluated turn in every conversation must return the required label. Turns where the metric did not run are skipped.
+
+```yaml
+qualitative_thresholds:
+  agent_behavior_failure: "no_failure"
+  prohibited_statements: "clean"   # example custom qualitative metric
+```
+
+If any gate fails, the CLI exits with code `1` and logs which conversations and turns did not meet the requirement. See [Exit codes](/schema-reference#exit-codes) for the full list of exit codes.
 
 ---
 

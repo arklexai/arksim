@@ -13,6 +13,9 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from arksim.cli import (
+    EXIT_CONFIG_ERROR,
+    _check_numeric_thresholds,
+    _check_qualitative_thresholds,
     _check_score_threshold,
     _merge_cli_overrides,
     _parse_value,
@@ -155,10 +158,10 @@ class TestValidateOverrides:
         validate_overrides({"model": "gpt-4"}, {"model", "provider"})
 
     def test_invalid_keys_exit(self) -> None:
-        """Exits with code 1 when unknown keys are present."""
+        """Exits with EXIT_CONFIG_ERROR when unknown keys are present."""
         with pytest.raises(SystemExit) as exc_info:
             validate_overrides({"bad_key": "val"}, {"model"})
-        assert exc_info.value.code == 1
+        assert exc_info.value.code == EXIT_CONFIG_ERROR
 
     def test_empty_overrides_pass(self) -> None:
         """Empty overrides always pass."""
@@ -327,7 +330,7 @@ class TestRunExamples:
         assert "bank-insurance" in out
 
     def test_unknown_name_exits(self, fake_tarball: bytes) -> None:
-        """Unknown example name exits with code 1."""
+        """Unknown example name exits with EXIT_CONFIG_ERROR."""
         resp = MagicMock()
         resp.read.return_value = fake_tarball
         resp.__enter__ = lambda s: s
@@ -336,10 +339,10 @@ class TestRunExamples:
         with patch("urllib.request.urlopen", return_value=resp):
             with pytest.raises(SystemExit) as exc_info:
                 _run_examples(name="nonexistent")
-            assert exc_info.value.code == 1
+            assert exc_info.value.code == EXIT_CONFIG_ERROR
 
     def test_dest_exists_exits(self, fake_tarball: bytes, temp_dir: str) -> None:
-        """Exits when destination already exists."""
+        """Exits with EXIT_CONFIG_ERROR when destination already exists."""
         resp = MagicMock()
         resp.read.return_value = fake_tarball
         resp.__enter__ = lambda s: s
@@ -355,7 +358,7 @@ class TestRunExamples:
             pytest.raises(SystemExit) as exc_info,
         ):
             _run_examples()
-        assert exc_info.value.code == 1
+        assert exc_info.value.code == EXIT_CONFIG_ERROR
 
     def test_path_traversal_skipped(self, temp_dir: str) -> None:
         """Members with '..' or absolute paths are skipped."""
@@ -398,18 +401,19 @@ class TestMainEvaluateValidation:
     def test_evaluate_missing_simulation_file_path_error(
         self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
     ) -> None:
-        """Raises clear error when simulation_file_path is missing."""
+        """Exits with EXIT_CONFIG_ERROR when simulation_file_path is missing."""
         cfg_path = tmp_path / "config.yaml"
         cfg_path.write_text("model: gpt-5.1\nprovider: openai\n")
         monkeypatch.setattr(sys, "argv", ["arksim", "evaluate", str(cfg_path)])
 
-        with pytest.raises(ValueError, match=r"simulation_file_path is required\."):
+        with pytest.raises(SystemExit) as exc_info:
             main()
+        assert exc_info.value.code == EXIT_CONFIG_ERROR
 
     def test_evaluate_nonexistent_simulation_file_path_error(
         self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
     ) -> None:
-        """Raises clear error when simulation_file_path does not exist."""
+        """Exits with EXIT_CONFIG_ERROR when simulation_file_path does not exist."""
         missing_path = tmp_path / "missing_simulation.json"
         cfg_path = tmp_path / "config.yaml"
         cfg_path.write_text(
@@ -417,8 +421,285 @@ class TestMainEvaluateValidation:
         )
         monkeypatch.setattr(sys, "argv", ["arksim", "evaluate", str(cfg_path)])
 
-        with pytest.raises(
-            ValueError,
-            match=rf"simulation_file_path does not exist: {str(missing_path)}",
-        ):
+        with pytest.raises(SystemExit) as exc_info:
             main()
+        assert exc_info.value.code == EXIT_CONFIG_ERROR
+
+
+# ── _check_numeric_thresholds ────────────────────────────
+
+
+class TestCheckNumericThresholds:
+    """Tests for _check_numeric_thresholds."""
+
+    @staticmethod
+    def _make_convo(
+        convo_id: str,
+        metric_scores: dict[str, list[float]],
+        goal_completion_score: float = -1.0,
+    ) -> MagicMock:
+        """Build a mock ConversationEvaluation with per-metric turn scores."""
+        turns = []
+        # Collect all turn ids across metrics
+        max_turns = max((len(v) for v in metric_scores.values()), default=0)
+        for i in range(max_turns):
+            turn = MagicMock()
+            turn.turn_id = i
+            scores = []
+            for name, values in metric_scores.items():
+                if i < len(values):
+                    r = MagicMock()
+                    r.name = name
+                    r.value = values[i]
+                    scores.append(r)
+            turn.scores = scores
+            turns.append(turn)
+        convo = MagicMock()
+        convo.conversation_id = convo_id
+        convo.turn_scores = turns
+        convo.goal_completion_score = goal_completion_score
+        return convo
+
+    @staticmethod
+    def _make_evaluation(convos: list) -> MagicMock:
+        ev = MagicMock()
+        ev.conversations = convos
+        return ev
+
+    def test_none_thresholds_passes(self) -> None:
+        """None thresholds always returns True."""
+        ev = self._make_evaluation([self._make_convo("c1", {"faithfulness": [3.0]})])
+        assert _check_numeric_thresholds(ev, None) is True
+
+    def test_empty_thresholds_passes(self) -> None:
+        """Empty dict always returns True."""
+        ev = self._make_evaluation([self._make_convo("c1", {"faithfulness": [3.0]})])
+        assert _check_numeric_thresholds(ev, {}) is True
+
+    def test_all_above_threshold(self) -> None:
+        """Returns True when all conversations pass."""
+        # mean >= 3.5
+        ev = self._make_evaluation(
+            [
+                self._make_convo("c1", {"faithfulness": [4.0, 3.5]}),
+                self._make_convo("c2", {"faithfulness": [3.5, 3.5]}),
+            ]
+        )
+        assert _check_numeric_thresholds(ev, {"faithfulness": 3.5}) is True
+
+    def test_some_below_threshold(self) -> None:
+        """Returns False when any conversation fails."""
+        # c2 mean = (2.0+2.0)/2 = 2.0 < 3.5
+        ev = self._make_evaluation(
+            [
+                self._make_convo("c1", {"faithfulness": [4.0, 4.0]}),
+                self._make_convo("c2", {"faithfulness": [2.0, 2.0]}),
+            ]
+        )
+        assert _check_numeric_thresholds(ev, {"faithfulness": 3.5}) is False
+
+    def test_exact_threshold_passes(self) -> None:
+        """Score exactly equal to threshold passes."""
+        # mean = 4.0 == 4.0
+        ev = self._make_evaluation([self._make_convo("c1", {"faithfulness": [4.0]})])
+        assert _check_numeric_thresholds(ev, {"faithfulness": 4.0}) is True
+
+    def test_goal_completion_uses_convo_score(self) -> None:
+        """goal_completion reads the per-conversation score, not turn scores."""
+        # goal_completion_score=0.9, threshold=0.8 → pass
+        ev = self._make_evaluation(
+            [self._make_convo("c1", {}, goal_completion_score=0.9)]
+        )
+        assert _check_numeric_thresholds(ev, {"goal_completion": 0.8}) is True
+
+    def test_goal_completion_not_computed_skips(self) -> None:
+        """goal_completion_score == -1 (not computed) is skipped with a warning."""
+        ev = self._make_evaluation(
+            [self._make_convo("c1", {}, goal_completion_score=-1.0)]
+        )
+        # Should pass (skipped, not failed)
+        assert _check_numeric_thresholds(ev, {"goal_completion": 0.8}) is True
+
+    def test_metric_not_found_skips_with_warning(self) -> None:
+        """Metric absent from all turns is skipped — does not cause failure."""
+        ev = self._make_evaluation([self._make_convo("c1", {"helpfulness": [3.0]})])
+        assert _check_numeric_thresholds(ev, {"not_exist": 4.0}) is True
+
+    def test_multiple_metrics_both_fail_reported(self) -> None:
+        """Both failing metrics are reported before returning False."""
+        # faithfulness mean = 1.0 < 4.0; helpfulness mean = 1.0 < 3.0
+        ev = self._make_evaluation(
+            [self._make_convo("c1", {"faithfulness": [1.0], "helpfulness": [1.0]})]
+        )
+        assert (
+            _check_numeric_thresholds(ev, {"faithfulness": 4.0, "helpfulness": 3.0})
+            is False
+        )
+
+    def test_scores_with_skipped_turns_excluded(self) -> None:
+        """Turn scores with value < 0 (SCORE_NOT_COMPUTED) are excluded from mean."""
+        # Only the 4.0 turn counts; -1 is excluded → mean = 4.0 >= 3.5
+        ev = self._make_evaluation(
+            [self._make_convo("c1", {"faithfulness": [4.0, -1.0]})]
+        )
+        assert _check_numeric_thresholds(ev, {"faithfulness": 3.5}) is True
+
+
+# ── _check_qualitative_thresholds ───────────────────────
+
+
+class TestCheckQualitativeThresholds:
+    """Tests for _check_qualitative_thresholds."""
+
+    @staticmethod
+    def _make_convo(
+        convo_id: str,
+        abf_labels: list[str] | None = None,
+        qual_scores: dict[str, list[str]] | None = None,
+    ) -> MagicMock:
+        """Build a mock ConversationEvaluation.
+
+        abf_labels: per-turn agent_behavior_failure labels.
+        qual_scores: dict of metric_name -> per-turn label values.
+        """
+        turns = []
+        max_turns = max(
+            len(abf_labels) if abf_labels else 0,
+            *(len(v) for v in (qual_scores or {}).values()),
+            0,
+        )
+        for i in range(max_turns):
+            turn = MagicMock()
+            turn.turn_id = i
+            turn.turn_behavior_failure = (
+                abf_labels[i] if abf_labels and i < len(abf_labels) else "no failure"
+            )
+            qs = []
+            for name, labels in (qual_scores or {}).items():
+                if i < len(labels):
+                    q = MagicMock()
+                    q.name = name
+                    q.value = labels[i]
+                    qs.append(q)
+            turn.qual_scores = qs
+            turns.append(turn)
+        convo = MagicMock()
+        convo.conversation_id = convo_id
+        convo.turn_scores = turns
+        return convo
+
+    @staticmethod
+    def _make_evaluation(convos: list) -> MagicMock:
+        ev = MagicMock()
+        ev.conversations = convos
+        return ev
+
+    def test_none_thresholds_passes(self) -> None:
+        """None thresholds always returns True."""
+        ev = self._make_evaluation([self._make_convo("c1", abf_labels=["no failure"])])
+        assert _check_qualitative_thresholds(ev, None) is True
+
+    def test_all_turns_match_required_label(self) -> None:
+        """Returns True when every turn has the required label."""
+        ev = self._make_evaluation(
+            [
+                self._make_convo("c1", abf_labels=["no failure", "no failure"]),
+            ]
+        )
+        assert (
+            _check_qualitative_thresholds(ev, {"agent_behavior_failure": "no failure"})
+            is True
+        )
+
+    def test_one_turn_fails_required_label(self) -> None:
+        """Returns False when any turn has a different label."""
+        ev = self._make_evaluation(
+            [
+                self._make_convo("c1", abf_labels=["no failure", "false information"]),
+            ]
+        )
+        assert (
+            _check_qualitative_thresholds(ev, {"agent_behavior_failure": "no failure"})
+            is False
+        )
+
+    def test_skip_outcomes_are_ignored(self) -> None:
+        """System skip outcomes are not counted as failures."""
+        ev = self._make_evaluation(
+            [
+                self._make_convo(
+                    "c1",
+                    abf_labels=["skipped_good_performance", "evaluation_run_failed"],
+                ),
+            ]
+        )
+        assert (
+            _check_qualitative_thresholds(ev, {"agent_behavior_failure": "no failure"})
+            is True
+        )
+
+    def test_agent_behavior_failure_uses_turn_field(self) -> None:
+        """agent_behavior_failure reads turn.turn_behavior_failure, not qual_scores."""
+        ev = self._make_evaluation(
+            [
+                self._make_convo(
+                    "c1",
+                    abf_labels=["no failure"],
+                    qual_scores={"agent_behavior_failure": ["disobey user request"]},
+                ),
+            ]
+        )
+        # Should use turn_behavior_failure ("no failure"), not qual_scores
+        assert (
+            _check_qualitative_thresholds(ev, {"agent_behavior_failure": "no failure"})
+            is True
+        )
+
+    def test_custom_qual_metric_uses_qual_scores(self) -> None:
+        """Custom qualitative metrics are read from turn.qual_scores."""
+        ev = self._make_evaluation(
+            [
+                self._make_convo(
+                    "c1",
+                    qual_scores={"prohibited_statements": ["clean", "clean"]},
+                ),
+            ]
+        )
+        assert (
+            _check_qualitative_thresholds(ev, {"prohibited_statements": "clean"})
+            is True
+        )
+
+    def test_metric_absent_from_turn_skips(self) -> None:
+        """Turns where the metric is absent are skipped — not counted as failures."""
+        ev = self._make_evaluation(
+            [
+                self._make_convo("c1", qual_scores={}),
+            ]
+        )
+        assert (
+            _check_qualitative_thresholds(ev, {"prohibited_statements": "clean"})
+            is True
+        )
+
+    def test_multiple_metrics_both_fail_reported(self) -> None:
+        """All failing metrics are reported before returning False."""
+        ev = self._make_evaluation(
+            [
+                self._make_convo(
+                    "c1",
+                    abf_labels=["false information"],
+                    qual_scores={"prohibited_statements": ["violated"]},
+                ),
+            ]
+        )
+        assert (
+            _check_qualitative_thresholds(
+                ev,
+                {
+                    "agent_behavior_failure": "no failure",
+                    "prohibited_statements": "clean",
+                },
+            )
+            is False
+        )

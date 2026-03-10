@@ -9,12 +9,26 @@ import sys
 import textwrap
 import time
 
+import httpx
 import yaml
+from pydantic import ValidationError
 
 from arksim import __version__
 from arksim.evaluator import Evaluation, EvaluationInput, run_evaluation
 from arksim.simulation_engine import SimulationInput, run_simulation
 from arksim.utils.logger import get_logger
+
+# Exit codes
+EXIT_OK = 0
+EXIT_EVAL_FAILED = 1
+EXIT_CONFIG_ERROR = 2
+EXIT_INTERNAL_ERROR = 3
+EXIT_NETWORK_ERROR = 4
+
+# Threshold check constants
+_QUAL_SKIP_OUTCOMES = frozenset(
+    {"skipped_good_performance", "evaluation_run_failed", "agent_api_error"}
+)
 
 logger = get_logger("arksim")
 
@@ -77,6 +91,138 @@ def _check_score_threshold(
         f"have overall_agent_score >= {score_threshold}",
     )
     return True
+
+
+def _check_numeric_thresholds(
+    evaluator_output: Evaluation,
+    numeric_thresholds: dict[str, float] | None,
+) -> bool:
+    """Check per-metric numeric score thresholds on each metric's native scale.
+
+    Per-conversation score = mean of all per-turn scores for that metric (1–5 scale
+    for built-in metrics). Every conversation must meet the threshold.
+    goal_completion uses its per-conversation score directly (stored as 0–1).
+
+    Returns:
+        True if all thresholds pass, False if any fail.
+    """
+    if not numeric_thresholds:
+        return True
+
+    all_passed = True
+    for metric_name, threshold in numeric_thresholds.items():
+        failed_conversations = []
+        for convo in evaluator_output.conversations:
+            if metric_name == "goal_completion":
+                # goal_completion is computed once per conversation, stored as 0-1
+                raw = convo.goal_completion_score
+                score: float | None = raw if raw >= 0 else None
+            else:
+                # Compute mean of per-turn scores on the metric's native scale
+                values = [
+                    r.value
+                    for turn in convo.turn_scores
+                    for r in turn.scores
+                    if r.name == metric_name and r.value >= 0
+                ]
+                score = sum(values) / len(values) if values else None
+
+            if score is None:
+                logger.warning(
+                    f"Metric '{metric_name}' not found in conversation "
+                    f"'{convo.conversation_id}', skipping threshold check for it."
+                )
+                continue
+
+            if score < threshold:
+                failed_conversations.append(
+                    {"conversation_id": convo.conversation_id, "score": score}
+                )
+
+        if failed_conversations:
+            all_passed = False
+            logger.error(
+                f"Metric threshold failed: '{metric_name}' requires >= {threshold}. "
+                f"Failed conversations: {len(failed_conversations)}"
+            )
+            for fc in failed_conversations:
+                logger.error(
+                    f"  Conversation {fc['conversation_id']}: "
+                    f"{metric_name}={fc['score']:.3f} < {threshold}"
+                )
+        else:
+            logger.info(
+                f"Metric threshold passed: '{metric_name}' >= {threshold} "
+                f"for all {len(evaluator_output.conversations)} conversations"
+            )
+
+    return all_passed
+
+
+def _check_qualitative_thresholds(
+    evaluator_output: Evaluation,
+    qualitative_thresholds: dict[str, str] | None,
+) -> bool:
+    """Check per-metric qualitative label requirements (hard gates).
+
+    Every evaluated turn in every conversation must return the required label.
+    Turns where the metric did not run are skipped. agent_behavior_failure uses
+    the dedicated turn field; other qualitative metrics use turn.qual_scores.
+
+    Returns:
+        True if all requirements pass, False if any fail.
+    """
+    if not qualitative_thresholds:
+        return True
+
+    all_passed = True
+    for metric_name, required_label in qualitative_thresholds.items():
+        failed_conversations = []
+        for convo in evaluator_output.conversations:
+            failing_turns = []
+            for turn in convo.turn_scores:
+                if metric_name == "agent_behavior_failure":
+                    label = turn.turn_behavior_failure
+                    if label in _QUAL_SKIP_OUTCOMES:
+                        continue
+                else:
+                    match = next(
+                        (q for q in turn.qual_scores if q.name == metric_name), None
+                    )
+                    if match is None:
+                        continue
+                    label = match.value
+
+                if label != required_label:
+                    failing_turns.append({"turn_id": turn.turn_id, "label": label})
+
+            if failing_turns:
+                failed_conversations.append(
+                    {
+                        "conversation_id": convo.conversation_id,
+                        "failing_turns": failing_turns,
+                    }
+                )
+
+        if failed_conversations:
+            all_passed = False
+            logger.error(
+                f"Qualitative threshold failed: '{metric_name}' must be "
+                f"'{required_label}'. Failed conversations: {len(failed_conversations)}"
+            )
+            for fc in failed_conversations:
+                for t in fc["failing_turns"]:
+                    logger.error(
+                        f"  Conversation {fc['conversation_id']} turn {t['turn_id']}: "
+                        f"{metric_name}='{t['label']}' != '{required_label}'"
+                    )
+        else:
+            logger.info(
+                f"Qualitative threshold passed: '{metric_name}' == '{required_label}' "
+                f"for all evaluated turns"
+            )
+
+    return all_passed
 
 
 def _merge_cli_overrides(yaml_settings: dict, cli_overrides: dict) -> dict:
@@ -184,7 +330,7 @@ def validate_overrides(overrides: dict, valid_keys: set) -> None:
     if invalid_keys:
         logger.error(f"Unknown options: {', '.join(sorted(invalid_keys))}")
         logger.info(f"Valid options: {', '.join(sorted(valid_keys))}")
-        sys.exit(1)
+        sys.exit(EXIT_CONFIG_ERROR)
 
 
 def _log_config_summary(label: str, settings: dict) -> None:
@@ -207,7 +353,7 @@ def _run_show_prompts(category: str | None) -> None:
         print(
             f"Unknown category: '{category}'. Available: {', '.join(get_categories())}"
         )
-        sys.exit(1)
+        sys.exit(EXIT_CONFIG_ERROR)
 
     for cat in matches:
         print(f"{'=' * 60}")
@@ -254,7 +400,7 @@ def _run_examples(
 
         if name and name not in available:
             logger.error(f"Unknown example '{name}'. Available: {', '.join(available)}")
-            sys.exit(1)
+            sys.exit(EXIT_CONFIG_ERROR)
 
         if name:
             filter_prefix = f"{top}/{_EXAMPLES_PREFIX}{name}/"
@@ -269,7 +415,7 @@ def _run_examples(
                 "Remove it first or choose a "
                 "different directory."
             )
-            sys.exit(1)
+            sys.exit(EXIT_CONFIG_ERROR)
 
         for member in tar.getmembers():
             if member.name.startswith(filter_prefix):
@@ -411,7 +557,7 @@ def main() -> None:
 
     if not args.command:
         parser.print_help()
-        sys.exit(1)
+        sys.exit(EXIT_CONFIG_ERROR)
 
     if args.command == "show-prompts":
         _run_show_prompts(args.category)
@@ -445,7 +591,7 @@ def main() -> None:
             logger.error(
                 f"Could not load config file '{args.config_file}': {e}",
             )
-            sys.exit(1)
+            sys.exit(EXIT_CONFIG_ERROR)
     else:
         logger.warning("No config YAML file provided.")
 
@@ -465,87 +611,112 @@ def main() -> None:
 
     cli_overrides = set(overrides.keys())
 
-    if args.command == "simulate":
-        valid_keys = set(SimulationInput.model_fields.keys())
-        validate_overrides(overrides, valid_keys)
-        _coerce_list_overrides(overrides, SimulationInput)
-        settings = _merge_cli_overrides(settings, overrides)
-        simulation_input = SimulationInput.model_validate(
-            settings,
-            context={"config_path": config_path, "cli_overrides": cli_overrides},
-        )
-        _log_config_summary("Simulation", simulation_input.model_dump())
-        asyncio.run(run_simulation(simulation_input, verbose=verbose))
-    elif args.command == "evaluate":
-        valid_keys = set(EvaluationInput.model_fields.keys())
-        validate_overrides(overrides, valid_keys)
-        _coerce_list_overrides(overrides, EvaluationInput)
-        settings = _merge_cli_overrides(settings, overrides)
-        evaluation_input = EvaluationInput.model_validate(
-            settings,
-            context={"config_path": config_path, "cli_overrides": cli_overrides},
-        )
-        if not evaluation_input.simulation_file_path:
-            raise ValueError("simulation_file_path is required.")
-        if not os.path.isfile(evaluation_input.simulation_file_path):
-            raise ValueError(
-                f"simulation_file_path does not exist: "
-                f"{evaluation_input.simulation_file_path}"
+    try:
+        if args.command == "simulate":
+            valid_keys = set(SimulationInput.model_fields.keys())
+            validate_overrides(overrides, valid_keys)
+            _coerce_list_overrides(overrides, SimulationInput)
+            settings = _merge_cli_overrides(settings, overrides)
+            simulation_input = SimulationInput.model_validate(
+                settings,
+                context={"config_path": config_path, "cli_overrides": cli_overrides},
             )
-        _log_config_summary("Evaluation", evaluation_input.model_dump())
-        evaluator_output = run_evaluation(evaluation_input)
+            _log_config_summary("Simulation", simulation_input.model_dump())
+            asyncio.run(run_simulation(simulation_input, verbose=verbose))
+        elif args.command == "evaluate":
+            valid_keys = set(EvaluationInput.model_fields.keys())
+            validate_overrides(overrides, valid_keys)
+            _coerce_list_overrides(overrides, EvaluationInput)
+            settings = _merge_cli_overrides(settings, overrides)
+            evaluation_input = EvaluationInput.model_validate(
+                settings,
+                context={"config_path": config_path, "cli_overrides": cli_overrides},
+            )
+            if not evaluation_input.simulation_file_path:
+                logger.error("simulation_file_path is required.")
+                sys.exit(EXIT_CONFIG_ERROR)
+            if not os.path.isfile(evaluation_input.simulation_file_path):
+                logger.error(
+                    f"simulation_file_path does not exist: "
+                    f"{evaluation_input.simulation_file_path}"
+                )
+                sys.exit(EXIT_CONFIG_ERROR)
+            _log_config_summary("Evaluation", evaluation_input.model_dump())
+            evaluator_output = run_evaluation(evaluation_input)
 
-        if not _check_score_threshold(
-            evaluator_output,
-            evaluation_input.score_threshold,
-        ):
-            sys.exit(1)
-    elif args.command == "simulate-evaluate":
-        valid_keys = set(SimulationInput.model_fields.keys()) | set(
-            EvaluationInput.model_fields.keys()
-        )
-        validate_overrides(overrides, valid_keys)
-        _coerce_list_overrides(overrides, SimulationInput)
-        _coerce_list_overrides(overrides, EvaluationInput)
-        settings = _merge_cli_overrides(settings, overrides)
+            threshold_ok = _check_score_threshold(
+                evaluator_output, evaluation_input.score_threshold
+            )
+            metric_ok = _check_numeric_thresholds(
+                evaluator_output, evaluation_input.numeric_thresholds
+            )
+            qual_ok = _check_qualitative_thresholds(
+                evaluator_output, evaluation_input.qualitative_thresholds
+            )
+            if not threshold_ok or not metric_ok or not qual_ok:
+                sys.exit(EXIT_EVAL_FAILED)
+        elif args.command == "simulate-evaluate":
+            valid_keys = set(SimulationInput.model_fields.keys()) | set(
+                EvaluationInput.model_fields.keys()
+            )
+            validate_overrides(overrides, valid_keys)
+            _coerce_list_overrides(overrides, SimulationInput)
+            _coerce_list_overrides(overrides, EvaluationInput)
+            settings = _merge_cli_overrides(settings, overrides)
 
-        simulation_settings = {
-            k: v for k, v in settings.items() if k in SimulationInput.model_fields
-        }
-        simulation_input = SimulationInput.model_validate(
-            simulation_settings,
-            context={"config_path": config_path, "cli_overrides": cli_overrides},
-        )
-        _log_config_summary("Simulation", simulation_input.model_dump())
+            simulation_settings = {
+                k: v for k, v in settings.items() if k in SimulationInput.model_fields
+            }
+            simulation_input = SimulationInput.model_validate(
+                simulation_settings,
+                context={"config_path": config_path, "cli_overrides": cli_overrides},
+            )
+            _log_config_summary("Simulation", simulation_input.model_dump())
 
-        sim_start = time.time()
-        simulation_output = asyncio.run(
-            run_simulation(simulation_input, verbose=verbose)
-        )
-        sim_elapsed = time.time() - sim_start
-        logger.info(f"Simulation completed in {sim_elapsed:.2f} seconds")
+            sim_start = time.time()
+            simulation_output = asyncio.run(
+                run_simulation(simulation_input, verbose=verbose)
+            )
+            sim_elapsed = time.time() - sim_start
+            logger.info(f"Simulation completed in {sim_elapsed:.2f} seconds")
 
-        evaluation_settings = {
-            k: v for k, v in settings.items() if k in EvaluationInput.model_fields
-        }
-        evaluation_input = EvaluationInput.model_validate(
-            evaluation_settings,
-            context={"config_path": config_path, "cli_overrides": cli_overrides},
-        )
-        _log_config_summary("Evaluation", evaluation_input.model_dump())
+            evaluation_settings = {
+                k: v for k, v in settings.items() if k in EvaluationInput.model_fields
+            }
+            evaluation_input = EvaluationInput.model_validate(
+                evaluation_settings,
+                context={"config_path": config_path, "cli_overrides": cli_overrides},
+            )
+            _log_config_summary("Evaluation", evaluation_input.model_dump())
 
-        eval_start = time.time()
-        evaluator_output = run_evaluation(
-            evaluation_input, simulation=simulation_output
-        )
-        eval_elapsed = time.time() - eval_start
-        logger.info(f"Evaluation completed in {eval_elapsed:.2f} seconds")
+            eval_start = time.time()
+            evaluator_output = run_evaluation(
+                evaluation_input, simulation=simulation_output
+            )
+            eval_elapsed = time.time() - eval_start
+            logger.info(f"Evaluation completed in {eval_elapsed:.2f} seconds")
 
-        if not _check_score_threshold(
-            evaluator_output,
-            evaluation_input.score_threshold,
-        ):
-            sys.exit(1)
+            threshold_ok = _check_score_threshold(
+                evaluator_output, evaluation_input.score_threshold
+            )
+            metric_ok = _check_numeric_thresholds(
+                evaluator_output, evaluation_input.numeric_thresholds
+            )
+            qual_ok = _check_qualitative_thresholds(
+                evaluator_output, evaluation_input.qualitative_thresholds
+            )
+            if not threshold_ok or not metric_ok or not qual_ok:
+                sys.exit(EXIT_EVAL_FAILED)
+
+    except ValidationError as e:
+        logger.error(f"Configuration error: {e}")
+        sys.exit(EXIT_CONFIG_ERROR)
+    except (httpx.NetworkError, httpx.TimeoutException) as e:
+        logger.error(f"Network/LLM unavailable: {e}")
+        sys.exit(EXIT_NETWORK_ERROR)
+    except Exception as e:
+        logger.error(f"Internal error: {e}")
+        sys.exit(EXIT_INTERNAL_ERROR)
 
     logger.info(f"Total elapsed: {time.time() - s_time:.2f} seconds")
 
