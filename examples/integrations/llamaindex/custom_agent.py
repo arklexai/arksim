@@ -10,6 +10,7 @@ from __future__ import annotations
 import uuid
 
 from llama_index.core.agent.workflow import FunctionAgent
+from llama_index.core.llms import ChatMessage
 from llama_index.llms.openai import OpenAI
 
 from arksim.config import AgentConfig
@@ -26,10 +27,14 @@ class LlamaIndexAgent(BaseAgent):
             llm=llm,
             system_prompt="You are a helpful assistant.",
         )
+        self._history: list[ChatMessage] = []
 
     async def get_chat_id(self) -> str:
         return self._chat_id
 
     async def execute(self, user_query: str, **kwargs: object) -> str:
-        response = await self._agent.run(user_query)
-        return str(response)
+        self._history.append(ChatMessage(role="user", content=user_query))
+        response = await self._agent.run(user_query, chat_history=self._history)
+        answer = str(response)
+        self._history.append(ChatMessage(role="assistant", content=answer))
+        return answer

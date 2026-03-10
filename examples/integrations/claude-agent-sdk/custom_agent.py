@@ -19,16 +19,20 @@ class ClaudeAgentSDKAgent(BaseAgent):
     def __init__(self, agent_config: AgentConfig) -> None:
         super().__init__(agent_config)
         self._chat_id = str(uuid.uuid4())
+        self._history: list[dict[str, str]] = []
 
     async def get_chat_id(self) -> str:
         return self._chat_id
 
     async def execute(self, user_query: str, **kwargs: object) -> str:
+        self._history.append({"role": "user", "content": user_query})
         result = None
         async for message in query(
-            prompt=user_query,
+            prompt=self._history,
             options=ClaudeAgentOptions(allowed_tools=[]),
         ):
             if hasattr(message, "result"):
                 result = message.result
-        return result or ""
+        answer = result or ""
+        self._history.append({"role": "assistant", "content": answer})
+        return answer

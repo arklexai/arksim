@@ -25,17 +25,28 @@ class CrewAIAgent(BaseAgent):
             goal="Answer user questions helpfully",
             backstory="You are a helpful assistant.",
             llm="gpt-5.1",
+            memory=True,
         )
+        self._history: list[dict[str, str]] = []
 
     async def get_chat_id(self) -> str:
         return self._chat_id
 
     async def execute(self, user_query: str, **kwargs: object) -> str:
+        self._history.append({"role": "user", "content": user_query})
+        context = "\n".join(f"{m['role']}: {m['content']}" for m in self._history[:-1])
+        description = (
+            f"Conversation so far:\n{context}\n\nLatest question: {user_query}"
+            if context
+            else user_query
+        )
         task = Task(
-            description=user_query,
+            description=description,
             expected_output="A clear, helpful answer",
             agent=self._agent,
         )
         crew = Crew(agents=[self._agent], tasks=[task], verbose=False)
         result = await crew.kickoff_async()
-        return result.raw
+        answer = result.raw
+        self._history.append({"role": "assistant", "content": answer})
+        return answer

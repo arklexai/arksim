@@ -20,10 +20,13 @@ from arksim.scenario import Scenarios
 EXAMPLES_DIR = Path(__file__).resolve().parents[2] / "examples"
 
 # Discover all example directories that contain a config*.yaml
-_EXAMPLE_CONFIGS: list[Path] = sorted(EXAMPLES_DIR.glob("*/config*.yaml"))
+_EXAMPLE_CONFIGS: list[Path] = sorted(EXAMPLES_DIR.glob("**/config*.yaml"))
 
 
-@pytest.fixture(params=_EXAMPLE_CONFIGS, ids=lambda p: f"{p.parent.name}/{p.name}")
+@pytest.fixture(
+    params=_EXAMPLE_CONFIGS,
+    ids=lambda p: str(p.relative_to(EXAMPLES_DIR)),
+)
 def example_config_path(request: pytest.FixtureRequest) -> Path:
     return request.param
 
@@ -45,10 +48,13 @@ class TestExampleConfigs:
 
 
 # Discover all scenario JSON files
-_SCENARIO_FILES: list[Path] = sorted(EXAMPLES_DIR.glob("*/scenarios.json"))
+_SCENARIO_FILES: list[Path] = sorted(EXAMPLES_DIR.glob("**/scenarios.json"))
 
 
-@pytest.fixture(params=_SCENARIO_FILES, ids=lambda p: p.parent.name)
+@pytest.fixture(
+    params=_SCENARIO_FILES,
+    ids=lambda p: str(p.relative_to(EXAMPLES_DIR)),
+)
 def scenario_path(request: pytest.FixtureRequest) -> Path:
     return request.param
 

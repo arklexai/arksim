@@ -23,10 +23,14 @@ class OpenAIAgentsSDKAgent(BaseAgent):
             name="assistant",
             instructions="You are a helpful assistant.",
         )
+        self._history: list[dict[str, str]] = []
 
     async def get_chat_id(self) -> str:
         return self._chat_id
 
     async def execute(self, user_query: str, **kwargs: object) -> str:
-        result = await Runner.run(self._agent, input=user_query)
-        return result.final_output
+        self._history.append({"role": "user", "content": user_query})
+        result = await Runner.run(self._agent, input=self._history)
+        answer = result.final_output
+        self._history.append({"role": "assistant", "content": answer})
+        return answer
