@@ -5,6 +5,40 @@ All notable changes to ArkSim will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0](https://github.com/arklexai/arksim/compare/v0.1.0...v0.2.0) (2026-03-10)
+
+
+### ⚠ BREAKING CHANGES
+
+* support custom Python agent connector ([#76](https://github.com/arklexai/arksim/issues/76))
+* fail early if error loading custom metrics or file not found ([#78](https://github.com/arklexai/arksim/issues/78))
+
+### Added
+
+* **examples:** add SDK/framework integration examples ([#87](https://github.com/arklexai/arksim/issues/87)) ([a56ad00](https://github.com/arklexai/arksim/commit/a56ad00cf027b9d97bd269fb58107588d537ae51))
+* support custom Python agent connector ([#76](https://github.com/arklexai/arksim/issues/76)) ([eeaf33f](https://github.com/arklexai/arksim/commit/eeaf33fdef0fbc45e5c8d89d18083446150507c0))
+
+
+### Fixed
+
+* fail early if error loading custom metrics or file not found ([#78](https://github.com/arklexai/arksim/issues/78)) ([b7a4bde](https://github.com/arklexai/arksim/commit/b7a4bdea8fbe024b3ef9c5651754f23ec6332df6))
+
+
+### Documentation
+
+* add demo video ([#77](https://github.com/arklexai/arksim/issues/77)) ([8a6d2e6](https://github.com/arklexai/arksim/commit/8a6d2e6e39a2ade7ea4c7b446c198698c02e80f2))
+* update slogan and video ([#80](https://github.com/arklexai/arksim/issues/80)) ([0679f9c](https://github.com/arklexai/arksim/commit/0679f9cb3f598fa44e5dc9ffe6e6dafdfc66554b))
+
+
+### Changed
+
+* bump actions/checkout from 4 to 6 ([#81](https://github.com/arklexai/arksim/issues/81)) ([11cc630](https://github.com/arklexai/arksim/commit/11cc63018b56b6c2116c283337eca6cc17bb3c35))
+* bump actions/create-github-app-token from 1 to 2 ([#84](https://github.com/arklexai/arksim/issues/84)) ([529c6a6](https://github.com/arklexai/arksim/commit/529c6a697ff7085887831c40792ab0071f9cc396))
+* bump actions/download-artifact from 4 to 8 ([#82](https://github.com/arklexai/arksim/issues/82)) ([ff969bf](https://github.com/arklexai/arksim/commit/ff969bf28fff99f9e0fe9f5e5e19cc000ccc93ec))
+* bump actions/upload-artifact from 4 to 7 ([#83](https://github.com/arklexai/arksim/issues/83)) ([b9fa245](https://github.com/arklexai/arksim/commit/b9fa24522299423b52abb3cff3346ccef3d1985c))
+* bump github/codeql-action from 3 to 4 ([#85](https://github.com/arklexai/arksim/issues/85)) ([3189b9b](https://github.com/arklexai/arksim/commit/3189b9b8dcf9bbe1943532c71e96afdd8538df95))
+* **ui:** remove demo scenario loading ([#71](https://github.com/arklexai/arksim/issues/71)) ([709e6ab](https://github.com/arklexai/arksim/commit/709e6ab953021a24f42b02aeb60f02447b782ca9))
+
 ## [0.1.0](https://github.com/arklexai/arksim/compare/v0.0.6...v0.1.0) (2026-03-05)
 
 
