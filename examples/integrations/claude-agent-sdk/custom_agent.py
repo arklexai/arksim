@@ -26,9 +26,17 @@ class ClaudeAgentSDKAgent(BaseAgent):
 
     async def execute(self, user_query: str, **kwargs: object) -> str:
         self._history.append({"role": "user", "content": user_query})
+        # query() is stateless; include prior turns as context in the prompt.
+        if len(self._history) > 1:
+            context = "\n".join(
+                f"{m['role']}: {m['content']}" for m in self._history[:-1]
+            )
+            prompt = f"Conversation so far:\n{context}\n\nLatest message: {user_query}"
+        else:
+            prompt = user_query
         result = None
         async for message in query(
-            prompt=self._history,
+            prompt=prompt,
             options=ClaudeAgentOptions(allowed_tools=[]),
         ):
             if hasattr(message, "result"):
