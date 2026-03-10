@@ -74,7 +74,6 @@ score_threshold: 0.6
 numeric_thresholds:
   clarity: 3.5
   goal_completion: 0.6
-  not_exist: 3.0
 
 # Qualitative thresholds: every evaluated turn must return the required label
 # Works with built-in and custom qualitative metrics

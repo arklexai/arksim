@@ -710,12 +710,15 @@ def main() -> None:
 
     except ValidationError as e:
         logger.error(f"Configuration error: {e}")
+        logger.debug("Traceback:", exc_info=True)
         sys.exit(EXIT_CONFIG_ERROR)
     except (httpx.NetworkError, httpx.TimeoutException) as e:
         logger.error(f"Network/LLM unavailable: {e}")
+        logger.debug("Traceback:", exc_info=True)
         sys.exit(EXIT_NETWORK_ERROR)
     except Exception as e:
         logger.error(f"Internal error: {e}")
+        logger.debug("Traceback:", exc_info=True)
         sys.exit(EXIT_INTERNAL_ERROR)
 
     logger.info(f"Total elapsed: {time.time() - s_time:.2f} seconds")
