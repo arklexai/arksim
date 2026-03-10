@@ -331,6 +331,12 @@ Opens a local web app at `http://localhost:8080` where you can browse config fil
 | [bank-insurance](examples/bank-insurance/) | Financial services agent with custom compliance metrics, adversarial scenarios, and a Chat Completions server |
 | [e-commerce](examples/e-commerce/) | E-commerce product recommendation agent with custom metrics |
 | [openclaw](examples/openclaw/) | Integration with the OpenClaw agent framework |
+| [claude-agent-sdk](examples/integrations/claude-agent-sdk/) | Integration with the Claude Agent SDK |
+| [google-adk](examples/integrations/google-adk/) | Integration with Google ADK |
+| [openai-agents-sdk](examples/integrations/openai-agents-sdk/) | Integration with the OpenAI Agents SDK |
+| [langchain](examples/integrations/langchain/) | Integration with LangChain/LangGraph |
+| [crewai](examples/integrations/crewai/) | Integration with CrewAI |
+| [llamaindex](examples/integrations/llamaindex/) | Integration with LlamaIndex |
 
 ## Development
 

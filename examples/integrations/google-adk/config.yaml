@@ -1,0 +1,38 @@
+# Simulate Configuration File
+# Configuration for 'arksim simulate' command
+
+# ── AGENT CONFIGURATION ────────────────────────────────────────────────────
+
+agent_config:
+  agent_type: custom
+  agent_name: google-adk
+  custom_config:
+    module_path: ./custom_agent.py
+
+# ── SIMULATION SETTINGS ──────────────────────────────────────────────────────
+
+# Path to the scenarios file
+scenario_file_path: ./scenarios.json
+
+# Number of conversations per scenario to generate
+num_conversations_per_scenario: 1
+
+# Maximum turns per conversation
+max_turns: 5
+
+# Output file path for simulation results
+output_file_path: ./results/simulation/simulation.json
+
+# Jinja template for the simulated user's system prompt
+simulated_user_prompt_template: null
+
+# ── SHARED SETTINGS ──────────────────────────────────────────────────────────
+
+# LLM model
+model: gemini-2.5-flash
+
+# LLM provider
+provider: google
+
+# Workers for parallel processing
+num_workers: 50
