@@ -20,26 +20,27 @@ from arksim.simulation_engine.agent.base import BaseAgent
 class GoogleADKAgent(BaseAgent):
     def __init__(self, agent_config: AgentConfig) -> None:
         super().__init__(agent_config)
-        self._chat_id = str(uuid.uuid4())
         adk_agent = LlmAgent(
             name="assistant",
             model="gemini-2.5-flash",
             instruction="You are a helpful assistant.",
         )
         self._runner = InMemoryRunner(agent=adk_agent, app_name="arksim")
-        self._user_id = f"arksim_{self._chat_id}"
+        self._user_id = f"arksim_{uuid.uuid4()}"
         self._session_id: str | None = None
 
     async def get_chat_id(self) -> str:
-        return self._chat_id
-
-    async def execute(self, user_query: str, **kwargs: object) -> str:
         if self._session_id is None:
             session = await self._runner.session_service.create_session(
                 app_name="arksim",
                 user_id=self._user_id,
             )
             self._session_id = session.id
+        return self._session_id
+
+    async def execute(self, user_query: str, **kwargs: object) -> str:
+        if self._session_id is None:
+            await self.get_chat_id()
 
         content = types.Content(role="user", parts=[types.Part(text=user_query)])
         result = ""

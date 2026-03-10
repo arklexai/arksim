@@ -10,7 +10,7 @@ from __future__ import annotations
 import uuid
 
 from llama_index.core.agent.workflow import FunctionAgent
-from llama_index.core.llms import ChatMessage
+from llama_index.core.memory import ChatMemoryBuffer
 from llama_index.llms.openai import OpenAI
 
 from arksim.config import AgentConfig
@@ -22,19 +22,16 @@ class LlamaIndexAgent(BaseAgent):
         super().__init__(agent_config)
         self._chat_id = str(uuid.uuid4())
         llm = OpenAI(model="gpt-5.1")
+        self._memory = ChatMemoryBuffer.from_defaults()
         self._agent = FunctionAgent(
             tools=[],
             llm=llm,
             system_prompt="You are a helpful assistant.",
         )
-        self._history: list[ChatMessage] = []
 
     async def get_chat_id(self) -> str:
         return self._chat_id
 
     async def execute(self, user_query: str, **kwargs: object) -> str:
-        self._history.append(ChatMessage(role="user", content=user_query))
-        response = await self._agent.run(user_query, chat_history=self._history)
-        answer = str(response)
-        self._history.append(ChatMessage(role="assistant", content=answer))
-        return answer
+        response = await self._agent.run(user_query, memory=self._memory)
+        return str(response)
