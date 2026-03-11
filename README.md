@@ -327,7 +327,6 @@ qualitative_failure_labels:
 | `1` | Evaluation failed — threshold not met |
 | `2` | Configuration error |
 | `3` | Internal error |
-| `4` | Network / LLM unavailable |
 
 ## CLI Reference
 
