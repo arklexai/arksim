@@ -102,8 +102,8 @@ numeric_thresholds:
   helpfulness: 3.0
   goal_completion: 0.8
 qualitative_failure_labels:
-  agent_behavior_failure: [false_information]
-  prohibited_statements: [violated]
+  agent_behavior_failure: ["false information", "disobey user request"]
+  prohibited_statements: ["violated"]
 ```
 
 For all evaluation config keys, types, and defaults, see [Run configuration → Evaluation keys](/schema-reference#evaluation-keys) in the Schema Reference.
@@ -221,11 +221,54 @@ Hard-gate failure labels for qualitative metrics. Any evaluated turn whose label
 
 ```yaml
 qualitative_failure_labels:
-  agent_behavior_failure: [false_information]
-  prohibited_statements: [violated]
+  agent_behavior_failure: ["false information", "disobey user request"]
+  prohibited_statements: ["violated"]
 ```
 
 If any gate fails, the CLI exits with code `1` and logs which conversations and turns did not meet the requirement. See [Exit codes](/schema-reference#exit-codes) for the full list of exit codes.
+
+### Programmatic threshold gates
+
+When running ArkSim programmatically (e.g. with a custom agent class), you can apply the same gates by importing `check_numeric_thresholds` and `check_qualitative_failure_labels` directly from `arksim.evaluator`:
+
+```python
+import sys
+from arksim.evaluator import (
+    Evaluator,
+    check_numeric_thresholds,
+    check_qualitative_failure_labels,
+)
+
+evaluator_output = evaluator.evaluate(simulation_output)
+
+numeric_ok = check_numeric_thresholds(
+    evaluator_output,
+    numeric_thresholds={
+        "clarity": 3.5,
+        "goal_completion": 0.6,
+    },
+)
+qual_ok = check_qualitative_failure_labels(
+    evaluator_output,
+    qualitative_failure_labels={
+        "agent_behavior_failure": ["false information"],
+        "prohibited_statements": ["violated"],
+    },
+)
+
+if not numeric_ok or not qual_ok:
+    sys.exit(1)
+```
+
+You can also write your own custom gate by inspecting `evaluator_output.conversations` directly and applying any logic you need:
+
+```python
+# Example: fail if any conversation has overall_agent_score below 0.7
+for convo in evaluator_output.conversations:
+    if convo.overall_agent_score < 0.7:
+        print(f"Conversation {convo.conversation_id} failed: score {convo.overall_agent_score:.2f}")
+        sys.exit(1)
+```
 
 ---
 

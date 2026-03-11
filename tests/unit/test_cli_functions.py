@@ -6,14 +6,13 @@ from __future__ import annotations
 from unittest.mock import MagicMock
 
 from arksim.cli import (
-    _check_numeric_thresholds,
-    _check_qualitative_thresholds,
     _check_score_threshold,
     _coerce_list_overrides,
     _merge_cli_overrides,
     _parse_value,
     parse_extra_args,
 )
+from arksim.evaluator import check_numeric_thresholds, check_qualitative_failure_labels
 from arksim.evaluator.entities import ConversationEvaluation, Evaluation
 
 # ── _parse_value ─────────────────────────────────────────
@@ -226,11 +225,11 @@ class TestCheckScoreThreshold:
         assert _check_score_threshold(_make_score_evaluation([0.7]), 0.7) is True
 
 
-# ── _check_numeric_thresholds ────────────────────────────
+# ── check_numeric_thresholds ────────────────────────────
 
 
 class TestCheckNumericThresholds:
-    """Tests for _check_numeric_thresholds."""
+    """Tests for check_numeric_thresholds."""
 
     @staticmethod
     def _make_convo(
@@ -268,12 +267,12 @@ class TestCheckNumericThresholds:
     def test_none_thresholds_passes(self) -> None:
         """None thresholds always returns True."""
         ev = self._make_evaluation([self._make_convo("c1", {"faithfulness": [3.0]})])
-        assert _check_numeric_thresholds(ev, None) is True
+        assert check_numeric_thresholds(ev, None) is True
 
     def test_empty_thresholds_passes(self) -> None:
         """Empty dict always returns True."""
         ev = self._make_evaluation([self._make_convo("c1", {"faithfulness": [3.0]})])
-        assert _check_numeric_thresholds(ev, {}) is True
+        assert check_numeric_thresholds(ev, {}) is True
 
     def test_all_above_threshold(self) -> None:
         """Returns True when all conversations pass."""
@@ -283,7 +282,7 @@ class TestCheckNumericThresholds:
                 self._make_convo("c2", {"faithfulness": [3.5, 3.5]}),
             ]
         )
-        assert _check_numeric_thresholds(ev, {"faithfulness": 3.5}) is True
+        assert check_numeric_thresholds(ev, {"faithfulness": 3.5}) is True
 
     def test_some_below_threshold(self) -> None:
         """Returns False when any conversation fails."""
@@ -293,31 +292,31 @@ class TestCheckNumericThresholds:
                 self._make_convo("c2", {"faithfulness": [2.0, 2.0]}),
             ]
         )
-        assert _check_numeric_thresholds(ev, {"faithfulness": 3.5}) is False
+        assert check_numeric_thresholds(ev, {"faithfulness": 3.5}) is False
 
     def test_exact_threshold_passes(self) -> None:
         """Score exactly equal to threshold passes."""
         ev = self._make_evaluation([self._make_convo("c1", {"faithfulness": [4.0]})])
-        assert _check_numeric_thresholds(ev, {"faithfulness": 4.0}) is True
+        assert check_numeric_thresholds(ev, {"faithfulness": 4.0}) is True
 
     def test_goal_completion_uses_convo_score(self) -> None:
         """goal_completion reads the per-conversation score, not turn scores."""
         ev = self._make_evaluation(
             [self._make_convo("c1", {}, goal_completion_score=0.9)]
         )
-        assert _check_numeric_thresholds(ev, {"goal_completion": 0.8}) is True
+        assert check_numeric_thresholds(ev, {"goal_completion": 0.8}) is True
 
     def test_goal_completion_not_computed_skips(self) -> None:
         """goal_completion_score == -1 (not computed) is skipped with a warning."""
         ev = self._make_evaluation(
             [self._make_convo("c1", {}, goal_completion_score=-1.0)]
         )
-        assert _check_numeric_thresholds(ev, {"goal_completion": 0.8}) is True
+        assert check_numeric_thresholds(ev, {"goal_completion": 0.8}) is True
 
     def test_metric_not_found_skips_with_warning(self) -> None:
         """Metric absent from all turns is skipped — does not cause failure."""
         ev = self._make_evaluation([self._make_convo("c1", {"helpfulness": [3.0]})])
-        assert _check_numeric_thresholds(ev, {"not_exist": 4.0}) is True
+        assert check_numeric_thresholds(ev, {"not_exist": 4.0}) is True
 
     def test_multiple_metrics_both_fail_reported(self) -> None:
         """Both failing metrics are reported before returning False."""
@@ -325,7 +324,7 @@ class TestCheckNumericThresholds:
             [self._make_convo("c1", {"faithfulness": [1.0], "helpfulness": [1.0]})]
         )
         assert (
-            _check_numeric_thresholds(ev, {"faithfulness": 4.0, "helpfulness": 3.0})
+            check_numeric_thresholds(ev, {"faithfulness": 4.0, "helpfulness": 3.0})
             is False
         )
 
@@ -334,14 +333,14 @@ class TestCheckNumericThresholds:
         ev = self._make_evaluation(
             [self._make_convo("c1", {"faithfulness": [4.0, -1.0]})]
         )
-        assert _check_numeric_thresholds(ev, {"faithfulness": 3.5}) is True
+        assert check_numeric_thresholds(ev, {"faithfulness": 3.5}) is True
 
 
-# ── _check_qualitative_thresholds ────────────────────────
+# ── check_qualitative_failure_labels ────────────────────────
 
 
 class TestCheckQualitativeThresholds:
-    """Tests for _check_qualitative_thresholds."""
+    """Tests for check_qualitative_failure_labels."""
 
     @staticmethod
     def _make_convo(
@@ -389,7 +388,7 @@ class TestCheckQualitativeThresholds:
     def test_none_thresholds_passes(self) -> None:
         """None thresholds always returns True."""
         ev = self._make_evaluation([self._make_convo("c1", abf_labels=["no failure"])])
-        assert _check_qualitative_thresholds(ev, None) is True
+        assert check_qualitative_failure_labels(ev, None) is True
 
     def test_no_turns_have_failure_label(self) -> None:
         """Returns True when no turn has a failure label."""
@@ -397,7 +396,7 @@ class TestCheckQualitativeThresholds:
             [self._make_convo("c1", abf_labels=["no failure", "no failure"])]
         )
         assert (
-            _check_qualitative_thresholds(
+            check_qualitative_failure_labels(
                 ev, {"agent_behavior_failure": ["false information"]}
             )
             is True
@@ -409,7 +408,7 @@ class TestCheckQualitativeThresholds:
             [self._make_convo("c1", abf_labels=["no failure", "false information"])]
         )
         assert (
-            _check_qualitative_thresholds(
+            check_qualitative_failure_labels(
                 ev, {"agent_behavior_failure": ["false information"]}
             )
             is False
@@ -426,7 +425,7 @@ class TestCheckQualitativeThresholds:
             ]
         )
         assert (
-            _check_qualitative_thresholds(
+            check_qualitative_failure_labels(
                 ev, {"agent_behavior_failure": ["false information"]}
             )
             is True
@@ -444,7 +443,7 @@ class TestCheckQualitativeThresholds:
             ]
         )
         assert (
-            _check_qualitative_thresholds(
+            check_qualitative_failure_labels(
                 ev, {"agent_behavior_failure": ["disobey user request"]}
             )
             is True
@@ -460,7 +459,9 @@ class TestCheckQualitativeThresholds:
             ]
         )
         assert (
-            _check_qualitative_thresholds(ev, {"prohibited_statements": ["violated"]})
+            check_qualitative_failure_labels(
+                ev, {"prohibited_statements": ["violated"]}
+            )
             is True
         )
 
@@ -468,7 +469,9 @@ class TestCheckQualitativeThresholds:
         """Turns where the metric is absent are skipped — not counted as failures."""
         ev = self._make_evaluation([self._make_convo("c1", qual_scores={})])
         assert (
-            _check_qualitative_thresholds(ev, {"prohibited_statements": ["violated"]})
+            check_qualitative_failure_labels(
+                ev, {"prohibited_statements": ["violated"]}
+            )
             is True
         )
 
@@ -478,7 +481,9 @@ class TestCheckQualitativeThresholds:
             [self._make_convo("c1", qual_scores={"other_metric": ["ok"]})]
         )
         assert (
-            _check_qualitative_thresholds(ev, {"prohibited_statements": ["violated"]})
+            check_qualitative_failure_labels(
+                ev, {"prohibited_statements": ["violated"]}
+            )
             is True
         )
 
@@ -494,7 +499,7 @@ class TestCheckQualitativeThresholds:
             ]
         )
         assert (
-            _check_qualitative_thresholds(
+            check_qualitative_failure_labels(
                 ev,
                 {
                     "agent_behavior_failure": ["false information"],

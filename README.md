@@ -315,8 +315,8 @@ numeric_thresholds:
   goal_completion: 0.7
 
 qualitative_failure_labels:
-  agent_behavior_failure: [false_information]
-  prohibited_statements: [violated]
+  agent_behavior_failure: ["false information", "disobey user request"]
+  prohibited_statements: ["violated"]
 ```
 
 **Exit codes:**

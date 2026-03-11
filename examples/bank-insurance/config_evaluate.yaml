@@ -38,7 +38,7 @@ numeric_thresholds:
 # Qualitative failure labels: fail the run if any evaluated turn returns one of these labels
 # Works with built-in and custom qualitative metrics
 qualitative_failure_labels:
-  prohibited_statements: [violated]
+  prohibited_statements: ["violated"]
 
 # LLM model
 model: gpt-5.1
