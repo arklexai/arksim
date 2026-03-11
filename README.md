@@ -362,7 +362,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 Apache-2.0. See [LICENSE](LICENSE).
 
 ## Citation
-```
+```bibtex
 @misc{shea2026sage,
       title={SAGE: A Top-Down Bottom-Up Knowledge-Grounded User Simulator for Multi-turn AGent Evaluation}, 
       author={Ryan Shea and Yunan Lu and Liang Qiu and Zhou Yu},
