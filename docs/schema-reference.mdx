@@ -219,7 +219,7 @@ Used by `evaluate` and the evaluation phase of `simulate-evaluate`.
 | `generate_html_report`      | boolean       | Whether to generate `final_report.html`.                                                                           |
 | `score_threshold`           | float \| null | If set, exit with non-zero code when any conversation score is below this value.                                   |
 | `numeric_thresholds`        | dict[string, float] \| null | Per-metric thresholds on each metric's native scale. Keys are metric names; values are minimum required scores. Built-in turn-level metrics use a 1–5 scale (mean across turns per conversation). `goal_completion` is stored as 0–1 and compared directly. |
-| `qualitative_thresholds`    | dict[string, string] \| null | Hard-gate label requirements for qualitative metrics. Keys are metric names; values are the required label (e.g. `prohibited_statements: "clean"`). Every evaluated turn must return the required label. |
+| `qualitative_failure_labels` | dict[string, list[string]] \| null | Hard-gate failure labels for qualitative metrics. Keys are metric names; values are lists of labels that trigger failure (e.g. `agent_behavior_failure: [false_information]`). Any evaluated turn whose label appears in the list fails the run with exit code 1. |
 | `model`                     | string        | LLM model for scoring.                                                                                             |
 | `provider`                  | string        | LLM provider.                                                                                                      |
 | `num_workers`               | string \| int | Parallel workers (default `50`). Set `"auto"` to auto-scale.                                                       |
@@ -237,7 +237,7 @@ The `arksim` CLI exits with one of the following codes, suitable for use in CI/C
 | Code | Constant           | When it is returned                                                                 |
 | ---- | ------------------ | ----------------------------------------------------------------------------------- |
 | `0`  | `EXIT_OK`          | Run completed successfully and all threshold checks passed.                         |
-| `1`  | `EXIT_EVAL_FAILED` | Evaluation completed but one or more threshold checks failed (`score_threshold`, `numeric_thresholds`, or `qualitative_thresholds`). |
+| `1`  | `EXIT_EVAL_FAILED` | Evaluation completed but one or more threshold checks failed (`score_threshold`, `numeric_thresholds`, or `qualitative_failure_labels`). |
 | `2`  | `EXIT_CONFIG_ERROR`| Invalid or missing configuration (bad YAML, unknown keys, missing required fields). |
 | `3`  | `EXIT_INTERNAL_ERROR` | Unexpected internal error.                                                       |
 | `4`  | `EXIT_NETWORK_ERROR`  | Network or LLM provider unreachable (connection error or timeout).               |

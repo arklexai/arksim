@@ -159,22 +159,22 @@ def _check_numeric_thresholds(
 
 def _check_qualitative_thresholds(
     evaluator_output: Evaluation,
-    qualitative_thresholds: dict[str, str] | None,
+    qualitative_failure_labels: dict[str, list[str]] | None,
 ) -> bool:
-    """Check per-metric qualitative label requirements (hard gates).
+    """Check per-metric qualitative failure label gates.
 
-    Every evaluated turn in every conversation must return the required label.
+    Any evaluated turn whose label appears in the failure list fails the run.
     Turns where the metric did not run are skipped. agent_behavior_failure uses
     the dedicated turn field; other qualitative metrics use turn.qual_scores.
 
     Returns:
-        True if all requirements pass, False if any fail.
+        True if no failure labels were found, False if any were.
     """
-    if not qualitative_thresholds:
+    if not qualitative_failure_labels:
         return True
 
     all_passed = True
-    for metric_name, required_label in qualitative_thresholds.items():
+    for metric_name, failure_labels in qualitative_failure_labels.items():
         failed_conversations = []
         for convo in evaluator_output.conversations:
             failing_turns = []
@@ -191,7 +191,7 @@ def _check_qualitative_thresholds(
                         continue
                     label = match.value
 
-                if label != required_label:
+                if label in failure_labels:
                     failing_turns.append({"turn_id": turn.turn_id, "label": label})
 
             if failing_turns:
@@ -205,19 +205,18 @@ def _check_qualitative_thresholds(
         if failed_conversations:
             all_passed = False
             logger.error(
-                f"Qualitative threshold failed: '{metric_name}' must be "
-                f"'{required_label}'. Failed conversations: {len(failed_conversations)}"
+                f"Qualitative gate failed: '{metric_name}' matched failure label(s) "
+                f"{failure_labels}. Failed conversations: {len(failed_conversations)}"
             )
             for fc in failed_conversations:
                 for t in fc["failing_turns"]:
                     logger.error(
                         f"  Conversation {fc['conversation_id']} turn {t['turn_id']}: "
-                        f"{metric_name}='{t['label']}' != '{required_label}'"
+                        f"{metric_name}='{t['label']}' is in {failure_labels}"
                     )
         else:
             logger.info(
-                f"Qualitative threshold passed: '{metric_name}' == '{required_label}' "
-                f"for all evaluated turns"
+                f"Qualitative gate passed: '{metric_name}' — no failure labels found"
             )
 
     return all_passed
@@ -609,6 +608,10 @@ def main() -> None:
 
     cli_overrides = set(overrides.keys())
 
+    simulation_input = None
+    evaluation_input = None
+
+    # Phase 1: config validation
     try:
         if args.command == "simulate":
             valid_keys = set(SimulationInput.model_fields.keys())
@@ -620,7 +623,6 @@ def main() -> None:
                 context={"config_path": config_path, "cli_overrides": cli_overrides},
             )
             _log_config_summary("Simulation", simulation_input.model_dump())
-            asyncio.run(run_simulation(simulation_input, verbose=verbose))
         elif args.command == "evaluate":
             valid_keys = set(EvaluationInput.model_fields.keys())
             validate_overrides(overrides, valid_keys)
@@ -640,19 +642,6 @@ def main() -> None:
                 )
                 sys.exit(EXIT_CONFIG_ERROR)
             _log_config_summary("Evaluation", evaluation_input.model_dump())
-            evaluator_output = run_evaluation(evaluation_input)
-
-            threshold_ok = _check_score_threshold(
-                evaluator_output, evaluation_input.score_threshold
-            )
-            metric_ok = _check_numeric_thresholds(
-                evaluator_output, evaluation_input.numeric_thresholds
-            )
-            qual_ok = _check_qualitative_thresholds(
-                evaluator_output, evaluation_input.qualitative_thresholds
-            )
-            if not threshold_ok or not metric_ok or not qual_ok:
-                sys.exit(EXIT_EVAL_FAILED)
         elif args.command == "simulate-evaluate":
             valid_keys = set(SimulationInput.model_fields.keys()) | set(
                 EvaluationInput.model_fields.keys()
@@ -671,13 +660,6 @@ def main() -> None:
             )
             _log_config_summary("Simulation", simulation_input.model_dump())
 
-            sim_start = time.time()
-            simulation_output = asyncio.run(
-                run_simulation(simulation_input, verbose=verbose)
-            )
-            sim_elapsed = time.time() - sim_start
-            logger.info(f"Simulation completed in {sim_elapsed:.2f} seconds")
-
             evaluation_settings = {
                 k: v for k, v in settings.items() if k in EvaluationInput.model_fields
             }
@@ -686,6 +668,36 @@ def main() -> None:
                 context={"config_path": config_path, "cli_overrides": cli_overrides},
             )
             _log_config_summary("Evaluation", evaluation_input.model_dump())
+    except ValidationError as e:
+        logger.error(f"Configuration error: {e}")
+        logger.debug("Traceback:", exc_info=True)
+        sys.exit(EXIT_CONFIG_ERROR)
+
+    # Phase 2: runtime execution
+    try:
+        if args.command == "simulate":
+            asyncio.run(run_simulation(simulation_input, verbose=verbose))
+        elif args.command == "evaluate":
+            evaluator_output = run_evaluation(evaluation_input)
+
+            threshold_ok = _check_score_threshold(
+                evaluator_output, evaluation_input.score_threshold
+            )
+            metric_ok = _check_numeric_thresholds(
+                evaluator_output, evaluation_input.numeric_thresholds
+            )
+            qual_ok = _check_qualitative_thresholds(
+                evaluator_output, evaluation_input.qualitative_failure_labels
+            )
+            if not threshold_ok or not metric_ok or not qual_ok:
+                sys.exit(EXIT_EVAL_FAILED)
+        elif args.command == "simulate-evaluate":
+            sim_start = time.time()
+            simulation_output = asyncio.run(
+                run_simulation(simulation_input, verbose=verbose)
+            )
+            sim_elapsed = time.time() - sim_start
+            logger.info(f"Simulation completed in {sim_elapsed:.2f} seconds")
 
             eval_start = time.time()
             evaluator_output = run_evaluation(
@@ -701,15 +713,10 @@ def main() -> None:
                 evaluator_output, evaluation_input.numeric_thresholds
             )
             qual_ok = _check_qualitative_thresholds(
-                evaluator_output, evaluation_input.qualitative_thresholds
+                evaluator_output, evaluation_input.qualitative_failure_labels
             )
             if not threshold_ok or not metric_ok or not qual_ok:
                 sys.exit(EXIT_EVAL_FAILED)
-
-    except ValidationError as e:
-        logger.error(f"Configuration error: {e}")
-        logger.debug("Traceback:", exc_info=True)
-        sys.exit(EXIT_CONFIG_ERROR)
     except Exception as e:
         logger.error(f"Internal error: {e}")
         logger.debug("Traceback:", exc_info=True)

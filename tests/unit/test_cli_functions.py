@@ -391,23 +391,27 @@ class TestCheckQualitativeThresholds:
         ev = self._make_evaluation([self._make_convo("c1", abf_labels=["no failure"])])
         assert _check_qualitative_thresholds(ev, None) is True
 
-    def test_all_turns_match_required_label(self) -> None:
-        """Returns True when every turn has the required label."""
+    def test_no_turns_have_failure_label(self) -> None:
+        """Returns True when no turn has a failure label."""
         ev = self._make_evaluation(
             [self._make_convo("c1", abf_labels=["no failure", "no failure"])]
         )
         assert (
-            _check_qualitative_thresholds(ev, {"agent_behavior_failure": "no failure"})
+            _check_qualitative_thresholds(
+                ev, {"agent_behavior_failure": ["false information"]}
+            )
             is True
         )
 
-    def test_one_turn_fails_required_label(self) -> None:
-        """Returns False when any turn has a different label."""
+    def test_one_turn_has_failure_label(self) -> None:
+        """Returns False when any turn has a label in the failure list."""
         ev = self._make_evaluation(
             [self._make_convo("c1", abf_labels=["no failure", "false information"])]
         )
         assert (
-            _check_qualitative_thresholds(ev, {"agent_behavior_failure": "no failure"})
+            _check_qualitative_thresholds(
+                ev, {"agent_behavior_failure": ["false information"]}
+            )
             is False
         )
 
@@ -422,7 +426,9 @@ class TestCheckQualitativeThresholds:
             ]
         )
         assert (
-            _check_qualitative_thresholds(ev, {"agent_behavior_failure": "no failure"})
+            _check_qualitative_thresholds(
+                ev, {"agent_behavior_failure": ["false information"]}
+            )
             is True
         )
 
@@ -438,7 +444,9 @@ class TestCheckQualitativeThresholds:
             ]
         )
         assert (
-            _check_qualitative_thresholds(ev, {"agent_behavior_failure": "no failure"})
+            _check_qualitative_thresholds(
+                ev, {"agent_behavior_failure": ["disobey user request"]}
+            )
             is True
         )
 
@@ -452,7 +460,7 @@ class TestCheckQualitativeThresholds:
             ]
         )
         assert (
-            _check_qualitative_thresholds(ev, {"prohibited_statements": "clean"})
+            _check_qualitative_thresholds(ev, {"prohibited_statements": ["violated"]})
             is True
         )
 
@@ -460,7 +468,7 @@ class TestCheckQualitativeThresholds:
         """Turns where the metric is absent are skipped — not counted as failures."""
         ev = self._make_evaluation([self._make_convo("c1", qual_scores={})])
         assert (
-            _check_qualitative_thresholds(ev, {"prohibited_statements": "clean"})
+            _check_qualitative_thresholds(ev, {"prohibited_statements": ["violated"]})
             is True
         )
 
@@ -470,7 +478,7 @@ class TestCheckQualitativeThresholds:
             [self._make_convo("c1", qual_scores={"other_metric": ["ok"]})]
         )
         assert (
-            _check_qualitative_thresholds(ev, {"prohibited_statements": "clean"})
+            _check_qualitative_thresholds(ev, {"prohibited_statements": ["violated"]})
             is True
         )
 
@@ -489,8 +497,8 @@ class TestCheckQualitativeThresholds:
             _check_qualitative_thresholds(
                 ev,
                 {
-                    "agent_behavior_failure": "no failure",
-                    "prohibited_statements": "clean",
+                    "agent_behavior_failure": ["false information"],
+                    "prohibited_statements": ["violated"],
                 },
             )
             is False

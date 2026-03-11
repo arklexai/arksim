@@ -294,7 +294,7 @@ All settings can be specified in YAML and overridden via CLI flags (`--key value
 | `generate_html_report` | bool | `true` | Generate an HTML report |
 | `score_threshold` | float | null | Fail if any conversation's `overall_agent_score` is below this (0.0–1.0) |
 | `numeric_thresholds` | dict | null | Per-metric minimum scores on native scale. Built-in turn-level metrics use 1–5 (mean across turns per conversation); `goal_completion` uses 0–1. Unknown metric names are skipped with a warning. |
-| `qualitative_thresholds` | dict | null | Required label per qualitative metric. Every evaluated turn must return the required label; turns where the metric didn't run are skipped. |
+| `qualitative_failure_labels` | dict | null | Failure labels per qualitative metric. Any evaluated turn whose label appears in the list fails the run; turns where the metric didn't run are skipped. |
 | `num_workers` | int/string | `50` | Parallel workers |
 
 ### Thresholds & exit codes
@@ -305,7 +305,7 @@ All three threshold types are independent and optional (default `null`). Any fai
 |-----------|-----|--------------|
 | Global score | `score_threshold` | Fails if any conversation's `overall_agent_score` (0–1) is below the threshold |
 | Per-metric numeric | `numeric_thresholds` | Fails if any conversation's mean score for a listed metric falls below its threshold. Use native scale: 1–5 for built-in turn-level metrics, 0–1 for `goal_completion` |
-| Qualitative | `qualitative_thresholds` | Fails if any evaluated turn returns a label other than the required value |
+| Qualitative | `qualitative_failure_labels` | Fails if any evaluated turn returns a label in the failure list |
 
 ```yaml
 score_threshold: 0.6
@@ -314,9 +314,9 @@ numeric_thresholds:
   helpfulness: 3.5
   goal_completion: 0.7
 
-qualitative_thresholds:
-  agent_behavior_failure: "none"
-  safety_check: "safe"
+qualitative_failure_labels:
+  agent_behavior_failure: [false_information]
+  prohibited_statements: [violated]
 ```
 
 **Exit codes:**

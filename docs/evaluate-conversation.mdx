@@ -101,8 +101,9 @@ numeric_thresholds:
   faithfulness: 3.5
   helpfulness: 3.0
   goal_completion: 0.8
-qualitative_thresholds:
-  agent_behavior_failure: "no_failure"
+qualitative_failure_labels:
+  agent_behavior_failure: [false_information]
+  prohibited_statements: [violated]
 ```
 
 For all evaluation config keys, types, and defaults, see [Run configuration → Evaluation keys](/schema-reference#evaluation-keys) in the Schema Reference.
@@ -191,7 +192,7 @@ Threshold gates let you fail the CLI with a non-zero exit code when evaluation r
 
 ### `score_threshold`
 
-A single float (0–1) applied to every conversation's `overall_agent_score`. Any conversation below the threshold fails the run.
+A single float (0–1) applied to every conversation's `overall_agent_score`. Any conversation below the threshold fails the run with exit code 1.
 
 ```yaml
 score_threshold: 0.6
@@ -199,7 +200,7 @@ score_threshold: 0.6
 
 ### `numeric_thresholds`
 
-Per-metric minimum scores on each metric's native scale. The mean score across all turns per conversation is compared against the threshold. Every conversation must meet it.
+Per-metric minimum scores on each metric's native scale. The mean score across all turns per conversation is compared against the threshold. Any conversation that falls below the threshold fails the run with exit code 1.
 
 | Metric | Scale | Notes |
 | --- | --- | --- |
@@ -214,14 +215,14 @@ numeric_thresholds:
   goal_completion: 0.8
 ```
 
-### `qualitative_thresholds`
+### `qualitative_failure_labels`
 
-Hard-gate label requirements for qualitative metrics. Every evaluated turn in every conversation must return the required label. Turns where the metric did not run are skipped.
+Hard-gate failure labels for qualitative metrics. Any evaluated turn whose label appears in the list fails the run with exit code 1. Turns where the metric did not run are skipped.
 
 ```yaml
-qualitative_thresholds:
-  agent_behavior_failure: "no_failure"
-  prohibited_statements: "clean"   # example custom qualitative metric
+qualitative_failure_labels:
+  agent_behavior_failure: [false_information]
+  prohibited_statements: [violated]
 ```
 
 If any gate fails, the CLI exits with code `1` and logs which conversations and turns did not meet the requirement. See [Exit codes](/schema-reference#exit-codes) for the full list of exit codes.

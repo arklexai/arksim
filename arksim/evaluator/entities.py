@@ -86,13 +86,13 @@ class EvaluationInput(BaseModel):
             "'goal_completion' is stored as 0–1 and compared directly."
         ),
     )
-    qualitative_thresholds: dict[str, str] | None = Field(
+    qualitative_failure_labels: dict[str, list[str]] | None = Field(
         default=None,
         description=(
-            "Hard-gate thresholds for qualitative metrics. "
-            "Keys are metric names, values are the required label "
-            "(e.g. 'prohibited_statements': 'clean'). "
-            "Every evaluated turn must return the required label; "
+            "Hard-gate failure labels for qualitative metrics. "
+            "Keys are metric names, values are lists of labels that trigger failure "
+            "(e.g. 'prohibited_statements': ['violated']). "
+            "Any evaluated turn whose label appears in the list fails the run; "
             "turns where the metric did not run are skipped."
         ),
     )

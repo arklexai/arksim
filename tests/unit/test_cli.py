@@ -97,10 +97,10 @@ class TestMainExceptionHandlers:
             return exc
         raise AssertionError("unreachable")  # pragma: no cover
 
-    def test_validation_error_exits_config_error(
+    def test_validation_error_from_runtime_exits_internal_error(
         self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
     ) -> None:
-        """ValidationError raised inside main() exits with EXIT_CONFIG_ERROR."""
+        """ValidationError raised inside run_evaluation() exits with EXIT_INTERNAL_ERROR (not config error)."""
         cfg = self._eval_config(tmp_path)
         monkeypatch.setattr(sys, "argv", ["arksim", "evaluate", str(cfg)])
         with (
@@ -111,7 +111,7 @@ class TestMainExceptionHandlers:
             pytest.raises(SystemExit) as exc_info,
         ):
             main()
-        assert exc_info.value.code == EXIT_CONFIG_ERROR
+        assert exc_info.value.code == EXIT_INTERNAL_ERROR
 
     def test_internal_error_exits_internal_error(
         self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
@@ -206,7 +206,7 @@ class TestMainEvaluateThresholds:
         """Exits with EXIT_EVAL_FAILED when a qualitative threshold is not met."""
         cfg = self._eval_config(
             tmp_path,
-            'qualitative_thresholds:\n  agent_behavior_failure: "no failure"\n',
+            'qualitative_failure_labels:\n  agent_behavior_failure:\n    - "false information"\n',
         )
         monkeypatch.setattr(sys, "argv", ["arksim", "evaluate", str(cfg)])
         turn = MagicMock()
