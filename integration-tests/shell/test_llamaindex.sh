@@ -14,7 +14,7 @@ require_env "OPENAI_API_KEY"
 log "Installing LlamaIndex dependencies..."
 pip install llama-index llama-index-llms-openai --quiet
 
-run_provider_test \
+run_shell_test \
     "llamaindex" \
     "$REPO_ROOT/examples/integrations/llamaindex/custom_agent.py" \
     "gpt-5.1" \

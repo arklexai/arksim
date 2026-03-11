@@ -14,7 +14,7 @@ require_env "OPENAI_API_KEY"
 log "Installing CrewAI dependencies..."
 pip install crewai --quiet
 
-run_provider_test \
+run_shell_test \
     "crewai" \
     "$REPO_ROOT/examples/integrations/crewai/custom_agent.py" \
     "gpt-5.1" \

@@ -12,13 +12,13 @@ log() { echo "[$(date '+%H:%M:%S')] $*"; }
 
 # ---------------------------------------------------------------------------
 # require_env VAR
-# Exits 0 with a SKIP message if the env var is not set.
+# Exits 1 with a FAIL message if the env var is not set.
 # ---------------------------------------------------------------------------
 require_env() {
     local var="$1"
     if [[ -z "${!var:-}" ]]; then
-        log "SKIP: $var is not set — skipping test"
-        exit 0
+        log "FAIL: $var is not set — cannot run test"
+        exit 1
     fi
 }
 
@@ -70,7 +70,7 @@ agent_config:
 
 scenario_file_path: ./scenarios.json
 num_conversations_per_scenario: 1
-max_turns: 2
+max_turns: 5
 output_file_path: ./results/simulation/simulation.json
 model: $model
 provider: $provider
@@ -105,10 +105,10 @@ PYEOF
 }
 
 # ---------------------------------------------------------------------------
-# run_provider_test NAME CUSTOM_AGENT_SRC MODEL PROVIDER
+# run_shell_test NAME CUSTOM_AGENT_SRC MODEL PROVIDER
 # Orchestrates temp dir setup, simulate, and validation.
 # ---------------------------------------------------------------------------
-run_provider_test() {
+run_shell_test() {
     local name="$1"
     local agent_src="$2"
     local model="$3"

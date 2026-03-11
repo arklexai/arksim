@@ -14,7 +14,7 @@ require_env "ANTHROPIC_API_KEY"
 log "Installing Claude Agent SDK dependencies..."
 pip install claude-agent-sdk --quiet
 
-run_provider_test \
+run_shell_test \
     "claude-agent-sdk" \
     "$REPO_ROOT/examples/integrations/claude-agent-sdk/custom_agent.py" \
     "claude-sonnet-4-6" \

@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
-# Run all provider integration tests and report a summary.
+# Run all shell integration tests and report a summary.
 #
-# Tests that are missing their required API key are counted as SKIP (not FAIL).
-# Exits 1 if any test fails.
+# Tests that are missing their required API key are counted as FAIL.
 #
 # Usage:
-#   bash tests/integration/providers/run_all.sh
+#   bash integration-tests/shell/run_all.sh
 set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -20,7 +19,6 @@ SCRIPTS=(
 )
 
 pass=0
-skip=0
 fail=0
 failed_names=()
 
@@ -39,13 +37,8 @@ for script in "${SCRIPTS[@]}"; do
     echo "$output"
 
     if [[ $exit_code -eq 0 ]]; then
-        if echo "$output" | grep -q "^.*SKIP:"; then
-            echo "  → SKIPPED"
-            ((skip++))
-        else
-            echo "  → PASSED"
-            ((pass++))
-        fi
+        echo "  → PASSED"
+        ((pass++))
     else
         echo "  → FAILED (exit code $exit_code)"
         ((fail++))
@@ -55,7 +48,7 @@ done
 
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "  Results: ${pass} passed, ${skip} skipped, ${fail} failed"
+echo "  Results: ${pass} passed, ${fail} failed"
 if [[ ${#failed_names[@]} -gt 0 ]]; then
     echo "  Failed:  ${failed_names[*]}"
 fi

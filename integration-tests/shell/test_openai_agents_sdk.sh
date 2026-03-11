@@ -14,7 +14,7 @@ require_env "OPENAI_API_KEY"
 log "Installing OpenAI Agents SDK dependencies..."
 pip install openai-agents --quiet
 
-run_provider_test \
+run_shell_test \
     "openai-agents-sdk" \
     "$REPO_ROOT/examples/integrations/openai-agents-sdk/custom_agent.py" \
     "gpt-5.1" \

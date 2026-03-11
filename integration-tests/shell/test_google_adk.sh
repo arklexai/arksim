@@ -14,7 +14,7 @@ require_env "GOOGLE_API_KEY"
 log "Installing Google ADK dependencies..."
 pip install google-adk --quiet
 
-run_provider_test \
+run_shell_test \
     "google-adk" \
     "$REPO_ROOT/examples/integrations/google-adk/custom_agent.py" \
     "gemini-3-flash-preview" \
