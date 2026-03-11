@@ -1,0 +1,71 @@
+name: Integration tests
+
+on:
+  schedule:
+    - cron: "0 6 * * *" # daily at 06:00 UTC
+  pull_request:
+    types: [labeled]
+  workflow_dispatch:
+
+jobs:
+  python-tests:
+    name: Integration tests
+    runs-on: ubuntu-latest
+    if: >-
+      github.event_name == 'schedule' ||
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'pull_request' && github.event.label.name == 'run_integration_tests')
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install dependencies
+        run: pip install -e ".[all,dev]"
+      - name: Run Python tests
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+        run: pytest integration-tests/code -v --tb=short --timeout=1800
+
+  shell-tests:
+    name: Shell tests
+    runs-on: ubuntu-latest
+    if: >-
+      github.event_name == 'schedule' ||
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'pull_request' && github.event.label.name == 'run_integration_tests')
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - provider: langchain
+            script: test_langchain.sh
+          - provider: openai-agents-sdk
+            script: test_openai_agents_sdk.sh
+          - provider: crewai
+            script: test_crewai.sh
+          - provider: llamaindex
+            script: test_llamaindex.sh
+          - provider: claude-agent-sdk
+            script: test_claude_agent_sdk.sh
+          - provider: google-adk
+            script: test_google_adk.sh
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install arksim
+        run: pip install -e ".[all,dev]"
+      - name: Run ${{ matrix.provider }} integration test
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+        run: bash integration-tests/shell/${{ matrix.script }}
