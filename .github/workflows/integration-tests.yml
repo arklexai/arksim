@@ -38,22 +38,6 @@ jobs:
       github.event_name == 'schedule' ||
       github.event_name == 'workflow_dispatch' ||
       (github.event_name == 'pull_request' && github.event.label.name == 'run_integration_tests')
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - provider: langchain
-            script: test_langchain.sh
-          - provider: openai-agents-sdk
-            script: test_openai_agents_sdk.sh
-          - provider: crewai
-            script: test_crewai.sh
-          - provider: llamaindex
-            script: test_llamaindex.sh
-          - provider: claude-agent-sdk
-            script: test_claude_agent_sdk.sh
-          - provider: google-adk
-            script: test_google_adk.sh
     steps:
       - uses: actions/checkout@v6
         with:
@@ -63,9 +47,9 @@ jobs:
           python-version: "3.13"
       - name: Install arksim
         run: pip install -e ".[all,dev]"
-      - name: Run ${{ matrix.provider }} integration test
+      - name: Run shell integration tests
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
-        run: bash integration-tests/shell/${{ matrix.script }}
+        run: bash integration-tests/shell/run_all.sh
