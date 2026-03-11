@@ -9,7 +9,6 @@ import sys
 import textwrap
 import time
 
-import httpx
 import yaml
 from pydantic import ValidationError
 
@@ -23,7 +22,6 @@ EXIT_OK = 0
 EXIT_EVAL_FAILED = 1
 EXIT_CONFIG_ERROR = 2
 EXIT_INTERNAL_ERROR = 3
-EXIT_NETWORK_ERROR = 4
 
 # Threshold check constants
 _QUAL_SKIP_OUTCOMES = frozenset(
@@ -712,10 +710,6 @@ def main() -> None:
         logger.error(f"Configuration error: {e}")
         logger.debug("Traceback:", exc_info=True)
         sys.exit(EXIT_CONFIG_ERROR)
-    except (httpx.NetworkError, httpx.TimeoutException) as e:
-        logger.error(f"Network/LLM unavailable: {e}")
-        logger.debug("Traceback:", exc_info=True)
-        sys.exit(EXIT_NETWORK_ERROR)
     except Exception as e:
         logger.error(f"Internal error: {e}")
         logger.debug("Traceback:", exc_info=True)

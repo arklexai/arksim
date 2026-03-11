@@ -7,7 +7,6 @@ import sys
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import httpx
 import pytest
 from pydantic import BaseModel, ValidationError
 
@@ -15,7 +14,6 @@ from arksim.cli import (
     EXIT_CONFIG_ERROR,
     EXIT_EVAL_FAILED,
     EXIT_INTERNAL_ERROR,
-    EXIT_NETWORK_ERROR,
     main,
 )
 
@@ -114,38 +112,6 @@ class TestMainExceptionHandlers:
         ):
             main()
         assert exc_info.value.code == EXIT_CONFIG_ERROR
-
-    def test_network_error_exits_network_error(
-        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-    ) -> None:
-        """httpx.NetworkError exits with EXIT_NETWORK_ERROR."""
-        cfg = self._eval_config(tmp_path)
-        monkeypatch.setattr(sys, "argv", ["arksim", "evaluate", str(cfg)])
-        with (
-            patch(
-                "arksim.cli.run_evaluation",
-                side_effect=httpx.NetworkError("connection refused"),
-            ),
-            pytest.raises(SystemExit) as exc_info,
-        ):
-            main()
-        assert exc_info.value.code == EXIT_NETWORK_ERROR
-
-    def test_timeout_error_exits_network_error(
-        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-    ) -> None:
-        """httpx.TimeoutException exits with EXIT_NETWORK_ERROR."""
-        cfg = self._eval_config(tmp_path)
-        monkeypatch.setattr(sys, "argv", ["arksim", "evaluate", str(cfg)])
-        with (
-            patch(
-                "arksim.cli.run_evaluation",
-                side_effect=httpx.TimeoutException("timed out"),
-            ),
-            pytest.raises(SystemExit) as exc_info,
-        ):
-            main()
-        assert exc_info.value.code == EXIT_NETWORK_ERROR
 
     def test_internal_error_exits_internal_error(
         self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path

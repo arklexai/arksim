@@ -17,6 +17,14 @@ _BASE_DELAY = 1.0
 _MAX_DELAY = 30.0
 
 
+def _is_non_retryable(e: Exception) -> bool:
+    """Return True for 4xx errors (except 429) that will never succeed on retry."""
+    status_code = getattr(e, "status_code", None)
+    return (
+        isinstance(status_code, int) and 400 <= status_code < 500 and status_code != 429
+    )
+
+
 def retry(max_retries: int = 5) -> Callable[[F], F]:
     """Retry decorator for LLM calls with exponential backoff."""
 
@@ -29,7 +37,7 @@ def retry(max_retries: int = 5) -> Callable[[F], F]:
                     try:
                         return await func(*args, **kwargs)
                     except Exception as e:
-                        if attempt >= max_retries - 1:
+                        if _is_non_retryable(e) or attempt >= max_retries - 1:
                             logger.error(
                                 f"Max retries ({max_retries}) exceeded. Error: {e}",
                             )
@@ -50,7 +58,7 @@ def retry(max_retries: int = 5) -> Callable[[F], F]:
                     try:
                         return func(*args, **kwargs)
                     except Exception as e:
-                        if attempt >= max_retries - 1:
+                        if _is_non_retryable(e) or attempt >= max_retries - 1:
                             logger.error(
                                 f"Max retries ({max_retries}) exceeded. Error: {e}",
                             )
