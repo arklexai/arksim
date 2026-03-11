@@ -364,12 +364,12 @@ Apache-2.0. See [LICENSE](LICENSE).
 ## Citation
 ```bibtex
 @misc{shea2026sage,
-      title={SAGE: A Top-Down Bottom-Up Knowledge-Grounded User Simulator for Multi-turn AGent Evaluation}, 
+      title={SAGE: A Top-Down Bottom-Up Knowledge-Grounded User Simulator for Multi-turn AGent Evaluation},
       author={Ryan Shea and Yunan Lu and Liang Qiu and Zhou Yu},
       year={2026},
       eprint={2510.11997},
       archivePrefix={arXiv},
       primaryClass={cs.CL},
-      url={https://arxiv.org/abs/2510.11997}, 
+      url={https://arxiv.org/abs/2510.11997},
 }
 ```
