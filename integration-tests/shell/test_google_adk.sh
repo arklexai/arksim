@@ -17,5 +17,5 @@ pip install google-adk --quiet
 run_provider_test \
     "google-adk" \
     "$REPO_ROOT/examples/integrations/google-adk/custom_agent.py" \
-    "gemini-2.5-flash" \
+    "gemini-3-flash-preview" \
     "google"

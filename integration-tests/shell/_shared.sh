@@ -114,7 +114,6 @@ run_provider_test() {
     local model="$3"
     local provider="$4"
 
-    local tmp
     tmp="$(mktemp -d)"
     trap 'rm -rf "$tmp"' EXIT
 
