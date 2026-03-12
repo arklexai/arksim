@@ -12,7 +12,57 @@ import logging
 
 from .entities import Evaluation
 
-logger = logging.getLogger("arksim")
+logger = logging.getLogger(__name__)
+
+
+def check_score_threshold(
+    evaluator_output: Evaluation,
+    score_threshold: float | None,
+) -> bool:
+    """Check if any conversation's overall_agent_score is below the threshold.
+
+    Args:
+        evaluator_output: The ``Evaluation`` returned by ``Evaluator.evaluate()``.
+        score_threshold: Minimum required ``overall_agent_score`` (0.0–1.0).
+            Pass ``None`` to skip the check.
+
+    Returns:
+        ``True`` if all scores pass (or threshold is None), ``False`` otherwise.
+    """
+    if score_threshold is None:
+        return True
+
+    failed_conversations = []
+    for convo in evaluator_output.conversations:
+        if convo.overall_agent_score < score_threshold:
+            failed_conversations.append(
+                {
+                    "conversation_id": convo.conversation_id,
+                    "overall_agent_score": convo.overall_agent_score,
+                }
+            )
+
+    if failed_conversations:
+        logger.error(
+            f"Score threshold check failed! "
+            f"Threshold: {score_threshold}, "
+            f"Failed conversations: {len(failed_conversations)}",
+        )
+        for fc in failed_conversations:
+            logger.error(
+                f"  Conversation {fc['conversation_id']}: "
+                f"overall_agent_score={fc['overall_agent_score']:.3f}"
+                f" < {score_threshold}",
+            )
+        return False
+
+    logger.info(
+        f"Score threshold check passed! "
+        f"All {len(evaluator_output.conversations)} conversations "
+        f"have overall_agent_score >= {score_threshold}",
+    )
+    return True
+
 
 # System outcomes for agent_behavior_failure that are not real failures.
 QUAL_SKIP_OUTCOMES = frozenset(

@@ -16,6 +16,7 @@ from arksim.cli import (
     EXIT_INTERNAL_ERROR,
     main,
 )
+from tests.unit.helpers import make_mock_convo, make_mock_evaluation
 
 # ── main() input validation ───────────────────────────────
 
@@ -167,14 +168,15 @@ class TestMainEvaluateThresholds:
 
     @staticmethod
     def _mock_eval(goal_completion: float = 0.9) -> MagicMock:
-        c = MagicMock()
-        c.conversation_id = "c1"
-        c.overall_agent_score = goal_completion
-        c.goal_completion_score = goal_completion
-        c.turn_scores = []
-        ev = MagicMock()
-        ev.conversations = [c]
-        return ev
+        return make_mock_evaluation(
+            [
+                make_mock_convo(
+                    "c1",
+                    overall_agent_score=goal_completion,
+                    goal_completion_score=goal_completion,
+                )
+            ]
+        )
 
     def test_simulate_runs_normally(
         self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path

@@ -18,6 +18,7 @@ from arksim.evaluator import (
     EvaluationInput,
     check_numeric_thresholds,
     check_qualitative_failure_labels,
+    check_score_threshold,
     run_evaluation,
 )
 from arksim.simulation_engine import SimulationInput, run_simulation
@@ -42,55 +43,21 @@ _EXAMPLES_REPO_URL = "https://github.com/arklexai/arksim/archive/main.tar.gz"
 _EXAMPLES_PREFIX = "examples/"
 
 
-def _check_score_threshold(
-    evaluator_output: Evaluation,
-    score_threshold: float | None,
-) -> bool:
-    """Check if any conversation's overall_agent_score is below
-    the threshold.
-
-    Args:
-        evaluator_output: Evaluation with conversations
-        score_threshold: Threshold value (0.0 to 1.0),
-            None to skip check
-
-    Returns:
-        True if all scores pass (or threshold is None),
-            False if any score fails
-    """
-    if score_threshold is None:
-        return True
-
-    failed_conversations = []
-    for convo in evaluator_output.conversations:
-        if convo.overall_agent_score < score_threshold:
-            failed_conversations.append(
-                {
-                    "conversation_id": convo.conversation_id,
-                    "overall_agent_score": convo.overall_agent_score,
-                }
-            )
-
-    if failed_conversations:
-        logger.error(
-            f"Score threshold check failed! "
-            f"Threshold: {score_threshold}, "
-            f"Failed conversations: {len(failed_conversations)}",
-        )
-        for fc in failed_conversations:
-            logger.error(
-                f"  Conversation {fc['conversation_id']}: "
-                f"overall_agent_score={fc['overall_agent_score']:.3f}"
-                f" < {score_threshold}",
-            )
-        return False
-
-    logger.info(
-        f"Score threshold check passed! "
-        f"All {len(evaluator_output.conversations)} conversations "
-        f"have overall_agent_score >= {score_threshold}",
+def _enforce_thresholds(
+    evaluator_output: Evaluation, evaluation_input: EvaluationInput
+) -> None:
+    """Run all threshold gates and exit with EXIT_EVAL_FAILED if any fail."""
+    threshold_ok = check_score_threshold(
+        evaluator_output, evaluation_input.score_threshold
     )
-    return True
+    metric_ok = check_numeric_thresholds(
+        evaluator_output, evaluation_input.numeric_thresholds
+    )
+    qual_ok = check_qualitative_failure_labels(
+        evaluator_output, evaluation_input.qualitative_failure_labels
+    )
+    if not threshold_ok or not metric_ok or not qual_ok:
+        sys.exit(EXIT_EVAL_FAILED)
 
 
 def _merge_cli_overrides(yaml_settings: dict, cli_overrides: dict) -> dict:
@@ -417,6 +384,117 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _cmd_simulate(
+    settings: dict,
+    overrides: dict,
+    config_path: str | None,
+    cli_overrides: set,
+    verbose: bool,
+) -> None:
+    """Validate config and run simulation."""
+    try:
+        valid_keys = set(SimulationInput.model_fields.keys())
+        validate_overrides(overrides, valid_keys)
+        _coerce_list_overrides(overrides, SimulationInput)
+        settings = _merge_cli_overrides(settings, overrides)
+        simulation_input = SimulationInput.model_validate(
+            settings,
+            context={"config_path": config_path, "cli_overrides": cli_overrides},
+        )
+        _log_config_summary("Simulation", simulation_input.model_dump())
+    except ValidationError as e:
+        logger.error(f"Configuration error: {e}")
+        logger.debug("Traceback:", exc_info=True)
+        sys.exit(EXIT_CONFIG_ERROR)
+
+    asyncio.run(run_simulation(simulation_input, verbose=verbose))
+
+
+def _cmd_evaluate(
+    settings: dict,
+    overrides: dict,
+    config_path: str | None,
+    cli_overrides: set,
+) -> None:
+    """Validate config and run evaluation."""
+    try:
+        valid_keys = set(EvaluationInput.model_fields.keys())
+        validate_overrides(overrides, valid_keys)
+        _coerce_list_overrides(overrides, EvaluationInput)
+        settings = _merge_cli_overrides(settings, overrides)
+        evaluation_input = EvaluationInput.model_validate(
+            settings,
+            context={"config_path": config_path, "cli_overrides": cli_overrides},
+        )
+        if not evaluation_input.simulation_file_path:
+            logger.error("simulation_file_path is required.")
+            sys.exit(EXIT_CONFIG_ERROR)
+        if not os.path.isfile(evaluation_input.simulation_file_path):
+            logger.error(
+                f"simulation_file_path does not exist: "
+                f"{evaluation_input.simulation_file_path}"
+            )
+            sys.exit(EXIT_CONFIG_ERROR)
+        _log_config_summary("Evaluation", evaluation_input.model_dump())
+    except ValidationError as e:
+        logger.error(f"Configuration error: {e}")
+        logger.debug("Traceback:", exc_info=True)
+        sys.exit(EXIT_CONFIG_ERROR)
+
+    evaluator_output = run_evaluation(evaluation_input)
+    _enforce_thresholds(evaluator_output, evaluation_input)
+
+
+def _cmd_simulate_evaluate(
+    settings: dict,
+    overrides: dict,
+    config_path: str | None,
+    cli_overrides: set,
+    verbose: bool,
+) -> None:
+    """Validate config, run simulation, then run evaluation."""
+    try:
+        valid_keys = set(SimulationInput.model_fields.keys()) | set(
+            EvaluationInput.model_fields.keys()
+        )
+        validate_overrides(overrides, valid_keys)
+        _coerce_list_overrides(overrides, SimulationInput)
+        _coerce_list_overrides(overrides, EvaluationInput)
+        settings = _merge_cli_overrides(settings, overrides)
+
+        simulation_settings = {
+            k: v for k, v in settings.items() if k in SimulationInput.model_fields
+        }
+        simulation_input = SimulationInput.model_validate(
+            simulation_settings,
+            context={"config_path": config_path, "cli_overrides": cli_overrides},
+        )
+        _log_config_summary("Simulation", simulation_input.model_dump())
+
+        evaluation_settings = {
+            k: v for k, v in settings.items() if k in EvaluationInput.model_fields
+        }
+        evaluation_input = EvaluationInput.model_validate(
+            evaluation_settings,
+            context={"config_path": config_path, "cli_overrides": cli_overrides},
+        )
+        _log_config_summary("Evaluation", evaluation_input.model_dump())
+    except ValidationError as e:
+        logger.error(f"Configuration error: {e}")
+        logger.debug("Traceback:", exc_info=True)
+        sys.exit(EXIT_CONFIG_ERROR)
+
+    sim_start = time.time()
+    simulation_output = asyncio.run(run_simulation(simulation_input, verbose=verbose))
+    logger.info(f"Simulation completed in {time.time() - sim_start:.2f} seconds")
+
+    eval_start = time.time()
+    evaluator_output = run_evaluation(evaluation_input, simulation=simulation_output)
+    logger.info(f"Evaluation completed in {time.time() - eval_start:.2f} seconds")
+
+    _enforce_thresholds(evaluator_output, evaluation_input)
+
+
 def main() -> None:
     """Main entry point for the arksim CLI."""
     s_time = time.time()
@@ -476,118 +554,17 @@ def main() -> None:
     verbose = overrides.pop("verbose", False)
 
     config_path = os.path.abspath(args.config_file) if use_config_file else None
-
     cli_overrides = set(overrides.keys())
 
-    simulation_input = None
-    evaluation_input = None
-
-    # Phase 1: config validation
     try:
         if args.command == "simulate":
-            valid_keys = set(SimulationInput.model_fields.keys())
-            validate_overrides(overrides, valid_keys)
-            _coerce_list_overrides(overrides, SimulationInput)
-            settings = _merge_cli_overrides(settings, overrides)
-            simulation_input = SimulationInput.model_validate(
-                settings,
-                context={"config_path": config_path, "cli_overrides": cli_overrides},
-            )
-            _log_config_summary("Simulation", simulation_input.model_dump())
+            _cmd_simulate(settings, overrides, config_path, cli_overrides, verbose)
         elif args.command == "evaluate":
-            valid_keys = set(EvaluationInput.model_fields.keys())
-            validate_overrides(overrides, valid_keys)
-            _coerce_list_overrides(overrides, EvaluationInput)
-            settings = _merge_cli_overrides(settings, overrides)
-            evaluation_input = EvaluationInput.model_validate(
-                settings,
-                context={"config_path": config_path, "cli_overrides": cli_overrides},
-            )
-            if not evaluation_input.simulation_file_path:
-                logger.error("simulation_file_path is required.")
-                sys.exit(EXIT_CONFIG_ERROR)
-            if not os.path.isfile(evaluation_input.simulation_file_path):
-                logger.error(
-                    f"simulation_file_path does not exist: "
-                    f"{evaluation_input.simulation_file_path}"
-                )
-                sys.exit(EXIT_CONFIG_ERROR)
-            _log_config_summary("Evaluation", evaluation_input.model_dump())
+            _cmd_evaluate(settings, overrides, config_path, cli_overrides)
         elif args.command == "simulate-evaluate":
-            valid_keys = set(SimulationInput.model_fields.keys()) | set(
-                EvaluationInput.model_fields.keys()
+            _cmd_simulate_evaluate(
+                settings, overrides, config_path, cli_overrides, verbose
             )
-            validate_overrides(overrides, valid_keys)
-            _coerce_list_overrides(overrides, SimulationInput)
-            _coerce_list_overrides(overrides, EvaluationInput)
-            settings = _merge_cli_overrides(settings, overrides)
-
-            simulation_settings = {
-                k: v for k, v in settings.items() if k in SimulationInput.model_fields
-            }
-            simulation_input = SimulationInput.model_validate(
-                simulation_settings,
-                context={"config_path": config_path, "cli_overrides": cli_overrides},
-            )
-            _log_config_summary("Simulation", simulation_input.model_dump())
-
-            evaluation_settings = {
-                k: v for k, v in settings.items() if k in EvaluationInput.model_fields
-            }
-            evaluation_input = EvaluationInput.model_validate(
-                evaluation_settings,
-                context={"config_path": config_path, "cli_overrides": cli_overrides},
-            )
-            _log_config_summary("Evaluation", evaluation_input.model_dump())
-    except ValidationError as e:
-        logger.error(f"Configuration error: {e}")
-        logger.debug("Traceback:", exc_info=True)
-        sys.exit(EXIT_CONFIG_ERROR)
-
-    # Phase 2: runtime execution
-    try:
-        if args.command == "simulate":
-            asyncio.run(run_simulation(simulation_input, verbose=verbose))
-        elif args.command == "evaluate":
-            evaluator_output = run_evaluation(evaluation_input)
-
-            threshold_ok = _check_score_threshold(
-                evaluator_output, evaluation_input.score_threshold
-            )
-            metric_ok = check_numeric_thresholds(
-                evaluator_output, evaluation_input.numeric_thresholds
-            )
-            qual_ok = check_qualitative_failure_labels(
-                evaluator_output, evaluation_input.qualitative_failure_labels
-            )
-            if not threshold_ok or not metric_ok or not qual_ok:
-                sys.exit(EXIT_EVAL_FAILED)
-        elif args.command == "simulate-evaluate":
-            sim_start = time.time()
-            simulation_output = asyncio.run(
-                run_simulation(simulation_input, verbose=verbose)
-            )
-            sim_elapsed = time.time() - sim_start
-            logger.info(f"Simulation completed in {sim_elapsed:.2f} seconds")
-
-            eval_start = time.time()
-            evaluator_output = run_evaluation(
-                evaluation_input, simulation=simulation_output
-            )
-            eval_elapsed = time.time() - eval_start
-            logger.info(f"Evaluation completed in {eval_elapsed:.2f} seconds")
-
-            threshold_ok = _check_score_threshold(
-                evaluator_output, evaluation_input.score_threshold
-            )
-            metric_ok = check_numeric_thresholds(
-                evaluator_output, evaluation_input.numeric_thresholds
-            )
-            qual_ok = check_qualitative_failure_labels(
-                evaluator_output, evaluation_input.qualitative_failure_labels
-            )
-            if not threshold_ok or not metric_ok or not qual_ok:
-                sys.exit(EXIT_EVAL_FAILED)
     except Exception as e:
         logger.error(f"Internal error: {e}")
         logger.debug("Traceback:", exc_info=True)

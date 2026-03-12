@@ -20,7 +20,11 @@ from .entities import (
     EvaluationParams,
 )
 from .evaluator import Evaluator, run_evaluation
-from .thresholds import check_numeric_thresholds, check_qualitative_failure_labels
+from .thresholds import (
+    check_numeric_thresholds,
+    check_qualitative_failure_labels,
+    check_score_threshold,
+)
 
 __all__ = [
     "ChatMessage",
@@ -35,6 +39,7 @@ __all__ = [
     "QuantResult",
     "check_numeric_thresholds",
     "check_qualitative_failure_labels",
+    "check_score_threshold",
     "format_chat_history",
     "run_evaluation",
 ]
