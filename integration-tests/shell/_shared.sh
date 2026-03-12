@@ -115,7 +115,7 @@ run_shell_test() {
     local provider="$4"
 
     local tmp="$(mktemp -d)"
-    trap 'rm -rf "$tmp"' EXIT
+    trap "rm -rf $tmp" EXIT
 
     log "Setting up temp dir: $tmp"
     cp "$agent_src" "$tmp/custom_agent.py"
