@@ -5,7 +5,7 @@ description: "Run ArkSim as an automated quality gate in your CI pipeline so eve
 
 ## Why run ArkSim in CI?
 
-Agents break in non-obvious ways. A prompt tweak, a model upgrade, or a dependency change can silently degrade helpfulness, introduce false information, or cause goal failures—without triggering any unit test.
+Agents break in non-obvious ways. A prompt tweak, a model upgrade, or a dependency change can silently degrade helpfulness, introduce false information, or cause goal failures — without triggering any unit test.
 
 Running ArkSim on every pull request turns quality regression into a CI signal:
 
@@ -16,22 +16,118 @@ Running ArkSim on every pull request turns quality regression into a CI signal:
 | Subjective "looks good to me" reviews | Objective, reproducible metric scores |
 | No record of quality over time | Artifact history per commit |
 
-ArkSim integrates naturally into any CI system via its CLI exit codes:
+---
 
-| Code | Meaning |
-|------|---------|
-| `0` | All evaluations passed |
-| `1` | Evaluation failed — a threshold was not met |
-| `2` | Config / usage error |
-| `3` | Internal / engine error |
+## Choose your approach
 
-Any non-zero exit code fails the job, blocking the merge just like a failing test.
+| | pytest (custom agent) | HTTP server |
+|---|---|---|
+| **How it works** | ArkSim loads your agent class in-process | ArkSim calls your agent over HTTP |
+| **Agent type** | Python class subclassing `BaseAgent` | Any HTTP server (any language or framework) |
+| **CI complexity** | Simple — just run `pytest` | Requires starting, health-checking, and stopping a server |
+| **Template** | `arksim-pytest.yml` + `test_agent_quality.py` | `arksim.yml` |
 
 ---
 
-## GitHub Actions
+## Approach 1: pytest with a custom agent
 
-The recommended approach for GitHub-hosted repos is the **HTTP server workflow**: your agent starts as a background HTTP server, ArkSim simulates conversations against it, evaluates the results, and fails the job if quality thresholds aren't met.
+Your agent is a Python class that subclasses `BaseAgent`. ArkSim loads it in-process — no HTTP server needed. The pytest test calls `run_simulation()` and `run_evaluation()` directly and asserts scores.
+
+### How it works
+
+```
+GitHub Actions runner
+│
+├── 1. Checkout + install dependencies
+├── 2. pip install arksim pytest
+├── 3. pytest tests/test_agent_quality.py
+│       ├── Simulate N conversations (agent runs in-process)
+│       ├── Evaluate each conversation with an LLM judge
+│       └── Assert quality thresholds → pass or fail
+└── 4. Upload HTML evaluation report as artifact  (always runs)
+```
+
+### Setup
+
+<Steps>
+  <Step title="Subclass BaseAgent">
+    Your agent class must implement two methods:
+
+    ```python
+    from arksim.simulation_engine.agent.base import BaseAgent
+
+    class MyAgent(BaseAgent):
+        async def get_chat_id(self) -> str:
+            # Return a stable ID for the current conversation session
+            return str(id(self))
+
+        async def execute(self, user_query: str, **kwargs) -> str:
+            # Your agent logic — return the agent's reply as a string
+            ...
+    ```
+
+    If you already have an existing agent, wrap it in a thin adapter:
+
+    ```python
+    class MyAgentAdapter(BaseAgent):
+        def __init__(self, agent_config):
+            super().__init__(agent_config)
+            self.agent = MyExistingAgent()
+
+        async def get_chat_id(self) -> str:
+            return str(id(self))
+
+        async def execute(self, user_query: str, **kwargs) -> str:
+            return await self.agent.process(user_query)
+    ```
+  </Step>
+
+  <Step title="Copy the pytest templates">
+    Download the GitHub Actions example:
+
+    ```bash
+    arksim examples ci
+    ```
+
+    Copy the pytest workflow and test template into your repo:
+
+    ```bash
+    mkdir -p .github/workflows tests
+    cp ci/github-actions/arksim-pytest.yml .github/workflows/arksim-pytest.yml
+    cp ci/pytest/test_agent_quality.py tests/test_agent_quality.py
+    ```
+  </Step>
+
+  <Step title="Create your scenarios">
+    Create `arksim/scenarios.json` with test cases representative of your agent's real usage. See [Build Scenarios](/build-scenario) for the schema, and [`examples/bank-insurance`](https://github.com/arklexai/arksim/tree/main/examples/bank-insurance) for a full example.
+  </Step>
+
+  <Step title="Customize the test file">
+    Open `tests/test_agent_quality.py` and update:
+
+    - Import your agent class (replace `from my_agent import MyAgent`)
+    - Set `SCORE_THRESHOLD`, `NUMERIC_THRESHOLDS`, and `QUALITATIVE_FAILURE_LABELS` to match your quality bar
+    - Adjust `num_conversations_per_scenario`, `max_turns`, and `metrics_to_run` as needed
+  </Step>
+
+  <Step title="Add GitHub secret">
+    In your repo → **Settings → Secrets and variables → Actions**:
+
+    | Secret | Purpose |
+    |--------|---------|
+    | `OPENAI_API_KEY` | LLM ArkSim uses to evaluate your agent |
+  </Step>
+
+  <Step title="Push">
+    The workflow triggers automatically on every push to `main` and on every PR. A failing assertion fails the job.
+  </Step>
+</Steps>
+
+---
+
+## Approach 2: HTTP server
+
+Your agent runs as an HTTP server exposing an OpenAI-compatible chat completions endpoint. ArkSim calls it over HTTP during CI — works with any language or framework.
 
 <Frame>
   ![CI workflow](/images/checks-passed.png)
@@ -54,6 +150,15 @@ GitHub Actions runner
 └── 7. Exit code → job passes or fails
 ```
 
+The CLI exits non-zero if any threshold is not met, which fails the job.
+
+| Exit code | Meaning |
+|-----------|---------|
+| `0` | All evaluations passed |
+| `1` | Evaluation failed — a threshold was not met |
+| `2` | Config / usage error |
+| `3` | Internal / engine error |
+
 ### Setup
 
 <Steps>
@@ -61,14 +166,14 @@ GitHub Actions runner
     Download the GitHub Actions example:
 
     ```bash
-    arksim examples github-actions
+    arksim examples ci
     ```
 
-    Then copy the workflow template into your repo:
+    Copy the workflow template into your repo:
 
     ```bash
     mkdir -p .github/workflows
-    cp github-actions/arksim.yml .github/workflows/arksim.yml
+    cp ci/github-actions/arksim.yml .github/workflows/arksim.yml
     ```
   </Step>
 
@@ -191,7 +296,7 @@ GitHub Actions runner
   </Step>
 
   <Step title="Add GitHub secrets">
-    In your repo → **Settings → Secrets and variables → Actions**, add:
+    In your repo → **Settings → Secrets and variables → Actions**:
 
     | Secret | Purpose |
     |--------|---------|
@@ -208,7 +313,7 @@ GitHub Actions runner
 
 ## Quality gates
 
-Quality gates are configured directly in `arksim/config.yaml`. The job exits with code `1` if any gate is not met.
+Configure pass/fail thresholds in your config or test file. If any gate is not met the job fails.
 
 ### Overall score
 

@@ -1,0 +1,67 @@
+# ArkSim CI – Agent Quality Gate (pytest)
+# ─────────────────────────────────────────────────────────────────────────────
+# Copy this file to .github/workflows/arksim-pytest.yml in your repository.
+#
+# Use this workflow when your agent is implemented as a Python class that
+# subclasses BaseAgent. No HTTP server is needed — ArkSim loads the agent
+# in-process and CI simply runs pytest.
+#
+# Exit codes from arksim (surfaced as pytest assertion failures):
+#   pass  –  All quality gates met
+#   fail  –  A score/label threshold was not met, or an error occurred
+#
+# Required GitHub secrets (repo → Settings → Secrets and variables → Actions):
+#   OPENAI_API_KEY   API key for the LLM ArkSim uses to evaluate your agent
+# ─────────────────────────────────────────────────────────────────────────────
+
+name: ArkSim Agent Quality Gate (pytest)
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  arksim:
+    name: Agent Quality Gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      # ── 1. Checkout ───────────────────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── 2. Python setup ───────────────────────────────────────────────────
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      # ── 3. Install dependencies ───────────────────────────────────────────
+      # TODO: adjust to your agent's dependency file
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Install ArkSim and pytest
+        run: pip install arksim pytest pytest-asyncio
+
+      # ── 4. Run quality tests ──────────────────────────────────────────────
+      # TODO: point to your test file
+      - name: Run ArkSim quality tests
+        run: pytest tests/test_agent_quality.py -v
+        env:
+          # API key for the LLM ArkSim uses internally to run evaluations
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
+      # ── 5. Upload evaluation report ───────────────────────────────────────
+      # The HTML report is uploaded even when the job fails for inspection.
+      - name: Upload ArkSim evaluation report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: arksim-evaluation-report
+          path: arksim/results/evaluation/
+          if-no-files-found: ignore
