@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import asyncio
 import os
+import sys
 
 from custom_agent import BankInsuranceCustomAgent
 from custom_metrics import (
@@ -27,7 +28,12 @@ from custom_metrics import (
 )
 
 from arksim.config import AgentConfig, CustomConfig
-from arksim.evaluator import EvaluationParams, Evaluator
+from arksim.evaluator import (
+    EvaluationParams,
+    Evaluator,
+    check_numeric_thresholds,
+    check_qualitative_failure_labels,
+)
 from arksim.llms.chat import LLM
 from arksim.scenario import Scenarios
 from arksim.simulation_engine import SimulationParams, Simulator
@@ -103,6 +109,28 @@ async def main() -> None:
     evaluator_output = await asyncio.to_thread(evaluator.evaluate, simulation_output)
     evaluator.display_evaluation_summary()
     evaluator.save_results()
+
+    # -- Step 3: Check thresholds --------------------------------------------
+    print("\n" + "=" * 60)
+    print("Step 3/3: Checking Thresholds...")
+    print("=" * 60)
+
+    numeric_thresholds = {
+        "clarity": 3.5,
+        "goal_completion": 0.6,
+    }
+    qualitative_failure_labels = {
+        "prohibited_statements": ["violated"],
+    }
+
+    numeric_ok = check_numeric_thresholds(evaluator_output, numeric_thresholds)
+    qual_ok = check_qualitative_failure_labels(
+        evaluator_output, qualitative_failure_labels
+    )
+
+    if not numeric_ok or not qual_ok:
+        print("\nEvaluation failed: one or more threshold gates did not pass.")
+        sys.exit(1)
 
     # Generate HTML report
     html_output_path = os.path.join(evaluation_output_dir, "final_report.html")
