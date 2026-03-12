@@ -12,7 +12,7 @@ log() { echo "[$(date '+%H:%M:%S')] $*"; }
 
 # ---------------------------------------------------------------------------
 # require_env VAR
-# Exits 1 with a FAIL message if the env var is not set.
+# Exits 1 with a FAIL message if the env var is not set
 # ---------------------------------------------------------------------------
 require_env() {
     local var="$1"
@@ -114,7 +114,7 @@ run_shell_test() {
     local model="$3"
     local provider="$4"
 
-    tmp="$(mktemp -d)"
+    local tmp="$(mktemp -d)"
     trap 'rm -rf "$tmp"' EXIT
 
     log "Setting up temp dir: $tmp"

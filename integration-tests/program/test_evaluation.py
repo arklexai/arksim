@@ -9,9 +9,9 @@ import os
 
 import pytest
 
-from .conftest import requires_openai
+from .conftest import OPENAI_MODEL, requires_openai
 
-pytestmark = [pytest.mark.integration, requires_openai]
+pytestmark = [pytest.mark.integration, pytest.mark.timeout(600), requires_openai]
 
 
 def _run_simulation(
@@ -29,7 +29,7 @@ def _run_simulation(
             "max_turns": 5,
             "num_workers": 20,
             "provider": "openai",
-            "model": "gpt-5.1",
+            "model": OPENAI_MODEL,
             "output_file_path": sim_output_path,
         }
     )
@@ -56,7 +56,7 @@ class TestEvaluateAllBuiltinMetrics:
             minimal_scenarios, agent_config_openai, tmp_output_dir
         )
 
-        llm = LLM(model="gpt-5.1", provider="openai")
+        llm = LLM(model=OPENAI_MODEL, provider="openai")
         eval_params = EvaluationParams(
             output_dir=os.path.join(tmp_output_dir, "evaluation"),
             num_workers=20,
@@ -109,7 +109,7 @@ class TestEvaluateSubsetMetrics:
             minimal_scenarios, agent_config_openai, tmp_output_dir
         )
 
-        llm = LLM(model="gpt-5.1", provider="openai")
+        llm = LLM(model=OPENAI_MODEL, provider="openai")
         eval_params = EvaluationParams(
             output_dir=os.path.join(tmp_output_dir, "evaluation"),
             num_workers=20,
@@ -178,7 +178,7 @@ class TestEvaluateWithCustomMetrics:
             minimal_scenarios, agent_config_openai, tmp_output_dir
         )
 
-        llm = LLM(model="gpt-5.1", provider="openai")
+        llm = LLM(model=OPENAI_MODEL, provider="openai")
         eval_params = EvaluationParams(
             output_dir=os.path.join(tmp_output_dir, "evaluation"),
             num_workers=20,
@@ -212,7 +212,7 @@ class TestEvaluationSavesResults:
         )
 
         eval_dir = os.path.join(tmp_output_dir, "evaluation")
-        llm = LLM(model="gpt-5.1", provider="openai")
+        llm = LLM(model=OPENAI_MODEL, provider="openai")
         eval_params = EvaluationParams(
             output_dir=eval_dir,
             num_workers=20,
@@ -251,7 +251,7 @@ class TestHtmlReportGeneration:
         scenarios = Scenarios.load(minimal_scenarios)
 
         eval_dir = os.path.join(tmp_output_dir, "evaluation")
-        llm = LLM(model="gpt-5.1", provider="openai")
+        llm = LLM(model=OPENAI_MODEL, provider="openai")
         eval_params = EvaluationParams(
             output_dir=eval_dir,
             num_workers=20,

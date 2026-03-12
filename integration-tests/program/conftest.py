@@ -10,8 +10,9 @@ from pathlib import Path
 
 import pytest
 
-OSS_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-EXAMPLES_DIR = os.path.join(OSS_ROOT, "examples", "bank-insurance")
+OPENAI_MODEL = os.environ.get("TEST_OPENAI_MODEL", "gpt-5.1")
+ANTHROPIC_MODEL = os.environ.get("TEST_ANTHROPIC_MODEL", "claude-sonnet-4-6")
+GOOGLE_MODEL = os.environ.get("TEST_GOOGLE_MODEL", "gemini-3-flash-preview")
 
 
 def _check_env(var: str) -> None:
@@ -46,23 +47,6 @@ def tmp_output_dir(tmp_path: Path) -> str:
     (tmp_path / "simulation").mkdir()
     (tmp_path / "evaluation").mkdir()
     return str(tmp_path)
-
-
-@pytest.fixture
-def bank_insurance_dir() -> str:
-    """Return path to the bank-insurance example directory."""
-    assert os.path.isdir(EXAMPLES_DIR), (
-        f"bank-insurance example not found at {EXAMPLES_DIR}"
-    )
-    return EXAMPLES_DIR
-
-
-@pytest.fixture
-def scenarios_file(bank_insurance_dir: str) -> str:
-    """Return path to bank-insurance scenarios.json."""
-    path = os.path.join(bank_insurance_dir, "scenarios.json")
-    assert os.path.isfile(path)
-    return path
 
 
 @pytest.fixture
@@ -203,7 +187,7 @@ def agent_config_openai() -> dict:
                 "Authorization": (f"Bearer {os.environ.get('OPENAI_API_KEY', '')}"),
             },
             "body": {
-                "model": "gpt-5.1",
+                "model": OPENAI_MODEL,
                 "messages": [
                     {
                         "role": "system",

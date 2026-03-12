@@ -15,9 +15,9 @@ import sys
 import pytest
 import yaml
 
-from .conftest import requires_openai
+from .conftest import OPENAI_MODEL, requires_openai
 
-pytestmark = [pytest.mark.integration, requires_openai]
+pytestmark = [pytest.mark.integration, pytest.mark.timeout(600), requires_openai]
 
 
 class TestFullPipelinePythonAPI:
@@ -46,7 +46,7 @@ class TestFullPipelinePythonAPI:
         # Step 1: Simulate
         scenarios = Scenarios.load(minimal_scenarios)
         agent_config = AgentConfig.model_validate(agent_config_openai)
-        llm = LLM(model="gpt-5.1", provider="openai")
+        llm = LLM(model=OPENAI_MODEL, provider="openai")
 
         sim_params = SimulationParams(
             num_convos_per_scenario=1,
@@ -107,7 +107,7 @@ class TestCLISimulateCommand:
             "max_turns": 5,
             "num_workers": 20,
             "provider": "openai",
-            "model": "gpt-5.1",
+            "model": OPENAI_MODEL,
             "output_file_path": sim_output,
         }
         config_path = os.path.join(tmp_output_dir, "config_simulate.yaml")
@@ -134,6 +134,7 @@ class TestCLISimulateCommand:
 class TestCLIEvaluateCommand:
     """Test arksim evaluate CLI command."""
 
+    @pytest.mark.timeout(900)
     def test_cli_evaluate(
         self,
         minimal_scenarios: str,
@@ -149,7 +150,7 @@ class TestCLIEvaluateCommand:
             "max_turns": 5,
             "num_workers": 20,
             "provider": "openai",
-            "model": "gpt-5.1",
+            "model": OPENAI_MODEL,
             "output_file_path": sim_output,
         }
         sim_config_path = os.path.join(tmp_output_dir, "config_simulate.yaml")
@@ -177,7 +178,7 @@ class TestCLIEvaluateCommand:
             "simulation_file_path": sim_output,
             "output_dir": eval_dir,
             "provider": "openai",
-            "model": "gpt-5.1",
+            "model": OPENAI_MODEL,
             "num_workers": 20,
             "metrics_to_run": ["helpfulness", "coherence"],
             "generate_html_report": True,
@@ -229,7 +230,7 @@ class TestCLISimulateEvaluateCommand:
             "max_turns": 5,
             "num_workers": 20,
             "provider": "openai",
-            "model": "gpt-5.1",
+            "model": OPENAI_MODEL,
             "output_file_path": sim_output,
             "output_dir": eval_dir,
             "metrics_to_run": [

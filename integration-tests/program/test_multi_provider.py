@@ -13,12 +13,15 @@ import pytest
 import yaml
 
 from .conftest import (
+    ANTHROPIC_MODEL,
+    GOOGLE_MODEL,
+    OPENAI_MODEL,
     requires_anthropic,
     requires_google,
     requires_openai,
 )
 
-pytestmark = pytest.mark.integration
+pytestmark = [pytest.mark.integration, pytest.mark.timeout(600)]
 
 
 def _run_simulation_with_provider(
@@ -60,7 +63,7 @@ class TestSimulateWithAnthropic:
             agent_config_openai,
             tmp_output_dir,
             provider="anthropic",
-            model="claude-sonnet-4-6",
+            model=ANTHROPIC_MODEL,
         )
         assert len(simulation.conversations) == 3
         for convo in simulation.conversations:
@@ -82,7 +85,7 @@ class TestSimulateWithGoogle:
             agent_config_openai,
             tmp_output_dir,
             provider="google",
-            model="gemini-3-flash-preview",
+            model=GOOGLE_MODEL,
         )
         assert len(simulation.conversations) == 3
         for convo in simulation.conversations:
@@ -108,12 +111,12 @@ class TestEvaluateWithAnthropic:
             agent_config_openai,
             tmp_output_dir,
             provider="openai",
-            model="gpt-5.1",
+            model=OPENAI_MODEL,
         )
 
         # Evaluate with Anthropic
         llm = LLM(
-            model="claude-sonnet-4-6",
+            model=ANTHROPIC_MODEL,
             provider="anthropic",
         )
         eval_params = EvaluationParams(
@@ -145,10 +148,10 @@ class TestEvaluateWithGoogle:
             agent_config_openai,
             tmp_output_dir,
             provider="openai",
-            model="gpt-5.1",
+            model=OPENAI_MODEL,
         )
 
-        llm = LLM(model="gemini-3-flash-preview", provider="google")
+        llm = LLM(model=GOOGLE_MODEL, provider="google")
         eval_params = EvaluationParams(
             output_dir=os.path.join(tmp_output_dir, "evaluation"),
             num_workers=20,
@@ -179,7 +182,7 @@ class TestCLISimulateEvaluateAnthropic:
             "max_turns": 5,
             "num_workers": 20,
             "provider": "anthropic",
-            "model": "claude-sonnet-4-6",
+            "model": ANTHROPIC_MODEL,
             "output_file_path": sim_output,
             "output_dir": eval_dir,
             "metrics_to_run": ["helpfulness", "coherence"],
@@ -222,7 +225,7 @@ class TestCLISimulateEvaluateGoogle:
             "max_turns": 5,
             "num_workers": 20,
             "provider": "google",
-            "model": "gemini-3-flash-preview",
+            "model": GOOGLE_MODEL,
             "output_file_path": sim_output,
             "output_dir": eval_dir,
             "metrics_to_run": ["helpfulness", "coherence"],

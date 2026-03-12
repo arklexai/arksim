@@ -11,9 +11,9 @@ import uuid
 
 import pytest
 
-from .conftest import requires_openai
+from .conftest import OPENAI_MODEL, requires_openai
 
-pytestmark = [pytest.mark.integration, requires_openai]
+pytestmark = [pytest.mark.integration, pytest.mark.timeout(300), requires_openai]
 
 
 class TestSimulateWithChatCompletions:
@@ -40,7 +40,7 @@ class TestSimulateWithChatCompletions:
                 "max_turns": 5,
                 "num_workers": 20,
                 "provider": "openai",
-                "model": "gpt-5.1",
+                "model": OPENAI_MODEL,
                 "output_file_path": sim_output_path,
             }
         )
@@ -100,7 +100,7 @@ class TestSimulateWithCustomAgent:
             def __init__(self, agent_config: dict) -> None:
                 super().__init__(agent_config)
                 self._chat_id = str(uuid.uuid4())
-                self._llm = LLM(model="gpt-5.1", provider="openai")
+                self._llm = LLM(model=OPENAI_MODEL, provider="openai")
 
             async def get_chat_id(self) -> str:
                 return self._chat_id
@@ -127,7 +127,7 @@ class TestSimulateWithCustomAgent:
             agent_name="SimpleTestAgent",
             custom_config=CustomConfig(agent_class=SimpleTestAgent),
         )
-        llm = LLM(model="gpt-5.1", provider="openai")
+        llm = LLM(model=OPENAI_MODEL, provider="openai")
 
         sim_params = SimulationParams(
             num_convos_per_scenario=1,

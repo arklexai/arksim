@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Run all shell integration tests and report a summary.
 #
-# Tests that are missing their required API key are counted as FAIL.
+# Tests that are missing their required API key are counted as FAIL,
+# Each test runs independently so one failure does not block others.
 #
 # Usage:
 #   bash integration-tests/shell/run_all.sh
@@ -38,10 +39,10 @@ for script in "${SCRIPTS[@]}"; do
 
     if [[ $exit_code -eq 0 ]]; then
         echo "  → PASSED"
-        ((pass++))
+        ((++pass))
     else
         echo "  → FAILED (exit code $exit_code)"
-        ((fail++))
+        ((++fail))
         failed_names+=("$name")
     fi
 done
