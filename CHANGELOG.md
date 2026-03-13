@@ -5,6 +5,24 @@ All notable changes to ArkSim will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1](https://github.com/arklexai/arksim/compare/v0.2.0...v0.2.1) (2026-03-13)
+
+
+### Added
+
+* add per-metric thresholds and structured exit codes ([#89](https://github.com/arklexai/arksim/issues/89)) ([5f0f93a](https://github.com/arklexai/arksim/commit/5f0f93aebbd03fd8bad624b7b4f707a01ab5d756))
+
+
+### Documentation
+
+* update readme to include paper information ([#90](https://github.com/arklexai/arksim/issues/90)) ([8e18e5c](https://github.com/arklexai/arksim/commit/8e18e5c05c046fb71926450eaaf8517c6ecc0ea1))
+
+
+### Changed
+
+* add integration tests ([#91](https://github.com/arklexai/arksim/issues/91)) ([b047397](https://github.com/arklexai/arksim/commit/b047397bf0284bbf10925c74d380deca90be6efc))
+* update SECURITY.md supported versions ([#94](https://github.com/arklexai/arksim/issues/94)) ([2220870](https://github.com/arklexai/arksim/commit/22208706365d63e22d08743fa06d0e888a2b9d7e))
+
 ## [0.2.0](https://github.com/arklexai/arksim/compare/v0.1.0...v0.2.0) (2026-03-10)
 
 
