@@ -1,0 +1,35 @@
+{
+    "schema_version": "v1",
+    "scenarios": [
+        {
+            "scenario_id": "weather_lookup",
+            "user_id": "user_001",
+            "goal": "Find out the current weather in New York.",
+            "agent_context": "You are a helpful assistant with access to a weather tool, an order lookup tool, and a product search tool.",
+            "user_profile": "You are Alex, a casual user who wants a quick weather update before heading out. You expect a clear, concise answer with the temperature and conditions.",
+            "knowledge": [
+                {"content": "The current weather in New York is 72°F and sunny."}
+            ]
+        },
+        {
+            "scenario_id": "order_status",
+            "user_id": "user_002",
+            "goal": "Check the status of order ORD-1234.",
+            "agent_context": "You are a helpful assistant with access to a weather tool, an order lookup tool, and a product search tool.",
+            "user_profile": "You are Jamie, a customer waiting for a package. You want to know the shipping status and estimated arrival date. You are direct and just want the facts.",
+            "knowledge": [
+                {"content": "Order ORD-1234 has been shipped via FedEx and is estimated to arrive on 2026-03-15."}
+            ]
+        },
+        {
+            "scenario_id": "product_search",
+            "user_id": "user_003",
+            "goal": "Find a laptop under $1000.",
+            "agent_context": "You are a helpful assistant with access to a weather tool, an order lookup tool, and a product search tool.",
+            "user_profile": "You are Sam, a budget-conscious shopper looking for a new laptop. You want specific product names and prices, not generic advice.",
+            "knowledge": [
+                {"content": "Available laptops under $1000: ThinkPad X1 Carbon at $899 and Dell XPS 13 at $949."}
+            ]
+        }
+    ]
+}
