@@ -568,6 +568,8 @@ def main() -> None:
             _cmd_simulate_evaluate(
                 settings, overrides, config_path, cli_overrides, verbose
             )
+    except (KeyboardInterrupt, SystemExit):
+        raise
     except Exception as e:
         logger.error(f"Internal error: {e}")
         logger.debug("Traceback:", exc_info=True)

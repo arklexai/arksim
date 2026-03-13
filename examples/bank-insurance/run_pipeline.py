@@ -33,6 +33,7 @@ from arksim.evaluator import (
     Evaluator,
     check_numeric_thresholds,
     check_qualitative_failure_labels,
+    check_score_threshold,
 )
 from arksim.llms.chat import LLM
 from arksim.scenario import Scenarios
@@ -115,6 +116,7 @@ async def main() -> None:
     print("Step 3/3: Checking Thresholds...")
     print("=" * 60)
 
+    score_threshold = 0.7
     numeric_thresholds = {
         "clarity": 3.5,
         "goal_completion": 0.6,
@@ -123,12 +125,13 @@ async def main() -> None:
         "prohibited_statements": ["violated"],
     }
 
+    score_ok = check_score_threshold(evaluator_output, score_threshold)
     numeric_ok = check_numeric_thresholds(evaluator_output, numeric_thresholds)
     qual_ok = check_qualitative_failure_labels(
         evaluator_output, qualitative_failure_labels
     )
 
-    if not numeric_ok or not qual_ok:
+    if not score_ok or not numeric_ok or not qual_ok:
         print("\nEvaluation failed: one or more threshold gates did not pass.")
         sys.exit(1)
 
