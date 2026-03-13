@@ -63,10 +63,23 @@ class ChatCompletionsAgent(BaseAgent):
 
         return data
 
+    def _extract_tool_calls(
+        self, result: dict[str, Any]
+    ) -> list[dict[str, Any]] | None:
+        """Extract tool_calls from an OpenAI-style response, or None."""
+        if "choices" not in result:
+            return None
+        msg = result["choices"][0].get("message", {})
+        tool_calls = msg.get("tool_calls")
+        if tool_calls:
+            return tool_calls
+        return None
+
     async def execute(self, user_query: str, **kwargs: object) -> str:
         """Execute user query using chat completions API."""
         metadata = kwargs.get("metadata")
         self.conversation_history.append({"role": "user", "content": user_query})
+
         try:
             payload_data = copy.deepcopy(self.config.body)
             payload_data.pop("messages", None)
@@ -79,7 +92,8 @@ class ChatCompletionsAgent(BaseAgent):
                     payload_data["metadata"] = metadata
                 else:
                     logger.warning(
-                        "Metadata is not provided. Please provide metadata to the chat completions API."
+                        "Metadata is not provided. Please provide metadata "
+                        "to the chat completions API."
                     )
 
             result = await self._post_request(payload_data)

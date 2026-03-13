@@ -4,6 +4,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 
 from arksim.config import AgentConfig
+from arksim.simulation_engine.tool_types import AgentResponse
 
 
 class BaseAgent(ABC):
@@ -17,7 +18,7 @@ class BaseAgent(ABC):
         """Get the chat ID. Must be implemented by subclasses."""
 
     @abstractmethod
-    async def execute(self, user_query: str, **kwargs: object) -> str:
+    async def execute(self, user_query: str, **kwargs: object) -> str | AgentResponse:
         """Execute the user query. Must be implemented by subclasses."""
 
     async def close(self) -> None:  # noqa: B027 - intentional non-abstract no-op
