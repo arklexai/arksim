@@ -181,4 +181,3 @@ class Simulation(BaseModel):
         )
     )
     conversations: list[Conversation]
-    tool_definitions: list[dict[str, Any]] = []

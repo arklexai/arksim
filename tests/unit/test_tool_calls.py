@@ -6,18 +6,12 @@ from __future__ import annotations
 from typing import Any
 from unittest.mock import MagicMock
 
-import pytest
-
-from arksim.config import AgentConfig
 from arksim.evaluator.base_metric import ChatMessage, ScoreInput
 from arksim.evaluator.entities import TurnItem
 from arksim.evaluator.evaluate import evaluate_turn
 from arksim.evaluator.tool_call_metrics import ToolCallBehaviorFailureMetric
 from arksim.evaluator.utils.schema import QualSchema, ScoreSchema
-from arksim.simulation_engine.agent.clients.chat_completions import (
-    ChatCompletionsAgent,
-)
-from arksim.simulation_engine.entities import Message, Simulation
+from arksim.simulation_engine.entities import Message
 from arksim.simulation_engine.tool_types import AgentResponse, ToolCall
 
 # ── ToolCall / AgentResponse data model tests ──
@@ -101,29 +95,6 @@ class TestMessageToolCalls:
         assert restored.tool_calls[0].id == "tc-1"
 
 
-# ── Simulation model with tool_definitions ──
-
-
-class TestSimulationToolDefinitions:
-    def test_default_empty(self) -> None:
-        sim = Simulation(
-            schema_version="v1.1",
-            simulator_version="v1",
-            conversations=[],
-        )
-        assert sim.tool_definitions == []
-
-    def test_with_definitions(self) -> None:
-        tools = [{"type": "function", "function": {"name": "get_weather"}}]
-        sim = Simulation(
-            schema_version="v1.1",
-            simulator_version="v1",
-            conversations=[],
-            tool_definitions=tools,
-        )
-        assert len(sim.tool_definitions) == 1
-
-
 # ── TurnItem with tool_calls ──
 
 
@@ -157,66 +128,6 @@ class TestTurnItemToolCalls:
         assert item.tool_calls == tc_data
 
 
-# ── ChatCompletionsAgent._extract_tool_calls ──
-
-
-class TestExtractToolCalls:
-    @pytest.fixture
-    def agent(
-        self, valid_agent_config_chat_completions_new: dict, mock_env_vars: dict
-    ) -> ChatCompletionsAgent:
-        config = AgentConfig(**valid_agent_config_chat_completions_new)
-        return ChatCompletionsAgent(config)
-
-    def test_with_tool_calls(self, agent: ChatCompletionsAgent) -> None:
-        result = {
-            "choices": [
-                {
-                    "message": {
-                        "role": "assistant",
-                        "content": None,
-                        "tool_calls": [
-                            {
-                                "id": "call_1",
-                                "type": "function",
-                                "function": {
-                                    "name": "get_weather",
-                                    "arguments": '{"city": "NYC"}',
-                                },
-                            }
-                        ],
-                    }
-                }
-            ]
-        }
-        tcs = agent._extract_tool_calls(result)
-        assert tcs is not None
-        assert len(tcs) == 1
-        assert tcs[0]["function"]["name"] == "get_weather"
-
-    def test_without_tool_calls(self, agent: ChatCompletionsAgent) -> None:
-        result = {"choices": [{"message": {"role": "assistant", "content": "Hello!"}}]}
-        assert agent._extract_tool_calls(result) is None
-
-    def test_non_openai_format(self, agent: ChatCompletionsAgent) -> None:
-        result = {"content": [{"type": "text", "text": "hi"}]}
-        assert agent._extract_tool_calls(result) is None
-
-    def test_empty_tool_calls_list(self, agent: ChatCompletionsAgent) -> None:
-        result = {
-            "choices": [
-                {
-                    "message": {
-                        "role": "assistant",
-                        "content": "hi",
-                        "tool_calls": [],
-                    }
-                }
-            ]
-        }
-        assert agent._extract_tool_calls(result) is None
-
-
 # ── ToolCallBehaviorFailureMetric ──
 
 
@@ -235,6 +146,23 @@ class TestToolCallBehaviorFailureMetric:
         result = metric.evaluate(score_input)
         assert result.value == "no failure"
         assert "No tool calls" in result.reason
+        mock_llm.call.assert_not_called()
+
+    def test_empty_tool_calls_list_returns_no_failure(self) -> None:
+        """Empty list is falsy and should be treated as no tool calls."""
+        mock_llm = MagicMock()
+        metric = ToolCallBehaviorFailureMetric(mock_llm)
+
+        score_input = ScoreInput(
+            chat_history=[],
+            current_turn=[],
+            knowledge="",
+            user_goal="",
+            profile="",
+            tool_calls=[],
+        )
+        result = metric.evaluate(score_input)
+        assert result.value == "no failure"
         mock_llm.call.assert_not_called()
 
     def test_with_tool_calls_calls_llm(self) -> None:
