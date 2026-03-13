@@ -30,6 +30,7 @@ from .entities import (
     TurnEvaluation,
     TurnItem,
 )
+from .tool_call_metrics import ToolCallBehaviorFailureMetric
 from .utils.constants import (
     BEHAVIOR_FAILURE_THRESHOLD,
     EVALUATION_PARTIAL_FAILURE_THRESHOLD,
@@ -175,6 +176,29 @@ def evaluate_turn(
     else:
         turn_behavior_failure = EvaluationOutcomes.SKIPPED_GOOD_PERFORMANCE.value
         turn_behavior_failure_reason = SKIPPED_GOOD_PERFORMANCE_REASON
+
+    # Tool call behavior failure check (independent of threshold, runs when turn has tool calls)
+    if (
+        _should_run("tool_call_behavior_failure", metrics_to_run)
+        and turn_item.tool_calls
+    ):
+        tool_score_input = ScoreInput(
+            chat_history=score_input.chat_history,
+            current_turn=score_input.current_turn,
+            knowledge=score_input.knowledge,
+            user_goal=score_input.user_goal,
+            profile=score_input.profile,
+            tool_calls=turn_item.tool_calls,
+        )
+        tool_qual = ToolCallBehaviorFailureMetric(llm).evaluate(tool_score_input)
+        qual_scores.append(tool_qual)
+
+        if tool_qual.value not in _SKIP_OUTCOMES:
+            if turn_behavior_failure in _SKIP_OUTCOMES:
+                turn_behavior_failure = tool_qual.value
+                turn_behavior_failure_reason = tool_qual.reason or ""
+            else:
+                turn_behavior_failure_reason += f" [Tool: {tool_qual.reason or ''}]"
 
     return TurnEvaluation(
         turn_id=turn_item.turn_id,

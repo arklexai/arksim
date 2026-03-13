@@ -70,6 +70,7 @@ class TestAgentMetrics:
             "faithfulness",
             "goal_completion",
             "agent_behavior_failure",
+            "tool_call_behavior_failure",
         ]
         assert set(metrics) == set(expected)
 
@@ -88,10 +89,18 @@ class TestAgentBehaviorFailureType:
         """Test NO_FAILURE type."""
         assert AgentBehaviorFailureType.NO_FAILURE.value == "no failure"
 
+    def test_unsafe_action(self) -> None:
+        """Test UNSAFE_ACTION type."""
+        assert AgentBehaviorFailureType.UNSAFE_ACTION.value == "unsafe action"
+
+    def test_unsafe_state(self) -> None:
+        """Test UNSAFE_STATE type."""
+        assert AgentBehaviorFailureType.UNSAFE_STATE.value == "unsafe state"
+
     def test_all_failure_types_defined(self) -> None:
         """Test all expected failure types are defined."""
         types = [t.value for t in AgentBehaviorFailureType]
-        assert len(types) == 6
+        assert len(types) == 8
 
 
 class TestEvaluationParams:
