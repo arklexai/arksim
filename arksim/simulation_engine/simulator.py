@@ -37,6 +37,7 @@ from .utils.utils import flip_hist
 logger = logging.getLogger(__name__)
 
 
+# v1.1: Message.tool_calls field added (optional, backward-compatible with v1)
 SIMULATION_SCHEMA_VERSION = "v1.1"
 SIMULATOR_VERSION = "v1"
 

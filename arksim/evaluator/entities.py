@@ -32,7 +32,6 @@ _DEFAULT_METRICS_TO_RUN = [
     "relevance",
     "goal_completion",
     "agent_behavior_failure",
-    "tool_call_behavior_failure",
 ]
 
 
