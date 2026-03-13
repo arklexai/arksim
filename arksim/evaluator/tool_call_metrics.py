@@ -13,7 +13,7 @@ from .base_metric import (
     ScoreInput,
     format_chat_history,
 )
-from .utils.enums import AgentMetrics
+from .utils.enums import AgentBehaviorFailureType, AgentMetrics
 from .utils.prompts import (
     tool_call_behavior_failure_system_prompt,
     tool_call_behavior_failure_user_prompt,
@@ -49,7 +49,7 @@ class ToolCallBehaviorFailureMetric(QualitativeMetric):
         if not tool_calls:
             return QualResult(
                 name=self.name,
-                value="no failure",
+                value=AgentBehaviorFailureType.NO_FAILURE.value,
                 reason="No tool calls in this turn",
             )
 
