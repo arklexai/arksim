@@ -17,6 +17,7 @@ from pydantic import BaseModel, Field, ValidationInfo, model_validator
 from arksim.config.core.agent import AgentConfig
 from arksim.config.utils import resolve_model_paths
 from arksim.constants import DEFAULT_MODEL, DEFAULT_PROVIDER
+from arksim.simulation_engine.tool_types import ToolCall
 from arksim.utils.concurrency import validate_num_workers
 
 
@@ -149,6 +150,7 @@ class Message(BaseModel):
     message_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     role: Literal["simulated_user", "assistant"]
     content: str
+    tool_calls: list[ToolCall] | None = None
 
 
 class SimulatedUserPrompt(BaseModel):

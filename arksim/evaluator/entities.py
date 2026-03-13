@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import os
 import sys
+from typing import Any
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -145,6 +146,7 @@ class TurnItem(BaseModel):
     knowledge: list[str]
     profile: str
     user_goal: str
+    tool_calls: list[dict[str, Any]] | None = None
 
 
 class ConvoItem(BaseModel):
