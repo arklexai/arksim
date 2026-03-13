@@ -76,6 +76,26 @@ class EvaluationInput(BaseModel):
             "If any score < threshold, exit with non-zero code."
         ),
     )
+    numeric_thresholds: dict[str, float] | None = Field(
+        default=None,
+        description=(
+            "Per-metric pass/fail thresholds on each metric's native scale. "
+            "Keys are metric names (e.g. 'faithfulness', 'helpfulness'). "
+            "Built-in turn-level metrics use a 1–5 scale; the mean across all "
+            "turns per conversation is compared against the threshold. "
+            "'goal_completion' is stored as 0–1 and compared directly."
+        ),
+    )
+    qualitative_failure_labels: dict[str, list[str]] | None = Field(
+        default=None,
+        description=(
+            "Hard-gate failure labels for qualitative metrics. "
+            "Keys are metric names, values are lists of labels that trigger failure "
+            "(e.g. 'prohibited_statements': ['violated']). "
+            "Any evaluated turn whose label appears in the list fails the run; "
+            "turns where the metric did not run are skipped."
+        ),
+    )
 
     @model_validator(mode="after")
     def validate_evaluation_input(self, info: ValidationInfo) -> Self:

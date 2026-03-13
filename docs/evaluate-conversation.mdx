@@ -78,7 +78,6 @@ model: gpt-5.1
 
 # Execution
 num_workers: 50
-score_threshold: null
 
 # Metrics
 metrics_to_run: [
@@ -95,6 +94,16 @@ custom_metrics_file_paths: []
 # Output
 output_dir: ./examples/path/to/evaluation
 generate_html_report: true
+
+# Threshold gates (optional — omit or set to null to disable)
+score_threshold: null
+numeric_thresholds:
+  faithfulness: 3.5
+  helpfulness: 3.0
+  goal_completion: 0.8
+qualitative_failure_labels:
+  agent_behavior_failure: ["false information", "disobey user request"]
+  prohibited_statements: ["violated"]
 ```
 
 For all evaluation config keys, types, and defaults, see [Run configuration → Evaluation keys](/schema-reference#evaluation-keys) in the Schema Reference.
@@ -173,6 +182,92 @@ Both metric types receive a `ScoreInput`:
 score_input.chat_history   # Full conversation turns
 score_input.user_goal      # The goal the user was trying to achieve
 score_input.knowledge      # Retrieved knowledge / context passed to the agent
+```
+
+---
+
+## Threshold Gates
+
+Threshold gates let you fail the CLI with a non-zero exit code when evaluation results fall below acceptable levels. All three gate types are evaluated after every `arksim evaluate` or `arksim simulate-evaluate` run.
+
+### `score_threshold`
+
+A single float (0–1) applied to every conversation's `overall_agent_score`. Any conversation below the threshold fails the run with exit code 1.
+
+```yaml
+score_threshold: 0.6
+```
+
+### `numeric_thresholds`
+
+Per-metric minimum scores on each metric's native scale. The mean score across all turns per conversation is compared against the threshold. Any conversation that falls below the threshold fails the run with exit code 1.
+
+| Metric | Scale | Notes |
+| --- | --- | --- |
+| `faithfulness`, `helpfulness`, `coherence`, `verbosity`, `relevance` | 1–5 | Mean of per-turn scores |
+| `goal_completion` | 0–1 | Per-conversation score compared directly |
+| Custom quantitative metrics | Your scale | Mean of per-turn scores |
+
+```yaml
+numeric_thresholds:
+  faithfulness: 3.5
+  helpfulness: 3.0
+  goal_completion: 0.8
+```
+
+### `qualitative_failure_labels`
+
+Hard-gate failure labels for qualitative metrics. Any evaluated turn whose label appears in the list fails the run with exit code 1. Turns where the metric did not run are skipped.
+
+```yaml
+qualitative_failure_labels:
+  agent_behavior_failure: ["false information", "disobey user request"]
+  prohibited_statements: ["violated"]
+```
+
+If any gate fails, the CLI exits with code `1` and logs which conversations and turns did not meet the requirement. See [Exit codes](/schema-reference#exit-codes) for the full list of exit codes.
+
+### Programmatic threshold gates
+
+When running ArkSim programmatically (e.g. with a custom agent class), you can apply the same gates by importing `check_numeric_thresholds` and `check_qualitative_failure_labels` directly from `arksim.evaluator`:
+
+```python
+import sys
+from arksim.evaluator import (
+    Evaluator,
+    check_numeric_thresholds,
+    check_qualitative_failure_labels,
+)
+
+evaluator_output = evaluator.evaluate(simulation_output)
+
+numeric_ok = check_numeric_thresholds(
+    evaluator_output,
+    numeric_thresholds={
+        "clarity": 3.5,
+        "goal_completion": 0.6,
+    },
+)
+qual_ok = check_qualitative_failure_labels(
+    evaluator_output,
+    qualitative_failure_labels={
+        "agent_behavior_failure": ["false information"],
+        "prohibited_statements": ["violated"],
+    },
+)
+
+if not numeric_ok or not qual_ok:
+    sys.exit(1)
+```
+
+You can also write your own custom gate by inspecting `evaluator_output.conversations` directly and applying any logic you need:
+
+```python
+# Example: fail if any conversation has overall_agent_score below 0.7
+for convo in evaluator_output.conversations:
+    if convo.overall_agent_score < 0.7:
+        print(f"Conversation {convo.conversation_id} failed: score {convo.overall_agent_score:.2f}")
+        sys.exit(1)
 ```
 
 ---

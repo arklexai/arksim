@@ -293,8 +293,41 @@ All settings can be specified in YAML and overridden via CLI flags (`--key value
 | `metrics_to_run` | list | all metrics | Which metrics to run |
 | `custom_metrics_file_paths` | list | `[]` | Paths to custom metric files |
 | `generate_html_report` | bool | `true` | Generate an HTML report |
-| `score_threshold` | float | null | Fail (exit 1) if any conversation scores below this |
+| `score_threshold` | float | null | Fail if any conversation's `overall_agent_score` is below this (0.0–1.0) |
+| `numeric_thresholds` | dict | null | Per-metric minimum scores on native scale. Built-in turn-level metrics use 1–5 (mean across turns per conversation); `goal_completion` uses 0–1. Unknown metric names are skipped with a warning. |
+| `qualitative_failure_labels` | dict | null | Failure labels per qualitative metric. Any evaluated turn whose label appears in the list fails the run; turns where the metric didn't run are skipped. |
 | `num_workers` | int/string | `50` | Parallel workers |
+
+### Thresholds & exit codes
+
+All three threshold types are independent and optional (default `null`). Any failure exits with code `1`.
+
+| Threshold | Key | How it works |
+|-----------|-----|--------------|
+| Global score | `score_threshold` | Fails if any conversation's `overall_agent_score` (0–1) is below the threshold |
+| Per-metric numeric | `numeric_thresholds` | Fails if any conversation's mean score for a listed metric falls below its threshold. Use native scale: 1–5 for built-in turn-level metrics, 0–1 for `goal_completion` |
+| Qualitative | `qualitative_failure_labels` | Fails if any evaluated turn returns a label in the failure list |
+
+```yaml
+score_threshold: 0.6
+
+numeric_thresholds:
+  helpfulness: 3.5
+  goal_completion: 0.7
+
+qualitative_failure_labels:
+  agent_behavior_failure: ["false information", "disobey user request"]
+  prohibited_statements: ["violated"]
+```
+
+**Exit codes:**
+
+| Code | Meaning |
+|------|---------|
+| `0` | Success |
+| `1` | Evaluation failed — threshold not met |
+| `2` | Configuration error |
+| `3` | Internal error |
 
 ## CLI Reference
 

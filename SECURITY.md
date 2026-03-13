@@ -4,7 +4,9 @@
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 0.0.x   | :white_check_mark: |
+| 0.2.x   | :white_check_mark: |
+| 0.1.x   | :white_check_mark: |
+| < 0.1   | :x:                |
 
 ## Reporting a Vulnerability
 
@@ -21,11 +23,11 @@ Instead, email **support@arklex.ai** with:
 
 ## Response Process
 
-1. **Acknowledgment** — We will acknowledge your report within 48 hours.
-2. **Assessment** — We will assess the severity and impact within 5 business days.
-3. **Fix** — We will work on a fix and coordinate disclosure with you.
-4. **Release** — Security fixes are released as patch versions (e.g., 0.0.x).
-5. **Disclosure** — We will credit reporters in the release notes unless anonymity is requested.
+1. **Acknowledgment** - We will acknowledge your report within 48 hours.
+2. **Assessment** - We will assess the severity and impact within 5 business days.
+3. **Fix** - We will work on a fix and coordinate disclosure with you.
+4. **Release** - Security fixes are released as patch versions (e.g., 0.2.x).
+5. **Disclosure** - We will credit reporters in the release notes unless anonymity is requested.
 
 ## Scope
 
