@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import asyncio
 import os
+import sys
 
 from custom_agent import EcommerceCustomAgent
 from custom_metrics import (
@@ -23,7 +24,13 @@ from custom_metrics import (
 )
 
 from arksim.config import AgentConfig, CustomConfig
-from arksim.evaluator import EvaluationParams, Evaluator
+from arksim.evaluator import (
+    EvaluationParams,
+    Evaluator,
+    check_numeric_thresholds,
+    check_qualitative_failure_labels,
+    check_score_threshold,
+)
 from arksim.llms.chat import LLM
 from arksim.scenario import Scenarios
 from arksim.simulation_engine import SimulationParams, Simulator
@@ -106,6 +113,30 @@ async def main() -> None:
         chat_id_to_label=evaluator.chat_id_to_label,
     )
     await asyncio.to_thread(generate_html_report, report_params)
+
+    # -- Step 3: Check thresholds --------------------------------------------
+    print("\n" + "=" * 60)
+    print("Step 3/3: Checking Thresholds...")
+    print("=" * 60)
+
+    score_threshold = 0.7
+    numeric_thresholds = {
+        "conversion": 0.6,
+        "goal_completion": 0.8,
+    }
+    qualitative_failure_labels = {
+        "upsell_behavior": ["inappropriate upsell"],
+    }
+
+    score_ok = check_score_threshold(evaluator_output, score_threshold)
+    numeric_ok = check_numeric_thresholds(evaluator_output, numeric_thresholds)
+    qual_ok = check_qualitative_failure_labels(
+        evaluator_output, qualitative_failure_labels
+    )
+
+    if not score_ok or not numeric_ok or not qual_ok:
+        print("\nEvaluation failed: one or more threshold gates did not pass.")
+        sys.exit(1)
 
     print("\n" + "=" * 60)
     print("Pipeline complete!")

@@ -93,21 +93,44 @@ GitHub Actions runner
 
     ```bash
     mkdir -p .github/workflows tests
-    cp ci/github-actions/arksim-pytest.yml .github/workflows/arksim-pytest.yml
-    cp ci/pytest/test_agent_quality.py tests/test_agent_quality.py
+    cp examples/ci/pytest/arksim-pytest.yml .github/workflows/arksim-pytest.yml
+    cp examples/ci/pytest/test_agent_quality.py tests/test_agent_quality.py
+    ```
+
+    Create a `conftest.py` in your `tests/` directory so pytest can resolve your agent and metrics modules:
+
+    ```python
+    # tests/conftest.py
+    import sys
+    import os
+
+    # Add the project root to sys.path so imports like
+    # `from my_agent import MyAgent` resolve correctly.
+    sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
     ```
   </Step>
 
   <Step title="Create your scenarios">
-    Create `arksim/scenarios.json` with test cases representative of your agent's real usage. See [Build Scenarios](/build-scenario) for the schema, and [`examples/bank-insurance`](https://github.com/arklexai/arksim/tree/main/examples/bank-insurance) for a full example.
+    Create `tests/arksim/scenarios.json` with test cases representative of your agent's real usage:
+
+    ```
+    tests/
+    ├── test_agent_quality.py
+    └── arksim/
+        ├── scenarios.json       ← test inputs (committed)
+        └── results/             ← outputs (add to .gitignore)
+    ```
+
+    See [Build Scenarios](/build-scenario) for the schema, and [`examples/bank-insurance`](https://github.com/arklexai/arksim/tree/main/examples/bank-insurance) for a full example.
   </Step>
 
   <Step title="Customize the test file">
     Open `tests/test_agent_quality.py` and update:
 
     - Import your agent class (replace `from my_agent import MyAgent`)
-    - Set `SCORE_THRESHOLD`, `NUMERIC_THRESHOLDS`, and `QUALITATIVE_FAILURE_LABELS` to match your quality bar
-    - Adjust `num_conversations_per_scenario`, `max_turns`, and `metrics_to_run` as needed
+    - Import your custom metrics if needed (replace `from my_metrics import ...`), or remove the custom metrics block entirely to use built-in metrics only
+    - Set `NUMERIC_THRESHOLDS` and `QUALITATIVE_FAILURE_LABELS` to match your quality bar
+    - Adjust `num_convos_per_scenario`, `max_turns`, and `num_workers` as needed
   </Step>
 
   <Step title="Add GitHub secret">
@@ -173,7 +196,7 @@ The CLI exits non-zero if any threshold is not met, which fails the job.
 
     ```bash
     mkdir -p .github/workflows
-    cp ci/github-actions/arksim.yml .github/workflows/arksim.yml
+    cp examples/ci/github-actions/arksim.yml .github/workflows/arksim.yml
     ```
   </Step>
 

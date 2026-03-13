@@ -43,10 +43,10 @@ jobs:
       # ── 3. Install dependencies ───────────────────────────────────────────
       # TODO: adjust to your agent's dependency file
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: python -m pip install -r requirements.txt
 
       - name: Install ArkSim and pytest
-        run: pip install arksim pytest pytest-asyncio
+        run: python -m pip install arksim pytest pytest-asyncio
 
       # ── 4. Run quality tests ──────────────────────────────────────────────
       # TODO: point to your test file
@@ -56,12 +56,24 @@ jobs:
           # API key for the LLM ArkSim uses internally to run evaluations
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
-      # ── 5. Upload evaluation report ───────────────────────────────────────
-      # The HTML report is uploaded even when the job fails for inspection.
-      - name: Upload ArkSim evaluation report
+      # ── 5. Upload artifacts ───────────────────────────────────────────────
+      # All three artifacts are uploaded even when the job fails so you can
+      # inspect results regardless of whether the quality gate passed.
+
+      # HTML report — download this one artifact, unzip, and open in browser.
+      - name: Upload HTML report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: arksim-evaluation-report
-          path: arksim/results/evaluation/
+          name: arksim-html-report
+          path: tests/arksim/results/evaluation/final_report.html
+          if-no-files-found: ignore
+
+      # Full results
+      - name: Upload full results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: arksim-full-results
+          path: tests/arksim/results/
           if-no-files-found: ignore
