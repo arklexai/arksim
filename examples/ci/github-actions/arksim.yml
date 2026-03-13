@@ -49,39 +49,39 @@ jobs:
           cache: pip
 
       # ── 3. Install dependencies ───────────────────────────────────────────
+      - name: Install ArkSim
+        run: pip install arksim
+
       # TODO: adjust to your agent's dependency file
       - name: Install agent dependencies
         run: pip install -r requirements.txt
-
-      - name: Install ArkSim
-        run: pip install arksim
 
       # ── 4. Start agent server ─────────────────────────────────────────────
       # TODO: replace the command below with whatever starts your agent as an
       #       HTTP server exposing an OpenAI-compatible chat completions endpoint.
       #
       # The endpoint URL must match `agent_config.api_config.endpoint` in
-      # arksim/config.yaml (default: http://localhost:8000/v1/chat/completions).
+      # arksim/config.yaml (default: http://localhost:8888/v1/chat/completions).
       #
       # Agent framework examples:
       #
       #   FastAPI / uvicorn:
-      #     uvicorn my_agent:app --host 0.0.0.0 --port 8000 &
+      #     uvicorn my_agent:app --host 0.0.0.0 --port 8888 &
       #
       #   LangChain + LangServe:
-      #     python -m uvicorn my_chain_server:app --port 8000 &
+      #     python -m uvicorn my_chain_server:app --port 8888 &
       #
       #   OpenAI Agents SDK:
-      #     python my_agent_server.py --port 8000 &
+      #     python my_agent_server.py --port 8888 &
       #
       #   Google ADK:
-      #     adk api_server --port 8000 &
+      #     adk api_server --port 8888 &
       #
       # The '&' runs the server in the background.
       # The PID is saved so the cleanup step can stop it later.
       - name: Start agent server
         run: |
-          python my_agent_server.py --port 8000 &
+          python my_agent_server.py --port 8888 &
           echo $! > /tmp/agent_server.pid
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -95,7 +95,7 @@ jobs:
         run: |
           echo "Waiting for agent server…"
           for i in $(seq 1 30); do
-            if curl -sf http://localhost:8000/health > /dev/null 2>&1; then
+            if curl -sf http://localhost:8888/health > /dev/null 2>&1; then
               echo "Agent is ready (attempt $i)"
               exit 0
             fi
@@ -112,15 +112,28 @@ jobs:
         env:
           # API key for the LLM ArkSim uses internally to run evaluations
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          # AGENT_API_KEY: ${{ secrets.AGENT_API_KEY }}
 
-      # ── 7. Upload evaluation report ───────────────────────────────────────
-      # The HTML report is uploaded even when the job fails for inspection.
-      - name: Upload ArkSim evaluation report
+      # ── 7. Upload artifacts ───────────────────────────────────────────────
+      # All artifacts are uploaded even when the job fails so you can
+      # inspect results regardless of whether the quality gate passed.
+
+      # HTML report — download this one artifact, unzip, and open in browser.
+      - name: Upload HTML report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: arksim-evaluation-report
-          path: arksim/results/evaluation/
+          name: arksim-html-report
+          path: arksim/results/evaluation/final_report.html
+          if-no-files-found: ignore
+
+      # Full results
+      - name: Upload full results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: arksim-full-results
+          path: arksim/results/
           if-no-files-found: ignore
 
       # ── 8. Stop agent server ──────────────────────────────────────────────

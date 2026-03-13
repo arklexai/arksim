@@ -372,6 +372,44 @@ Opens a local web app at `http://localhost:8080` where you can browse config fil
 | [crewai](examples/integrations/crewai/) | Integration with CrewAI |
 | [llamaindex](examples/integrations/llamaindex/) | Integration with LlamaIndex |
 
+## CI Integration
+
+Run ArkSim as a quality gate on every pull request so regressions are caught before they ship.
+
+### pytest (custom agent)
+
+The simplest path if your agent is a Python class. CI runs `pytest` — no server needed.
+
+```bash
+# Copy templates into your repo
+arksim examples ci
+mkdir -p .github/workflows tests
+cp examples/ci/pytest/arksim-pytest.yml .github/workflows/arksim-pytest.yml
+cp examples/ci/pytest/test_agent_quality.py tests/test_agent_quality.py
+```
+
+Edit `tests/test_agent_quality.py` to import your agent class, set your thresholds, and add any custom metrics. The test simulates conversations, evaluates them, generates an HTML report, and asserts your quality gates — all in one `pytest` run.
+
+### HTTP server (any language or framework)
+
+If your agent runs as an HTTP server exposing a Chat Completions or A2A endpoint:
+
+```bash
+arksim examples ci
+mkdir -p .github/workflows
+cp examples/ci/github-actions/arksim.yml .github/workflows/arksim.yml
+```
+
+The workflow starts your server, waits for it to be healthy, runs `arksim simulate-evaluate`, and exits non-zero if any threshold is not met.
+
+Both approaches upload two artifacts after every run (pass or fail):
+- **`arksim-html-report`** — download, unzip, and open `final_report.html` in your browser
+- **`arksim-full-results`** — raw simulation and evaluation JSONs for programmatic analysis
+
+See [examples/ci/](examples/ci/) for full templates and [CI Integration docs](https://docs.arklex.ai/ci-integration) for a step-by-step setup guide.
+
+---
+
 ## Development
 
 ```bash

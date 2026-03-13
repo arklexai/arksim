@@ -31,7 +31,7 @@ Running ArkSim on every pull request turns quality regression into a CI signal:
 
 ## Approach 1: pytest with a custom agent
 
-Your agent is a Python class that subclasses `BaseAgent`. ArkSim loads it in-process — no HTTP server needed. The pytest test calls `run_simulation()` and `run_evaluation()` directly and asserts scores.
+Your agent is a Python class that subclasses `BaseAgent`. ArkSim loads it in-process — no HTTP server needed. The pytest test runs simulation and evaluation directly and asserts scores.
 
 ### How it works
 
@@ -39,12 +39,16 @@ Your agent is a Python class that subclasses `BaseAgent`. ArkSim loads it in-pro
 GitHub Actions runner
 │
 ├── 1. Checkout + install dependencies
-├── 2. pip install arksim pytest
-├── 3. pytest tests/test_agent_quality.py
+├── 2. python -m pip install arksim pytest pytest-asyncio
+├── 3. python -m pip install -r requirements.txt
+├── 4. pytest tests/test_agent_quality.py
 │       ├── Simulate N conversations (agent runs in-process)
 │       ├── Evaluate each conversation with an LLM judge
+│       ├── Generate HTML report
 │       └── Assert quality thresholds → pass or fail
-└── 4. Upload HTML evaluation report as artifact  (always runs)
+└── 5. Upload artifacts (always runs)
+        ├── arksim-html-report  (final_report.html)
+        └── arksim-full-results (simulation + evaluation JSONs)
 ```
 
 ### Setup
@@ -129,7 +133,7 @@ GitHub Actions runner
 
     - Import your agent class (replace `from my_agent import MyAgent`)
     - Import your custom metrics if needed (replace `from my_metrics import ...`), or remove the custom metrics block entirely to use built-in metrics only
-    - Set `NUMERIC_THRESHOLDS` and `QUALITATIVE_FAILURE_LABELS` to match your quality bar
+    - Set `SCORE_THRESHOLD`, `NUMERIC_THRESHOLDS`, and `QUALITATIVE_FAILURE_LABELS` to match your quality bar
     - Adjust `num_convos_per_scenario`, `max_turns`, and `num_workers` as needed
   </Step>
 
@@ -163,14 +167,17 @@ GitHub Actions runner
 │
 ├── 1. Checkout + install dependencies
 ├── 2. pip install arksim
-├── 3. Start your agent as an HTTP server (background)
-├── 4. Poll /health until HTTP 200
-├── 5. arksim simulate-evaluate config.yaml
+├── 3. pip install -r requirements.txt
+├── 4. Start your agent as an HTTP server (background)
+├── 5. Poll /health until HTTP 200
+├── 6. arksim simulate-evaluate config.yaml
 │       ├── Simulate N conversations with your agent
 │       ├── Evaluate each conversation with an LLM judge
 │       └── Check configured quality thresholds
-├── 6. Upload HTML evaluation report as artifact  (always runs)
-└── 7. Exit code → job passes or fails
+├── 7. Upload artifacts (always runs)
+│       ├── arksim-html-report  (final_report.html)
+│       └── arksim-full-results (simulation + evaluation JSONs)
+└── 8. Exit code → job passes or fails
 ```
 
 The CLI exits non-zero if any threshold is not met, which fails the job.
@@ -208,7 +215,7 @@ The CLI exits non-zero if any threshold is not met, which fails the job.
       agent_type: chat_completions
       agent_name: my-agent
       api_config:
-        endpoint: http://localhost:8000/v1/chat/completions
+        endpoint: http://localhost:8888/v1/chat/completions
         headers:
           Content-Type: application/json
         body:
@@ -254,13 +261,17 @@ The CLI exits non-zero if any threshold is not met, which fails the job.
         run: pip install arksim
 
       - name: Start agent server
-        run: .venv-agent/bin/python my_agent_server.py --port 8000 &
+        run: .venv-agent/bin/python my_agent_server.py --port 8888 &
       ```
     </Tip>
   </Step>
 
   <Step title="Create your scenarios">
     Create `arksim/scenarios.json` with test cases representative of your agent's real usage. See [Build Scenarios](/build-scenario) for the schema, and [`examples/bank-insurance`](https://github.com/arklexai/arksim/tree/main/examples/bank-insurance) for a full example.
+  </Step>
+
+  <Step title="Add custom metrics (optional)">
+    If you have custom metrics, add them to `arksim/custom_metrics/` and reference them in your `arksim/config.yaml`. See [Custom Metrics](/evaluate-conversation#custom-metrics) for the schema.
   </Step>
 
   <Step title="Customize the workflow">
@@ -272,7 +283,7 @@ The CLI exits non-zero if any threshold is not met, which fails the job.
       <Tab title="FastAPI / uvicorn">
         ```yaml
         - name: Start agent server
-          run: uvicorn my_agent:app --host 0.0.0.0 --port 8000 &
+          run: uvicorn my_agent:app --host 0.0.0.0 --port 8888 &
           env:
             OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         ```
@@ -280,7 +291,7 @@ The CLI exits non-zero if any threshold is not met, which fails the job.
       <Tab title="LangChain + LangServe">
         ```yaml
         - name: Start agent server
-          run: python -m uvicorn my_chain_server:app --port 8000 &
+          run: python -m uvicorn my_chain_server:app --port 8888 &
           env:
             OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         ```
@@ -288,7 +299,7 @@ The CLI exits non-zero if any threshold is not met, which fails the job.
       <Tab title="OpenAI Agents SDK">
         ```yaml
         - name: Start agent server
-          run: python my_agent_server.py --port 8000 &
+          run: python my_agent_server.py --port 8888 &
           env:
             OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         ```
@@ -296,7 +307,7 @@ The CLI exits non-zero if any threshold is not met, which fails the job.
       <Tab title="Google ADK">
         ```yaml
         - name: Start agent server
-          run: adk api_server --port 8000 &
+          run: adk api_server --port 8888 &
           env:
             GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
         ```
@@ -309,7 +320,7 @@ The CLI exits non-zero if any threshold is not met, which fails the job.
     - name: Wait for agent to be healthy
       run: |
         for i in $(seq 1 30); do
-          if curl -sf http://localhost:8000/health > /dev/null 2>&1; then
+          if curl -sf http://localhost:8888/health > /dev/null 2>&1; then
             exit 0
           fi
           sleep 2
@@ -373,10 +384,11 @@ See [Threshold Gates](/evaluate-conversation#threshold-gates) for the full refer
 
 ## Viewing the evaluation report
 
-After every run — pass or fail — the full HTML report is uploaded as a build artifact.
+After every run — pass or fail — two artifacts are uploaded so you can inspect results regardless of outcome.
 
 1. Open the workflow run in GitHub Actions.
 2. Scroll to **Artifacts** at the bottom.
-3. Download **arksim-evaluation-report**.
+3. Download **arksim-html-report** → unzip → open `final_report.html` in your browser.
+4. Download **arksim-full-results** for the raw simulation and evaluation JSONs (useful for programmatic analysis or diffing metric trends across runs).
 
-The report shows metric averages, per-conversation scores, and the top failure patterns, giving you enough context to know exactly what to fix.
+The HTML report shows metric averages, per-conversation scores, and the top failure patterns, giving you enough context to know exactly what to fix.

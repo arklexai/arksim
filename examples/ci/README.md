@@ -35,9 +35,10 @@ cp github-actions/arksim.yml .github/workflows/arksim.yml
 
 **Then:**
 1. Update the `TODO` sections in `arksim.yml` (startup command and health-check URL)
-2. Create `arksim/config.yaml` pointing to your server endpoint
-3. Create `arksim/scenarios.json` with your test cases
-4. Add `OPENAI_API_KEY` (and optionally `AGENT_API_KEY`) to GitHub secrets
+2. Create `tests/arksim/config.yaml` pointing to your server endpoint
+3. Create `tests/arksim/scenarios.json` with your test cases
+4. Add custom metrics to `tests/arksim/custom_metrics/` if needed and reference them in `tests/arksim/config.yaml`
+5. Add `OPENAI_API_KEY` (and optionally `AGENT_API_KEY`) to GitHub secrets
 
 See [`examples/bank-insurance`](../bank-insurance) for a full example of the scenario format.
 
