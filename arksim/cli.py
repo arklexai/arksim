@@ -39,7 +39,10 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 logging.getLogger("openai").setLevel(logging.WARNING)
 logging.getLogger("a2a.client.card_resolver").setLevel(logging.WARNING)
 
-_EXAMPLES_REPO_URL = "https://github.com/arklexai/arksim/archive/main.tar.gz"
+_version_tag = f"v{__version__}" if "+" not in __version__ else "main"
+_EXAMPLES_REPO_URL = (
+    f"https://github.com/arklexai/arksim/archive/refs/tags/{_version_tag}.tar.gz"
+)
 _EXAMPLES_PREFIX = "examples/"
 
 
