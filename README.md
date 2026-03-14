@@ -368,9 +368,15 @@ Opens a local web app at `http://localhost:8080` where you can browse config fil
 | [claude-agent-sdk](examples/integrations/claude-agent-sdk/) | Integration with the Claude Agent SDK |
 | [google-adk](examples/integrations/google-adk/) | Integration with Google ADK |
 | [openai-agents-sdk](examples/integrations/openai-agents-sdk/) | Integration with the OpenAI Agents SDK |
-| [langchain](examples/integrations/langchain/) | Integration with LangChain/LangGraph |
+| [langchain](examples/integrations/langchain/) | Integration with LangChain |
+| [langgraph](examples/integrations/langgraph/) | Integration with LangGraph |
 | [crewai](examples/integrations/crewai/) | Integration with CrewAI |
+| [autogen](examples/integrations/autogen/) | Integration with Microsoft AutoGen |
 | [llamaindex](examples/integrations/llamaindex/) | Integration with LlamaIndex |
+| [pydantic-ai](examples/integrations/pydantic-ai/) | Integration with Pydantic AI |
+| [smolagents](examples/integrations/smolagents/) | Integration with Hugging Face Smolagents |
+| [mastra](examples/integrations/mastra/) | Integration with Mastra (TypeScript) |
+| [vercel-ai-sdk](examples/integrations/vercel-ai-sdk/) | Integration with Vercel AI SDK (TypeScript) |
 
 ## Development
 

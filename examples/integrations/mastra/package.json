@@ -1,0 +1,15 @@
+{
+  "name": "arksim-mastra-example",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "npx tsx agent_server.ts"
+  },
+  "dependencies": {
+    "@mastra/core": "^1.0",
+    "@ai-sdk/openai": "^1.0",
+    "hono": "^4.0",
+    "@hono/node-server": "^1.0",
+    "tsx": "^4.0"
+  }
+}
