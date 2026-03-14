@@ -36,7 +36,8 @@ app.post("/v1/chat/completions", async (c) => {
   sessions[sessionKey].push(...messages);
 
   const assistant = mastra.getAgent("assistant");
-  const result = await assistant.generate(sessions[sessionKey]);
+  // Use generateLegacy for AI SDK v4 model providers
+  const result = await assistant.generateLegacy(sessions[sessionKey]);
 
   const content =
     typeof result.text === "string" ? result.text : JSON.stringify(result.text);
