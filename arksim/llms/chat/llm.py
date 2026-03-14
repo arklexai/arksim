@@ -45,5 +45,9 @@ class LLM(BaseLLM):
             from arksim.llms.chat.providers.google import GoogleLLM
 
             return GoogleLLM
+        elif provider == "minimax":
+            from arksim.llms.chat.providers.minimax import MiniMaxLLM
+
+            return MiniMaxLLM
         else:
             raise ValueError(f"Provider {provider} is not supported")

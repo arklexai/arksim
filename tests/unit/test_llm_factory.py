@@ -45,6 +45,10 @@ class TestGetProvider:
         except (ModuleNotFoundError, ImportError):
             pytest.skip("google-genai not installed")
 
+    def test_minimax_provider(self) -> None:
+        cls = LLM._get_provider("minimax")
+        assert cls.__name__ == "MiniMaxLLM"
+
     def test_unknown_provider_raises(self) -> None:
         with pytest.raises(ValueError, match="not supported"):
             LLM._get_provider("unknown")
