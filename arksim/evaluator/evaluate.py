@@ -39,6 +39,7 @@ from .utils.constants import (
     TURN_SUCCESS_RATIO_SCORE_WEIGHT,
 )
 from .utils.enums import (
+    AgentMetrics,
     EvaluationOutcomes,
     EvaluationStatus,
 )
@@ -191,14 +192,22 @@ def evaluate_turn(
             tool_calls=turn_item.tool_calls,
         )
         tool_qual = ToolCallBehaviorFailureMetric(llm).evaluate(tool_score_input)
-        qual_scores.append(tool_qual)
+
+        # Surface tool call failures under agent_behavior_failure so the
+        # HTML report and downstream consumers treat them uniformly.
+        tool_qual_as_agent = QualResult(
+            name=AgentMetrics.AGENT_BEHAVIOR_FAILURE.value,
+            value=tool_qual.value,
+            reason=f"[Tool call] {tool_qual.reason}" if tool_qual.reason else "",
+        )
+        qual_scores.append(tool_qual_as_agent)
 
         if tool_qual.value not in _SKIP_OUTCOMES:
             if turn_behavior_failure in _SKIP_OUTCOMES:
                 turn_behavior_failure = tool_qual.value
-                turn_behavior_failure_reason = tool_qual.reason or ""
+                turn_behavior_failure_reason = tool_qual_as_agent.reason
             else:
-                turn_behavior_failure_reason += f" [Tool: {tool_qual.reason or ''}]"
+                turn_behavior_failure_reason += f" [Tool call] {tool_qual.reason or ''}"
 
     return TurnEvaluation(
         turn_id=turn_item.turn_id,

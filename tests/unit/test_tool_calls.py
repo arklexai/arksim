@@ -325,9 +325,11 @@ class TestEvaluateTurnWithToolCalls:
             tool_calls=tc_data,
         )
         result = evaluate_turn(llm, turn_item)
-        # Should have qual_scores with tool_call_behavior_failure
+        # Tool call failures surface under agent_behavior_failure
         tool_qual = [
-            q for q in result.qual_scores if q.name == "tool_call_behavior_failure"
+            q
+            for q in result.qual_scores
+            if q.name == "agent_behavior_failure" and "[Tool call]" in (q.reason or "")
         ]
         assert len(tool_qual) == 1
 
@@ -351,7 +353,9 @@ class TestEvaluateTurnWithToolCalls:
         )
         result = evaluate_turn(llm, turn_item)
         tool_qual = [
-            q for q in result.qual_scores if q.name == "tool_call_behavior_failure"
+            q
+            for q in result.qual_scores
+            if q.name == "agent_behavior_failure" and "[Tool call]" in (q.reason or "")
         ]
         assert len(tool_qual) == 0
 
@@ -390,6 +394,7 @@ class TestEvaluateTurnWithToolCalls:
         # Good quant scores -> agent_behavior_failure skipped
         # But tool call failure detected -> should set turn_behavior_failure
         assert result.turn_behavior_failure == "false information"
+        assert "[Tool call]" in result.turn_behavior_failure_reason
         assert "fabricated" in result.turn_behavior_failure_reason
 
     def test_metric_disabled_skips_tool_check(self) -> None:
@@ -419,7 +424,9 @@ class TestEvaluateTurnWithToolCalls:
             metrics_to_run=["helpfulness", "agent_behavior_failure"],
         )
         tool_qual = [
-            q for q in result.qual_scores if q.name == "tool_call_behavior_failure"
+            q
+            for q in result.qual_scores
+            if q.name == "agent_behavior_failure" and "[Tool call]" in (q.reason or "")
         ]
         assert len(tool_qual) == 0
 
