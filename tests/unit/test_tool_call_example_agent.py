@@ -55,36 +55,38 @@ class TestExtractToolCalls:
     def test_single_tool_call_with_output(self) -> None:
         result = MagicMock()
         result.new_items = [
-            _make_function_call("c1", "get_weather", '{"city": "New York"}'),
-            _make_function_output("c1", '{"temp_f": 72, "condition": "sunny"}'),
+            _make_function_call("c1", "get_order", '{"order_id": "ORD-1001"}'),
+            _make_function_output("c1", '{"status": "shipped", "total": 249.99}'),
         ]
 
         tool_calls = ToolCallExampleAgent._extract_tool_calls(result)
         assert len(tool_calls) == 1
         assert tool_calls[0].id == "c1"
-        assert tool_calls[0].name == "get_weather"
-        assert tool_calls[0].arguments == {"city": "New York"}
-        assert tool_calls[0].result == '{"temp_f": 72, "condition": "sunny"}'
+        assert tool_calls[0].name == "get_order"
+        assert tool_calls[0].arguments == {"order_id": "ORD-1001"}
+        assert tool_calls[0].result == '{"status": "shipped", "total": 249.99}'
 
     def test_multiple_tool_calls(self) -> None:
         result = MagicMock()
         result.new_items = [
-            _make_function_call("c1", "get_weather", '{"city": "NYC"}'),
-            _make_function_output("c1", '{"temp_f": 72}'),
-            _make_function_call("c2", "lookup_order", '{"order_id": "ORD-1234"}'),
+            _make_function_call(
+                "c1", "lookup_customer", '{"email": "alice@example.com"}'
+            ),
+            _make_function_output("c1", '{"id": "C-001", "name": "Alice"}'),
+            _make_function_call("c2", "get_order", '{"order_id": "ORD-1001"}'),
             _make_function_output("c2", '{"status": "shipped"}'),
         ]
 
         tool_calls = ToolCallExampleAgent._extract_tool_calls(result)
         assert len(tool_calls) == 2
-        assert tool_calls[0].name == "get_weather"
-        assert tool_calls[1].name == "lookup_order"
+        assert tool_calls[0].name == "lookup_customer"
+        assert tool_calls[1].name == "get_order"
         assert tool_calls[1].result == '{"status": "shipped"}'
 
     def test_tool_call_without_output(self) -> None:
         result = MagicMock()
         result.new_items = [
-            _make_function_call("c1", "get_weather", '{"city": "NYC"}'),
+            _make_function_call("c1", "get_order", '{"order_id": "ORD-1001"}'),
         ]
 
         tool_calls = ToolCallExampleAgent._extract_tool_calls(result)

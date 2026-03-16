@@ -1,6 +1,9 @@
 # Tool Call Evaluation Example
-# Demonstrates tool_call_behavior_failure metric with a custom agent
-# that makes real tool calls via OpenAI Agents SDK.
+# Demonstrates tool_call_behavior_failure metric with a SQLite-backed
+# customer service agent using OpenAI Agents SDK.
+#
+# Tools: lookup_customer, get_order, search_products, cancel_order
+# The SQLite database (store.db) is created automatically on first run.
 #
 # Usage:
 #   cd examples/tool-calls

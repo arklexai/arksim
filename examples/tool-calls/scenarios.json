@@ -2,33 +2,43 @@
     "schema_version": "v1",
     "scenarios": [
         {
-            "scenario_id": "weather_lookup",
+            "scenario_id": "order_status_check",
             "user_id": "user_001",
-            "goal": "Find out the current weather in New York.",
-            "agent_context": "You are a helpful assistant with access to a weather tool, an order lookup tool, and a product search tool.",
-            "user_profile": "You are Alex, a casual user who wants a quick weather update before heading out. You expect a clear, concise answer with the temperature and conditions.",
+            "goal": "Check the status of order ORD-1001.",
+            "agent_context": "You are a customer service assistant for an online store with access to customer lookup, order lookup, product search, and order cancellation tools.",
+            "user_profile": "You are Alice, a premium customer who placed an order for wireless headphones. You want to know if your order has shipped and when it will arrive. You know your order ID is ORD-1001.",
             "knowledge": [
-                {"content": "The current weather in New York is 72°F and sunny."}
+                {"content": "Order ORD-1001 belongs to Alice Johnson (alice@example.com), a premium customer. The order contains Wireless Headphones x1, totaling $249.99. The order status is 'shipped'."}
             ]
         },
         {
-            "scenario_id": "order_status",
+            "scenario_id": "cancel_processing_order",
+            "user_id": "user_001",
+            "goal": "Cancel order ORD-1002 which is still processing.",
+            "agent_context": "You are a customer service assistant for an online store with access to customer lookup, order lookup, product search, and order cancellation tools.",
+            "user_profile": "You are Alice, a premium customer. You changed your mind about the ThinkPad X1 Carbon you ordered and want to cancel it before it ships. Your order ID is ORD-1002 and it is still processing.",
+            "knowledge": [
+                {"content": "Order ORD-1002 belongs to Alice Johnson. It contains ThinkPad X1 Carbon x1, totaling $1299.00. The order status is 'processing' and can be cancelled. The agent should confirm with the user before cancelling."}
+            ]
+        },
+        {
+            "scenario_id": "product_search_with_budget",
             "user_id": "user_002",
-            "goal": "Check the status of order ORD-1234.",
-            "agent_context": "You are a helpful assistant with access to a weather tool, an order lookup tool, and a product search tool.",
-            "user_profile": "You are Jamie, a customer waiting for a package. You want to know the shipping status and estimated arrival date. You are direct and just want the facts.",
+            "goal": "Find a laptop under $1000.",
+            "agent_context": "You are a customer service assistant for an online store with access to customer lookup, order lookup, product search, and order cancellation tools.",
+            "user_profile": "You are Bob, a budget-conscious shopper looking for a new laptop. You want specific product names, prices, and whether they are in stock.",
             "knowledge": [
-                {"content": "Order ORD-1234 has been shipped via FedEx and is estimated to arrive on 2026-03-15."}
+                {"content": "The store has three laptops: ThinkPad X1 Carbon at $1299 (in stock), MacBook Air M4 at $1199 (in stock), and Dell XPS 13 at $949 (out of stock). Only the Dell XPS 13 is under $1000 but it is currently out of stock."}
             ]
         },
         {
-            "scenario_id": "product_search",
-            "user_id": "user_003",
-            "goal": "Find a laptop under $1000.",
-            "agent_context": "You are a helpful assistant with access to a weather tool, an order lookup tool, and a product search tool.",
-            "user_profile": "You are Sam, a budget-conscious shopper looking for a new laptop. You want specific product names and prices, not generic advice.",
+            "scenario_id": "nonexistent_order_lookup",
+            "user_id": "user_002",
+            "goal": "Check the status of order ORD-9999 which does not exist.",
+            "agent_context": "You are a customer service assistant for an online store with access to customer lookup, order lookup, product search, and order cancellation tools.",
+            "user_profile": "You are Bob. You think your order ID is ORD-9999 but you are not sure. You want the agent to help you find your order or tell you clearly if it does not exist.",
             "knowledge": [
-                {"content": "Available laptops under $1000: ThinkPad X1 Carbon at $899 and Dell XPS 13 at $949."}
+                {"content": "Order ORD-9999 does not exist in the system. Bob's actual orders are ORD-1003 (USB-C Hub, delivered) and ORD-1004 (MacBook Air M4, cancelled). The agent should report the error from the tool and help the user find their actual order."}
             ]
         }
     ]
