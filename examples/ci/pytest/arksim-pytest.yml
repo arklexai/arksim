@@ -50,7 +50,7 @@ jobs:
 
       # ── 4. Run quality tests ──────────────────────────────────────────────
       # TODO: point to your test file
-      - name: Run ArkSim quality tests
+      - name: Run ArkSim Quality Gates
         run: pytest tests/test_agent_quality.py -v
         env:
           # API key for the LLM ArkSim uses internally to run evaluations

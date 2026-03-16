@@ -96,8 +96,8 @@ output_dir: ./examples/path/to/evaluation
 generate_html_report: true
 
 # Threshold gates (optional — omit or set to null to disable)
-score_threshold: null
 numeric_thresholds:
+  overall_score: 0.7
   faithfulness: 3.5
   helpfulness: 3.0
   goal_completion: 0.8
@@ -190,26 +190,20 @@ score_input.knowledge      # Retrieved knowledge / context passed to the agent
 
 Threshold gates let you fail the CLI with a non-zero exit code when evaluation results fall below acceptable levels. All three gate types are evaluated after every `arksim evaluate` or `arksim simulate-evaluate` run.
 
-### `score_threshold`
-
-A single float (0–1) applied to every conversation's `overall_agent_score`. Any conversation below the threshold fails the run with exit code 1.
-
-```yaml
-score_threshold: 0.6
-```
-
 ### `numeric_thresholds`
 
 Per-metric minimum scores on each metric's native scale. The mean score across all turns per conversation is compared against the threshold. Any conversation that falls below the threshold fails the run with exit code 1.
 
 | Metric | Scale | Notes |
 | --- | --- | --- |
+| `overall_score` | 0–1 | Per-conversation `overall_agent_score` compared directly |
 | `faithfulness`, `helpfulness`, `coherence`, `verbosity`, `relevance` | 1–5 | Mean of per-turn scores |
 | `goal_completion` | 0–1 | Per-conversation score compared directly |
 | Custom quantitative metrics | Your scale | Mean of per-turn scores |
 
 ```yaml
 numeric_thresholds:
+  overall_score: 0.7
   faithfulness: 3.5
   helpfulness: 3.0
   goal_completion: 0.8

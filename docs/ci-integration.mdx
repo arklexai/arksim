@@ -133,7 +133,7 @@ GitHub Actions runner
 
     - Import your agent class (replace `from my_agent import MyAgent`)
     - Import your custom metrics if needed (replace `from my_metrics import ...`), or remove the custom metrics block entirely to use built-in metrics only
-    - Set `SCORE_THRESHOLD`, `NUMERIC_THRESHOLDS`, and `QUALITATIVE_FAILURE_LABELS` to match your quality bar
+    - Set `NUMERIC_THRESHOLDS` and `QUALITATIVE_FAILURE_LABELS` to match your quality bar
     - Adjust `num_convos_per_scenario`, `max_turns`, and `num_workers` as needed
   </Step>
 
@@ -237,8 +237,8 @@ The CLI exits non-zero if any threshold is not met, which fails the job.
       - agent_behavior_failure
     generate_html_report: true
 
-    score_threshold: 0.7
     numeric_thresholds:
+      overall_score: 0.6
       goal_completion: 0.8
 
     model: gpt-4o
@@ -349,20 +349,13 @@ The CLI exits non-zero if any threshold is not met, which fails the job.
 
 Configure pass/fail thresholds in your config or test file. If any gate is not met the job fails.
 
-### Overall score
-
-Fail if any conversation's `overall_agent_score` falls below the threshold (0–1 scale):
-
-```yaml
-score_threshold: 0.7
-```
-
 ### Per-metric thresholds
 
-Fail if any conversation's per-metric score falls below the minimum. Built-in turn-level metrics use a 1–5 scale; `goal_completion` uses 0–1:
+Fail if any conversation's per-metric score falls below the minimum. Built-in turn-level metrics use a 1–5 scale; `goal_completion` and `overall_score` use 0–1:
 
 ```yaml
 numeric_thresholds:
+  overall_score: 0.6
   goal_completion: 0.8
   faithfulness: 3.5
   helpfulness: 3.0
