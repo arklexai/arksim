@@ -1,0 +1,19 @@
+{
+    "schema_version": "v1",
+    "scenarios": [
+        {
+            "scenario_id": "general_knowledge_qa",
+            "user_id": "user_0001",
+            "goal": "You want to learn about the history and science behind renewable energy sources. Ask about solar, wind, and hydroelectric power, including how they work, their advantages and disadvantages, and their adoption worldwide.",
+            "agent_context": "You are a helpful assistant that answers user questions clearly and accurately.",
+            "user_profile": "You are Jordan, a curious and detail-oriented 28-year-old graduate student studying environmental policy. You enjoy learning about technical topics and ask follow-up questions to deepen your understanding. You prefer clear, structured explanations and appreciate when answers include real-world examples."
+        },
+        {
+            "scenario_id": "task_assistance",
+            "user_id": "user_0002",
+            "goal": "You need help drafting a professional email to your manager requesting time off next month for a family event. Ask the assistant to help you write the email, suggest improvements, and make it concise yet polite.",
+            "agent_context": "You are a helpful assistant that assists users with writing, planning, and everyday tasks.",
+            "user_profile": "You are Sam, a 34-year-old marketing coordinator at a mid-sized company. You are friendly and collaborative but sometimes unsure about formal communication. You value politeness and professionalism in workplace writing and want your emails to strike the right tone without being overly stiff."
+        }
+    ]
+}
