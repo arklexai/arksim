@@ -25,7 +25,8 @@ class EvaluateRequest(BaseModel):
     custom_metrics_file_paths: list[str] = []
     metrics_to_run: list[str] | None = None
     generate_html_report: bool = True
-    score_threshold: float | None = None
+    numeric_thresholds: dict[str, float] | None = None
+    qualitative_failure_labels: dict[str, list[str]] | None = None
 
 
 @router.post("/evaluate")
@@ -106,7 +107,8 @@ def _run_evaluation(app_state: AppState, body: EvaluateRequest) -> None:
                 metrics_to_run=body.metrics_to_run or [],
                 output_dir=output_dir,
                 generate_html_report=body.generate_html_report,
-                score_threshold=body.score_threshold,
+                numeric_thresholds=body.numeric_thresholds,
+                qualitative_failure_labels=body.qualitative_failure_labels,
             )
 
             from arksim.evaluator import run_evaluation

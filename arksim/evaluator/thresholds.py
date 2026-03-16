@@ -79,10 +79,12 @@ def check_numeric_thresholds(
     Per-conversation score = mean of all per-turn scores for that metric (1–5 scale
     for built-in metrics). Every conversation must meet the threshold.
     ``goal_completion`` uses its per-conversation score directly (stored as 0–1).
+    ``overall_score`` checks ``overall_agent_score`` directly (stored as 0–1).
 
     Args:
         evaluator_output: The ``Evaluation`` returned by ``Evaluator.evaluate()``.
         numeric_thresholds: Mapping of metric name to minimum required score.
+            Use ``'overall_score'`` to gate on the per-conversation overall_agent_score (0–1).
             Pass ``None`` or an empty dict to skip all checks.
 
     Returns:
@@ -95,7 +97,9 @@ def check_numeric_thresholds(
     for metric_name, threshold in numeric_thresholds.items():
         failed_conversations = []
         for convo in evaluator_output.conversations:
-            if metric_name == "goal_completion":
+            if metric_name == "overall_score":
+                score: float | None = convo.overall_agent_score
+            elif metric_name == "goal_completion":
                 raw = convo.goal_completion_score
                 score: float | None = raw if raw >= 0 else None
             else:

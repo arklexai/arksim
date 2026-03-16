@@ -69,7 +69,6 @@ from arksim.evaluator import (
     Evaluator,
     check_numeric_thresholds,
     check_qualitative_failure_labels,
-    check_score_threshold,
 )
 from arksim.llms.chat import LLM
 from arksim.scenario import Scenarios
@@ -81,9 +80,8 @@ from arksim.utils.html_report.generate_html_report import (
 
 # ── Quality gate thresholds ────────────────────────────────────────────────────
 
-SCORE_THRESHOLD = 0.7
-
 NUMERIC_THRESHOLDS = {
+    "overall_score": 0.7,
     "goal_completion": 0.8,
     "faithfulness": 3.5,
 }
@@ -158,13 +156,7 @@ async def test_agent_quality() -> None:
     await asyncio.to_thread(generate_html_report, report_params)
 
     # ── Assert quality gates ───────────────────────────────────────────────────
-    # Overall score gate
-    assert check_score_threshold(
-        evaluator_output,
-        score_threshold=SCORE_THRESHOLD,
-    ), "Score threshold check failed — see arksim/results/evaluation for details"
-
-    # Per-metric gate
+    # Per-metric gate (use "overall_score" key to gate on overall_agent_score 0–1)
     assert check_numeric_thresholds(
         evaluator_output,
         numeric_thresholds=NUMERIC_THRESHOLDS,
