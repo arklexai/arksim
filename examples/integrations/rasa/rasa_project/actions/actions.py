@@ -5,11 +5,11 @@ from __future__ import annotations
 
 from typing import Any
 
-from openai import OpenAI
+from openai import AsyncOpenAI
 from rasa_sdk import Action, Tracker
 from rasa_sdk.executor import CollectingDispatcher
 
-_client = OpenAI()
+_client = AsyncOpenAI()
 
 _SYSTEM_PROMPT = (
     "You are a helpful assistant that answers user questions clearly and accurately."
@@ -22,7 +22,7 @@ class ActionLLMResponse(Action):
     def name(self) -> str:
         return "action_llm_response"
 
-    def run(
+    async def run(
         self,
         dispatcher: CollectingDispatcher,
         tracker: Tracker,
@@ -41,7 +41,7 @@ class ActionLLMResponse(Action):
                 if text:
                     messages.append({"role": "assistant", "content": text})
 
-        response = _client.chat.completions.create(
+        response = await _client.chat.completions.create(
             model="gpt-4o",
             messages=messages,
         )
