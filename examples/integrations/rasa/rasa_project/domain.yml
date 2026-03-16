@@ -3,23 +3,16 @@ version: "3.1"
 intents:
   - greet
   - goodbye
-  - ask_help
-  - affirm
-  - deny
+  - out_of_scope
+
+actions:
+  - action_llm_response
 
 responses:
   utter_greet:
     - text: "Hello! How can I help you today?"
   utter_goodbye:
     - text: "Goodbye! Have a great day."
-  utter_help:
-    - text: "I'm here to help. You can ask me questions and I'll do my best to assist you."
-  utter_affirm:
-    - text: "Great, glad I could help!"
-  utter_deny:
-    - text: "I understand. Let me know if there's anything else I can do."
-  utter_default:
-    - text: "I'm not sure I understand. Could you rephrase that?"
 
 session_config:
   session_expiration_time: 60

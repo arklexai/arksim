@@ -11,22 +11,12 @@ rules:
       - intent: goodbye
       - action: utter_goodbye
 
-  - rule: Offer help
+  - rule: Forward out-of-scope to LLM
     steps:
-      - intent: ask_help
-      - action: utter_help
+      - intent: out_of_scope
+      - action: action_llm_response
 
-  - rule: Handle affirmation
-    steps:
-      - intent: affirm
-      - action: utter_affirm
-
-  - rule: Handle denial
-    steps:
-      - intent: deny
-      - action: utter_deny
-
-  - rule: Handle unrecognized input
+  - rule: Forward unrecognized input to LLM
     steps:
       - intent: nlu_fallback
-      - action: utter_default
+      - action: action_llm_response

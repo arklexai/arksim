@@ -22,33 +22,20 @@ nlu:
       - bye bye
       - take care
 
-  - intent: ask_help
+  - intent: out_of_scope
     examples: |
-      - help
-      - I need help
-      - can you help me
-      - help me
-      - what can you do
-      - I need assistance
-      - assist me
-
-  - intent: affirm
-    examples: |
-      - yes
-      - indeed
-      - of course
-      - that sounds good
-      - correct
-      - sure
-      - okay
-      - yeah
-
-  - intent: deny
-    examples: |
-      - no
-      - never
-      - I don't think so
-      - no way
-      - not really
-      - nope
-      - no thanks
+      - Can you explain how solar panels work?
+      - Help me draft a professional email
+      - What are the advantages of wind power?
+      - Tell me about renewable energy
+      - I need help writing a message to my manager
+      - How does hydroelectric power generation work?
+      - What is the capital of France?
+      - Can you summarize this article for me?
+      - I want to learn about machine learning
+      - What are the best practices for time management?
+      - How do I make a budget spreadsheet?
+      - Explain quantum computing in simple terms
+      - What is the difference between stocks and bonds?
+      - Can you recommend some books on leadership?
+      - How do electric cars work?
