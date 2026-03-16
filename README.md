@@ -374,6 +374,7 @@ Opens a local web app at `http://localhost:8080` where you can browse config fil
 | [autogen](examples/integrations/autogen/) | Integration with Microsoft AutoGen |
 | [llamaindex](examples/integrations/llamaindex/) | Integration with LlamaIndex |
 | [pydantic-ai](examples/integrations/pydantic-ai/) | Integration with Pydantic AI |
+| [rasa](examples/integrations/rasa/) | Integration with Rasa |
 | [smolagents](examples/integrations/smolagents/) | Integration with Hugging Face Smolagents |
 | [mastra](examples/integrations/mastra/) | Integration with Mastra (TypeScript) |
 | [vercel-ai-sdk](examples/integrations/vercel-ai-sdk/) | Integration with Vercel AI SDK (TypeScript) |

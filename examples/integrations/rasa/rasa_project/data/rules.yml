@@ -1,0 +1,32 @@
+version: "3.1"
+
+rules:
+  - rule: Say greeting
+    steps:
+      - intent: greet
+      - action: utter_greet
+
+  - rule: Say goodbye
+    steps:
+      - intent: goodbye
+      - action: utter_goodbye
+
+  - rule: Offer help
+    steps:
+      - intent: ask_help
+      - action: utter_help
+
+  - rule: Handle affirmation
+    steps:
+      - intent: affirm
+      - action: utter_affirm
+
+  - rule: Handle denial
+    steps:
+      - intent: deny
+      - action: utter_deny
+
+  - rule: Handle unrecognized input
+    steps:
+      - intent: nlu_fallback
+      - action: utter_default
