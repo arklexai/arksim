@@ -125,7 +125,9 @@ class TestTurnItemToolCalls:
             user_goal="",
             tool_calls=tc_data,
         )
-        assert item.tool_calls == tc_data
+        assert len(item.tool_calls) == 1
+        assert item.tool_calls[0].id == "tc-1"
+        assert item.tool_calls[0].name == "fn"
 
 
 # ── ToolCallBehaviorFailureMetric ──

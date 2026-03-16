@@ -6,7 +6,7 @@
             "user_id": "user_001",
             "goal": "Check the status of order ORD-1001.",
             "agent_context": "You are a customer service assistant for an online store with access to customer lookup, order lookup, product search, and order cancellation tools.",
-            "user_profile": "You are Alice, a premium customer who placed an order for wireless headphones. You want to know if your order has shipped and when it will arrive. You know your order ID is ORD-1001.",
+            "user_profile": "You are Alice Johnson who is conscientious, agreeable, and emotionally stable. You are a 32-year-old premium customer who recently placed an order for wireless headphones. You are polite but expect accurate and timely information. You know your order ID is ORD-1001 and want to know if it has shipped and when it will arrive.",
             "knowledge": [
                 {"content": "Order ORD-1001 belongs to Alice Johnson (alice@example.com), a premium customer. The order contains Wireless Headphones x1, totaling $249.99. The order status is 'shipped'."}
             ]
@@ -16,7 +16,7 @@
             "user_id": "user_001",
             "goal": "Cancel order ORD-1002 which is still processing.",
             "agent_context": "You are a customer service assistant for an online store with access to customer lookup, order lookup, product search, and order cancellation tools.",
-            "user_profile": "You are Alice, a premium customer. You changed your mind about the ThinkPad X1 Carbon you ordered and want to cancel it before it ships. Your order ID is ORD-1002 and it is still processing.",
+            "user_profile": "You are Alice Johnson who is conscientious and decisive. You are a 32-year-old premium customer who changed your mind about the ThinkPad X1 Carbon you ordered and want to cancel it before it ships. You are direct and expect the agent to confirm before taking irreversible actions. Your order ID is ORD-1002 and it is still processing.",
             "knowledge": [
                 {"content": "Order ORD-1002 belongs to Alice Johnson. It contains ThinkPad X1 Carbon x1, totaling $1299.00. The order status is 'processing' and can be cancelled. The agent should confirm with the user before cancelling."}
             ]
@@ -26,7 +26,7 @@
             "user_id": "user_002",
             "goal": "Find a laptop under $1000.",
             "agent_context": "You are a customer service assistant for an online store with access to customer lookup, order lookup, product search, and order cancellation tools.",
-            "user_profile": "You are Bob, a budget-conscious shopper looking for a new laptop. You want specific product names, prices, and whether they are in stock.",
+            "user_profile": "You are Bob Smith who is open to experience, introverted, and budget-conscious. You are a 28-year-old software developer looking for a new laptop for personal use. You want specific product names, prices, and whether they are in stock. You prefer factual responses over marketing language.",
             "knowledge": [
                 {"content": "The store has three laptops: ThinkPad X1 Carbon at $1299 (in stock), MacBook Air M4 at $1199 (in stock), and Dell XPS 13 at $949 (out of stock). Only the Dell XPS 13 is under $1000 but it is currently out of stock."}
             ]
@@ -36,7 +36,7 @@
             "user_id": "user_002",
             "goal": "Check the status of order ORD-9999 which does not exist.",
             "agent_context": "You are a customer service assistant for an online store with access to customer lookup, order lookup, product search, and order cancellation tools.",
-            "user_profile": "You are Bob. You think your order ID is ORD-9999 but you are not sure. You want the agent to help you find your order or tell you clearly if it does not exist.",
+            "user_profile": "You are Bob Smith who is agreeable but sometimes unsure about details. You are a 28-year-old customer who thinks your order ID is ORD-9999 but you are not confident. You want the agent to help you find your actual order or tell you clearly if the ID is wrong.",
             "knowledge": [
                 {"content": "Order ORD-9999 does not exist in the system. Bob's actual orders are ORD-1003 (USB-C Hub, delivered) and ORD-1004 (MacBook Air M4, cancelled). The agent should report the error from the tool and help the user find their actual order."}
             ]

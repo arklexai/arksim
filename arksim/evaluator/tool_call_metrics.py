@@ -62,9 +62,16 @@ class ToolCallBehaviorFailureMetric(QualitativeMetric):
                 {
                     "role": "user",
                     "content": tool_call_behavior_failure_user_prompt.format(
+                        user_goal=score_input.user_goal,
                         conversation=format_chat_history(score_input.current_turn),
                         knowledge=score_input.knowledge,
-                        tool_calls=json.dumps(tool_calls, indent=2),
+                        tool_calls=json.dumps(
+                            [
+                                tc.model_dump() if hasattr(tc, "model_dump") else tc
+                                for tc in tool_calls
+                            ],
+                            indent=2,
+                        ),
                     ),
                 },
             ],
