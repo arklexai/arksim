@@ -3,7 +3,7 @@
 # Copy this file to .github/workflows/arksim-pytest.yml in your repository.
 #
 # Use this workflow when your agent is implemented as a Python class that
-# subclasses BaseAgent. No HTTP server is needed — ArkSim loads the agent
+# subclasses BaseAgent. No HTTP server is needed - ArkSim loads the agent
 # in-process and CI simply runs pytest.
 #
 # Exit codes from arksim (surfaced as pytest assertion failures):
@@ -60,7 +60,7 @@ jobs:
       # All three artifacts are uploaded even when the job fails so you can
       # inspect results regardless of whether the quality gate passed.
 
-      # HTML report — download this one artifact, unzip, and open in browser.
+      # HTML report - download this one artifact, unzip, and open in browser.
       - name: Upload HTML report
         if: always()
         uses: actions/upload-artifact@v4

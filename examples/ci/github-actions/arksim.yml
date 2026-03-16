@@ -99,7 +99,7 @@ jobs:
               echo "Agent is ready (attempt $i)"
               exit 0
             fi
-            echo "  attempt $i/30 — not ready, retrying in 2 s"
+            echo "  attempt $i/30 - not ready, retrying in 2 s"
             sleep 2
           done
           echo "Agent server did not become healthy within 60 s"
@@ -118,7 +118,7 @@ jobs:
       # All artifacts are uploaded even when the job fails so you can
       # inspect results regardless of whether the quality gate passed.
 
-      # HTML report — download this one artifact, unzip, and open in browser.
+      # HTML report - download this one artifact, unzip, and open in browser.
       - name: Upload HTML report
         if: always()
         uses: actions/upload-artifact@v4
@@ -136,7 +136,7 @@ jobs:
           path: arksim/results/
           if-no-files-found: ignore
 
-      # Agent server logs — useful for debugging startup failures or crashes
+      # Agent server logs - useful for debugging startup failures or crashes
       - name: Upload agent server logs
         if: always()
         uses: actions/upload-artifact@v4

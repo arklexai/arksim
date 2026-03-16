@@ -59,11 +59,10 @@ from my_agent import MyAgent  # TODO: replace with your agent class
 #       name = "my_qualitative_metric"
 #       ...
 #
-from my_metrics import (  # TODO: replace with your metric classes
-    MyNumericMetric,
-    MyQualitativeMetric,
-)
-
+# from my_metrics import (  # TODO: replace with your metric classes
+#     MyNumericMetric,
+#     MyQualitativeMetric,
+# )
 from arksim.config import AgentConfig, CustomConfig
 from arksim.evaluator import (
     EvaluationParams,
@@ -134,12 +133,12 @@ async def test_agent_quality() -> None:
     evaluator_params = EvaluationParams(
         output_dir=evaluation_output_dir,
         num_workers=10,
-        custom_metrics=[
-            MyNumericMetric(),  # TODO: replace with your numeric metric instances
-        ],
-        custom_qualitative_metrics=[
-            MyQualitativeMetric(),  # TODO: replace with your qualitative metric instances
-        ],
+        # custom_metrics=[
+        #     MyNumericMetric(),  # TODO: replace with your numeric metric instances
+        # ],
+        # custom_qualitative_metrics=[
+        #     MyQualitativeMetric(),  # TODO: replace with your qualitative metric instances
+        # ],
     )
 
     evaluator = Evaluator(evaluator_params, llm=llm)

@@ -569,7 +569,7 @@ def main() -> None:
                 settings, overrides, config_path, cli_overrides, verbose
             )
     except (KeyboardInterrupt, SystemExit):
-        raise
+        raise  # this preserves exit codes for CI
     except Exception as e:
         logger.error(f"Internal error: {e}")
         logger.debug("Traceback:", exc_info=True)
