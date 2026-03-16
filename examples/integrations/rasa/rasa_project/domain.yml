@@ -13,6 +13,8 @@ responses:
     - text: "Hello! How can I help you today?"
   utter_goodbye:
     - text: "Goodbye! Have a great day."
+  utter_default:
+    - text: "I'm not sure I understand. Could you rephrase that?"
 
 session_config:
   session_expiration_time: 60
