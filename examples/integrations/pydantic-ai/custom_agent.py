@@ -17,6 +17,12 @@ from arksim.simulation_engine.agent.base import BaseAgent
 
 
 class PydanticAIAgent(BaseAgent):
+    """Pydantic AI agent wrapper.
+
+    Maintains conversation history via message_history parameter
+    and all_messages() to accumulate context across turns.
+    """
+
     def __init__(self, agent_config: AgentConfig) -> None:
         super().__init__(agent_config)
         self._chat_id = str(uuid.uuid4())

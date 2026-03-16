@@ -7,6 +7,7 @@ Auth:    export OPENAI_API_KEY="<your-key>"
 
 from __future__ import annotations
 
+import asyncio
 import os
 import uuid
 
@@ -39,8 +40,8 @@ class SmolagentsAgent(BaseAgent):
 
     async def execute(self, user_query: str, **kwargs: object) -> str:
         if self._first_turn:
-            result = self._agent.run(user_query)
+            result = await asyncio.to_thread(self._agent.run, user_query)
             self._first_turn = False
         else:
-            result = self._agent.run(user_query, reset=False)
+            result = await asyncio.to_thread(self._agent.run, user_query, reset=False)
         return str(result)

@@ -9,18 +9,17 @@ import { openai } from "@ai-sdk/openai";
 import { Hono } from "hono";
 import { serve } from "@hono/node-server";
 
+type ChatMessage = { role: "system" | "user" | "assistant"; content: string };
+
 // In-memory session storage for multi-turn conversations
-const sessions: Record<
-  string,
-  Array<{ role: "system" | "user" | "assistant"; content: string }>
-> = {};
+const sessions: Record<string, ChatMessage[]> = {};
 
 const app = new Hono();
 
 // OpenAI-compatible chat completions endpoint
 app.post("/v1/chat/completions", async (c) => {
   const body = await c.req.json();
-  const messages: Array<{ role: string; content: string }> = body.messages ?? [];
+  const messages: ChatMessage[] = body.messages ?? [];
 
   const sessionKey = body.session_id ?? "default";
   if (!sessions[sessionKey]) {
@@ -31,7 +30,7 @@ app.post("/v1/chat/completions", async (c) => {
 
   for (const msg of messages) {
     if (msg.role !== "system") {
-      sessions[sessionKey].push(msg as any);
+      sessions[sessionKey].push(msg);
     }
   }
 
