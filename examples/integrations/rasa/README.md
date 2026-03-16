@@ -1,6 +1,8 @@
 # Rasa Integration
 
-This example demonstrates how to connect a [Rasa](https://rasa.com/) agent to ArkSim using a custom agent that communicates with Rasa's REST webhook channel. Rasa handles intent recognition and dialogue management, while a custom action forwards unrecognized messages to an LLM (OpenAI) for open-ended conversation.
+This example demonstrates how to connect a [Rasa](https://rasa.com/) agent to ArkSim using a custom agent that communicates with Rasa's REST webhook channel.
+
+The Rasa bot uses a hybrid approach common in production deployments: Rasa's NLU pipeline handles in-domain intents (pricing, features, support hours, refund policy) with structured responses, while a custom action forwards out-of-domain messages to an LLM (OpenAI) for open-ended conversation. The two scenarios exercise both paths so you can evaluate each independently.
 
 ## Prerequisites
 

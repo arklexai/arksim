@@ -22,6 +22,58 @@ nlu:
       - bye bye
       - take care
 
+  - intent: ask_pricing
+    examples: |
+      - How much does it cost?
+      - What are your prices?
+      - What plans do you offer?
+      - How much is the subscription?
+      - Can you tell me about pricing?
+      - What does it cost per month?
+      - Do you have a free tier?
+      - Is there a trial period?
+      - What are the plan options?
+      - How much do I have to pay?
+
+  - intent: ask_features
+    examples: |
+      - What features do you offer?
+      - What can your platform do?
+      - Tell me about your product features
+      - What functionality is included?
+      - What are the main capabilities?
+      - Does it support integrations?
+      - What tools are available?
+      - Can you describe the feature set?
+      - What does the product include?
+      - Do you have an API?
+
+  - intent: ask_support_hours
+    examples: |
+      - When is support available?
+      - What are your support hours?
+      - When can I reach customer service?
+      - Is support available on weekends?
+      - What time does support open?
+      - How do I contact support?
+      - When can I get help?
+      - Do you offer 24/7 support?
+      - What are the customer service hours?
+      - Is there live chat support?
+
+  - intent: ask_refund_policy
+    examples: |
+      - What is your refund policy?
+      - Can I get a refund?
+      - How do I cancel and get my money back?
+      - Is there a money-back guarantee?
+      - What happens if I want to cancel?
+      - Do you offer refunds?
+      - How long do I have to request a refund?
+      - Can I cancel my subscription?
+      - What is the cancellation policy?
+      - Are refunds prorated?
+
   - intent: out_of_scope
     examples: |
       - Can you explain how solar panels work?
