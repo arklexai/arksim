@@ -1,6 +1,6 @@
 # Custom Agent Connector Configuration
 # Loads the bank-insurance RAG agent directly as a Python class.
-# No HTTP server required — arksim imports the agent module at runtime.
+# No HTTP server required - arksim imports the agent module at runtime.
 #
 # Usage: arksim simulate-evaluate config_custom.yaml
 
@@ -36,7 +36,16 @@ metrics_to_run:
   - agent_behavior_failure
 
 generate_html_report: true
-score_threshold: null
+
+# Numeric thresholds: per-metric minimum scores on native scale
+# Built-in turn-level metrics use 1–5; goal_completion uses 0–1; overall_score uses 0–1
+# numeric_thresholds:
+#   overall_score: 0.7
+#   goal_completion: 0.6
+
+# Qualitative failure labels: fail the run if any evaluated turn returns one of these labels
+# qualitative_failure_labels:
+#   agent_behavior_failure: ["false information", "disobey user request"]
 
 # ── SHARED SETTINGS ──────────────────────────────────────────────────────────
 

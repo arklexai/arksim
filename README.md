@@ -151,7 +151,7 @@ Environment variables in headers are resolved at runtime using `${VAR_NAME}` syn
 
 ### Custom Agent (Python)
 
-Load your agent directly as a Python class — no HTTP server required.
+Load your agent directly as a Python class - no HTTP server required.
 
 ```yaml
 agent_config:
@@ -293,25 +293,23 @@ All settings can be specified in YAML and overridden via CLI flags (`--key value
 | `metrics_to_run` | list | all metrics | Which metrics to run |
 | `custom_metrics_file_paths` | list | `[]` | Paths to custom metric files |
 | `generate_html_report` | bool | `true` | Generate an HTML report |
-| `score_threshold` | float | null | Fail if any conversation's `overall_agent_score` is below this (0.0–1.0) |
-| `numeric_thresholds` | dict | null | Per-metric minimum scores on native scale. Built-in turn-level metrics use 1–5 (mean across turns per conversation); `goal_completion` uses 0–1. Unknown metric names are skipped with a warning. |
+| `numeric_thresholds` | dict | null | Per-metric minimum scores on native scale. Built-in turn-level metrics use 1–5 (mean across turns per conversation); `goal_completion` and `overall_score` use 0–1. Unknown metric names are skipped with a warning. |
 | `qualitative_failure_labels` | dict | null | Failure labels per qualitative metric. Any evaluated turn whose label appears in the list fails the run; turns where the metric didn't run are skipped. |
 | `num_workers` | int/string | `50` | Parallel workers |
 
 ### Thresholds & exit codes
 
-All three threshold types are independent and optional (default `null`). Any failure exits with code `1`.
+All threshold types are independent and optional (default `null`). Any failure exits with code `1`.
 
 | Threshold | Key | How it works |
 |-----------|-----|--------------|
-| Global score | `score_threshold` | Fails if any conversation's `overall_agent_score` (0–1) is below the threshold |
-| Per-metric numeric | `numeric_thresholds` | Fails if any conversation's mean score for a listed metric falls below its threshold. Use native scale: 1–5 for built-in turn-level metrics, 0–1 for `goal_completion` |
+| Overall score | `numeric_thresholds.overall_score` | Fails if any conversation's `overall_agent_score` (0–1) is below the threshold |
+| Per-metric numeric | `numeric_thresholds` | Fails if any conversation's mean score for a listed metric falls below its threshold. Use native scale: 1–5 for built-in turn-level metrics, 0–1 for `goal_completion` and `overall_score` |
 | Qualitative | `qualitative_failure_labels` | Fails if any evaluated turn returns a label in the failure list |
 
 ```yaml
-score_threshold: 0.6
-
 numeric_thresholds:
+  overall_score: 0.6
   helpfulness: 3.5
   goal_completion: 0.7
 
@@ -320,12 +318,14 @@ qualitative_failure_labels:
   prohibited_statements: ["violated"]
 ```
 
+> **Deprecated:** `score_threshold` is deprecated. Use `numeric_thresholds: {overall_score: <value>}` instead. The old key still works but logs a warning.
+
 **Exit codes:**
 
 | Code | Meaning |
 |------|---------|
 | `0` | Success |
-| `1` | Evaluation failed — threshold not met |
+| `1` | Evaluation failed - threshold not met |
 | `2` | Configuration error |
 | `3` | Internal error |
 
@@ -378,6 +378,44 @@ Opens a local web app at `http://localhost:8080` where you can browse config fil
 | [smolagents](examples/integrations/smolagents/) | Integration with Hugging Face Smolagents |
 | [mastra](examples/integrations/mastra/) | Integration with Mastra (TypeScript) |
 | [vercel-ai-sdk](examples/integrations/vercel-ai-sdk/) | Integration with Vercel AI SDK (TypeScript) |
+
+## CI Integration
+
+Run ArkSim as a quality gate on every pull request so regressions are caught before they ship.
+
+### pytest (custom agent)
+
+The simplest path if your agent is a Python class. CI runs `pytest` (no server needed).
+
+```bash
+# Copy templates into your repo
+arksim examples ci
+mkdir -p .github/workflows tests
+cp examples/ci/pytest/arksim-pytest.yml .github/workflows/arksim-pytest.yml
+cp examples/ci/pytest/test_agent_quality.py tests/test_agent_quality.py
+```
+
+Edit `tests/test_agent_quality.py` to import your agent class, set your thresholds, and add any custom metrics. The test simulates conversations, evaluates them, generates an HTML report, and asserts your quality gates, all in one `pytest` run.
+
+### HTTP server (any language or framework)
+
+If your agent runs as an HTTP server exposing a Chat Completions or A2A endpoint:
+
+```bash
+arksim examples ci
+mkdir -p .github/workflows
+cp examples/ci/github-actions/arksim.yml .github/workflows/arksim.yml
+```
+
+The workflow starts your server, waits for it to be healthy, runs `arksim simulate-evaluate`, and exits non-zero if any threshold is not met.
+
+Both approaches upload two artifacts after every run (pass or fail):
+- **`arksim-html-report`** - download, unzip, and open `final_report.html` in your browser
+- **`arksim-full-results`** - raw simulation and evaluation JSONs for programmatic analysis
+
+See [examples/ci/](examples/ci/) for full templates and [CI Integration docs](https://docs.arklex.ai/ci-integration) for a step-by-step setup guide.
+
+---
 
 ## Development
 

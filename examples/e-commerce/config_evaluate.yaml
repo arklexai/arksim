@@ -5,7 +5,7 @@
 scenario_file_path: ./scenarios.json
 
 # Path to the simulation output file
-simulation_file_path: ./results/simulation/simulation.json
+simulation_file_path: ./simulation/simulation.json
 
 # Output directory for evaluation results
 output_dir: ./results/evaluation
@@ -27,8 +27,15 @@ metrics_to_run:
 # Generate HTML report
 generate_html_report: true
 
-# Exit with non-zero if any score is below this (0.0–1.0); null to disable
-score_threshold: null
+# Numeric thresholds: per-metric minimum scores on native scale
+# Built-in turn-level metrics use 1–5; goal_completion uses 0–1; overall_score uses 0–1
+numeric_thresholds:
+  overall_score: 1
+  goal_completion: 0.6
+
+# Qualitative failure labels: fail the run if any evaluated turn returns one of these labels
+qualitative_failure_labels:
+  agent_behavior_failure: ["false information", "disobey user request"]
 
 # LLM model
 model: gpt-5.1

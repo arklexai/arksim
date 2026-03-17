@@ -65,7 +65,7 @@ Steps to run:
 
    - **2.3 Custom agent connector**
 
-     This loads the agent directly as a Python class — no HTTP server needed. See [`custom_agent.py`](custom_agent.py) for the `BaseAgent` subclass implementation.
+     This loads the agent directly as a Python class - no HTTP server needed. See [`custom_agent.py`](custom_agent.py) for the `BaseAgent` subclass implementation.
 
    You can also adapt these servers to call your own backend agent by following the comments in `agent_server/chat_completions/server.py` (for Chat Completions) or by implementing your own A2A-compatible executor in `agent_server/a2a`.
 

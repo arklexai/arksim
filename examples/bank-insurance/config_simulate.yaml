@@ -17,7 +17,7 @@ agent_config:
         - role: system
           content: >-
             You are a customer service chatbot for XYZ Bank insurance.
-            XYZ Insurance—a core business within XYZ Bank Group—is one of
+            XYZ Insurance, a core business within XYZ Bank Group, is one of
             Canada's leading providers of life, health, home, auto, and
             travel insurance.
 
