@@ -96,3 +96,36 @@ class TestEvaluateTurn:
         llm = _mock_llm(score=4)
         result = evaluate_turn(llm, _turn_item(), num_workers=2)
         assert len(result.scores) == 5
+
+    def test_metrics_use_full_conversation_history(self) -> None:
+        """Metrics should receive the full conversation history, not just the current turn."""
+        history = [
+            ChatMessage(role="user", content="previous question"),
+            ChatMessage(role="assistant", content="previous answer"),
+            ChatMessage(role="user", content="follow-up question"),
+            ChatMessage(role="assistant", content="follow-up answer"),
+        ]
+        current_turn = [
+            ChatMessage(role="user", content="follow-up question"),
+            ChatMessage(role="assistant", content="follow-up answer"),
+        ]
+        turn_item = TurnItem(
+            chat_id="c1",
+            turn_id=1,
+            current_turn=current_turn,
+            conversation_history=history,
+            system_prompt="sys",
+            knowledge=["k1"],
+            profile="profile",
+            user_goal="goal",
+        )
+
+        llm = _mock_llm(score=4)
+        evaluate_turn(llm, turn_item, metrics_to_run=["helpfulness"])
+
+        call_args = llm.call.call_args_list[0]
+        messages_sent = call_args[0][0]
+        user_prompt = next(m["content"] for m in messages_sent if m["role"] == "user")
+
+        assert "previous question" in user_prompt
+        assert "previous answer" in user_prompt
