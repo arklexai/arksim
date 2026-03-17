@@ -5,6 +5,8 @@ import logging
 import os
 import sys
 
+from arksim.simulation_engine.tool_types import ToolCall
+
 if sys.version_info >= (3, 11):
     from typing import Self
 else:
@@ -172,6 +174,7 @@ class TurnItem(BaseModel):
     knowledge: list[str]
     profile: str
     user_goal: str
+    tool_calls: list[ToolCall] | None = None
 
 
 class ConvoItem(BaseModel):

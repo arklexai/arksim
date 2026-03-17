@@ -30,13 +30,15 @@ from .entities import (
     SimulationInput,
     SimulationParams,
 )
+from .tool_types import AgentResponse, ToolCall
 from .utils.prompts import DEFAULT_SIMULATED_USER_PROMPT_TEMPLATE
 from .utils.utils import flip_hist
 
 logger = logging.getLogger(__name__)
 
 
-SIMULATION_SCHEMA_VERSION = "v1"
+# v1.1: Message.tool_calls field added (optional, backward-compatible with v1)
+SIMULATION_SCHEMA_VERSION = "v1.1"
 SIMULATOR_VERSION = "v1"
 
 
@@ -161,11 +163,30 @@ class Simulator:
                     )
                     break
 
-                answer = await agent.execute(
+                result = await agent.execute(
                     user_query=output,
                     metadata=metadata,
                 )
-                history.append({"role": "user", "content": answer})
+
+                # Normalize response
+                if isinstance(result, AgentResponse):
+                    answer = result.content
+                    turn_tool_calls = result.tool_calls
+                else:
+                    answer = result
+                    turn_tool_calls = None
+
+                history.append(
+                    {
+                        "role": "user",
+                        "content": answer,
+                        **(
+                            {"tool_calls": [tc.model_dump() for tc in turn_tool_calls]}
+                            if turn_tool_calls
+                            else {}
+                        ),
+                    }
+                )
 
                 if on_turn_display:
                     on_turn_display(conversation_id, output, answer, turn + 1)
@@ -208,11 +229,14 @@ class Simulator:
                     )
                 )
             elif role == "assistant":
+                raw_tcs = msg.get("tool_calls")
+                tool_calls = [ToolCall(**tc) for tc in raw_tcs] if raw_tcs else None
                 messages.append(
                     Message(
                         turn_id=turn_id,
                         role="assistant",
                         content=msg.get("content", ""),
+                        tool_calls=tool_calls,
                     )
                 )
                 turn_id += 1
