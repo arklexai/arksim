@@ -22,6 +22,7 @@ class AgentMetrics(str, Enum):
     FAITHFULNESS = "faithfulness"
     GOAL_COMPLETION = "goal_completion"
     AGENT_BEHAVIOR_FAILURE = "agent_behavior_failure"
+    TOOL_CALL_BEHAVIOR_FAILURE = "tool_call_behavior_failure"
 
 
 class EvaluationOutcomes(str, Enum):
@@ -42,6 +43,8 @@ class AgentBehaviorFailureType(str, Enum):
     DISOBEY_USER_REQUEST = "disobey user request"
     REPETITION = "repetition"
     FALSE_INFORMATION = "false information"
+    UNSAFE_ACTION = "unsafe action"
+    UNSAFE_STATE = "unsafe state"
     NO_FAILURE = "no failure"
 
 
@@ -51,6 +54,8 @@ EvaluationOutcomes.AgentBehaviorFailureType = AgentBehaviorFailureType
 
 # Mapping of agent behavior failure categories to severity levels.
 AGENT_BEHAVIOR_FAILURE_SEVERITY = {
+    "unsafe action": "critical",
+    "unsafe state": "critical",
     "false information": "critical",
     "disobey user request": "high",
     "lack of specific information": "medium",

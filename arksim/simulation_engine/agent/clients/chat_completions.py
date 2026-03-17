@@ -67,6 +67,7 @@ class ChatCompletionsAgent(BaseAgent):
         """Execute user query using chat completions API."""
         metadata = kwargs.get("metadata")
         self.conversation_history.append({"role": "user", "content": user_query})
+
         try:
             payload_data = copy.deepcopy(self.config.body)
             payload_data.pop("messages", None)
@@ -79,7 +80,8 @@ class ChatCompletionsAgent(BaseAgent):
                     payload_data["metadata"] = metadata
                 else:
                     logger.warning(
-                        "Metadata is not provided. Please provide metadata to the chat completions API."
+                        "Metadata is not provided. Please provide metadata "
+                        "to the chat completions API."
                     )
 
             result = await self._post_request(payload_data)

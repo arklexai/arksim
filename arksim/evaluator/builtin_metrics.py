@@ -183,6 +183,7 @@ class AgentBehaviorFailureMetric(QualitativeMetric):
                 {
                     "role": "user",
                     "content": agent_behavior_failure_user_prompt.format(
+                        user_goal=score_input.user_goal,
                         conversation=format_chat_history(score_input.current_turn),
                         knowledge=score_input.knowledge,
                     ),

@@ -83,6 +83,9 @@ class Evaluator:
                         ChatMessage(role="assistant", content=output_msg),
                     ]
                     all_messages.extend(turn_messages)
+
+                    turn_tool_calls = msg.tool_calls if msg.tool_calls else None
+
                     convo_list.append(
                         TurnItem(
                             chat_id=entry.conversation_id,
@@ -93,6 +96,7 @@ class Evaluator:
                             knowledge=knowledge,
                             profile=profile,
                             user_goal=user_goal,
+                            tool_calls=turn_tool_calls,
                         )
                     )
                     turn_id += 1
