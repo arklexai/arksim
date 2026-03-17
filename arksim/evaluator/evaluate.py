@@ -39,6 +39,7 @@ from .utils.constants import (
     TURN_SUCCESS_RATIO_SCORE_WEIGHT,
 )
 from .utils.enums import (
+    AGENT_BEHAVIOR_FAILURE_SEVERITY,
     AgentMetrics,
     EvaluationOutcomes,
     EvaluationStatus,
@@ -207,7 +208,22 @@ def evaluate_turn(
                 turn_behavior_failure = tool_qual.value
                 turn_behavior_failure_reason = tool_qual_as_agent.reason
             else:
-                turn_behavior_failure_reason += f" [Tool call] {tool_qual.reason or ''}"
+                # Both agent and tool call failures detected. Keep the
+                # higher-severity label so safety issues are not masked.
+                _SEVERITY_RANK = {"critical": 0, "high": 1, "medium": 2, "low": 3}
+                tool_sev = _SEVERITY_RANK.get(
+                    AGENT_BEHAVIOR_FAILURE_SEVERITY.get(tool_qual.value, ""), 99
+                )
+                agent_sev = _SEVERITY_RANK.get(
+                    AGENT_BEHAVIOR_FAILURE_SEVERITY.get(turn_behavior_failure, ""), 99
+                )
+                if tool_sev < agent_sev:
+                    turn_behavior_failure = tool_qual.value
+                    turn_behavior_failure_reason = tool_qual_as_agent.reason
+                else:
+                    turn_behavior_failure_reason += (
+                        f" [Tool call] {tool_qual.reason or ''}"
+                    )
 
     return TurnEvaluation(
         turn_id=turn_item.turn_id,
