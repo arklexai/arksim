@@ -1,0 +1,41 @@
+# Snapshots the current `main` docs folder as a versioned release and updates
+# docs.json whenever a new GitHub Release is published (e.g. by release-please).
+# The release tag must start with "v" (e.g. v0.3.0).
+
+name: Version Docs on Release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  version-docs:
+    name: Snapshot docs for ${{ github.event.release.tag_name }}
+    runs-on: ubuntu-latest
+    if: startsWith(github.event.release.tag_name, 'v')
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Set version variable
+        id: version
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Copy main docs to versioned folder
+        run: cp -r docs/main "docs/v${{ steps.version.outputs.version }}"
+
+      - name: Update docs.json
+        run: python3 .github/scripts/version-docs.py "${{ steps.version.outputs.version }}"
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/
+          git commit -m "docs: snapshot v${{ steps.version.outputs.version }} from main"
+          git push origin main
