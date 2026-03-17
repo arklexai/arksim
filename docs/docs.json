@@ -29,6 +29,12 @@
         ]
       },
       {
+        "group": "CI/CD",
+        "pages": [
+          "ci-integration"
+        ]
+      },
+      {
         "group": "Examples",
         "pages": [
           "insurance-customer-service-agent-evaluation",
