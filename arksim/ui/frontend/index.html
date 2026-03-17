@@ -710,6 +710,9 @@
                   <label class="block text-sm font-medium t-label mb-1">Goal</label>
                   <input type="text" x-model="sc.goal" @input="scenarioDirty = true" class="w-full border t-input rounded-lg px-3 py-2 text-sm mb-3" placeholder="What should the simulated user try to accomplish?">
 
+                  <label class="block text-sm font-medium t-label mb-1">Agent Context <span class="font-normal t-caption">(system prompt or context for the agent under test)</span></label>
+                  <textarea x-model="sc.agent_context" @input="scenarioDirty = true" rows="2" class="w-full border t-input rounded-lg px-3 py-2 text-sm mb-3" placeholder="You are a helpful insurance agent for XYZ Insurance..."></textarea>
+
                   <label class="block text-sm font-medium t-label mb-1">Knowledge <span class="font-normal t-caption">(context the simulated user has)</span></label>
                   <textarea x-model="sc._knowledgeText" @input="scenarioDirty = true" rows="2" class="w-full border t-input rounded-lg px-3 py-2 text-sm mb-3" placeholder="Background information the user knows about..."></textarea>
 
