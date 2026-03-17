@@ -5,6 +5,32 @@ All notable changes to ArkSim will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0](https://github.com/arklexai/arksim/compare/v0.2.0...v0.3.0) (2026-03-17)
+
+
+### ⚠ BREAKING CHANGES
+
+* add CI integration templates, docs, and example updates ([#92](https://github.com/arklexai/arksim/issues/92))
+
+### Added
+
+* add CI integration templates, docs, and example updates ([#92](https://github.com/arklexai/arksim/issues/92)) ([09a3674](https://github.com/arklexai/arksim/commit/09a367402a849a4fb89845ab5e940e3756b56157))
+* add per-metric thresholds and structured exit codes ([#89](https://github.com/arklexai/arksim/issues/89)) ([5f0f93a](https://github.com/arklexai/arksim/commit/5f0f93aebbd03fd8bad624b7b4f707a01ab5d756))
+* **examples:** add 6 new SDK/framework integration examples ([#97](https://github.com/arklexai/arksim/issues/97)) ([883ff9a](https://github.com/arklexai/arksim/commit/883ff9a930167bb94440a5bf9c3eaae9cef9b511))
+
+
+### Documentation
+
+* update readme to include paper information ([#90](https://github.com/arklexai/arksim/issues/90)) ([8e18e5c](https://github.com/arklexai/arksim/commit/8e18e5c05c046fb71926450eaaf8517c6ecc0ea1))
+
+
+### Changed
+
+* add integration tests ([#91](https://github.com/arklexai/arksim/issues/91)) ([b047397](https://github.com/arklexai/arksim/commit/b047397bf0284bbf10925c74d380deca90be6efc))
+* bump actions/create-github-app-token from 2 to 3 ([#98](https://github.com/arklexai/arksim/issues/98)) ([724a779](https://github.com/arklexai/arksim/commit/724a77994037ce84178c54841750c88617fb1972))
+* update SECURITY.md supported versions ([#94](https://github.com/arklexai/arksim/issues/94)) ([2220870](https://github.com/arklexai/arksim/commit/22208706365d63e22d08743fa06d0e888a2b9d7e))
+* update vercel ai sdk deps for security updates ([#100](https://github.com/arklexai/arksim/issues/100)) ([412ad4c](https://github.com/arklexai/arksim/commit/412ad4cc84db932c9866c901d4d07e7c6d3f29df))
+
 ## [0.2.0](https://github.com/arklexai/arksim/compare/v0.1.0...v0.2.0) (2026-03-10)
 
 

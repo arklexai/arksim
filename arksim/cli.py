@@ -18,7 +18,6 @@ from arksim.evaluator import (
     EvaluationInput,
     check_numeric_thresholds,
     check_qualitative_failure_labels,
-    check_score_threshold,
     run_evaluation,
 )
 from arksim.simulation_engine import SimulationInput, run_simulation
@@ -50,16 +49,13 @@ def _enforce_thresholds(
     evaluator_output: Evaluation, evaluation_input: EvaluationInput
 ) -> None:
     """Run all threshold gates and exit with EXIT_EVAL_FAILED if any fail."""
-    threshold_ok = check_score_threshold(
-        evaluator_output, evaluation_input.score_threshold
-    )
     metric_ok = check_numeric_thresholds(
         evaluator_output, evaluation_input.numeric_thresholds
     )
     qual_ok = check_qualitative_failure_labels(
         evaluator_output, evaluation_input.qualitative_failure_labels
     )
-    if not threshold_ok or not metric_ok or not qual_ok:
+    if not metric_ok or not qual_ok:
         sys.exit(EXIT_EVAL_FAILED)
 
 
@@ -568,6 +564,8 @@ def main() -> None:
             _cmd_simulate_evaluate(
                 settings, overrides, config_path, cli_overrides, verbose
             )
+    except (KeyboardInterrupt, SystemExit):
+        raise  # this preserves exit codes for CI
     except Exception as e:
         logger.error(f"Internal error: {e}")
         logger.debug("Traceback:", exc_info=True)

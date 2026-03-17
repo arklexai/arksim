@@ -234,7 +234,7 @@ class TestMainEvaluateThresholds:
         """No SystemExit when all thresholds pass."""
         cfg = self._eval_config(
             tmp_path,
-            "score_threshold: 0.5\nnumeric_thresholds:\n  goal_completion: 0.5\n",
+            "numeric_thresholds:\n  overall_score: 0.5\n  goal_completion: 0.5\n",
         )
         monkeypatch.setattr(sys, "argv", ["arksim", "evaluate", str(cfg)])
         with patch("arksim.cli.run_evaluation", return_value=self._mock_eval(0.9)):

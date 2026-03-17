@@ -12,9 +12,7 @@ from arksim.cli import (
 from arksim.evaluator import (
     check_numeric_thresholds,
     check_qualitative_failure_labels,
-    check_score_threshold,
 )
-from arksim.evaluator.entities import ConversationEvaluation, Evaluation
 from tests.unit.helpers import make_mock_convo, make_mock_evaluation
 
 # ── _parse_value ─────────────────────────────────────────
@@ -181,50 +179,6 @@ class TestCoerceListOverrides:
         overrides = {"items": "x,y"}
         _coerce_list_overrides(overrides, _Model)
         assert overrides["items"] == ["x", "y"]
-
-
-# ── _check_score_threshold ───────────────────────────────
-
-
-def _make_score_evaluation(scores: list[float]) -> Evaluation:
-    convos = [
-        ConversationEvaluation(
-            conversation_id=f"conv-{i}",
-            goal_completion_score=s,
-            goal_completion_reason="ok",
-            turn_success_ratio=s,
-            overall_agent_score=s,
-            evaluation_status="Done",
-            turn_scores=[],
-        )
-        for i, s in enumerate(scores)
-    ]
-    return Evaluation(
-        schema_version="v1",
-        generated_at="2024-01-01T00:00:00Z",
-        evaluator_version="v1",
-        evaluation_id="eval-1",
-        simulation_id="sim-1",
-        conversations=convos,
-        unique_errors=[],
-    )
-
-
-class TestCheckScoreThreshold:
-    def test_none_threshold_always_passes(self) -> None:
-        assert check_score_threshold(_make_score_evaluation([0.1]), None) is True
-
-    def test_all_pass(self) -> None:
-        assert check_score_threshold(_make_score_evaluation([0.8, 0.9]), 0.7) is True
-
-    def test_one_fails(self) -> None:
-        assert check_score_threshold(_make_score_evaluation([0.8, 0.5]), 0.7) is False
-
-    def test_all_fail(self) -> None:
-        assert check_score_threshold(_make_score_evaluation([0.1, 0.2]), 0.5) is False
-
-    def test_exact_threshold_passes(self) -> None:
-        assert check_score_threshold(_make_score_evaluation([0.7]), 0.7) is True
 
 
 # ── check_numeric_thresholds ────────────────────────────

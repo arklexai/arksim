@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import logging
 import os
 import sys
 
@@ -24,6 +25,8 @@ from .base_metric import (
     QuantitativeMetric,
     QuantResult,
 )
+
+_entities_logger = logging.getLogger(__name__)
 
 _DEFAULT_METRICS_TO_RUN = [
     "faithfulness",
@@ -74,7 +77,8 @@ class EvaluationInput(BaseModel):
     score_threshold: float | None = Field(
         default=None,
         description=(
-            "Threshold for per-conversation final scores. "
+            "Deprecated. Use numeric_thresholds with key 'overall_score' instead. "
+            "Threshold for per-conversation final scores (0.0–1.0). "
             "If any score < threshold, exit with non-zero code."
         ),
     )
@@ -85,7 +89,8 @@ class EvaluationInput(BaseModel):
             "Keys are metric names (e.g. 'faithfulness', 'helpfulness'). "
             "Built-in turn-level metrics use a 1–5 scale; the mean across all "
             "turns per conversation is compared against the threshold. "
-            "'goal_completion' is stored as 0–1 and compared directly."
+            "'goal_completion' is stored as 0–1 and compared directly. "
+            "'overall_score' checks the per-conversation overall_agent_score (0–1)."
         ),
     )
     qualitative_failure_labels: dict[str, list[str]] | None = Field(
@@ -98,6 +103,28 @@ class EvaluationInput(BaseModel):
             "turns where the metric did not run are skipped."
         ),
     )
+
+    @model_validator(mode="before")
+    @classmethod
+    def _migrate_score_threshold(cls, data: object) -> object:
+        """Migrate deprecated score_threshold into numeric_thresholds['overall_score']."""
+        if not isinstance(data, dict):
+            return data
+        score_threshold = data.get("score_threshold")
+        if score_threshold is not None:
+            _entities_logger.warning(
+                "'score_threshold' is deprecated. "
+                "Use 'numeric_thresholds: {overall_score: <value>}' instead."
+            )
+            numeric_thresholds = dict(data.get("numeric_thresholds") or {})
+            if "overall_score" not in numeric_thresholds:
+                numeric_thresholds["overall_score"] = score_threshold
+            data = {
+                **data,
+                "numeric_thresholds": numeric_thresholds,
+                "score_threshold": None,
+            }
+        return data
 
     @model_validator(mode="after")
     def validate_evaluation_input(self, info: ValidationInfo) -> Self:

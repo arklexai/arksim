@@ -1,0 +1,387 @@
+---
+title: "CI Integration"
+description: "Run ArkSim as an automated quality gate in your CI pipeline so every code change is tested against your agent's quality bar before it ships."
+---
+
+## Why run ArkSim in CI?
+
+Agents break in non-obvious ways. A prompt tweak, a model upgrade, or a dependency change can silently degrade helpfulness, introduce false information, or cause goal failures — without triggering any unit test.
+
+Running ArkSim on every pull request turns quality regression into a CI signal:
+
+| Without ArkSim in CI | With ArkSim in CI |
+|----------------------|-------------------|
+| Regressions found in production | Regressions caught before merge |
+| Manual spot-checking before releases | Automated evaluation on every PR |
+| Subjective "looks good to me" reviews | Objective, reproducible metric scores |
+| No record of quality over time | Artifact history per commit |
+
+---
+
+## Choose your approach
+
+| | pytest (custom agent) | HTTP server |
+|---|---|---|
+| **How it works** | ArkSim loads your agent class in-process | ArkSim calls your agent over HTTP |
+| **Agent type** | Python class subclassing `BaseAgent` | Any HTTP server (any language or framework) |
+| **CI complexity** | Simple — just run `pytest` | Requires starting, health-checking, and stopping a server |
+| **Template** | `arksim-pytest.yml` + `test_agent_quality.py` | `arksim.yml` |
+
+---
+
+## Approach 1: pytest with a custom agent
+
+Your agent is a Python class that subclasses `BaseAgent`. ArkSim loads it in-process — no HTTP server needed. The pytest test runs simulation and evaluation directly and asserts scores.
+
+### How it works
+
+```
+GitHub Actions runner
+│
+├── 1. Checkout + install dependencies
+├── 2. python -m pip install arksim pytest pytest-asyncio
+├── 3. python -m pip install -r requirements.txt
+├── 4. pytest tests/test_agent_quality.py
+│       ├── Simulate N conversations (agent runs in-process)
+│       ├── Evaluate each conversation with an LLM judge
+│       ├── Generate HTML report
+│       └── Assert quality thresholds → pass or fail
+└── 5. Upload artifacts (always runs)
+        ├── arksim-html-report  (final_report.html)
+        └── arksim-full-results (simulation + evaluation JSONs)
+```
+
+### Setup
+
+<Steps>
+  <Step title="Subclass BaseAgent">
+    Your agent class must implement two methods:
+
+    ```python
+    from arksim.simulation_engine.agent.base import BaseAgent
+
+    class MyAgent(BaseAgent):
+        async def get_chat_id(self) -> str:
+            # Return a stable ID for the current conversation session
+            return str(id(self))
+
+        async def execute(self, user_query: str, **kwargs) -> str:
+            # Your agent logic — return the agent's reply as a string
+            ...
+    ```
+
+    If you already have an existing agent, wrap it in a thin adapter:
+
+    ```python
+    class MyAgentAdapter(BaseAgent):
+        def __init__(self, agent_config):
+            super().__init__(agent_config)
+            self.agent = MyExistingAgent()
+
+        async def get_chat_id(self) -> str:
+            return str(id(self))
+
+        async def execute(self, user_query: str, **kwargs) -> str:
+            return await self.agent.process(user_query)
+    ```
+  </Step>
+
+  <Step title="Copy the pytest templates">
+    Download the GitHub Actions example:
+
+    ```bash
+    arksim examples ci
+    ```
+
+    Copy the pytest workflow and test template into your repo:
+
+    ```bash
+    mkdir -p .github/workflows tests
+    cp examples/ci/pytest/arksim-pytest.yml .github/workflows/arksim-pytest.yml
+    cp examples/ci/pytest/test_agent_quality.py tests/test_agent_quality.py
+    ```
+
+    Create a `conftest.py` in your `tests/` directory so pytest can resolve your agent and metrics modules:
+
+    ```python
+    # tests/conftest.py
+    import sys
+    import os
+
+    # Add the project root to sys.path so imports like
+    # `from my_agent import MyAgent` resolve correctly.
+    sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+    ```
+  </Step>
+
+  <Step title="Create your scenarios">
+    Create `tests/arksim/scenarios.json` with test cases representative of your agent's real usage:
+
+    ```
+    tests/
+    ├── test_agent_quality.py
+    └── arksim/
+        ├── scenarios.json       ← test inputs (committed)
+        └── results/             ← outputs (add to .gitignore)
+    ```
+
+    See [Build Scenarios](/build-scenario) for the schema, and [`examples/bank-insurance`](https://github.com/arklexai/arksim/tree/main/examples/bank-insurance) for a full example.
+  </Step>
+
+  <Step title="Customize the test file">
+    Open `tests/test_agent_quality.py` and update:
+
+    - Import your agent class (replace `from my_agent import MyAgent`)
+    - Import your custom metrics if needed (replace `from my_metrics import ...`), or remove the custom metrics block entirely to use built-in metrics only
+    - Set `NUMERIC_THRESHOLDS` and `QUALITATIVE_FAILURE_LABELS` to match your quality bar
+    - Adjust `num_convos_per_scenario`, `max_turns`, and `num_workers` as needed
+  </Step>
+
+  <Step title="Add GitHub secret">
+    In your repo → **Settings → Secrets and variables → Actions**:
+
+    | Secret | Purpose |
+    |--------|---------|
+    | `OPENAI_API_KEY` | LLM ArkSim uses to evaluate your agent |
+  </Step>
+
+  <Step title="Push">
+    The workflow triggers automatically on every push to `main` and on every PR. A failing assertion fails the job.
+  </Step>
+</Steps>
+
+---
+
+## Approach 2: HTTP server
+
+Your agent runs as an HTTP server exposing an OpenAI-compatible chat completions endpoint. ArkSim calls it over HTTP during CI — works with any language or framework.
+
+<Frame>
+  ![CI workflow](/images/checks-passed.png)
+</Frame>
+
+### How it works
+
+```
+GitHub Actions runner
+│
+├── 1. Checkout + install dependencies
+├── 2. pip install arksim
+├── 3. pip install -r requirements.txt
+├── 4. Start your agent as an HTTP server (background)
+├── 5. Poll /health until HTTP 200
+├── 6. arksim simulate-evaluate config.yaml
+│       ├── Simulate N conversations with your agent
+│       ├── Evaluate each conversation with an LLM judge
+│       └── Check configured quality thresholds
+├── 7. Upload artifacts (always runs)
+│       ├── arksim-html-report  (final_report.html)
+│       └── arksim-full-results (simulation + evaluation JSONs)
+└── 8. Exit code → job passes or fails
+```
+
+The CLI exits non-zero if any threshold is not met, which fails the job.
+
+| Exit code | Meaning |
+|-----------|---------|
+| `0` | All evaluations passed |
+| `1` | Evaluation failed — a threshold was not met |
+| `2` | Config / usage error |
+| `3` | Internal / engine error |
+
+### Setup
+
+<Steps>
+  <Step title="Get the workflow template">
+    Download the GitHub Actions example:
+
+    ```bash
+    arksim examples ci
+    ```
+
+    Copy the workflow template into your repo:
+
+    ```bash
+    mkdir -p .github/workflows
+    cp examples/ci/github-actions/arksim.yml .github/workflows/arksim.yml
+    ```
+  </Step>
+
+  <Step title="Create your ArkSim config">
+    Create `arksim/config.yaml` in your repo. Point the `endpoint` at the port where your agent server will listen:
+
+    ```yaml
+    agent_config:
+      agent_type: chat_completions
+      agent_name: my-agent
+      api_config:
+        endpoint: http://localhost:8888/v1/chat/completions
+        headers:
+          Content-Type: application/json
+        body:
+          model: my-model
+          messages: []
+
+    scenario_file_path: ./arksim/scenarios.json
+    num_conversations_per_scenario: 3
+    max_turns: 5
+    output_file_path: ./arksim/results/simulation.json
+
+    output_dir: ./arksim/results/evaluation
+    metrics_to_run:
+      - faithfulness
+      - helpfulness
+      - coherence
+      - relevance
+      - goal_completion
+      - agent_behavior_failure
+    generate_html_report: true
+
+    numeric_thresholds:
+      overall_score: 0.6
+      goal_completion: 0.8
+
+    model: gpt-4o
+    provider: openai
+    num_workers: 10
+    ```
+
+    See [Evaluation](/evaluate-conversation) for all configuration options and the full list of available metrics.
+
+    <Tip>
+      If your agent's `requirements.txt` conflicts with ArkSim's dependencies, install them in separate virtual environments so they don't interfere:
+
+      ```yaml
+      - name: Install agent dependencies
+        run: |
+          python -m venv .venv-agent
+          .venv-agent/bin/pip install -r requirements.txt
+
+      - name: Install ArkSim
+        run: pip install arksim
+
+      - name: Start agent server
+        run: .venv-agent/bin/python my_agent_server.py --port 8888 &
+      ```
+    </Tip>
+  </Step>
+
+  <Step title="Create your scenarios">
+    Create `arksim/scenarios.json` with test cases representative of your agent's real usage. See [Build Scenarios](/build-scenario) for the schema, and [`examples/bank-insurance`](https://github.com/arklexai/arksim/tree/main/examples/bank-insurance) for a full example.
+  </Step>
+
+  <Step title="Add custom metrics (optional)">
+    If you have custom metrics, add them to `arksim/custom_metrics/` and reference them in your `arksim/config.yaml`. See [Custom Metrics](/evaluate-conversation#custom-metrics) for the schema.
+  </Step>
+
+  <Step title="Customize the workflow">
+    Open `.github/workflows/arksim.yml` and update the two `TODO` sections:
+
+    **Start agent server** — replace with your framework's startup command:
+
+    <Tabs>
+      <Tab title="FastAPI / uvicorn">
+        ```yaml
+        - name: Start agent server
+          run: uvicorn my_agent:app --host 0.0.0.0 --port 8888 &
+          env:
+            OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        ```
+      </Tab>
+      <Tab title="LangChain + LangServe">
+        ```yaml
+        - name: Start agent server
+          run: python -m uvicorn my_chain_server:app --port 8888 &
+          env:
+            OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        ```
+      </Tab>
+      <Tab title="OpenAI Agents SDK">
+        ```yaml
+        - name: Start agent server
+          run: python my_agent_server.py --port 8888 &
+          env:
+            OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        ```
+      </Tab>
+      <Tab title="Google ADK">
+        ```yaml
+        - name: Start agent server
+          run: adk api_server --port 8888 &
+          env:
+            GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+        ```
+      </Tab>
+    </Tabs>
+
+    **Wait for agent** — update the health-check URL if your server uses a different route:
+
+    ```yaml
+    - name: Wait for agent to be healthy
+      run: |
+        for i in $(seq 1 30); do
+          if curl -sf http://localhost:8888/health > /dev/null 2>&1; then
+            exit 0
+          fi
+          sleep 2
+        done
+        exit 1
+    ```
+  </Step>
+
+  <Step title="Add GitHub secrets">
+    In your repo → **Settings → Secrets and variables → Actions**:
+
+    | Secret | Purpose |
+    |--------|---------|
+    | `OPENAI_API_KEY` | LLM ArkSim uses to evaluate your agent |
+    | `AGENT_API_KEY` | *(optional)* API key your agent server needs |
+  </Step>
+
+  <Step title="Push">
+    The workflow triggers automatically on every push to `main` and on every PR. The job passes or fails based on your configured thresholds.
+  </Step>
+</Steps>
+
+---
+
+## Quality gates
+
+Configure pass/fail thresholds in your config or test file. If any gate is not met the job fails.
+
+### Per-metric thresholds
+
+Fail if any conversation's per-metric score falls below the minimum. Built-in turn-level metrics use a 1–5 scale; `goal_completion` and `overall_score` use 0–1:
+
+```yaml
+numeric_thresholds:
+  overall_score: 0.6
+  goal_completion: 0.8
+  faithfulness: 3.5
+  helpfulness: 3.0
+```
+
+### Qualitative failure labels
+
+Fail if any evaluated turn returns one of these labels:
+
+```yaml
+qualitative_failure_labels:
+  agent_behavior_failure: ["false information", "disobey user request"]
+  prohibited_statements: ["violated"]
+```
+
+See [Threshold Gates](/evaluate-conversation#threshold-gates) for the full reference on all three gate types.
+
+---
+
+## Viewing the evaluation report
+
+After every run — pass or fail — two artifacts are uploaded so you can inspect results regardless of outcome.
+
+1. Open the workflow run in GitHub Actions.
+2. Scroll to **Artifacts** at the bottom.
+3. Download **arksim-html-report** → unzip → open `final_report.html` in your browser.
+4. Download **arksim-full-results** for the raw simulation and evaluation JSONs (useful for programmatic analysis or diffing metric trends across runs).
+
+The HTML report shows metric averages, per-conversation scores, and the top failure patterns, giving you enough context to know exactly what to fix.
