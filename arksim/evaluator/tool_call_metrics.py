@@ -5,14 +5,12 @@ from __future__ import annotations
 
 import json
 
-from arksim.llms.chat import LLM
-
 from .base_metric import (
-    QualitativeMetric,
     QualResult,
     ScoreInput,
     format_chat_history,
 )
+from .builtin_metrics import AgentBehaviorFailureMetric
 from .utils.enums import AgentBehaviorFailureType, AgentMetrics
 from .utils.prompts import (
     tool_call_behavior_failure_system_prompt,
@@ -21,12 +19,15 @@ from .utils.prompts import (
 from .utils.schema import QualSchema
 
 
-class ToolCallBehaviorFailureMetric(QualitativeMetric):
+class ToolCallBehaviorFailureMetric(AgentBehaviorFailureMetric):
     """Detects tool call behavior failures using LLM-as-judge.
 
+    Extends AgentBehaviorFailureMetric because tool call failures are
+    a specialized form of agent behavior failure. Shares the same
+    failure labels, severity mapping, and pipeline (TSR, Unique Errors).
+
     Evaluates: tool selection, parameter correctness, call necessity,
-    and result usage. Maps failures to AgentBehaviorFailureType labels
-    including unsafe action and unsafe state for tool-specific failure modes.
+    result usage, action safety, and response integrity.
     """
 
     DESCRIPTION = (
@@ -37,12 +38,10 @@ class ToolCallBehaviorFailureMetric(QualitativeMetric):
         "unsafe action, unsafe state, no failure."
     )
 
-    def __init__(self, llm: LLM) -> None:
-        super().__init__(
-            name=AgentMetrics.TOOL_CALL_BEHAVIOR_FAILURE.value,
-            description=self.DESCRIPTION,
-        )
-        self._llm = llm
+    def __init__(self, llm: LLM) -> None:  # noqa: F821
+        super().__init__(llm)
+        self.name = AgentMetrics.TOOL_CALL_BEHAVIOR_FAILURE.value
+        self.description = self.DESCRIPTION
 
     def evaluate(self, score_input: ScoreInput) -> QualResult:
         tool_calls = getattr(score_input, "tool_calls", None)
