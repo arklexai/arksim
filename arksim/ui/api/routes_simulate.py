@@ -103,7 +103,7 @@ def _run_simulation(app_state: AppState, body: SimulateRequest) -> None:
             from arksim.utils.output.types import OutputDir
 
             output_dir = resolve_output_dir(
-                os.path.join(body.output_file_path, OutputDir.SIMULATION.value)
+                os.path.join(body.output_file_path or ".", OutputDir.SIMULATION.value)
             )
             output_file_path = os.path.join(output_dir, "simulation.json")
 
