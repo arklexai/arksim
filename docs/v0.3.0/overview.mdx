@@ -1,0 +1,69 @@
+---
+title: "Overview"
+description: "Validate, simulate, and harden your agent systems with ArkSim."
+---
+
+## What is ArkSim?
+
+ArkSim is an open-source agent testing tool designed to help developers validate, simulate, and harden their agent systems. It focuses on reproducible interaction simulations to identify reliability and idempotency gaps before production deployment.
+
+<Frame>
+  <img
+    className="hidden dark:block"
+    src="/images/arksim-workflow.svg"
+    alt="ArkSim Workflow"
+  />
+  <img
+    className="dark:hidden"
+    src="/images/arksim-overview.svg"
+    alt="ArkSim Workflow"
+  />
+</Frame>
+
+## Who is it for?
+
+Developers looking to ensure their agents are robust, reliable, and ready for real-world interactions, without relying on manual testing.
+
+## What makes it different?
+
+<CardGroup cols={2}>
+  <Card icon="code" title="Open-source">
+    Fully transparent and customizable, letting you extend or adapt the tool as needed.
+  </Card>
+  <Card icon="flask" title="End-to-end testing">
+    Test your agent in realistic scenarios to uncover gaps in behavior or reliability before production.
+  </Card>
+  <Card icon="bolt" title="Pre-built scenarios">
+    Use predefined scenarios to quickly validate your agent and jump-start testing effectively.
+  </Card>
+  <Card icon="puzzle-piece" title="Easily extensible">
+    Integrate with existing systems and tailor the testing environment to your specific needs.
+  </Card>
+</CardGroup>
+
+## Core Capabilities
+
+### Scenarios
+
+A scenario is a test case that defines a simulated user’s attributes, goals, and prior knowledge. It allows you to test different versions of your agent against the same set of scenarios to compare behavior and catch regressions.
+
+### Simulation
+
+Simulation turns scenarios into live, multi-turn conversations with your agent. You get full transcripts (and optional metadata) that you can critically inspect or pass to evaluation.
+
+### Evaluation
+
+Evaluation scores your agent on those conversations. You get quantitative and qualitative metrics (e.g. helpfulness, faithfulness) and agent behavior failures that you can prioritize and fix.
+
+## Ready to start?
+
+Test your AI agent with ArkSim. Follow the quick start or explore the source on GitHub.
+
+<CardGroup cols={2}>
+  <Card icon="rocket" href="/quickstart" title="Quick Start">
+    Set up your first simulation in minutes.
+  </Card>
+  <Card icon="github" href="https://github.com/arklexai/arksim" title="Source Code">
+    Explore full implementation on GitHub.
+  </Card>
+</CardGroup>

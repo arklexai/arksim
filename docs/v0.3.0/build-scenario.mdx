@@ -1,0 +1,186 @@
+---
+title: "Scenarios"
+description: "Define who your simulated user is, what they want, and what they know."
+---
+
+## What is a Scenario?
+
+A scenario is a test case that describes who the simulated user is, what they want to accomplish, and what they already know going into the conversation with the agent.
+
+<Frame>
+  ![ArkSim Workflow](/images/scenarios.svg)
+</Frame>
+
+## The Three Core Pillars
+
+### Goal
+
+Describes the user's objective, guiding their actions and decisions throughout the conversation.
+
+> Plan a purchase of a service robot, focusing on delivery timelines and suitability for commercial use.
+
+### User Profile (Persona)
+
+Defines who the simulated user is — their personality, demographics, and behavior — as a natural-language description written in second person.
+
+> You are Alex, a 26-year-old operations analyst at a mid-sized logistics company in Chicago. You are analytical, detail-oriented, budget-conscious, and risk-aware.
+
+### Knowledge
+
+Provides context that shapes the simulated user's questions and expectations. Also used during **evaluation** to check whether the agent's responses were accurate and consistent with the source.
+
+> - `home_insurance_overview.md` \
+>   The service robot is a 40 kg payload autonomous service robot with 8-hour battery life and \$70,000 price…
+> - `purchase_options.pdf` \
+>   The payment plans include full purchase, 12-month leasing, and vendor financing…
+
+<Tip>
+  Think of a scenario as answering three questions: **Who** is this user? **What** do they want? **What** do they know?
+</Tip>
+
+## Why ArkSim Scenarios?
+
+ArkSim Scenarios let you test and evaluate your agent using realistic, profile-driven simulations of user interactions. Each scenario is built around clearly defined goals and behaviors, enabling structured performance evaluation without requiring a real-world dataset.
+
+By using synthetic users, you can run consistent and reproducible tests across a wide range of interaction types, making it easy to scale evaluations and understand how your agent performs before deploying it to real users.
+
+---
+
+## Scenario File Structure
+
+A scenario file is a single JSON document containing a list of scenario objects. Each scenario represents one simulated user and one conversation session.
+
+```json
+{
+  "schema_version": "v1",
+  "scenarios": [
+    { ... },
+    { ... }
+  ]
+}
+```
+
+For the full scenario schema (all fields and types), see [Schema Reference](/schema-reference#scenarios-scenariosjson).
+
+---
+
+## Full Example
+
+```json
+{
+  "schema_version": "v1",
+  "scenarios": [
+    {
+      "scenario_id": "123456",
+      "user_id": "123456",
+      "goal": "You want to ask detailed questions about XYZ Insurance car coverage options in your province, including limits, deductibles, and what's actually covered.",
+      "knowledge": [
+        {
+          "content": "Car Insurance Overview: XYZ Insurance offers mandatory and optional coverages including third-party liability, collision, and comprehensive...",
+          "metadata": {
+            "title": "Car Insurance Overview",
+            "source": "https://www.xyzinsurance.com/products-services/auto-car-insurance",
+            "knowledge_type": "car_insurance_overview",
+            "doc_id": "car_insurance_overview_001"
+          }
+        }
+      ],
+      "user_profile": "You are Priya Chen who is open to experience, conscientious, introverted, agreeable, and emotionally stable. You are a 34-year-old single woman living in Toronto, ON, Canada. As a prospective customer who found XYZ Insurance through an online search, you are analytical and value-oriented with moderate spending habits.",
+      "origin": {
+        "target_agent_capability": "Answer questions about XYZ Insurance products and coverage",
+        "goal_raw": "Ask question about XYZ insurance",
+        "user_attributes": {
+          "sex": "Female",
+          "age": "34",
+          "marital_status": "single",
+          "household_size": "1",
+          "location": "Toronto, ON, Canada",
+          "Household_income": "$50,000 - $74,999",
+          "education": "Bachelor's degree",
+          "Openness": "open to experience",
+          "Conscientiousness": "conscientious",
+          "Extraversion": "introverted",
+          "Agreeableness": "agreeable",
+          "Neuroticism": "emotionally stable",
+          "customer_type": "prospective customer",
+          "discovery_type": "online search",
+          "decision_making_style": "analytical",
+          "purchasing_preference": "value oriented",
+          "spending_behavior": "moderate spending",
+          "loyalty_level": "neutral"
+        }
+      }
+    }
+  ]
+}
+```
+
+---
+
+## Writing Scenarios
+
+You can write scenario files manually. The required fields are `scenario_id`, `user_id`, `goal`, `agent_context`, and `user_profile`:
+
+```json
+{
+  "schema_version": "v1",
+  "scenarios": [
+    {
+      "scenario_id": "my-scenario-001",
+      "user_id": "user-001",
+      "goal": "You want to find out whether your home insurance policy covers water damage from a burst pipe.",
+      "agent_context": "You are a helpful home insurance assistant for XYZ Insurance.",
+      "user_profile": "You are Jordan, an existing customer from Calgary, AB, Canada. You are detail-oriented and want a clear answer.",
+    }
+  ]
+}
+```
+
+<Note>
+  **Tips**
+
+  - Write `goal` in second person ("You want to...") so it reads naturally as a simulator instruction.
+  - `knowledge` can be omitted if the simulated user has no specific background information.
+  - `origin` can be omitted for hand-authored scenarios.
+</Note>
+
+---
+
+## Multi-Knowledge Scenarios
+
+A scenario can include multiple knowledge items by adding additional entries to the `knowledge` list. These items are directly injected into the simulated user's context — there is no retrieval step or external knowledge base involved.
+
+```json
+"knowledge": [
+  {
+    "content": "Home Insurance Basics: XYZ Insurance provides coverage for your dwelling, contents, and liability...",
+    "metadata": { "title": "Home Insurance Basics" }
+  },
+  {
+    "content": "Claims Process: To file a claim, you can call the XYZ Insurance claims line or use the online claims portal...",
+    "metadata": { "title": "How to File a Claim" }
+  }
+]
+```
+
+---
+
+## How Fields Are Used Downstream
+
+Understanding how each field is used helps you decide what to include.
+
+| Field                          | Used By               | Description                                                          |
+| ------------------------------ | --------------------- | -------------------------------------------------------------------- |
+| `goal`                         | Simulator & Evaluator | Directly used in the simulator prompt; the most important field.     |
+| `knowledge[].content`          | Simulator & Evaluator | Provides simulated user's background knowledge for the conversation. |
+| `user_profile`                 | Simulator             | Used as-is in the simulated user prompt to define the persona.       |
+| `knowledge[].metadata`         | Not used by ArkSim    | For labeling and traceability only.                                  |
+| `origin`                       | Not used by ArkSim    | Tracks scenario provenance; reference only.                          |
+
+## Next Steps
+
+Once your scenario file is ready, you're ready to run your scenarios and review the results.
+
+<Card href="/simulate-conversation" title="Simulations →">
+  Execute your scenarios and simulate conversations for review and analysis.
+</Card>
