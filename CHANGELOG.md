@@ -5,6 +5,19 @@ All notable changes to ArkSim will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1](https://github.com/arklexai/arksim/compare/v0.3.0...v0.3.1) (2026-03-17)
+
+
+### Added
+
+* **evaluator:** add tool call evaluation with working example ([#95](https://github.com/arklexai/arksim/issues/95)) ([761a750](https://github.com/arklexai/arksim/commit/761a7500101eb324435168a15709f400468d32d0))
+
+
+### Fixed
+
+* **eval:** correctly provide conversation history to eval prompts ([#107](https://github.com/arklexai/arksim/issues/107)) ([2211112](https://github.com/arklexai/arksim/commit/22111124b0b011e628ba932309c26fdba1c3870f))
+* **ui:** fix scenario save and add agent_context field ([#105](https://github.com/arklexai/arksim/issues/105)) ([77e0d83](https://github.com/arklexai/arksim/commit/77e0d8349181418894a5b49a2c3cc507e1fd9226))
+
 ## [0.3.0](https://github.com/arklexai/arksim/compare/v0.2.0...v0.3.0) (2026-03-17)
 
 
