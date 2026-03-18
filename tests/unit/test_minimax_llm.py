@@ -28,7 +28,7 @@ def _build_llm(
         patch("arksim.llms.chat.providers.minimax.OpenAI"),
         patch("arksim.llms.chat.providers.minimax.AsyncOpenAI"),
     ):
-        llm = MiniMaxLLM(model="MiniMax-M2.5", temperature=temperature)
+        llm = MiniMaxLLM(model="MiniMax-M2.7", temperature=temperature)
     return llm
 
 
@@ -38,11 +38,11 @@ class TestMiniMaxLLMInit:
             patch.dict("os.environ", {}, clear=True),
             pytest.raises(ValueError, match="MINIMAX_API_KEY"),
         ):
-            MiniMaxLLM(model="MiniMax-M2.5")
+            MiniMaxLLM(model="MiniMax-M2.7")
 
     def test_creates_instance_with_api_key(self) -> None:
         llm = _build_llm()
-        assert llm.model == "MiniMax-M2.5"
+        assert llm.model == "MiniMax-M2.7"
 
     def test_uses_default_base_url(self) -> None:
         with (
@@ -53,7 +53,7 @@ class TestMiniMaxLLMInit:
             patch("arksim.llms.chat.providers.minimax.OpenAI") as mock_openai,
             patch("arksim.llms.chat.providers.minimax.AsyncOpenAI"),
         ):
-            MiniMaxLLM(model="MiniMax-M2.5")
+            MiniMaxLLM(model="MiniMax-M2.7")
             mock_openai.assert_called_once_with(
                 api_key="test-key", base_url=DEFAULT_BASE_URL
             )
@@ -68,7 +68,7 @@ class TestMiniMaxLLMInit:
             patch("arksim.llms.chat.providers.minimax.OpenAI") as mock_openai,
             patch("arksim.llms.chat.providers.minimax.AsyncOpenAI"),
         ):
-            MiniMaxLLM(model="MiniMax-M2.5")
+            MiniMaxLLM(model="MiniMax-M2.7")
             mock_openai.assert_called_once_with(api_key="test-key", base_url=custom_url)
 
 
@@ -95,7 +95,7 @@ class TestMiniMaxLLMPrepareParams:
     def test_basic_params(self) -> None:
         llm = _build_llm()
         params = llm._prepare_params("hello")
-        assert params["model"] == "MiniMax-M2.5"
+        assert params["model"] == "MiniMax-M2.7"
         assert params["messages"] == [{"role": "user", "content": "hello"}]
         assert params["temperature"] == 1.0
 
