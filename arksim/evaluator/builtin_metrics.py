@@ -45,7 +45,7 @@ class HelpfulnessMetric(QuantitativeMetric):
                 {
                     "role": "user",
                     "content": helpfulness_user_prompt.format(
-                        full_conversation=format_chat_history(score_input.current_turn),
+                        full_conversation=format_chat_history(score_input.chat_history),
                     ),
                 },
             ],
@@ -66,7 +66,7 @@ class CoherenceMetric(QuantitativeMetric):
                 {
                     "role": "user",
                     "content": coherence_user_prompt.format(
-                        full_conversation=format_chat_history(score_input.current_turn),
+                        full_conversation=format_chat_history(score_input.chat_history),
                     ),
                 },
             ],
@@ -87,7 +87,7 @@ class VerbosityMetric(QuantitativeMetric):
                 {
                     "role": "user",
                     "content": verbosity_user_prompt.format(
-                        full_conversation=format_chat_history(score_input.current_turn),
+                        full_conversation=format_chat_history(score_input.chat_history),
                     ),
                 },
             ],
@@ -111,7 +111,7 @@ class RelevanceMetric(QuantitativeMetric):
                 {
                     "role": "user",
                     "content": relevance_user_prompt.format(
-                        full_conversation=format_chat_history(score_input.current_turn),
+                        full_conversation=format_chat_history(score_input.chat_history),
                     ),
                 },
             ],
@@ -133,7 +133,7 @@ class FaithfulnessMetric(QuantitativeMetric):
                     "role": "user",
                     "content": faithfulness_user_prompt.format(
                         knowledge=score_input.knowledge,
-                        full_conversation=format_chat_history(score_input.current_turn),
+                        full_conversation=format_chat_history(score_input.chat_history),
                     ),
                 },
             ],
@@ -184,7 +184,7 @@ class AgentBehaviorFailureMetric(QualitativeMetric):
                     "role": "user",
                     "content": agent_behavior_failure_user_prompt.format(
                         user_goal=score_input.user_goal,
-                        conversation=format_chat_history(score_input.current_turn),
+                        conversation=format_chat_history(score_input.chat_history),
                         knowledge=score_input.knowledge,
                     ),
                 },
