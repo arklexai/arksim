@@ -37,6 +37,12 @@ def main() -> None:
 
     versions = config["navigation"]["versions"]
 
+    # Remove any existing entry for this version so a re-publish overwrites it cleanly
+    existing = next((v for v in versions if v["version"] == new_version), None)
+    if existing is not None:
+        print(f"Version {new_version} already exists in {docs_path}, overwriting.")
+        versions.remove(existing)
+
     # Find the main version entry
     main_entry = next((v for v in versions if v["version"] == "main"), None)
     if main_entry is None:
