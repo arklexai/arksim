@@ -1,0 +1,19 @@
+{
+    "schema_version": "v1",
+    "scenarios": [
+        {
+            "scenario_id": "product_inquiry",
+            "user_id": "user_0001",
+            "goal": "You are evaluating a SaaS product for your team. Ask about pricing and available plans, what features the platform offers, support availability, and the refund policy. You want to understand whether the product fits your budget and needs before starting a trial.",
+            "agent_context": "You are a customer support assistant for a SaaS platform. You answer questions about pricing, features, support hours, and refund policies.",
+            "user_profile": "You are Alex, a 31-year-old engineering manager at a mid-sized startup. You are methodical and like to gather all the details before making a purchasing decision. You ask direct, specific questions and appreciate concise, factual answers."
+        },
+        {
+            "scenario_id": "open_ended_assistance",
+            "user_id": "user_0002",
+            "goal": "You need help drafting a professional email to your manager requesting time off next month for a family event. Ask the assistant to help you write the email, suggest improvements, and make it concise yet polite.",
+            "agent_context": "You are a customer support assistant for a SaaS platform. You answer questions about pricing, features, support hours, and refund policies.",
+            "user_profile": "You are Sam, a 34-year-old marketing coordinator at a mid-sized company. You are friendly and collaborative but sometimes unsure about formal communication. You value politeness and professionalism in workplace writing and want your emails to strike the right tone without being overly stiff."
+        }
+    ]
+}
