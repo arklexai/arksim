@@ -30,6 +30,14 @@ _BUILTIN_METRIC_DESCRIPTIONS: dict[str, str] = {
 }
 
 # ---------------------------------------------------------------------------
+# Built-in label colors (merged with user-supplied qual_label_colors)
+# ---------------------------------------------------------------------------
+
+_BUILTIN_QUAL_LABEL_COLORS: dict[str, dict[str, str]] = {
+    AgentMetrics.AGENT_BEHAVIOR_FAILURE.value: AgentBehaviorFailureMetric.DEFAULT_LABEL_COLORS,
+}
+
+# ---------------------------------------------------------------------------
 # JSON data models — define the exact shape passed to the HTML template
 # ---------------------------------------------------------------------------
 
@@ -145,6 +153,7 @@ class HtmlReportParams(BaseModel):
     chat_id_to_label: dict[str, str] = Field(default_factory=dict)
     metric_descriptions: dict[str, str] = Field(default_factory=dict)
     metric_ranges: dict[str, tuple[float, float]] = Field(default_factory=dict)
+    qual_label_colors: dict[str, dict[str, str]] = Field(default_factory=dict)
     evaluation_model: str | None = None
     evaluation_provider: str | None = None
 
@@ -525,6 +534,11 @@ def generate_html_report(params: HtmlReportParams) -> Path:
         **params.metric_descriptions,
     }
     html = html.replace("{{METRIC_DESCRIPTIONS}}", _safe_json(all_metric_descriptions))
+    all_qual_label_colors = {
+        **_BUILTIN_QUAL_LABEL_COLORS,
+        **params.qual_label_colors,
+    }
+    html = html.replace("{{QUAL_LABEL_COLORS}}", _safe_json(all_qual_label_colors))
 
     with open(output_path, "w", encoding="utf-8") as f:
         f.write(html)
