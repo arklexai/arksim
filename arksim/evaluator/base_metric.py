@@ -121,7 +121,13 @@ class QualitativeMetric(abc.ABC):
         >>>
         >>> class MyQualMetric(QualitativeMetric):
         >>>     def __init__(self):
-        >>>         super().__init__(name="my_qual_metric")
+        >>>         super().__init__(
+        >>>             name="my_qual_metric",
+        >>>             label_colors={
+        >>>                 "pass": "#22c55e",  # green
+        >>>                 "fail": "#ef4444",  # red
+        >>>             },
+        >>>         )
         >>>
         >>>     def evaluate(self, score_input: ScoreInput) -> QualResult:
         >>>         return QualResult(
@@ -131,9 +137,15 @@ class QualitativeMetric(abc.ABC):
         >>>         )
     """
 
-    def __init__(self, name: str | None = None, description: str = "") -> None:
+    def __init__(
+        self,
+        name: str | None = None,
+        description: str = "",
+        label_colors: dict[str, str] | None = None,
+    ) -> None:
         self.name = name if name is not None else self.__class__.__name__
         self.description = description
+        self.label_colors: dict[str, str] = label_colors or {}
 
     @abc.abstractmethod
     def evaluate(self, score_input: ScoreInput) -> QualResult:
