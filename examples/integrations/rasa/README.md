@@ -6,7 +6,7 @@ The Rasa bot uses a hybrid approach common in production deployments: Rasa's NLU
 
 ## Prerequisites
 
-1. Install Rasa and the OpenAI SDK (requires Python 3.10):
+1. Install Rasa and the OpenAI SDK (requires Python 3.10, rasa-sdk >= 3.7 for async actions):
 
    ```bash
    pip3 install rasa openai

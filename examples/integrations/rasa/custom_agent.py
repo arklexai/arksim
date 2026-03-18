@@ -8,6 +8,7 @@ Endpoint:    RASA_ENDPOINT env var or http://localhost:5005/webhooks/rest/webhoo
 
 from __future__ import annotations
 
+import logging
 import os
 import uuid
 
@@ -15,6 +16,8 @@ import httpx
 
 from arksim.config import AgentConfig
 from arksim.simulation_engine.agent.base import BaseAgent
+
+logger = logging.getLogger(__name__)
 
 _DEFAULT_ENDPOINT = "http://localhost:5005/webhooks/rest/webhook"
 
@@ -45,7 +48,10 @@ class RasaAgent(BaseAgent):
 
         messages = response.json()
         texts = [m["text"] for m in messages if "text" in m]
-        return "\n".join(texts) if texts else ""
+        if not texts:
+            logger.warning("Rasa returned no text messages for query: %s", user_query)
+            return ""
+        return "\n".join(texts)
 
     async def close(self) -> None:
         await self._client.aclose()
