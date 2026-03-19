@@ -9,49 +9,136 @@
   },
   "favicon": "/favicon.svg",
   "navigation": {
-    "pages": [
-      "overview",
+    "versions": [
       {
-        "group": "Getting started",
-        "expanded": true,
+        "version": "0.3.x",
+        "tag": "Latest",
+        "default": true,
         "pages": [
-          "installation",
-          "quickstart"
+          "v0.3.x/overview",
+          {
+            "group": "Getting started",
+            "expanded": true,
+            "pages": [
+              "v0.3.x/installation",
+              "v0.3.x/quickstart"
+            ]
+          },
+          {
+            "group": "Core Capabilities",
+            "pages": [
+              "v0.3.x/build-scenario",
+              "v0.3.x/simulate-conversation",
+              "v0.3.x/evaluate-conversation",
+              "v0.3.x/schema-reference"
+            ]
+          },
+          {
+            "group": "CI/CD",
+            "pages": [
+              "v0.3.x/ci-integration"
+            ]
+          },
+          {
+            "group": "Examples",
+            "pages": [
+              "v0.3.x/insurance-customer-service-agent-evaluation",
+              "v0.3.x/e-commerce-customer-service-agent-evaluation",
+              "v0.3.x/personal-ai-assistant-openclaw-evaluation"
+            ]
+          },
+          {
+            "group": "Help",
+            "pages": [
+              "v0.3.x/contact-email"
+            ]
+          }
         ]
       },
       {
-        "group": "Core Capabilities",
+        "version": "0.2.0",
         "pages": [
-          "build-scenario",
-          "simulate-conversation",
-          "evaluate-conversation",
-          "schema-reference"
+          "v0.2.0/overview",
+          {
+            "group": "Getting started",
+            "expanded": true,
+            "pages": [
+              "v0.2.0/installation",
+              "v0.2.0/quickstart"
+            ]
+          },
+          {
+            "group": "Core Capabilities",
+            "pages": [
+              "v0.2.0/build-scenario",
+              "v0.2.0/simulate-conversation",
+              "v0.2.0/evaluate-conversation",
+              "v0.2.0/schema-reference"
+            ]
+          },
+          {
+            "group": "Examples",
+            "pages": [
+              "v0.2.0/insurance-customer-service-agent-evaluation",
+              "v0.2.0/e-commerce-customer-service-agent-evaluation",
+              "v0.2.0/personal-ai-assistant-openclaw-evaluation"
+            ]
+          },
+          {
+            "group": "Help",
+            "pages": [
+              "v0.2.0/contact-email"
+            ]
+          }
         ]
       },
       {
-        "group": "CI/CD",
+        "version": "main",
         "pages": [
-          "ci-integration"
-        ]
-      },
-      {
-        "group": "Integrations",
-        "pages": [
-          "integrations"
-        ]
-      },
-      {
-        "group": "Examples",
-        "pages": [
-          "insurance-customer-service-agent-evaluation",
-          "e-commerce-customer-service-agent-evaluation",
-          "personal-ai-assistant-openclaw-evaluation"
-        ]
-      },
-      {
-        "group": "Help",
-        "pages": [
-          "contact-email"
+          "main/overview",
+          {
+            "group": "Getting started",
+            "expanded": true,
+            "pages": [
+              "main/installation",
+              "main/quickstart"
+            ]
+          },
+          {
+            "group": "Core Capabilities",
+            "pages": [
+              "main/build-scenario",
+              "main/simulate-conversation",
+              "main/evaluate-conversation",
+              "main/schema-reference"
+            ]
+          },
+          {
+            "group": "CI/CD",
+            "pages": [
+              "main/ci-integration"
+            ]
+          },
+          {
+            "group": "Integrations",
+            "pages": [
+              "main/integrations"
+            ]
+          },
+          {
+            "group": "Examples",
+            "pages": [
+              "main/insurance-customer-service-agent-evaluation",
+              "main/e-commerce-customer-service-agent-evaluation",
+              "main/personal-ai-assistant-openclaw-evaluation"
+            ]
+          },
+          {
+            "group": "Help",
+            "pages": [
+              "main/contact-email"
+            ]
+          }
         ]
       }
     ]
