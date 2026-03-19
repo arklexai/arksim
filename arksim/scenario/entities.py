@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+from typing import Any, Literal
+
 from pydantic import BaseModel, Field, model_validator
 
 from arksim.utils.output import load_json_file
@@ -10,6 +12,18 @@ class KnowledgeItem(BaseModel):
     """Knowledge used in a scenario."""
 
     content: str = ""
+
+
+class ExpectedToolCall(BaseModel):
+    """An expected tool call for trajectory matching.
+
+    Simplified model (no id/result/error) since expected calls only
+    describe what the agent should call, not the outcomes.
+    """
+
+    name: str
+    arguments: dict[str, Any] = {}
+    arg_match_mode: Literal["exact", "ignore", "subset"] = "ignore"
 
 
 class Scenario(BaseModel):
@@ -22,6 +36,8 @@ class Scenario(BaseModel):
     knowledge: list[KnowledgeItem] = []
     user_profile: str
     origin: dict = Field(default_factory=dict)
+    expected_tool_calls: list[ExpectedToolCall] | None = None
+    match_mode: Literal["strict", "unordered", "subset", "superset"] = "unordered"
 
     @model_validator(mode="before")
     @classmethod

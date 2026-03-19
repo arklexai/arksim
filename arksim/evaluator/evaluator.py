@@ -14,11 +14,12 @@ from tqdm import tqdm
 
 from arksim.llms.chat import LLM
 from arksim.scenario import Scenarios
+from arksim.scenario.entities import ExpectedToolCall
 from arksim.simulation_engine import Conversation, Simulation
 from arksim.utils.module_loader import load_module_from_file
 from arksim.utils.output import load_json_file, save_json_file
 
-from .base_metric import ChatMessage, QualitativeMetric, QuantitativeMetric
+from .base_metric import ChatMessage, QualitativeMetric, QualResult, QuantitativeMetric
 from .entities import (
     ConversationEvaluation,
     ConvoItem,
@@ -34,8 +35,19 @@ from .evaluate import (
     evaluate_goal_completion,
     evaluate_turn,
 )
-from .utils.constants import SCORE_NOT_COMPUTED, score_label
-from .utils.enums import AgentBehaviorFailureType, EvaluationOutcomes
+from .trajectory_matching import match_trajectory
+from .utils.constants import (
+    SCORE_NOT_COMPUTED,
+    SEVERITY_RANK,
+    SKIP_OUTCOMES,
+    score_label,
+)
+from .utils.enums import (
+    AGENT_BEHAVIOR_FAILURE_SEVERITY,
+    AgentBehaviorFailureType,
+    AgentMetrics,
+    EvaluationOutcomes,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -49,13 +61,26 @@ class Evaluator:
         self,
         params: EvaluationParams,
         llm: LLM | None = None,
+        scenarios: Scenarios | None = None,
     ) -> None:
         self.params = params
         self.llm = llm
+        self.scenarios = scenarios
         self.evaluation_results: Evaluation | None = None
         self.total_turns: int = 0
         self.total_conversations: int = 0
         self.chat_id_to_label: dict[str, str] = {}
+
+        # Build scenario_id -> (expected_tool_calls, match_mode) mapping
+        self._scenario_expected: dict[str, tuple[list[ExpectedToolCall], str]] = {}
+        if scenarios:
+            for s in scenarios.scenarios:
+                if s.expected_tool_calls:
+                    self._scenario_expected[s.scenario_id] = (
+                        s.expected_tool_calls,
+                        s.match_mode,
+                    )
+
         logger.info(f"Evaluator initialized: num_workers={params.num_workers}")
 
     def _process_input(self, entry: Conversation) -> tuple[list[TurnItem], ConvoItem]:
@@ -112,6 +137,86 @@ class Evaluator:
             turns=turn_id,
         )
         return convo_list, convo_item
+
+    def _apply_trajectory_matching(
+        self,
+        conversations: list[Conversation],
+        processed_entries: list[tuple[list[TurnItem], ConvoItem]],
+        turn_results: dict[str, list[TurnEvaluation]],
+    ) -> None:
+        """Run conversation-level trajectory matching and attribute failures.
+
+        Aggregates all tool calls across a conversation's turns, matches
+        against the scenario's expected_tool_calls, and attributes any
+        failure to the last turn that had tool calls.
+
+        Note: when ``num_convos_per_scenario > 1``, every conversation
+        for the same scenario is compared against the same expected
+        trajectory.  If the simulated user can diverge (e.g. decline a
+        cancellation), use ``subset`` mode instead of ``strict`` so the
+        agent is not penalised for correctly adapting to user input.
+        """
+        for entry, (convo_list, _) in zip(
+            conversations, processed_entries, strict=False
+        ):
+            expected_info = self._scenario_expected.get(entry.scenario_id)
+            if not expected_info:
+                continue
+            expected_calls, match_mode_val = expected_info
+
+            # Aggregate tool calls across all turns in the conversation
+            all_tool_calls = []
+            last_tool_turn_id = -1
+            for turn_item in convo_list:
+                if turn_item.tool_calls:
+                    all_tool_calls.extend(turn_item.tool_calls)
+                    last_tool_turn_id = turn_item.turn_id
+
+            if not all_tool_calls:
+                continue
+
+            traj_result = match_trajectory(
+                all_tool_calls, expected_calls, match_mode_val
+            )
+            if traj_result.matched:
+                continue
+
+            # Attribute the failure to the last turn with tool calls
+            turns = turn_results.get(entry.conversation_id, [])
+            target_turn = next(
+                (t for t in turns if t.turn_id == last_tool_turn_id), None
+            )
+            if target_turn is None:
+                continue
+
+            traj_qual = QualResult(
+                name=AgentMetrics.AGENT_BEHAVIOR_FAILURE.value,
+                value=traj_result.failure_label,
+                reason=f"[Trajectory] {traj_result.reason}",
+            )
+            target_turn.qual_scores.append(traj_qual)
+
+            if target_turn.turn_behavior_failure in SKIP_OUTCOMES:
+                target_turn.turn_behavior_failure = traj_result.failure_label
+                target_turn.turn_behavior_failure_reason = traj_qual.reason
+            else:
+                traj_sev = SEVERITY_RANK.get(
+                    AGENT_BEHAVIOR_FAILURE_SEVERITY.get(
+                        traj_result.failure_label or "", ""
+                    ),
+                    99,
+                )
+                current_sev = SEVERITY_RANK.get(
+                    AGENT_BEHAVIOR_FAILURE_SEVERITY.get(
+                        target_turn.turn_behavior_failure, ""
+                    ),
+                    99,
+                )
+                if traj_sev < current_sev:
+                    target_turn.turn_behavior_failure = traj_result.failure_label
+                    target_turn.turn_behavior_failure_reason = traj_qual.reason
+                else:
+                    target_turn.turn_behavior_failure_reason += f" {traj_qual.reason}"
 
     def evaluate(
         self,
@@ -191,6 +296,19 @@ class Evaluator:
                             f"of conversation {turn_item.chat_id}: {e}"
                         )
                     _on_turn_complete()
+
+        # Phase 1.5: Conversation-level trajectory matching (deterministic,
+        # no LLM cost). Runs before goal completion so trajectory failures
+        # are reflected in TSR. Only runs when tool_call_behavior_failure
+        # is in metrics_to_run (or metrics_to_run is None/empty, meaning
+        # "run all").
+        _mtrs = self.params.metrics_to_run
+        if self._scenario_expected and (
+            not _mtrs or "tool_call_behavior_failure" in _mtrs
+        ):
+            self._apply_trajectory_matching(
+                conversations, processed_entries, turn_results
+            )
 
         # Phase 2: goal_completion for each conversation (parallel)
         convo_score_list: list[ConversationEvaluation] = []
@@ -595,7 +713,8 @@ def run_evaluation(
         settings: EvaluationInput with evaluation settings
         simulation: Optional in-memory simulation output from run_simulation.
             If not provided, load from settings.simulation_file_path.
-        scenarios: Optional in-memory scenarios for HTML report context.
+        scenarios: Optional in-memory scenarios. Used for trajectory matching
+            (when scenarios define expected_tool_calls) and HTML report context.
             If not provided, load from settings.scenario_file_path.
     """
     if simulation is None:
@@ -607,6 +726,17 @@ def run_evaluation(
         simulation = Simulation.model_validate(
             load_json_file(settings.simulation_file_path)
         )
+
+    # Load scenarios early so they're available for both trajectory matching
+    # and (later) the HTML report.
+    if scenarios is None and settings.scenario_file_path:
+        try:
+            scenarios = Scenarios.load(settings.scenario_file_path)
+        except Exception:
+            logger.warning(
+                "Could not load scenarios; trajectory matching and report "
+                "scenario context will be unavailable"
+            )
 
     llm = LLM(
         model=settings.model,
@@ -627,13 +757,13 @@ def run_evaluation(
     evaluator = Evaluator(
         params=params,
         llm=llm,
+        scenarios=scenarios,
     )
     evaluator_output = evaluator.evaluate(simulation, on_progress=on_progress)
     evaluator.display_evaluation_summary()
     evaluator.save_results()
 
     if settings.generate_html_report:
-        from arksim.scenario import Scenarios
         from arksim.utils.html_report.generate_html_report import (
             HtmlReportParams,
             generate_html_report,
@@ -642,14 +772,6 @@ def run_evaluation(
         html_output_path = os.path.join(settings.output_dir, "final_report.html")
 
         logger.info("Generating HTML report...")
-
-        if scenarios is None and settings.scenario_file_path:
-            try:
-                scenarios = Scenarios.load(settings.scenario_file_path)
-            except Exception:
-                logger.warning(
-                    "Could not load scenarios; scenarios will be empty in report"
-                )
         all_custom = list(custom_metrics) + list(custom_qualitative_metrics)
         metric_descriptions = {
             m.name: m.description for m in all_custom if m.description

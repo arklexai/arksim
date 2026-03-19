@@ -963,6 +963,19 @@
         .qual-badge.neutral  { background: #fffbeb; border-color: #fde68a; color: #92400e; }
         .qual-badge.negative { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
 
+        .failure-source-tag {
+            display: inline-block;
+            padding: 1px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            margin-right: 4px;
+            vertical-align: middle;
+        }
+        .failure-source-tag.trajectory { background: #ede9fe !important; color: #5b21b6 !important; border: 1px solid #c4b5fd; }
+        .failure-source-tag.tool-call  { background: #e0f2fe !important; color: #0369a1 !important; border: 1px solid #7dd3fc; }
+
         @keyframes fadeIn {
             from {
                 opacity: 0;
@@ -2020,12 +2033,16 @@
                                 const sentiment = POSITIVE_LABELS.includes(q.value.toLowerCase()) ? 'positive'
                                                : NEGATIVE_LABELS.includes(q.value.toLowerCase()) ? 'negative'
                                                : 'neutral';
-                                const label = q.name.replace(/_/g, ' ');
                                 const tipRaw = q.reason || '';
                                 const tip = tipRaw.replace(/"/g, '&quot;');
                                 const customColor = (QUAL_LABEL_COLORS[q.name] || {})[q.value];
                                 const styleAttr = customColor ? ` style="background:${customColor};"` : '';
-                                return `<span class="qual-badge ${sentiment}"${styleAttr} title="${tip}"><span>${label}:</span><strong>${q.value}</strong></span>`;
+                                // Show source tag (Trajectory / Tool call) in the badge label
+                                let source = '';
+                                if (tipRaw.startsWith('[Trajectory]')) source = '<span class="failure-source-tag trajectory">Trajectory</span> ';
+                                else if (tipRaw.startsWith('[Tool call]')) source = '<span class="failure-source-tag tool-call">Tool call</span> ';
+                                const label = q.name.replace(/_/g, ' ');
+                                return `<span class="qual-badge ${sentiment}"${styleAttr} title="${tip}">${source}<span>${label}:</span><strong>${q.value}</strong></span>`;
                             }).join('');
                             metricsHtml += `<div class="turn-metrics">${badges}</div>`;
                         }
@@ -2045,13 +2062,17 @@
                         // Build failure reason block
                         let failureHtml = '';
                         if (showFailure) {
-                            const escaped = perTurnRow.agent_behavior_failure_reason
+                            let escaped = perTurnRow.agent_behavior_failure_reason
                                 .replace(/&/g, '&amp;')
                                 .replace(/</g, '&lt;')
                                 .replace(/>/g, '&gt;')
                                 .replace(/"/g, '&quot;')
                                 .replace(/'/g, '&#39;')
                                 .replace(/\n/g, '<br>');
+                            // Style [Trajectory] and [Tool call] source prefixes
+                            escaped = escaped
+                                .replace(/\[Trajectory\]/g, '<span class="failure-source-tag trajectory">Trajectory</span>')
+                                .replace(/\[Tool call\]/g, '<span class="failure-source-tag tool-call">Tool call</span>');
                             const topMargin = metricsHtml ? 'margin-top: 12px;' : '';
                             failureHtml = `
                                 <div style="margin-bottom: 12px; ${topMargin}">

@@ -15,6 +15,12 @@ GOAL_COMPLETION_SCORE_WEIGHT = 0.25
 # Evaluation Partial Failure Threshold
 EVALUATION_PARTIAL_FAILURE_THRESHOLD = 0.6
 
+# Behavior failure outcomes that indicate no actionable failure
+SKIP_OUTCOMES = {"skipped_good_performance", "no failure"}
+
+# Numeric ranking for severity comparison (lower = more severe)
+SEVERITY_RANK = {"critical": 0, "high": 1, "medium": 2, "low": 3}
+
 
 # Score interpretation labels (1-5 scale)
 SCORE_LABELS = {
