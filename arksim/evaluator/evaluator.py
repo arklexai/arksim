@@ -655,6 +655,9 @@ def run_evaluation(
             m.name: m.description for m in all_custom if m.description
         }
         metric_ranges = {m.name: tuple(m.score_range) for m in custom_metrics}
+        qual_label_colors = {
+            m.name: m.label_colors for m in custom_qualitative_metrics if m.label_colors
+        }
         report_params = HtmlReportParams(
             simulation=simulation,
             evaluation=evaluator_output,
@@ -663,6 +666,7 @@ def run_evaluation(
             chat_id_to_label=evaluator.chat_id_to_label,
             metric_descriptions=metric_descriptions,
             metric_ranges=metric_ranges,
+            qual_label_colors=qual_label_colors,
             evaluation_model=settings.model,
             evaluation_provider=settings.provider,
         )

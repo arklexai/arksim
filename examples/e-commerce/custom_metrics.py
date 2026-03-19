@@ -270,6 +270,12 @@ class UpsellBehaviorMetric(QualitativeMetric):
             name="upsell_behavior",
             description="Classifies whether the agent's upselling was appropriate, "
             "too pushy, or a missed opportunity.",
+            label_colors={
+                "appropriate": "#22c55e",  # green — well-judged upsell
+                "too_pushy": "#ef4444",  # red   — overly aggressive
+                "missed_opportunity": "#f97316",  # orange — upsell omitted
+                "not_applicable": "#94a3b8",  # slate — no upsell context
+            },
         )
 
     def evaluate(self, score_input: ScoreInput) -> QualResult:
