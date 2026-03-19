@@ -11,46 +11,46 @@
   "navigation": {
     "versions": [
       {
-        "version": "0.3.0",
+        "version": "0.3.x",
         "tag": "Latest",
         "default": true,
         "pages": [
-          "v0.3.0/overview",
+          "v0.3.x/overview",
           {
             "group": "Getting started",
             "expanded": true,
             "pages": [
-              "v0.3.0/installation",
-              "v0.3.0/quickstart"
+              "v0.3.x/installation",
+              "v0.3.x/quickstart"
             ]
           },
           {
             "group": "Core Capabilities",
             "pages": [
-              "v0.3.0/build-scenario",
-              "v0.3.0/simulate-conversation",
-              "v0.3.0/evaluate-conversation",
-              "v0.3.0/schema-reference"
+              "v0.3.x/build-scenario",
+              "v0.3.x/simulate-conversation",
+              "v0.3.x/evaluate-conversation",
+              "v0.3.x/schema-reference"
             ]
           },
           {
             "group": "CI/CD",
             "pages": [
-              "v0.3.0/ci-integration"
+              "v0.3.x/ci-integration"
             ]
           },
           {
             "group": "Examples",
             "pages": [
-              "v0.3.0/insurance-customer-service-agent-evaluation",
-              "v0.3.0/e-commerce-customer-service-agent-evaluation",
-              "v0.3.0/personal-ai-assistant-openclaw-evaluation"
+              "v0.3.x/insurance-customer-service-agent-evaluation",
+              "v0.3.x/e-commerce-customer-service-agent-evaluation",
+              "v0.3.x/personal-ai-assistant-openclaw-evaluation"
             ]
           },
           {
             "group": "Help",
             "pages": [
-              "v0.3.0/contact-email"
+              "v0.3.x/contact-email"
             ]
           }
         ]

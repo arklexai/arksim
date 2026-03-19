@@ -20,7 +20,7 @@ All pages live in their respective version folder:
 ```
 docs/
   main/        ← unreleased, active development
-  v0.3.0/      ← latest release
+  v0.3.x/      ← latest release
   v0.2.0/      ← previous release
 ```
 

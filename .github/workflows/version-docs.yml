@@ -23,9 +23,16 @@ jobs:
           ref: main
           fetch-depth: 0
 
-      - name: Set version variable
+      - name: Set version variables
         id: version
-        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT" # GITHUB_REF_NAME inside a release event is the tag name (e.g. v0.3.0)
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          MAJOR=$(echo "$VERSION" | cut -d. -f1)
+          MINOR=$(echo "$VERSION" | cut -d. -f2)
+          PATCH=$(echo "$VERSION" | cut -d. -f3)
+          echo "minor_series=v${MAJOR}.${MINOR}.x" >> "$GITHUB_OUTPUT"
+          echo "patch=$PATCH" >> "$GITHUB_OUTPUT"
 
       - name: Validate version format
         run: |
@@ -36,10 +43,19 @@ jobs:
           fi
 
       - name: Copy main docs to versioned folder
-        run: cp -r docs/main "docs/v${{ steps.version.outputs.version }}"
+        run: |
+          MINOR_SERIES="${{ steps.version.outputs.minor_series }}"
+          if [ "${{ steps.version.outputs.patch }}" = "0" ]; then
+            # New minor version: create fresh snapshot folder
+            cp -r docs/main "docs/$MINOR_SERIES"
+          else
+            # Patch release: overwrite existing snapshot folder
+            rm -rf "docs/$MINOR_SERIES"
+            cp -r docs/main "docs/$MINOR_SERIES"
+          fi
 
       - name: Update docs.json
-        run: python3 .github/scripts/version-docs.py "${{ steps.version.outputs.version }}"
+        run: python3 .github/scripts/version-docs.py "${{ steps.version.outputs.version }}" "${{ steps.version.outputs.minor_series }}"
 
       - name: Commit and open PR
         env:
