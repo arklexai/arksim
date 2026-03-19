@@ -35,6 +35,12 @@
         ]
       },
       {
+        "group": "Integrations",
+        "pages": [
+          "integrations"
+        ]
+      },
+      {
         "group": "Examples",
         "pages": [
           "insurance-customer-service-agent-evaluation",

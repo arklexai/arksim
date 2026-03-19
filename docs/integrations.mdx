@@ -1,0 +1,70 @@
+---
+title: "Integrations"
+description: "Use ArkSim with any agent framework. Browse working examples for 13 popular frameworks."
+---
+
+ArkSim connects to your agent through one of three [connection types](/simulate-conversation#connection-types). The examples below show how to wire up each framework.
+
+## Custom connector
+
+These Python examples load your agent directly as a `BaseAgent` subclass. No HTTP server needed.
+
+<CardGroup cols={2}>
+  <Card icon="robot" href="https://github.com/arklexai/arksim/tree/main/examples/integrations/autogen/" title="AutoGen">
+    Microsoft AutoGen multi-agent framework.
+  </Card>
+  <Card icon="robot" href="https://github.com/arklexai/arksim/tree/main/examples/integrations/claude-agent-sdk/" title="Claude Agent SDK">
+    Anthropic's Agent SDK for building agents with Claude.
+  </Card>
+  <Card icon="robot" href="https://github.com/arklexai/arksim/tree/main/examples/integrations/crewai/" title="CrewAI">
+    Role-based multi-agent orchestration.
+  </Card>
+  <Card icon="robot" href="https://github.com/arklexai/arksim/tree/main/examples/integrations/google-adk/" title="Google ADK">
+    Google's Agent Development Kit.
+  </Card>
+  <Card icon="robot" href="https://github.com/arklexai/arksim/tree/main/examples/integrations/langchain/" title="LangChain">
+    LangChain agents and chains.
+  </Card>
+  <Card icon="robot" href="https://github.com/arklexai/arksim/tree/main/examples/integrations/langgraph/" title="LangGraph">
+    Stateful, graph-based agent workflows.
+  </Card>
+  <Card icon="robot" href="https://github.com/arklexai/arksim/tree/main/examples/integrations/llamaindex/" title="LlamaIndex">
+    LlamaIndex agents and query engines.
+  </Card>
+  <Card icon="robot" href="https://github.com/arklexai/arksim/tree/main/examples/integrations/openai-agents-sdk/" title="OpenAI Agents SDK">
+    OpenAI's SDK for building production agents.
+  </Card>
+  <Card icon="robot" href="https://github.com/arklexai/arksim/tree/main/examples/integrations/pydantic-ai/" title="PydanticAI">
+    Type-safe agent framework built on Pydantic.
+  </Card>
+  <Card icon="robot" href="https://github.com/arklexai/arksim/tree/main/examples/integrations/smolagents/" title="SmolAgents">
+    Hugging Face's lightweight agent library.
+  </Card>
+</CardGroup>
+
+## Chat Completions connector
+
+These TypeScript examples expose your agent behind an OpenAI-compatible HTTP endpoint. ArkSim connects using the `chat_completions` connector.
+
+<CardGroup cols={2}>
+  <Card icon="server" href="https://github.com/arklexai/arksim/tree/main/examples/integrations/mastra/" title="Mastra">
+    TypeScript agent framework with built-in tool calling.
+  </Card>
+  <Card icon="server" href="https://github.com/arklexai/arksim/tree/main/examples/integrations/vercel-ai-sdk/" title="Vercel AI SDK">
+    Vercel's SDK for building AI-powered applications.
+  </Card>
+</CardGroup>
+
+## Custom connector with HTTP
+
+This example uses the `custom` connector with a `BaseAgent` subclass that forwards requests to a running HTTP server.
+
+<CardGroup cols={2}>
+  <Card icon="network-wired" href="https://github.com/arklexai/arksim/tree/main/examples/integrations/rasa/" title="Rasa">
+    Open-source conversational AI framework. The custom agent wraps Rasa's REST webhook channel.
+  </Card>
+</CardGroup>
+
+---
+
+For details on each connection type, see [Agent configuration](/simulate-conversation#agent-configuration).
