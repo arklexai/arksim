@@ -24,10 +24,10 @@ Start the agent server:
 npm start
 ```
 
-In a separate terminal, run the simulation:
+In a separate terminal, run the simulation and evaluation:
 
 ```bash
-arksim simulate config.yaml
+arksim simulate-evaluate config.yaml
 ```
 
 ## Files

@@ -36,10 +36,10 @@ rasa run actions &
 rasa run --enable-api --cors "*"
 ```
 
-In a separate terminal, run the simulation:
+In a separate terminal, run the simulation and evaluation:
 
 ```bash
-arksim simulate config.yaml
+arksim simulate-evaluate config.yaml
 ```
 
 By default the agent connects to `http://localhost:5005/webhooks/rest/webhook`. Override this with the `RASA_ENDPOINT` environment variable if your server runs elsewhere.
