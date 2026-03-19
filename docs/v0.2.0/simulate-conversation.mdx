@@ -21,7 +21,7 @@ Before running a simulation, you need three things in place:
 
 | Input            | Description                                                                                                                                  |
 | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Scenarios**    | A `scenarios.json` file defining user attributes, goals, knowledge, and scenario metadata. [Learn how to write scenarios →](/build-scenario) |
+| **Scenarios**    | A `scenarios.json` file defining user attributes, goals, knowledge, and scenario metadata. [Learn how to write scenarios →](./build-scenario) |
 | **Agent config** | Inline `agent_config` in your config YAML. Defines how ArkSim connects to your agent. See [Agent configuration](#agent-configuration) below. |
 | **Config file**  | `config.yaml` controlling simulation parameters such as number of conversations, max turns, workers, and model settings.                     |
 
@@ -331,7 +331,7 @@ Both types support `${ENV_VAR}` substitution in header values (and in the endpoi
     </Tabs>
   </Step>
   <Step title="Inspect your output">
-    Simulation writes to the path set by `output_file_path` (default `./simulation.json`). The file contains the full transcript of every conversation, ready to inspect or pass into [Evaluation](/evaluate-conversation).
+    Simulation writes to the path set by `output_file_path` (default `./simulation.json`). The file contains the full transcript of every conversation, ready to inspect or pass into [Evaluation](./evaluate-conversation).
   </Step>
 </Steps>
 
@@ -341,7 +341,7 @@ Both types support `${ENV_VAR}` substitution in header values (and in the endpoi
 
 Simulation writes one file: the path set by `output_file_path` (default `./simulation.json`). It contains the full transcript of every conversation: message history, scenario ID, simulated user prompt (template and variables), and all agent and simulated user messages.
 
-For the full structure and field order, see the [Schema Reference](/schema-reference#simulation-output-simulation-json).
+For the full structure and field order, see the [Schema Reference](./schema-reference#simulation-output-simulation-json).
 
 ### Example output
 
@@ -389,6 +389,6 @@ For the full structure and field order, see the [Schema Reference](/schema-refer
 
 Once your conversations are simulated, you're ready to evaluate how well your agent performed.
 
-<Card href="/evaluate-conversation" title="Evaluation →">
+<Card href="./evaluate-conversation" title="Evaluation →">
   Score your agent's responses against the simulated user's goals and knowledge.
 </Card>

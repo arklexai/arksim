@@ -42,7 +42,7 @@ Scenarios are defined in `scenarios.json` in the example directory and can be ed
 ---
 
 <Note>
-  Before following either path, ensure [ArkSim is installed](/installation) (`pip install arksim`).
+  Before following either path, ensure [ArkSim is installed](./installation) (`pip install arksim`).
 </Note>
 
 ## Option 1: OpenAI Agent
@@ -176,12 +176,12 @@ To test your own backend agent against these scenarios:
 
 - **Chat Completions:** Follow the comments in `agent_server/chat_completions/server.py` to swap in your own backend logic or point to your endpoint.
 - **A2A:** Implement your own A2A executor in `agent_server/a2a/agent_executor.py`.
-- **Custom:** Subclass `BaseAgent` and point `config_custom.yaml` at your module. See [Custom agent configuration](/simulate-conversation#connection-types) for details.
+- **Custom:** Subclass `BaseAgent` and point `config_custom.yaml` at your module. See [Custom agent configuration](./simulate-conversation#connection-types) for details.
 
 Make sure the `agent_config` field in the config YAML is updated. Then run simulation and evaluation as above.
 
 <Tip>
-  See [Agent configuration](/simulate-conversation#agent-configuration) for supported protocols and how to configure agent connections.
+  See [Agent configuration](./simulate-conversation#agent-configuration) for supported protocols and how to configure agent connections.
 </Tip>
 
 ---

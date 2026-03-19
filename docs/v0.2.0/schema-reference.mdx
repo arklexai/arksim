@@ -6,13 +6,13 @@ description: "JSON and YAML schemas used by ArkSim for scenarios, simulation out
 This page documents the structure of the main artifacts used and produced by ArkSim: scenario files, simulation output, evaluation output, and the run configuration file. Use it when building integrations, writing custom tooling, or debugging pipeline outputs.
 
 <Tip>
-  For agent connection details (Chat Completions, A2A, and config), see [Agent configuration](/simulate-conversation#agent-configuration).
+  For agent connection details (Chat Completions, A2A, and config), see [Agent configuration](./simulate-conversation#agent-configuration).
 </Tip>
 ---
 
 ## Scenarios (`scenarios.json`)
 
-The scenario file is a single JSON document that lists scenario objects. Each scenario describes one simulated user and one conversation session. It is the input to [Simulation](/simulate-conversation) and is referenced during [Evaluation](/evaluate-conversation).
+The scenario file is a single JSON document that lists scenario objects. Each scenario describes one simulated user and one conversation session. It is the input to [Simulation](./simulate-conversation) and is referenced during [Evaluation](./evaluate-conversation).
 
 ### Schema
 
@@ -188,7 +188,7 @@ The same YAML file can be used for `arksim simulate`, `arksim evaluate`, and `ar
 
 | Key              | Type   | Description                                                                                                    |
 | ---------------- | ------ | -------------------------------------------------------------------------------------------------------------- |
-| `agent_config`   | object | Inline agent configuration. See [Agent configuration](/simulate-conversation#agent-configuration) for `chat_completions` and `a2a`. |
+| `agent_config`   | object | Inline agent configuration. See [Agent configuration](./simulate-conversation#agent-configuration) for `chat_completions` and `a2a`. |
 
 ### Simulation keys
 

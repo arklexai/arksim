@@ -39,7 +39,7 @@ These combine into an **Overall Agent Score** per conversation:
 <Note>
   `overall_agent_score = turn_success_ratio × 0.75 + goal_completion_score × 0.25`
 
-  Each conversation is assigned a status based on this score. For the exact status values and thresholds, see [Evaluation output](/schema-reference#evaluation-output-evaluationjson) in the Schema Reference.
+  Each conversation is assigned a status based on this score. For the exact status values and thresholds, see [Evaluation output](./schema-reference#evaluation-output-evaluationjson) in the Schema Reference.
 </Note>
 
 ---
@@ -63,7 +63,7 @@ Across all conversations, duplicate failures are deduplicated into a **unique er
 
 ## Inputs
 
-The input to evaluation is the simulation output file (e.g. `simulation.json`) from the [Simulation](/simulate-conversation) step. Knowledge referenced during evaluation comes from your [Scenarios](/build-scenario) file.
+The input to evaluation is the simulation output file (e.g. `simulation.json`) from the [Simulation](./simulate-conversation) step. Knowledge referenced during evaluation comes from your [Scenarios](./build-scenario) file.
 
 Evaluation is configured via a YAML file:
 
@@ -106,7 +106,7 @@ qualitative_failure_labels:
   prohibited_statements: ["violated"]
 ```
 
-For all evaluation config keys, types, and defaults, see [Run configuration → Evaluation keys](/schema-reference#evaluation-keys) in the Schema Reference.
+For all evaluation config keys, types, and defaults, see [Run configuration → Evaluation keys](./schema-reference#evaluation-keys) in the Schema Reference.
 
 ---
 
@@ -219,7 +219,7 @@ qualitative_failure_labels:
   prohibited_statements: ["violated"]
 ```
 
-If any gate fails, the CLI exits with code `1` and logs which conversations and turns did not meet the requirement. See [Exit codes](/schema-reference#exit-codes) for the full list of exit codes.
+If any gate fails, the CLI exits with code `1` and logs which conversations and turns did not meet the requirement. See [Exit codes](./schema-reference#exit-codes) for the full list of exit codes.
 
 ### Programmatic threshold gates
 
@@ -323,7 +323,7 @@ for convo in evaluator_output.conversations:
 
 | File                | Description                                                                                                                                                                       |
 | ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `evaluation.json`   | Full evaluation output: conversations with scores, failure labels, and unique errors. See [Evaluation output](/schema-reference#evaluation-output-evaluationjson) for the schema. |
+| `evaluation.json`   | Full evaluation output: conversations with scores, failure labels, and unique errors. See [Evaluation output](./schema-reference#evaluation-output-evaluationjson) for the schema. |
 | `final_report.html` | High-level summary with metric averages, overall assessment, and top unique errors, rendered for easier browsing and sharing.                                                      |
 
 ---

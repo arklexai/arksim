@@ -125,7 +125,7 @@ GitHub Actions runner
         └── results/             ← outputs (add to .gitignore)
     ```
 
-    See [Build Scenarios](/build-scenario) for the schema, and [`examples/bank-insurance`](https://github.com/arklexai/arksim/tree/main/examples/bank-insurance) for a full example.
+    See [Build Scenarios](./build-scenario) for the schema, and [`examples/bank-insurance`](https://github.com/arklexai/arksim/tree/main/examples/bank-insurance) for a full example.
   </Step>
 
   <Step title="Customize the test file">
@@ -246,7 +246,7 @@ The CLI exits non-zero if any threshold is not met, which fails the job.
     num_workers: 10
     ```
 
-    See [Evaluation](/evaluate-conversation) for all configuration options and the full list of available metrics.
+    See [Evaluation](./evaluate-conversation) for all configuration options and the full list of available metrics.
 
     <Tip>
       If your agent's `requirements.txt` conflicts with ArkSim's dependencies, install them in separate virtual environments so they don't interfere:
@@ -267,11 +267,11 @@ The CLI exits non-zero if any threshold is not met, which fails the job.
   </Step>
 
   <Step title="Create your scenarios">
-    Create `arksim/scenarios.json` with test cases representative of your agent's real usage. See [Build Scenarios](/build-scenario) for the schema, and [`examples/bank-insurance`](https://github.com/arklexai/arksim/tree/main/examples/bank-insurance) for a full example.
+    Create `arksim/scenarios.json` with test cases representative of your agent's real usage. See [Build Scenarios](./build-scenario) for the schema, and [`examples/bank-insurance`](https://github.com/arklexai/arksim/tree/main/examples/bank-insurance) for a full example.
   </Step>
 
   <Step title="Add custom metrics (optional)">
-    If you have custom metrics, add them to `arksim/custom_metrics/` and reference them in your `arksim/config.yaml`. See [Custom Metrics](/evaluate-conversation#custom-metrics) for the schema.
+    If you have custom metrics, add them to `arksim/custom_metrics/` and reference them in your `arksim/config.yaml`. See [Custom Metrics](./evaluate-conversation#custom-metrics) for the schema.
   </Step>
 
   <Step title="Customize the workflow">
@@ -371,7 +371,7 @@ qualitative_failure_labels:
   prohibited_statements: ["violated"]
 ```
 
-See [Threshold Gates](/evaluate-conversation#threshold-gates) for the full reference on all three gate types.
+See [Threshold Gates](./evaluate-conversation#threshold-gates) for the full reference on all three gate types.
 
 ---
 
