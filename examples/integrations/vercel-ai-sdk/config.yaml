@@ -1,5 +1,5 @@
-# Simulate Configuration File
-# Configuration for 'arksim simulate' command
+# Simulate + Evaluate Configuration File
+# Configuration for 'arksim simulate-evaluate' command
 #
 # This example uses an HTTP server (Vercel AI SDK/TypeScript) instead of a
 # Python custom agent. Start the server first, then run arksim.

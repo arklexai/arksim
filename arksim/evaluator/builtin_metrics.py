@@ -171,9 +171,24 @@ class AgentBehaviorFailureMetric(QualitativeMetric):
         " lack of specific information, failure to ask for clarification,"
         " repetition, no failure."
     )
+    # Default colors keyed by severity: green for clean, red for critical, etc.
+    DEFAULT_LABEL_COLORS: dict[str, str] = {
+        "no failure": "#22c55e",  # green  — all good
+        "repetition": "#94a3b8",  # slate  — low
+        "failure to ask for clarification": "#f59e0b",  # amber  — medium
+        "lack of specific information": "#f59e0b",  # amber  — medium
+        "disobey user request": "#f97316",  # orange — high
+        "false information": "#ef4444",  # red    — critical
+        "unsafe action": "#dc2626",  # dark red — critical
+        "unsafe state": "#dc2626",  # dark red — critical
+    }
 
     def __init__(self, llm: LLM) -> None:
-        super().__init__(name="agent_behavior_failure", description=self.DESCRIPTION)
+        super().__init__(
+            name="agent_behavior_failure",
+            description=self.DESCRIPTION,
+            label_colors=self.DEFAULT_LABEL_COLORS,
+        )
         self._llm = llm
 
     def evaluate(self, score_input: ScoreInput) -> QualResult:

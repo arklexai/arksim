@@ -1577,6 +1577,7 @@
         const EMBEDDED_FINAL_REPORT = {{FINAL_REPORT_DATA}};
         const CHAT_ID_TO_LABEL = {{CHAT_ID_TO_LABEL}};
         const CUSTOM_METRIC_DESCRIPTIONS = {{METRIC_DESCRIPTIONS}};
+        const QUAL_LABEL_COLORS = {{QUAL_LABEL_COLORS}} || {};
         let simulateData = {{SIMULATE_DATA}};
         let convosData = {{CONVOS_DATA}};
         let uniqueErrorsData = {{UNIQUE_ERRORS_DATA}};
@@ -2022,7 +2023,9 @@
                                 const label = q.name.replace(/_/g, ' ');
                                 const tipRaw = q.reason || '';
                                 const tip = tipRaw.replace(/"/g, '&quot;');
-                                return `<span class="qual-badge ${sentiment}" title="${tip}"><span>${label}:</span><strong>${q.value}</strong></span>`;
+                                const customColor = (QUAL_LABEL_COLORS[q.name] || {})[q.value];
+                                const styleAttr = customColor ? ` style="background:${customColor};"` : '';
+                                return `<span class="qual-badge ${sentiment}"${styleAttr} title="${tip}"><span>${label}:</span><strong>${q.value}</strong></span>`;
                             }).join('');
                             metricsHtml += `<div class="turn-metrics">${badges}</div>`;
                         }
@@ -2033,7 +2036,9 @@
                         if (abfLabel && !skipAbfLabels.has(abfLabel)) {
                             const abfSentiment = abfLabel === 'no failure' ? 'positive' : 'negative';
                             const abfTip = (perTurnRow.agent_behavior_failure_reason || '').replace(/"/g, '&quot;');
-                            const abfBadge = `<span class="qual-badge ${abfSentiment}" title="${abfTip}"><span>agent behavior failure:</span><strong>${abfLabel}</strong></span>`;
+                            const abfCustomColor = (QUAL_LABEL_COLORS['agent_behavior_failure'] || {})[abfLabel];
+                            const abfStyleAttr = abfCustomColor ? ` style="background:${abfCustomColor};"` : '';
+                            const abfBadge = `<span class="qual-badge ${abfSentiment}"${abfStyleAttr} title="${abfTip}"><span>agent behavior failure:</span><strong>${abfLabel}</strong></span>`;
                             metricsHtml += `<div class="turn-metrics">${abfBadge}</div>`;
                         }
 
@@ -2291,7 +2296,8 @@
                 const maxCount = Math.max(...entries.map(([, v]) => v.occurrences));
 
                 entries.forEach(([label, item], idx) => {
-                    const color = QUAL_PALETTE[idx % QUAL_PALETTE.length];
+                    const metricColors = QUAL_LABEL_COLORS[metricName] || {};
+                    const color = metricColors[label] || QUAL_PALETTE[idx % QUAL_PALETTE.length];
                     const barWidth = maxCount > 0 ? (item.occurrences / maxCount) * 100 : 0;
 
                     const row = document.createElement('div');

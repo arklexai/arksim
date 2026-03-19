@@ -21,7 +21,7 @@ This example demonstrates how to connect an [OpenAI Agents SDK](https://github.c
 From this example directory, run:
 
 ```bash
-arksim simulate config.yaml
+arksim simulate-evaluate config.yaml
 ```
 
 ## Files
