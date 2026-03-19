@@ -66,9 +66,11 @@ class MiniMaxLLM(BaseLLM):
             "messages": chat_messages,
         }
 
-        # MiniMax requires temperature in (0.0, 1.0]; default to 1.0.
-        temp = self.temperature if self.temperature is not None else 1.0
-        params["temperature"] = max(0.01, min(temp, 1.0))
+        if self.temperature is not None:
+            params["temperature"] = max(0.01, min(self.temperature, 1.0))
+
+        if schema:
+            params["response_format"] = {"type": "json_object"}
 
         return params
 

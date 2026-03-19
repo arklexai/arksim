@@ -97,7 +97,7 @@ class TestMiniMaxLLMPrepareParams:
         params = llm._prepare_params("hello")
         assert params["model"] == "MiniMax-M2.7"
         assert params["messages"] == [{"role": "user", "content": "hello"}]
-        assert params["temperature"] == 1.0
+        assert "temperature" not in params
 
     def test_temperature_included(self) -> None:
         llm = _build_llm(temperature=0.7)
@@ -109,12 +109,13 @@ class TestMiniMaxLLMPrepareParams:
         params = llm._prepare_params("hello")
         assert params["temperature"] == 0.01
 
-    def test_schema_adds_system_prompt(self) -> None:
+    def test_schema_adds_system_prompt_and_response_format(self) -> None:
         llm = _build_llm()
         params = llm._prepare_params("hello", schema=_DummySchema)
         assert len(params["messages"]) == 2
         assert params["messages"][0]["role"] == "system"
         assert "JSON" in params["messages"][0]["content"]
+        assert params["response_format"] == {"type": "json_object"}
 
 
 class TestMiniMaxLLMParseJson:
