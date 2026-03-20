@@ -33,7 +33,7 @@ def _args_match(
         return True
     if arg_match_mode == "exact":
         return actual_args == expected_args
-    # subset: expected args must be a subset of actual args
+    # partial: expected args must appear in actual args
     return all(
         k in actual_args and actual_args[k] == v for k, v in expected_args.items()
     )
@@ -143,7 +143,7 @@ def _match_strict(
         elif not _args_match(act.arguments, exp.arguments, exp.arg_match_mode):
             label = (
                 "lack of specific information"
-                if exp.arg_match_mode == "subset"
+                if exp.arg_match_mode == "partial"
                 else "false information"
             )
             arg_mismatches.append(

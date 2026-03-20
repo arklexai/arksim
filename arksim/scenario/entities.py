@@ -23,7 +23,7 @@ class ExpectedToolCall(BaseModel):
 
     name: str
     arguments: dict[str, Any] = {}
-    arg_match_mode: Literal["exact", "ignore", "subset"] = "ignore"
+    arg_match_mode: Literal["exact", "ignore", "partial"] = "ignore"
 
 
 class Scenario(BaseModel):

@@ -213,15 +213,15 @@ class TestArgumentMatching:
         result = match_trajectory(actual, expected, "unordered")
         assert result.matched is True
 
-    def test_subset_args_match(self) -> None:
+    def test_partial_args_match(self) -> None:
         actual = [_tc("get_order", order_id="123", verbose=True)]
-        expected = [_etc("get_order", arg_match_mode="subset", order_id="123")]
+        expected = [_etc("get_order", arg_match_mode="partial", order_id="123")]
         result = match_trajectory(actual, expected, "unordered")
         assert result.matched is True
 
-    def test_subset_args_missing_key(self) -> None:
+    def test_partial_args_missing_key(self) -> None:
         actual = [_tc("get_order", verbose=True)]
-        expected = [_etc("get_order", arg_match_mode="subset", order_id="123")]
+        expected = [_etc("get_order", arg_match_mode="partial", order_id="123")]
         result = match_trajectory(actual, expected, "unordered")
         assert result.matched is False
 
@@ -232,9 +232,9 @@ class TestArgumentMatching:
         assert result.matched is False
         assert result.failure_label == "false information"
 
-    def test_strict_mode_subset_arg_mismatch(self) -> None:
+    def test_strict_mode_partial_arg_mismatch(self) -> None:
         actual = [_tc("get_order")]
-        expected = [_etc("get_order", arg_match_mode="subset", order_id="123")]
+        expected = [_etc("get_order", arg_match_mode="partial", order_id="123")]
         result = match_trajectory(actual, expected, "strict")
         assert result.matched is False
         assert result.failure_label == "lack of specific information"
