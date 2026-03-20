@@ -40,7 +40,7 @@ def _mock_llm() -> MagicMock:
 
 def _simulation() -> Simulation:
     return Simulation(
-        schema_version="v1",
+        schema_version="v1.1",
         simulator_version="v1",
         simulation_id="sim-1",
         conversations=[

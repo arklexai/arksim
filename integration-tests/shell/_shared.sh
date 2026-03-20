@@ -93,7 +93,7 @@ import json, sys
 path = sys.argv[1]
 with open(path) as f:
     data = json.load(f)
-assert data.get("schema_version") == "v1", f"Bad schema_version: {data.get('schema_version')}"
+assert data.get("schema_version") == "v1.1", f"Bad schema_version: {data.get('schema_version')}"
 convos = data.get("conversations", [])
 assert len(convos) >= 1, f"Expected >= 1 conversation, got {len(convos)}"
 for c in convos:

@@ -48,7 +48,7 @@ class TestSimulateWithChatCompletions:
         simulation = asyncio.run(run_simulation(simulation_input))
 
         assert isinstance(simulation, Simulation)
-        assert simulation.schema_version == "v1"
+        assert simulation.schema_version == "v1.1"
         assert simulation.simulation_id
         assert simulation.generated_at
 
@@ -73,7 +73,7 @@ class TestSimulateWithChatCompletions:
 
         loaded = Simulation.model_validate(data)
         assert len(loaded.conversations) == 3
-        assert loaded.schema_version == "v1"
+        assert loaded.schema_version == "v1.1"
 
 
 class TestSimulateWithCustomAgent:
