@@ -138,6 +138,7 @@ class ConversationState(BaseModel):
     user_goal: str
     knowledge: list[str]
     agent_context: str
+    expected_outcomes: list[str] = Field(default_factory=list)
 
 
 # ── Conversation output file schema models ──

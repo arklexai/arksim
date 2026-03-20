@@ -111,6 +111,7 @@ class Simulator:
         agent_context: str,
         max_turns: int,
         scenario_id: str = "",
+        expected_outcomes: list[str] | None = None,
         on_turn_complete: Callable[[], None] | None = None,
         on_turn_display: Callable[[str, str, str, int], None] | None = None,
     ) -> ConversationState | None:
@@ -205,6 +206,7 @@ class Simulator:
                 user_goal=goal,
                 knowledge=knowledge_content,
                 agent_context=agent_context,
+                expected_outcomes=expected_outcomes or [],
             )
         except Exception as e:
             logger.error(f"Error simulating conversation: {str(e)}")
@@ -248,6 +250,7 @@ class Simulator:
                 "scenario.goal": state.user_goal,
                 "scenario.knowledge": state.knowledge,
                 "scenario.user_profile": state.simulated_user_profile,
+                "scenario.expected_outcomes": state.expected_outcomes,
             },
         )
 
@@ -318,6 +321,7 @@ class Simulator:
                     scenario.agent_context,
                     max_turns,
                     scenario_id=scenario.scenario_id,
+                    expected_outcomes=scenario.expected_outcomes,
                     on_turn_complete=on_turn_complete,
                     on_turn_display=on_turn_display,
                 )

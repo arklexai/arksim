@@ -192,6 +192,18 @@ class AgentBehaviorFailureMetric(QualitativeMetric):
         self._llm = llm
 
     def evaluate(self, score_input: ScoreInput) -> QualResult:
+        expected_outcomes = score_input.expected_outcomes or []
+        if expected_outcomes:
+            outcomes_text = "\n".join(f"    - {o}" for o in expected_outcomes)
+            expected_outcomes_section = (
+                "\n    Here is what the test considers correct agent behavior "
+                "(use this instead of the user's goal to judge whether the agent's "
+                "behavior is a failure):\n"
+                f"{outcomes_text}\n"
+            )
+        else:
+            expected_outcomes_section = ""
+
         response = self._llm.call(
             [
                 {"role": "system", "content": agent_behavior_failure_system_prompt},
@@ -199,6 +211,7 @@ class AgentBehaviorFailureMetric(QualitativeMetric):
                     "role": "user",
                     "content": agent_behavior_failure_user_prompt.format(
                         user_goal=score_input.user_goal,
+                        expected_outcomes_section=expected_outcomes_section,
                         conversation=format_chat_history(score_input.chat_history),
                         knowledge=score_input.knowledge,
                     ),

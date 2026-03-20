@@ -66,6 +66,7 @@ class Evaluator:
         knowledge = variables.get("scenario.knowledge", [])
         profile = variables.get("scenario.user_profile", "")
         user_goal = variables.get("scenario.goal", "")
+        expected_outcomes = variables.get("scenario.expected_outcomes", [])
 
         convo_list = []
         all_messages: list[ChatMessage] = []
@@ -96,6 +97,7 @@ class Evaluator:
                             knowledge=knowledge,
                             profile=profile,
                             user_goal=user_goal,
+                            expected_outcomes=expected_outcomes,
                             tool_calls=turn_tool_calls,
                         )
                     )
@@ -109,6 +111,7 @@ class Evaluator:
             knowledge=knowledge,
             profile=profile,
             user_goal=user_goal,
+            expected_outcomes=expected_outcomes,
             turns=turn_id,
         )
         return convo_list, convo_item

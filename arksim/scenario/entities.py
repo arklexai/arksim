@@ -21,6 +21,15 @@ class Scenario(BaseModel):
     agent_context: str
     knowledge: list[KnowledgeItem] = []
     user_profile: str
+    expected_outcomes: list[str] = Field(
+        default_factory=list,
+        description=(
+            "Optional list of expected outcomes for evaluation. "
+            "When provided, the evaluator uses these instead of the user goal "
+            "to judge agent behavior — enabling correct classification of "
+            "intentional scope-based refusals as 'no failure'."
+        ),
+    )
     origin: dict = Field(default_factory=dict)
 
     @model_validator(mode="before")

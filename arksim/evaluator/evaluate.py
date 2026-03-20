@@ -83,6 +83,7 @@ def evaluate_turn(
         knowledge=combine_knowledge(turn_item.knowledge or []),
         user_goal=turn_item.user_goal,
         profile=turn_item.profile,
+        expected_outcomes=turn_item.expected_outcomes,
     )
 
     builtin: list[QuantitativeMetric] = [
@@ -105,6 +106,7 @@ def evaluate_turn(
                 knowledge=score_input.knowledge,
                 user_goal=score_input.user_goal,
                 profile=score_input.profile,
+                expected_outcomes=score_input.expected_outcomes,
                 **metric.additional_input,
             )
         )
@@ -120,6 +122,7 @@ def evaluate_turn(
                 knowledge=score_input.knowledge,
                 user_goal=score_input.user_goal,
                 profile=score_input.profile,
+                expected_outcomes=score_input.expected_outcomes,
                 **getattr(metric, "additional_input", {}),
             )
         )
@@ -190,6 +193,7 @@ def evaluate_turn(
             knowledge=score_input.knowledge,
             user_goal=score_input.user_goal,
             profile=score_input.profile,
+            expected_outcomes=score_input.expected_outcomes,
             tool_calls=turn_item.tool_calls,
         )
         tool_qual = ToolCallBehaviorFailureMetric(llm).evaluate(tool_score_input)

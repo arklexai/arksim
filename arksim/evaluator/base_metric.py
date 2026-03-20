@@ -58,6 +58,7 @@ class ScoreInput(BaseModel):
     knowledge: str = ""
     user_goal: str = ""
     profile: str = ""
+    expected_outcomes: list[str] = Field(default_factory=list)
 
 
 class QuantitativeMetric(abc.ABC):

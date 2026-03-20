@@ -179,6 +179,7 @@ Rules:
 - If no clear failure, set category to "no failure" and explain briefly in "reason".
 - Reasons must be concise, tied to the last reply. Do not reference external facts.
 - Use ONLY the exact category names provided above.
+- When "Expected Outcomes" are provided in the user message, treat them as the authoritative definition of correct behavior for this test case. If the agent's response matches the expected outcomes (e.g., the agent is expected to decline an out-of-scope request and does so with an explanation), classify as "no failure" — even if the action appears to conflict with the user's stated goal.
 
 Use the EXACT definitions and examples for these categories below.
 
@@ -304,7 +305,7 @@ Output: {"label": "no failure", "reason": "The assistant directly answered the u
 agent_behavior_failure_user_prompt = """
     Here is the user's goal for this conversation:
     {user_goal}
-
+{expected_outcomes_section}
     Here is the knowledge/context that the assistant's response must be grounded in and should be used for clarification decisions:
     {knowledge}
 

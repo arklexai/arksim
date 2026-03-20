@@ -174,6 +174,7 @@ class TurnItem(BaseModel):
     knowledge: list[str]
     profile: str
     user_goal: str
+    expected_outcomes: list[str] = Field(default_factory=list)
     tool_calls: list[ToolCall] | None = None
 
 
@@ -184,6 +185,7 @@ class ConvoItem(BaseModel):
     knowledge: list[str]
     profile: str
     user_goal: str
+    expected_outcomes: list[str] = Field(default_factory=list)
     turns: int
 
 
