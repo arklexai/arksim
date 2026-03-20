@@ -166,9 +166,13 @@ def _match_strict(
             parts.extend(detail for _, _, detail in arg_mismatches)
 
         # Pick the most severe failure label: ordering/substitution issues
-        # take precedence ("disobey user request") over arg mismatches
+        # take precedence ("disobey user request") over arg mismatches.
+        # Among arg mismatches, "false information" (critical) beats
+        # "lack of specific information" (medium).
         if ordering_issues or substitutions:
             failure_label = "disobey user request"
+        elif any(label == "false information" for _, label, _ in arg_mismatches):
+            failure_label = "false information"
         else:
             failure_label = arg_mismatches[0][1]
 
