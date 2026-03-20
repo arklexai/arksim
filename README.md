@@ -78,18 +78,13 @@ arksim examples
 
 This creates an `examples/` folder with ready-to-use projects (e-commerce, bank-insurance, openclaw), each containing a `config.yaml` and `scenarios.json`.
 
+To create your own scenarios, see the [Scenarios documentation](https://docs.arklex.ai/main/build-scenario).
+
 ### Run
 
 ```bash
 cd examples/e-commerce
 arksim simulate-evaluate config.yaml
-```
-
-You can also run each step separately:
-
-```bash
-arksim simulate config_simulate.yaml
-arksim evaluate config_evaluate.yaml
 ```
 
 ### View results
@@ -99,8 +94,6 @@ Open the generated HTML report in `./results/evaluation/`, or launch the web UI:
 ```bash
 arksim ui
 ```
-
-To create your own scenarios, see the [Scenarios documentation](https://docs.arklex.ai/build-scenario).
 
 ## Agent Configuration
 
