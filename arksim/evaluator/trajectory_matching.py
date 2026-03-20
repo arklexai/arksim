@@ -59,7 +59,7 @@ def match_trajectory(
     Args:
         actual: Tool calls the agent actually made.
         expected: Tool calls the scenario author expected.
-        match_mode: One of "strict", "unordered", "subset", "superset".
+        match_mode: One of "strict", "unordered", "contains", "within".
 
     Returns:
         TrajectoryResult with match status and diagnostics.
@@ -80,10 +80,10 @@ def match_trajectory(
         return _match_strict(actual, expected)
     if match_mode == "unordered":
         return _match_unordered(actual, expected)
-    if match_mode == "subset":
-        return _match_subset(actual, expected)
-    if match_mode == "superset":
-        return _match_superset(actual, expected)
+    if match_mode == "contains":
+        return _match_contains(actual, expected)
+    if match_mode == "within":
+        return _match_within(actual, expected)
 
     return TrajectoryResult(
         matched=False,
@@ -128,27 +128,54 @@ def _match_strict(
             extra_calls=extra,
         )
 
+    substitutions: list[str] = []
+    arg_mismatches: list[tuple[int, str, str]] = []  # (position, label, detail)
     for i, (act, exp) in enumerate(zip(actual, expected, strict=False)):
         if act.name != exp.name:
-            ordering_issues.append(f"Position {i}: expected {exp.name}, got {act.name}")
+            if any(e.name == act.name for e in expected):
+                ordering_issues.append(
+                    f"Position {i}: expected {exp.name}, got {act.name}"
+                )
+            else:
+                substitutions.append(
+                    f"Position {i}: expected {exp.name}, got {act.name} (not in expected set)"
+                )
         elif not _args_match(act.arguments, exp.arguments, exp.arg_match_mode):
-            arg_label = (
+            label = (
                 "lack of specific information"
                 if exp.arg_match_mode == "subset"
                 else "false information"
             )
-            return TrajectoryResult(
-                matched=False,
-                failure_label=arg_label,
-                reason=f"Tool {act.name} at position {i}: argument mismatch. "
-                f"Expected {exp.arguments}, got {act.arguments}.",
+            arg_mismatches.append(
+                (
+                    i,
+                    label,
+                    f"Tool {act.name} at position {i}: argument mismatch. "
+                    f"Expected {exp.arguments}, got {act.arguments}.",
+                )
             )
 
-    if ordering_issues:
+    # Report all collected issues together so nothing is silently dropped
+    if ordering_issues or substitutions or arg_mismatches:
+        parts: list[str] = []
+        if ordering_issues:
+            parts.append("Tool call ordering mismatch. " + "; ".join(ordering_issues))
+        if substitutions:
+            parts.append("Wrong tool called. " + "; ".join(substitutions))
+        if arg_mismatches:
+            parts.extend(detail for _, _, detail in arg_mismatches)
+
+        # Pick the most severe failure label: ordering/substitution issues
+        # take precedence ("disobey user request") over arg mismatches
+        if ordering_issues or substitutions:
+            failure_label = "disobey user request"
+        else:
+            failure_label = arg_mismatches[0][1]
+
         return TrajectoryResult(
             matched=False,
-            failure_label="disobey user request",
-            reason="Tool call ordering mismatch. " + "; ".join(ordering_issues),
+            failure_label=failure_label,
+            reason=". ".join(parts),
             ordering_issues=ordering_issues,
         )
 
@@ -219,11 +246,11 @@ def _match_unordered(
     return TrajectoryResult(matched=True, reason="All expected tool calls found.")
 
 
-def _match_subset(
+def _match_contains(
     actual: list[ToolCall],
     expected: list[ExpectedToolCall],
 ) -> TrajectoryResult:
-    """Expected calls are a subset of actual (agent may call extra tools)."""
+    """Agent must call at least the expected tools (extras are allowed)."""
     matched_expected: list[bool] = [False] * len(expected)
     matched_actual: list[bool] = [False] * len(actual)
 
@@ -246,15 +273,15 @@ def _match_subset(
         )
 
     return TrajectoryResult(
-        matched=True, reason="All expected tool calls found (subset mode)."
+        matched=True, reason="All expected tool calls found (contains mode)."
     )
 
 
-def _match_superset(
+def _match_within(
     actual: list[ToolCall],
     expected: list[ExpectedToolCall],
 ) -> TrajectoryResult:
-    """Actual calls are a subset of expected (agent may skip optional tools)."""
+    """Agent can only call tools from the expected set (may skip some)."""
     matched_actual: list[bool] = [False] * len(actual)
 
     for j, act in enumerate(actual):
@@ -273,5 +300,5 @@ def _match_superset(
         )
 
     return TrajectoryResult(
-        matched=True, reason="All actual calls within expected set (superset mode)."
+        matched=True, reason="All actual calls within expected set (within mode)."
     )

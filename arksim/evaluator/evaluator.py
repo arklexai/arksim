@@ -153,7 +153,7 @@ class Evaluator:
         Note: when ``num_convos_per_scenario > 1``, every conversation
         for the same scenario is compared against the same expected
         trajectory.  If the simulated user can diverge (e.g. decline a
-        cancellation), use ``subset`` mode instead of ``strict`` so the
+        cancellation), use ``contains`` mode instead of ``strict`` so the
         agent is not penalised for correctly adapting to user input.
         """
         for entry, (convo_list, _) in zip(
@@ -172,20 +172,20 @@ class Evaluator:
                     all_tool_calls.extend(turn_item.tool_calls)
                     last_tool_turn_id = turn_item.turn_id
 
-            if not all_tool_calls:
-                continue
-
             traj_result = match_trajectory(
                 all_tool_calls, expected_calls, match_mode_val
             )
             if traj_result.matched:
                 continue
 
-            # Attribute the failure to the last turn with tool calls
             turns = turn_results.get(entry.conversation_id, [])
-            target_turn = next(
-                (t for t in turns if t.turn_id == last_tool_turn_id), None
-            )
+            if last_tool_turn_id >= 0:
+                target_turn = next(
+                    (t for t in turns if t.turn_id == last_tool_turn_id), None
+                )
+            else:
+                # No tool calls at all; attribute to the last turn
+                target_turn = max(turns, key=lambda t: t.turn_id) if turns else None
             if target_turn is None:
                 continue
 
@@ -216,7 +216,7 @@ class Evaluator:
                     target_turn.turn_behavior_failure = traj_result.failure_label
                     target_turn.turn_behavior_failure_reason = traj_qual.reason
                 else:
-                    target_turn.turn_behavior_failure_reason += f" {traj_qual.reason}"
+                    target_turn.turn_behavior_failure_reason += f"\n{traj_qual.reason}"
 
     def evaluate(
         self,

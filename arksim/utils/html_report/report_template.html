@@ -2047,10 +2047,14 @@
                             metricsHtml += `<div class="turn-metrics">${badges}</div>`;
                         }
 
-                        // Add agent_behavior_failure label badge
+                        // Add agent_behavior_failure label badge (skip if source-tagged entries already cover it)
                         const abfLabel = perTurnRow && perTurnRow.agent_behavior_failure_label;
                         const skipAbfLabels = new Set(['skipped_good_performance', '']);
-                        if (abfLabel && !skipAbfLabels.has(abfLabel)) {
+                        const hasSourceTaggedAbf = hasQualScores && perTurnRow.qual_scores.some(q =>
+                            q.name === 'agent_behavior_failure' &&
+                            (q.reason?.startsWith('[Trajectory]') || q.reason?.startsWith('[Tool call]'))
+                        );
+                        if (abfLabel && !skipAbfLabels.has(abfLabel) && !hasSourceTaggedAbf) {
                             const abfSentiment = abfLabel === 'no failure' ? 'positive' : 'negative';
                             const abfTip = (perTurnRow.agent_behavior_failure_reason || '').replace(/"/g, '&quot;');
                             const abfCustomColor = (QUAL_LABEL_COLORS['agent_behavior_failure'] || {})[abfLabel];

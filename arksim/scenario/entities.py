@@ -37,7 +37,7 @@ class Scenario(BaseModel):
     user_profile: str
     origin: dict = Field(default_factory=dict)
     expected_tool_calls: list[ExpectedToolCall] | None = None
-    match_mode: Literal["strict", "unordered", "subset", "superset"] = "unordered"
+    match_mode: Literal["strict", "unordered", "contains", "within"] = "unordered"
 
     @model_validator(mode="before")
     @classmethod
