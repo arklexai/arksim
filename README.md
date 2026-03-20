@@ -70,43 +70,21 @@ pip install "arksim[google]"     # Google only
 export OPENAI_API_KEY="your-key"
 ```
 
-### Create a config
+### Download examples
 
-```yaml
-# config.yaml
-agent_config:
-  agent_type: chat_completions
-  agent_name: my-agent
-  api_config:
-    endpoint: https://api.openai.com/v1/chat/completions
-    headers:
-      Content-Type: application/json
-      Authorization: "Bearer ${OPENAI_API_KEY}"
-    body:
-      model: gpt-5.1
-      messages:
-        - role: system
-          content: "You are a helpful assistant."
-
-scenario_file_path: ./scenarios.json
-model: gpt-5.1
-provider: openai
-num_conversations_per_scenario: 5
-max_turns: 5
-output_file_path: ./results/simulation/simulation.json
-output_dir: ./results/evaluation
-generate_html_report: true
+```bash
+arksim examples
 ```
+
+This creates an `examples/` folder with ready-to-use projects (e-commerce, bank-insurance, openclaw), each containing a `config.yaml` and `scenarios.json`.
+
+To create your own scenarios, see the [Scenarios documentation](https://docs.arklex.ai/main/build-scenario).
 
 ### Run
 
 ```bash
-# Simulate conversations, then evaluate
+cd examples/e-commerce
 arksim simulate-evaluate config.yaml
-
-# Or run each step separately
-arksim simulate config_simulate.yaml
-arksim evaluate config_evaluate.yaml
 ```
 
 ### View results
