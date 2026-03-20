@@ -8,7 +8,7 @@ description: "How to contribute to ArkSim: bugs, features, pull requests, and co
 ## Getting Started
 
 - **Local development:** Follow the Developer Install section in the README to set up a Python 3.10–3.13 environment and install ArkSim in editable mode.
-- **Documentation:** For simulator configuration and usage, see the [ArkSim docs](/quickstart).
+- **Documentation:** For simulator configuration and usage, see the [ArkSim docs](https://doc.arklex.ai/).
 
 ## Repository Layout
 
