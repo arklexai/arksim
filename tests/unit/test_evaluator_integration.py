@@ -11,6 +11,7 @@ import pytest
 from arksim.evaluator.entities import EvaluationParams
 from arksim.evaluator.evaluator import Evaluator
 from arksim.evaluator.utils.schema import QualSchema, ScoreSchema, UniqueErrorsSchema
+from arksim.simulation_engine import SIMULATION_SCHEMA_VERSION
 from arksim.simulation_engine.entities import (
     Conversation,
     Message,
@@ -40,7 +41,7 @@ def _mock_llm() -> MagicMock:
 
 def _simulation() -> Simulation:
     return Simulation(
-        schema_version="v1",
+        schema_version=SIMULATION_SCHEMA_VERSION,
         simulator_version="v1",
         simulation_id="sim-1",
         conversations=[

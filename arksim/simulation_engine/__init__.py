@@ -9,7 +9,7 @@ from .entities import (
     SimulationInput,
     SimulationParams,
 )
-from .simulator import Simulator, run_simulation
+from .simulator import SIMULATION_SCHEMA_VERSION, Simulator, run_simulation
 from .tool_types import AgentResponse, ToolCall
 
 __all__ = [
@@ -23,4 +23,5 @@ __all__ = [
     "ToolCall",
     "combine_knowledge",
     "run_simulation",
+    "SIMULATION_SCHEMA_VERSION",
 ]
