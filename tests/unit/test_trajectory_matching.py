@@ -290,6 +290,17 @@ class TestEdgeCases:
         assert result.matched is False
         assert result.failure_label == "disobey user request"
 
+    def test_empty_actual_within_mode_passes(self) -> None:
+        """within mode allows skipping all tools, so zero calls is valid."""
+        result = match_trajectory([], [_etc("get_order")], "within")
+        assert result.matched is True
+
+    def test_empty_actual_contains_mode_fails(self) -> None:
+        """contains mode requires at least the expected tools."""
+        result = match_trajectory([], [_etc("get_order")], "contains")
+        assert result.matched is False
+        assert result.failure_label == "disobey user request"
+
     def test_duplicate_expected_calls(self) -> None:
         actual = [_tc("get_order"), _tc("get_order")]
         expected = [_etc("get_order"), _etc("get_order")]

@@ -68,6 +68,12 @@ def match_trajectory(
         return TrajectoryResult(matched=True, reason="No expected tool calls defined.")
 
     if not actual:
+        # within mode allows skipping all tools (zero calls is valid)
+        if match_mode == "within":
+            return TrajectoryResult(
+                matched=True,
+                reason="No tool calls made (within mode allows skipping all).",
+            )
         return TrajectoryResult(
             matched=False,
             failure_label="disobey user request",
