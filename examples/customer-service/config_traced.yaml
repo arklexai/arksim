@@ -1,0 +1,49 @@
+# Traced Tool Call Example
+# Same as config.yaml but uses the traced agent variant that pushes
+# tool calls via OTel spans instead of returning them in AgentResponse.
+#
+# This exercises the full trace receiver pipeline:
+#   Agent executes tools -> OTel spans pushed -> arksim captures -> evaluator scores
+#
+# Install: pip install openai-agents opentelemetry-sdk opentelemetry-exporter-otlp-proto-http
+# Usage:
+#   cd examples/tool-calls
+#   arksim simulate-evaluate config_traced.yaml
+
+# ── AGENT ─────────────────────────────────────────────────────────────────────
+
+agent_config:
+  agent_type: custom
+  agent_name: tool-call-traced-example
+  custom_config:
+    module_path: ./traced_agent.py
+
+# ── SIMULATION ────────────────────────────────────────────────────────────────
+
+scenario_file_path: ./scenarios.json
+num_conversations_per_scenario: 1
+max_turns: 3
+output_file_path: ./results/simulation/simulation_traced.json
+simulated_user_prompt_template: null
+
+# ── TRACE RECEIVER ────────────────────────────────────────────────────────────
+# The agent pushes OTel spans to this receiver instead of returning tool calls
+# in AgentResponse. arksim captures them and attaches to Message.tool_calls.
+
+trace_receiver:
+  enabled: true
+  port: 4318
+  wait_timeout: 3
+
+# ── EVALUATION ────────────────────────────────────────────────────────────────
+
+metrics_to_run:
+  - helpfulness
+  - agent_behavior_failure
+  - tool_call_behavior_failure
+
+# ── SHARED ────────────────────────────────────────────────────────────────────
+
+model: gpt-4.1-mini
+provider: openai
+num_workers: 50

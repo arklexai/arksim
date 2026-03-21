@@ -41,10 +41,18 @@ except ImportError:
 
 
 def _parse_protobuf_payload(body: bytes) -> dict[str, Any]:
-    """Deserialize an OTLP protobuf payload into the same dict structure as OTLP JSON."""
+    """Deserialize an OTLP protobuf payload into the same dict structure as OTLP JSON.
+
+    Uses ``including_default_value_fields=True`` so that zero-valued fields
+    (e.g. ``int_value=0`` for ``arksim.turn_id=0``) are not silently dropped.
+    """
     request = ExportTraceServiceRequest()
     request.ParseFromString(body)
-    return MessageToDict(request, preserving_proto_field_name=True)
+    return MessageToDict(
+        request,
+        preserving_proto_field_name=True,
+        always_print_fields_with_no_presence=True,
+    )
 
 
 def _extract_spans_with_routing(
