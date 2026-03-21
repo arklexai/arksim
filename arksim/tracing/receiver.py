@@ -1,9 +1,12 @@
 # SPDX-License-Identifier: Apache-2.0
 """Lightweight OTLP/HTTP trace receiver for capturing agent tool call spans.
 
-Accepts ``POST /v1/traces`` with OTLP JSON payloads, extracts tool call spans,
-and buffers them keyed by ``(conversation_id, turn_id)`` so the simulator can
-collect them after each agent turn.
+Accepts ``POST /v1/traces`` with OTLP payloads (protobuf or JSON), extracts
+tool call spans, and buffers them keyed by ``(conversation_id, turn_id)`` so
+the simulator can collect them after each agent turn.
+
+Protobuf support requires ``opentelemetry-proto`` (installed automatically
+with any OTel exporter package). Falls back to JSON-only when unavailable.
 """
 
 from __future__ import annotations
@@ -25,21 +28,44 @@ logger = logging.getLogger(__name__)
 # Maximum accepted payload size (10 MB). Requests exceeding this are rejected.
 _MAX_PAYLOAD_BYTES = 10 * 1024 * 1024
 
+# Try to import protobuf support for parsing real OTel SDK payloads.
+try:
+    from google.protobuf.json_format import MessageToDict
+    from opentelemetry.proto.collector.trace.v1.trace_service_pb2 import (
+        ExportTraceServiceRequest,
+    )
+
+    _HAS_PROTOBUF = True
+except ImportError:
+    _HAS_PROTOBUF = False
+
+
+def _parse_protobuf_payload(body: bytes) -> dict[str, Any]:
+    """Deserialize an OTLP protobuf payload into the same dict structure as OTLP JSON."""
+    request = ExportTraceServiceRequest()
+    request.ParseFromString(body)
+    return MessageToDict(request, preserving_proto_field_name=True)
+
 
 def _extract_spans_with_routing(
     payload: dict[str, Any],
 ) -> dict[tuple[str, int], list[dict[str, Any]]]:
-    """Parse an OTLP/HTTP JSON payload and group spans by (conversation_id, turn_id).
+    """Parse an OTLP payload dict and group spans by (conversation_id, turn_id).
 
     Routing attributes (``arksim.conversation_id``, ``arksim.turn_id``) are
     looked up first in span attributes, then in resource attributes.
     """
     grouped: dict[tuple[str, int], list[dict[str, Any]]] = defaultdict(list)
 
-    for resource_span in payload.get("resourceSpans", []):
-        resource_attrs = resource_span.get("resource", {}).get("attributes", [])
+    for resource_span in payload.get(
+        "resource_spans", payload.get("resourceSpans", [])
+    ):
+        resource = resource_span.get("resource", {})
+        resource_attrs = resource.get("attributes", [])
 
-        for scope_span in resource_span.get("scopeSpans", []):
+        for scope_span in resource_span.get(
+            "scope_spans", resource_span.get("scopeSpans", [])
+        ):
             for span in scope_span.get("spans", []):
                 span_attrs = span.get("attributes", [])
 
@@ -54,7 +80,7 @@ def _extract_spans_with_routing(
                 if conv_id is None or raw_turn is None:
                     logger.debug(
                         "Span %s missing arksim routing attributes, skipping",
-                        span.get("spanId", "?"),
+                        span.get("spanId", span.get("span_id", "?")),
                     )
                     continue
 
@@ -64,7 +90,7 @@ def _extract_spans_with_routing(
                     logger.warning(
                         "Invalid arksim.turn_id value %r in span %s",
                         raw_turn,
-                        span.get("spanId", "?"),
+                        span.get("spanId", span.get("span_id", "?")),
                     )
                     continue
 
@@ -74,14 +100,19 @@ def _extract_spans_with_routing(
 
 
 def _find_attr(attrs: list[dict[str, Any]], key: str) -> str | None:
-    """Find an attribute value by key in an OTLP attribute list."""
+    """Find an attribute value by key in an OTLP attribute list.
+
+    Handles both JSON-style (``stringValue``) and protobuf-converted
+    (``string_value``) field names.
+    """
     for attr in attrs:
         if attr.get("key") == key:
             value = attr.get("value", {})
-            str_val = value.get("stringValue")
+            # JSON-style keys
+            str_val = value.get("stringValue", value.get("string_value"))
             if str_val is not None:
-                return str_val
-            int_val = value.get("intValue")
+                return str(str_val)
+            int_val = value.get("intValue", value.get("int_value"))
             if int_val is not None:
                 return str(int_val)
     return None
@@ -90,14 +121,17 @@ def _find_attr(attrs: list[dict[str, Any]], key: str) -> str | None:
 class TraceReceiver:
     """Async context manager that runs an OTLP/HTTP receiver.
 
+    Accepts both protobuf and JSON payloads on the standard OTLP/HTTP port.
+    Protobuf is the default format used by OTel SDK exporters.
+
     Usage::
 
-        async with TraceReceiver(port=9712, wait_timeout=5.0) as receiver:
+        async with TraceReceiver(port=4318, wait_timeout=5.0) as receiver:
             # ... run simulation turns ...
             tool_calls = await receiver.wait_for_traces("conv-1", 0)
     """
 
-    def __init__(self, port: int = 9712, wait_timeout: float = 5.0) -> None:
+    def __init__(self, port: int = 4318, wait_timeout: float = 5.0) -> None:
         self.port = port
         self.wait_timeout = wait_timeout
         self._spans: dict[tuple[str, int], list[dict[str, Any]]] = defaultdict(list)
@@ -117,7 +151,10 @@ class TraceReceiver:
         self._server = await asyncio.start_server(
             self._handle_connection, "127.0.0.1", self.port
         )
-        logger.info("Trace receiver listening on 127.0.0.1:%d", self.port)
+        proto_status = "protobuf+JSON" if _HAS_PROTOBUF else "JSON only"
+        logger.info(
+            "Trace receiver listening on 127.0.0.1:%d (%s)", self.port, proto_status
+        )
 
     async def stop(self) -> None:
         """Stop the HTTP server and clean up."""
@@ -185,13 +222,17 @@ class TraceReceiver:
 
             # Read headers
             content_length = 0
+            content_type = ""
             while True:
                 line = await asyncio.wait_for(reader.readline(), timeout=10)
                 if line in (b"\r\n", b"\n", b""):
                     break
-                header = line.decode("utf-8", errors="replace").strip().lower()
-                if header.startswith("content-length:"):
-                    content_length = int(header.split(":", 1)[1].strip())
+                header = line.decode("utf-8", errors="replace").strip()
+                header_lower = header.lower()
+                if header_lower.startswith("content-length:"):
+                    content_length = int(header_lower.split(":", 1)[1].strip())
+                elif header_lower.startswith("content-type:"):
+                    content_type = header_lower.split(":", 1)[1].strip()
 
             # Only accept POST /v1/traces
             if method != "POST" or path != "/v1/traces":
@@ -214,7 +255,7 @@ class TraceReceiver:
                     reader.readexactly(content_length), timeout=30
                 )
 
-            await self._handle_traces(body)
+            await self._handle_traces(body, content_type)
             self._send_response(writer, HTTPStatus.OK, b"{}")
 
         except (asyncio.TimeoutError, ConnectionError, asyncio.IncompleteReadError):
@@ -243,13 +284,28 @@ class TraceReceiver:
         ).encode() + body
         writer.write(response)
 
-    async def _handle_traces(self, body: bytes) -> None:
-        """Parse OTLP JSON body and buffer spans by routing key."""
-        try:
-            payload = json.loads(body)
-        except (json.JSONDecodeError, TypeError):
-            logger.warning("Invalid JSON in trace payload")
-            return
+    async def _handle_traces(self, body: bytes, content_type: str = "") -> None:
+        """Parse OTLP body (protobuf or JSON) and buffer spans by routing key."""
+        is_protobuf = "protobuf" in content_type or "proto" in content_type
+
+        if is_protobuf:
+            if not _HAS_PROTOBUF:
+                logger.warning(
+                    "Received protobuf payload but opentelemetry-proto is not "
+                    "installed. Install it with: pip install opentelemetry-proto"
+                )
+                return
+            try:
+                payload = _parse_protobuf_payload(body)
+            except Exception:
+                logger.warning("Failed to parse protobuf trace payload")
+                return
+        else:
+            try:
+                payload = json.loads(body)
+            except (json.JSONDecodeError, TypeError):
+                logger.warning("Invalid JSON in trace payload")
+                return
 
         grouped = _extract_spans_with_routing(payload)
         if not grouped:

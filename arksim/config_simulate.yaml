@@ -55,5 +55,5 @@ num_workers: 50
 # Agents push OTLP/HTTP JSON traces to POST /v1/traces on this receiver.
 # trace_receiver:
 #   enabled: true
-#   port: 9712
+#   port: 4318
 #   wait_timeout: 5  # seconds to wait for traces after each agent response

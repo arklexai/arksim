@@ -21,19 +21,20 @@ def _get_attr(attrs: list[dict[str, Any]], key: str) -> str | None:
     """Extract a string attribute value from OTLP attribute list.
 
     OTLP attribute values are typed (stringValue, intValue, boolValue, etc.).
-    We check each with ``is not None`` to avoid dropping falsy values like
-    empty strings, ``0``, or ``False``.
+    Handles both JSON-style (``stringValue``) and protobuf-converted
+    (``string_value``) field names. We check each with ``is not None`` to
+    avoid dropping falsy values like empty strings, ``0``, or ``False``.
     """
     for attr in attrs:
         if attr.get("key") == key:
             value = attr.get("value", {})
-            str_val = value.get("stringValue")
+            str_val = value.get("stringValue", value.get("string_value"))
             if str_val is not None:
                 return str(str_val)
-            int_val = value.get("intValue")
+            int_val = value.get("intValue", value.get("int_value"))
             if int_val is not None:
                 return str(int_val)
-            bool_val = value.get("boolValue")
+            bool_val = value.get("boolValue", value.get("bool_value"))
             if bool_val is not None:
                 return str(bool_val)
     return None
@@ -90,7 +91,7 @@ def span_to_tool_call(span: dict[str, Any]) -> ToolCall | None:
     # Extract tool call ID
     tool_id = _first_attr(attrs, "gen_ai.tool.call.id", "tool_call.id", "tool.id")
     if not tool_id:
-        tool_id = span.get("spanId", "")
+        tool_id = span.get("spanId", span.get("span_id", ""))
 
     # Extract error from span status
     error = None
