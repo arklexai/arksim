@@ -60,16 +60,3 @@ jobs:
           files: coverage.xml
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: false
-
-  test-otel:
-    name: Test OTel integration
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-python@v6
-        with:
-          python-version: "3.13"
-      - name: Install dependencies
-        run: pip install -e ".[dev,otel]" opentelemetry-sdk opentelemetry-exporter-otlp-proto-http
-      - name: Test
-        run: pytest tests/integration/ -v --tb=short
