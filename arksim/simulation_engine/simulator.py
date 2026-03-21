@@ -5,7 +5,7 @@ import asyncio
 import logging
 import traceback
 from collections.abc import Callable
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from jinja2.sandbox import SandboxedEnvironment
 from tqdm import tqdm
@@ -18,6 +18,9 @@ from arksim.scenario import (
 )
 from arksim.utils.concurrency import resolve_num_workers
 from arksim.utils.output import save_json_file_async
+
+if TYPE_CHECKING:
+    from arksim.tracing import TraceReceiver
 
 from .agent.factory import create_agent
 from .core import TURN_KNOWLEDGE_FN
@@ -51,10 +54,12 @@ class Simulator:
         agent_config: AgentConfig,
         simulator_params: SimulationParams,
         llm: LLM,
+        trace_receiver: TraceReceiver | None = None,
     ) -> None:
         self.agent_config = agent_config
         self.simulator_params = simulator_params
         self.llm = llm
+        self.trace_receiver = trace_receiver
         self.simulation: Simulation | None = None
 
     def _render_simulated_user_prompt(
@@ -137,7 +142,7 @@ class Simulator:
             history: list[dict[str, Any]] = [
                 {"role": "system", "content": instructional_prompt}
             ]
-            metadata = {
+            metadata: dict[str, Any] = {
                 "chat_id": conversation_id,
                 "user_goal": goal,
                 "knowledge": knowledge,
@@ -163,6 +168,7 @@ class Simulator:
                     )
                     break
 
+                metadata["turn_id"] = turn
                 result = await agent.execute(
                     user_query=output,
                     metadata=metadata,
@@ -171,10 +177,29 @@ class Simulator:
                 # Normalize response
                 if isinstance(result, AgentResponse):
                     answer = result.content
-                    turn_tool_calls = result.tool_calls
+                    turn_tool_calls = result.tool_calls or []
                 else:
                     answer = result
-                    turn_tool_calls = None
+                    turn_tool_calls = []
+
+                # Merge tool calls from trace receiver (if active).
+                # Dedup by ID first, then by (name, arguments) to handle
+                # cases where the trace receiver falls back to spanId while
+                # AgentResponse carries an SDK-assigned tool call ID.
+                if self.trace_receiver is not None:
+                    traced = await self.trace_receiver.wait_for_traces(
+                        conversation_id, turn
+                    )
+                    if traced:
+                        existing_ids = {tc.id for tc in turn_tool_calls}
+                        existing_sigs = {
+                            (tc.name, frozenset(tc.arguments.items()))
+                            for tc in turn_tool_calls
+                        }
+                        for tc in traced:
+                            sig = (tc.name, frozenset(tc.arguments.items()))
+                            if tc.id not in existing_ids and sig not in existing_sigs:
+                                turn_tool_calls.append(tc)
 
                 history.append(
                     {
@@ -406,20 +431,36 @@ async def run_simulation(
         simulated_user_prompt_template=settings.simulated_user_prompt_template,
     )
 
-    simulator = Simulator(
-        agent_config=agent_config,
-        simulator_params=simulation_params,
-        llm=llm,
-    )
-    simulation_output = await simulator.simulate(
-        scenarios, on_progress=on_progress, verbose=verbose
-    )
+    # Start trace receiver if configured (lazy import to avoid circular deps)
+    trace_cfg = settings.trace_receiver
+    trace_receiver: TraceReceiver | None = None
+    if trace_cfg and trace_cfg.enabled:
+        from arksim.tracing import TraceReceiver as _TraceReceiver
 
-    if not simulation_output.conversations:
-        raise RuntimeError(
-            "Simulation failed: no conversations were completed successfully. "
-            "Check the errors above for details."
+        trace_receiver = _TraceReceiver(
+            port=trace_cfg.port, wait_timeout=trace_cfg.wait_timeout
+        )
+        await trace_receiver.start()
+
+    try:
+        simulator = Simulator(
+            agent_config=agent_config,
+            simulator_params=simulation_params,
+            llm=llm,
+            trace_receiver=trace_receiver,
+        )
+        simulation_output = await simulator.simulate(
+            scenarios, on_progress=on_progress, verbose=verbose
         )
 
-    await simulator.save()
-    return simulation_output
+        if not simulation_output.conversations:
+            raise RuntimeError(
+                "Simulation failed: no conversations were completed successfully. "
+                "Check the errors above for details."
+            )
+
+        await simulator.save()
+        return simulation_output
+    finally:
+        if trace_receiver is not None:
+            await trace_receiver.stop()

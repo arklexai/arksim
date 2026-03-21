@@ -1,0 +1,168 @@
+===============================================================================
+  arksim OTel Trace Receiver - Test Results
+  Branch: feat/otel-trace-receiver
+  Commit: 641fd5e test: fix tests for simulation schema version update (#113)
+  Date:   2026-03-21T03:57:21Z
+===============================================================================
+
+── Unit Tests: span_converter, trace_receiver, trace_merge ──────────────────
+
+============================= test session starts ==============================
+platform darwin -- Python 3.13.5, pytest-9.0.2, pluggy-1.6.0 -- /opt/homebrew/opt/python@3.13/bin/python3.13
+cachedir: .pytest_cache
+rootdir: /Users/arbit/workspace/arklex/arksim
+configfile: pytest.ini
+plugins: anyio-4.12.1, asyncio-1.3.0, cov-7.0.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collecting ... collected 38 items
+
+tests/unit/test_span_converter.py::TestSpanToToolCall::test_otel_genai_convention PASSED [  2%]
+tests/unit/test_span_converter.py::TestSpanToToolCall::test_openinference_convention PASSED [  5%]
+tests/unit/test_span_converter.py::TestSpanToToolCall::test_fallback_to_span_name PASSED [  7%]
+tests/unit/test_span_converter.py::TestSpanToToolCall::test_plain_span_name_fallback PASSED [ 10%]
+tests/unit/test_span_converter.py::TestSpanToToolCall::test_empty_span_name_returns_none PASSED [ 13%]
+tests/unit/test_span_converter.py::TestSpanToToolCall::test_error_status PASSED [ 15%]
+tests/unit/test_span_converter.py::TestSpanToToolCall::test_error_status_string_code PASSED [ 18%]
+tests/unit/test_span_converter.py::TestSpanToToolCall::test_invalid_json_arguments PASSED [ 21%]
+tests/unit/test_span_converter.py::TestSpanToToolCall::test_missing_attributes PASSED [ 23%]
+tests/unit/test_span_converter.py::TestSpanToToolCall::test_openinference_tool_parameters PASSED [ 26%]
+tests/unit/test_span_converter.py::TestSpanToToolCall::test_openinference_output_value_result PASSED [ 28%]
+tests/unit/test_span_converter.py::TestGetAttrFalsyValues::test_empty_string_preserved PASSED [ 31%]
+tests/unit/test_span_converter.py::TestGetAttrFalsyValues::test_zero_int_preserved PASSED [ 34%]
+tests/unit/test_span_converter.py::TestGetAttrFalsyValues::test_false_bool_preserved PASSED [ 36%]
+tests/unit/test_span_converter.py::TestGetAttrFalsyValues::test_missing_key_returns_none PASSED [ 39%]
+tests/unit/test_span_converter.py::TestSpansToToolCalls::test_multiple_spans PASSED [ 42%]
+tests/unit/test_span_converter.py::TestSpansToToolCalls::test_empty_list PASSED [ 44%]
+tests/unit/test_span_converter.py::TestSpansToToolCalls::test_skips_unconvertible_spans PASSED [ 47%]
+tests/unit/test_trace_receiver.py::TestExtractSpansWithRouting::test_span_level_routing PASSED [ 50%]
+tests/unit/test_trace_receiver.py::TestExtractSpansWithRouting::test_resource_level_routing PASSED [ 52%]
+tests/unit/test_trace_receiver.py::TestExtractSpansWithRouting::test_missing_routing_attrs_skips_span PASSED [ 55%]
+tests/unit/test_trace_receiver.py::TestExtractSpansWithRouting::test_invalid_turn_id_skips_span PASSED [ 57%]
+tests/unit/test_trace_receiver.py::TestExtractSpansWithRouting::test_multiple_keys PASSED [ 60%]
+tests/unit/test_trace_receiver.py::test_receiver_lifecycle PASSED        [ 63%]
+tests/unit/test_trace_receiver.py::test_receiver_accepts_traces PASSED   [ 65%]
+tests/unit/test_trace_receiver.py::test_receiver_timeout_returns_empty PASSED [ 68%]
+tests/unit/test_trace_receiver.py::test_receiver_wrong_path_returns_404 PASSED [ 71%]
+tests/unit/test_trace_receiver.py::test_receiver_traces_before_wait PASSED [ 73%]
+tests/unit/test_trace_receiver.py::test_receiver_deduplication_across_keys PASSED [ 76%]
+tests/unit/test_trace_receiver.py::test_receiver_invalid_json PASSED     [ 78%]
+tests/unit/test_trace_receiver.py::test_receiver_multi_batch_collection PASSED [ 81%]
+tests/unit/test_trace_receiver.py::test_receiver_rejects_oversized_payload PASSED [ 84%]
+tests/unit/test_trace_merge.py::test_trace_merge_appends_new_tool_calls PASSED [ 86%]
+tests/unit/test_trace_merge.py::test_trace_merge_deduplicates_by_id PASSED [ 89%]
+tests/unit/test_trace_merge.py::test_trace_merge_deduplicates_by_name_args PASSED [ 92%]
+tests/unit/test_trace_merge.py::test_trace_merge_adds_unique_traced_calls PASSED [ 94%]
+tests/unit/test_trace_merge.py::test_no_trace_receiver_preserves_existing_behavior PASSED [ 97%]
+tests/unit/test_trace_merge.py::test_turn_id_passed_in_metadata PASSED   [100%]
+
+============================== 38 passed in 1.67s ==============================
+
+── Integration Test: real HTTP trace receiver ───────────────────────────────
+
+[1] Starting TraceReceiver on port 55489...
+    OK - receiver started
+
+[2] Pushing single tool call (lookup_customer)...
+    HTTP 200 OK
+    Waiting for traces...
+    OK - got ToolCall(name='lookup_customer', args={'email': 'alice@example.com'})
+
+[3] Pushing 3 tool calls in one batch...
+    HTTP 200 OK
+    OK - got 3 tool calls: ['search_products', 'get_order', 'cancel_order']
+    Error tool call: cancel_order -> 'denied'
+
+[4] Pushing 2 separate batches for the same turn...
+    HTTP 200, 200 OK
+    OK - both batches collected: {'tool_a', 'tool_b'}
+
+[5] Testing timeout (no traces pushed)...
+    OK - empty list returned after timeout
+
+[6] Testing 404 for wrong path...
+    OK - got 404
+
+    Receiver stopped cleanly
+
+=== ALL INTEGRATION TESTS PASSED ===
+
+── Full Suite Regression ────────────────────────────────────────────────────
+
+============================= test session starts ==============================
+platform darwin -- Python 3.13.5, pytest-9.0.2, pluggy-1.6.0
+rootdir: /Users/arbit/workspace/arklex/arksim
+configfile: pytest.ini
+plugins: anyio-4.12.1, asyncio-1.3.0, cov-7.0.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=function, asyncio_default_test_loop_scope=function
+collected 595 items
+
+tests/unit/test_agent_config.py .........................                [  4%]
+tests/unit/test_agent_factory.py .s.....                                 [  5%]
+tests/unit/test_agent_utils.py ........                                  [  6%]
+tests/unit/test_azure_openai_llm.py ..                                   [  7%]
+tests/unit/test_azure_utils.py ....                                      [  7%]
+tests/unit/test_builtin_metrics.py ................                      [ 10%]
+tests/unit/test_chat_completions.py ............                         [ 12%]
+tests/unit/test_cli.py ............                                      [ 14%]
+tests/unit/test_cli_extended.py ....................                     [ 17%]
+tests/unit/test_cli_functions.py ....................................... [ 24%]
+..                                                                       [ 24%]
+tests/unit/test_custom_agent.py ...........................              [ 29%]
+tests/unit/test_error_detection.py .........                             [ 30%]
+tests/unit/test_error_detection_extended.py ......                       [ 31%]
+tests/unit/test_evaluate.py ..........                                   [ 33%]
+tests/unit/test_evaluate_turn.py .......                                 [ 34%]
+tests/unit/test_evaluation_input.py .........                            [ 36%]
+tests/unit/test_evaluator_class.py ......................                [ 39%]
+tests/unit/test_evaluator_entities.py .................................. [ 45%]
+..                                                                       [ 45%]
+tests/unit/test_evaluator_integration.py ......                          [ 46%]
+tests/unit/test_examples_valid.py ....s.....s........................... [ 53%]
+.......................                                                  [ 57%]
+tests/unit/test_html_report_integration.py .......                       [ 58%]
+tests/unit/test_llm.py .........                                         [ 59%]
+tests/unit/test_llm_factory.py .....ss.                                  [ 61%]
+tests/unit/test_llm_utils.py .........                                   [ 62%]
+tests/unit/test_logger.py .....                                          [ 63%]
+tests/unit/test_module_loader.py ..........                              [ 65%]
+tests/unit/test_multi_knowledge.py ...............                       [ 67%]
+tests/unit/test_output_utils.py ...........                              [ 69%]
+tests/unit/test_path_validation.py ...........                           [ 71%]
+tests/unit/test_prompt_registry.py ........                              [ 72%]
+tests/unit/test_resolve_output_dir.py ...                                [ 73%]
+tests/unit/test_routes_filesystem.py ....................                [ 76%]
+tests/unit/test_routes_results.py ............                           [ 78%]
+tests/unit/test_run_evaluation.py ...                                    [ 79%]
+tests/unit/test_scenario_entities.py .....                               [ 80%]
+tests/unit/test_score_label.py ......                                    [ 81%]
+tests/unit/test_sim_utils.py .......                                     [ 82%]
+tests/unit/test_simulation_engine_entities.py .........                  [ 83%]
+tests/unit/test_simulation_input.py ...........                          [ 85%]
+tests/unit/test_simulator_num_convos.py ...                              [ 86%]
+tests/unit/test_span_converter.py ..................                     [ 89%]
+tests/unit/test_tool_call_example_agent.py .......                       [ 90%]
+tests/unit/test_tool_calls.py ............................               [ 94%]
+tests/unit/test_trace_merge.py ......                                    [ 95%]
+tests/unit/test_trace_receiver.py ..............                         [ 98%]
+tests/unit/test_version_fallback.py .                                    [ 98%]
+tests/unit/test_workers.py .........                                     [100%]
+
+=============================== warnings summary ===============================
+tests/unit/test_cli.py::TestMainEvaluateThresholds::test_numeric_threshold_failure_exits_eval_failed
+tests/unit/test_cli_extended.py::TestBuildParser::test_examples_list_flag
+  <frozen os>:717: RuntimeWarning: coroutine 'run_simulation' was never awaited
+  Enable tracemalloc to get traceback where the object was allocated.
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+tests/unit/test_examples_valid.py::TestExampleConfigs::test_agent_config_parses[e-commerce/config_simulate.yaml]
+  /opt/homebrew/lib/python3.13/site-packages/yaml/tokens.py:3: RuntimeWarning: coroutine 'run_simulation' was never awaited
+    def __init__(self, start_mark, end_mark):
+  Enable tracemalloc to get traceback where the object was allocated.
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================== 590 passed, 5 skipped, 3 warnings in 3.02s ==================
+
+===============================================================================
+  All tests completed successfully.
+===============================================================================
