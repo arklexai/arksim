@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 import traceback
 from collections.abc import Callable
@@ -193,11 +194,11 @@ class Simulator:
                     if traced:
                         existing_ids = {tc.id for tc in turn_tool_calls}
                         existing_sigs = {
-                            (tc.name, frozenset(tc.arguments.items()))
+                            (tc.name, json.dumps(tc.arguments, sort_keys=True))
                             for tc in turn_tool_calls
                         }
                         for tc in traced:
-                            sig = (tc.name, frozenset(tc.arguments.items()))
+                            sig = (tc.name, json.dumps(tc.arguments, sort_keys=True))
                             if tc.id not in existing_ids and sig not in existing_sigs:
                                 turn_tool_calls.append(tc)
 
