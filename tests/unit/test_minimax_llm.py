@@ -109,6 +109,18 @@ class TestMiniMaxLLMPrepareParams:
         params = llm._prepare_params("hello")
         assert params["temperature"] == 0.01
 
+    def test_temperature_clamping_logs_warning(self) -> None:
+        llm = _build_llm(temperature=0.0)
+        with patch("arksim.llms.chat.providers.minimax.logger") as mock_logger:
+            llm._prepare_params("hello")
+            mock_logger.warning.assert_called_once()
+
+    def test_valid_temperature_no_warning(self) -> None:
+        llm = _build_llm(temperature=0.5)
+        with patch("arksim.llms.chat.providers.minimax.logger") as mock_logger:
+            llm._prepare_params("hello")
+            mock_logger.warning.assert_not_called()
+
     def test_schema_adds_system_prompt_and_response_format(self) -> None:
         llm = _build_llm()
         params = llm._prepare_params("hello", schema=_DummySchema)
@@ -164,6 +176,18 @@ class TestMiniMaxLLMCall:
         assert isinstance(result, _DummySchema)
         assert result.answer == "42"
 
+    @patch("time.sleep", return_value=None)
+    def test_call_raises_on_none_content(self, _sleep: MagicMock) -> None:
+        llm = _build_llm()
+        mock_message = SimpleNamespace(content=None)
+        mock_choice = SimpleNamespace(message=mock_message)
+        mock_response = MagicMock()
+        mock_response.choices = [mock_choice]
+        llm.client = MagicMock()
+        llm.client.chat.completions.create.return_value = mock_response
+        with pytest.raises(ValueError, match="MiniMax returned empty response"):
+            llm.call("hello")
+
     @pytest.mark.asyncio
     @patch("asyncio.sleep", new_callable=AsyncMock)
     async def test_call_async_text(self, _sleep: AsyncMock) -> None:
@@ -190,3 +214,16 @@ class TestMiniMaxLLMCall:
         result = await llm.call_async("question", schema=_DummySchema)
         assert isinstance(result, _DummySchema)
         assert result.answer == "async 42"
+
+    @pytest.mark.asyncio
+    @patch("asyncio.sleep", new_callable=AsyncMock)
+    async def test_call_async_raises_on_none_content(self, _sleep: AsyncMock) -> None:
+        llm = _build_llm()
+        mock_message = SimpleNamespace(content=None)
+        mock_choice = SimpleNamespace(message=mock_message)
+        mock_response = MagicMock()
+        mock_response.choices = [mock_choice]
+        llm.async_client = MagicMock()
+        llm.async_client.chat.completions.create = AsyncMock(return_value=mock_response)
+        with pytest.raises(ValueError, match="MiniMax returned empty response"):
+            await llm.call_async("hello")

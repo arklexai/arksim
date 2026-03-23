@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import re
 from typing import Any, TypeVar, overload
@@ -14,6 +15,8 @@ from arksim.llms.chat.base.types import LLMMessage
 from arksim.llms.chat.utils import retry
 
 T = TypeVar("T", bound=BaseModel)
+
+logger = logging.getLogger(__name__)
 
 DEFAULT_BASE_URL = "https://api.minimax.io/v1"
 
@@ -67,7 +70,15 @@ class MiniMaxLLM(BaseLLM):
         }
 
         if self.temperature is not None:
-            params["temperature"] = max(0.01, min(self.temperature, 1.0))
+            clamped = max(0.01, min(self.temperature, 1.0))
+            if clamped != self.temperature:
+                logger.warning(
+                    "MiniMax requires temperature in (0.0, 1.0]; "
+                    "clamping %.2f to %.2f",
+                    self.temperature,
+                    clamped,
+                )
+            params["temperature"] = clamped
 
         if schema:
             params["response_format"] = {"type": "json_object"}
@@ -111,6 +122,8 @@ class MiniMaxLLM(BaseLLM):
         params = self._prepare_params(messages, schema=schema)
         response = self.client.chat.completions.create(**params)
         content = response.choices[0].message.content
+        if content is None:
+            raise ValueError("MiniMax returned empty response")
         if schema:
             parsed = self._parse_json(content)
             return schema.model_validate(parsed)
@@ -136,6 +149,8 @@ class MiniMaxLLM(BaseLLM):
         params = self._prepare_params(messages, schema=schema)
         response = await self.async_client.chat.completions.create(**params)
         content = response.choices[0].message.content
+        if content is None:
+            raise ValueError("MiniMax returned empty response")
         if schema:
             parsed = self._parse_json(content)
             return schema.model_validate(parsed)
