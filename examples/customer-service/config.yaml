@@ -1,0 +1,76 @@
+# Simulate + Evaluate Configuration File
+# Configuration for 'arksim simulate-evaluate' command
+# Runs simulation followed by evaluation in a single pipeline.
+#
+# Customer service agent with tool calling (OpenAI Agents SDK + SQLite).
+# Tools: lookup_customer, get_order, search_products, cancel_order,
+#        send_verification_code, verify_customer
+# The SQLite database (store.db) is created automatically on first run.
+#
+# Usage:
+#   cd examples/customer-service
+#   arksim simulate-evaluate config.yaml
+
+# ── AGENT CONFIGURATION ────────────────────────────────────────────────────
+
+agent_config:
+  agent_type: custom
+  agent_name: customer-service
+  custom_config:
+    module_path: ./custom_agent.py
+
+# ── SIMULATION SETTINGS ──────────────────────────────────────────────────────
+
+# Path to the scenarios file
+scenario_file_path: ./scenarios.json
+
+# Number of conversations per scenario to generate
+num_conversations_per_scenario: 2
+
+# Maximum turns per conversation
+max_turns: 3
+
+# Output file path for simulation results
+output_file_path: ./results/simulation/simulation.json
+
+# Jinja template for the simulated user's system prompt
+simulated_user_prompt_template: null
+
+# ── EVALUATION SETTINGS ──────────────────────────────────────────────────────
+
+# Output directory for evaluation results
+output_dir: ./results/evaluation
+
+# Paths to Python files defining custom QuantitativeMetric or QualitativeMetric subclasses
+custom_metrics_file_paths:
+  - ./custom_metrics.py
+
+# Built-in metrics to run; if empty, all built-in metrics run
+metrics_to_run:
+  - helpfulness
+  - agent_behavior_failure
+  - tool_call_behavior_failure
+
+# Generate HTML report
+generate_html_report: true
+
+# Numeric thresholds: per-metric minimum scores on native scale
+# Built-in turn-level metrics use 1-5; goal_completion uses 0-1; overall_score uses 0-1
+# numeric_thresholds:
+#   overall_score: 0.7
+#   goal_completion: 0.6
+
+# Qualitative failure labels: fail the run if any evaluated turn returns one of these labels
+# qualitative_failure_labels:
+#   agent_behavior_failure: ["false information", "disobey user request"]
+
+# ── SHARED SETTINGS ──────────────────────────────────────────────────────────
+
+# LLM model
+model: gpt-4.1-mini
+
+# LLM provider
+provider: openai
+
+# Workers for parallel processing
+num_workers: 50

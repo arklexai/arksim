@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-"""Tests for the tool-calls example agent's _extract_tool_calls logic.
+"""Tests for the customer-service example agent's _extract_tool_calls logic.
 
 Requires: pip install openai-agents
 Skipped automatically when the SDK is not installed.
@@ -21,7 +21,10 @@ from openai.types.responses import ResponseFunctionToolCall  # noqa: E402
 
 # Load the example module dynamically (directory name has a hyphen)
 _EXAMPLE_PATH = (
-    Path(__file__).resolve().parents[2] / "examples" / "tool-calls" / "custom_agent.py"
+    Path(__file__).resolve().parents[2]
+    / "examples"
+    / "customer-service"
+    / "custom_agent.py"
 )
 _spec = importlib.util.spec_from_file_location("tool_calls_example", _EXAMPLE_PATH)
 _mod = importlib.util.module_from_spec(_spec)
