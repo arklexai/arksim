@@ -53,6 +53,32 @@ arksim simulate-evaluate config_custom.yaml
 python run_pipeline.py
 ```
 
+### Traced agent (OTel spans)
+
+The example includes a traced agent variant (`traced_agent.py`) that pushes tool calls as OTel spans instead of returning them in `AgentResponse`. This exercises the full trace receiver pipeline:
+
+```
+Agent executes tools -> OTel spans pushed -> arksim captures -> evaluator scores
+```
+
+The traced agent uses OpenTelemetry's `OTLPSpanExporter` to push protobuf spans to arksim's built-in trace receiver on port 4318 (IANA-assigned OTLP/HTTP standard). arksim waits for spans after each agent turn, converts them to `ToolCall` objects, and merges them into `Message.tool_calls`. The simulator deduplicates by ID and (name, args), so both paths can coexist.
+
+```bash
+pip install -r requirements-traced.txt
+arksim simulate-evaluate config_traced.yaml
+```
+
+The trace receiver is configured in config_traced.yaml:
+
+```yaml
+trace_receiver:
+  enabled: true
+  port: 4318        # IANA-assigned OTLP/HTTP standard port
+  wait_timeout: 3   # seconds to wait for traces after each agent turn
+```
+
+When `trace_receiver.enabled` is false or omitted, arksim only captures tool calls from `AgentResponse` (the standard path).
+
 ## Trajectory matching
 
 This example demonstrates **trajectory matching**, which compares the agent's actual tool calls against expected tool calls defined in each scenario. This catches structural issues (wrong tools, wrong order, missing steps) that the LLM-based judge cannot detect.

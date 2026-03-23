@@ -57,7 +57,8 @@ async def test_trace_merge_appends_new_tool_calls() -> None:
     )
     mock_agent.close = AsyncMock()
 
-    sim.llm.call_async = AsyncMock(return_value="###STOP###")
+    # LLM returns non-STOP first so the agent gets a turn, then STOP
+    sim.llm.call_async = AsyncMock(side_effect=["hello", "###STOP###"])
 
     with patch(
         "arksim.simulation_engine.simulator.create_agent",
@@ -68,14 +69,18 @@ async def test_trace_merge_appends_new_tool_calls() -> None:
             goal="test goal",
             knowledge=[{"content": "k1"}],
             agent_context="context",
-            max_turns=2,
+            max_turns=3,
             scenario_id="s1",
         )
 
-    # The STOP signal fires on the first simulated user turn, so
-    # agent.execute is never called and no tool calls are collected.
-    # Use a non-stop message instead.
     assert state is not None
+    agent_msgs = [m for m in state.conversation_history if m.get("role") == "user"]
+    assert len(agent_msgs) == 1
+    tc_list = agent_msgs[0].get("tool_calls", [])
+    # Explicit (lookup) + traced (search) = 2 tool calls
+    assert len(tc_list) == 2
+    names = {tc["name"] for tc in tc_list}
+    assert names == {"lookup", "search"}
 
 
 @pytest.mark.asyncio

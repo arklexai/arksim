@@ -21,8 +21,8 @@ from http import HTTPStatus
 from typing import Any
 
 from arksim.simulation_engine.tool_types import ToolCall
-
-from .span_converter import spans_to_tool_calls
+from arksim.tracing._attrs import get_attr
+from arksim.tracing.span_converter import spans_to_tool_calls
 
 logger = logging.getLogger(__name__)
 
@@ -83,10 +83,10 @@ def _extract_spans_with_routing(
                 span_attrs = span.get("attributes", [])
 
                 # Look up routing keys: span attrs take precedence
-                conv_id = _find_attr(
-                    span_attrs, "arksim.conversation_id"
-                ) or _find_attr(resource_attrs, "arksim.conversation_id")
-                raw_turn = _find_attr(span_attrs, "arksim.turn_id") or _find_attr(
+                conv_id = get_attr(span_attrs, "arksim.conversation_id") or get_attr(
+                    resource_attrs, "arksim.conversation_id"
+                )
+                raw_turn = get_attr(span_attrs, "arksim.turn_id") or get_attr(
                     resource_attrs, "arksim.turn_id"
                 )
 
@@ -110,25 +110,6 @@ def _extract_spans_with_routing(
                 grouped[(conv_id, turn_id)].append(span)
 
     return grouped
-
-
-def _find_attr(attrs: list[dict[str, Any]], key: str) -> str | None:
-    """Find an attribute value by key in an OTLP attribute list.
-
-    Handles both JSON-style (``stringValue``) and protobuf-converted
-    (``string_value``) field names.
-    """
-    for attr in attrs:
-        if attr.get("key") == key:
-            value = attr.get("value", {})
-            # JSON-style keys
-            str_val = value.get("stringValue", value.get("string_value"))
-            if str_val is not None:
-                return str(str_val)
-            int_val = value.get("intValue", value.get("int_value"))
-            if int_val is not None:
-                return str(int_val)
-    return None
 
 
 class TraceReceiver:
@@ -258,7 +239,7 @@ class TraceReceiver:
 
             parts = request_line.decode("utf-8", errors="replace").strip().split()
             if len(parts) < 2:
-                self._send_response(writer, HTTPStatus.BAD_REQUEST)
+                await self._send_response(writer, HTTPStatus.BAD_REQUEST)
                 return
 
             method, path = parts[0], parts[1]
@@ -273,13 +254,17 @@ class TraceReceiver:
                 header = line.decode("utf-8", errors="replace").strip()
                 header_lower = header.lower()
                 if header_lower.startswith("content-length:"):
-                    content_length = int(header_lower.split(":", 1)[1].strip())
+                    try:
+                        content_length = int(header_lower.split(":", 1)[1].strip())
+                    except ValueError:
+                        await self._send_response(writer, HTTPStatus.BAD_REQUEST)
+                        return
                 elif header_lower.startswith("content-type:"):
                     content_type = header_lower.split(":", 1)[1].strip()
 
             # Only accept POST /v1/traces
             if method != "POST" or path != "/v1/traces":
-                self._send_response(writer, HTTPStatus.NOT_FOUND)
+                await self._send_response(writer, HTTPStatus.NOT_FOUND)
                 return
 
             # Reject oversized payloads
@@ -288,7 +273,7 @@ class TraceReceiver:
                     "Trace payload too large (%d bytes), rejecting",
                     content_length,
                 )
-                self._send_response(writer, HTTPStatus.REQUEST_ENTITY_TOO_LARGE)
+                await self._send_response(writer, HTTPStatus.REQUEST_ENTITY_TOO_LARGE)
                 return
 
             # Read body
@@ -305,29 +290,29 @@ class TraceReceiver:
                     "Received protobuf payload but opentelemetry-proto is not "
                     "installed. Install with: pip install arksim[otel]"
                 )
-                self._send_response(
+                await self._send_response(
                     writer,
                     HTTPStatus.UNSUPPORTED_MEDIA_TYPE,
                     b'{"error": "Protobuf not supported. Install with: pip install arksim[otel]"}',
                 )
                 return
 
-            await self._handle_traces(body, content_type)
-            self._send_response(writer, HTTPStatus.OK, b"{}")
+            await self._handle_traces(body, is_protobuf=is_protobuf)
+            await self._send_response(writer, HTTPStatus.OK, b"{}")
 
         except (asyncio.TimeoutError, ConnectionError, asyncio.IncompleteReadError):
             logger.debug("Connection error in trace receiver")
         except Exception:
             logger.exception("Unexpected error in trace receiver")
             with contextlib.suppress(Exception):
-                self._send_response(writer, HTTPStatus.INTERNAL_SERVER_ERROR)
+                await self._send_response(writer, HTTPStatus.INTERNAL_SERVER_ERROR)
         finally:
             with contextlib.suppress(Exception):
                 writer.close()
                 await writer.wait_closed()
 
     @staticmethod
-    def _send_response(
+    async def _send_response(
         writer: asyncio.StreamWriter,
         status: HTTPStatus,
         body: bytes = b"",
@@ -337,14 +322,14 @@ class TraceReceiver:
             f"HTTP/1.1 {status.value} {status.phrase}\r\n"
             f"Content-Length: {len(body)}\r\n"
             f"Content-Type: application/json\r\n"
+            f"Connection: close\r\n"
             f"\r\n"
         ).encode() + body
         writer.write(response)
+        await writer.drain()
 
-    async def _handle_traces(self, body: bytes, content_type: str = "") -> None:
+    async def _handle_traces(self, body: bytes, *, is_protobuf: bool = False) -> None:
         """Parse OTLP body (protobuf or JSON) and buffer spans by routing key."""
-        is_protobuf = "protobuf" in content_type or "proto" in content_type
-
         if is_protobuf:
             try:
                 payload = _parse_protobuf_payload(body)

@@ -13,40 +13,9 @@ import logging
 from typing import Any
 
 from arksim.simulation_engine.tool_types import ToolCall
+from arksim.tracing._attrs import first_attr
 
 logger = logging.getLogger(__name__)
-
-
-def _get_attr(attrs: list[dict[str, Any]], key: str) -> str | None:
-    """Extract a string attribute value from OTLP attribute list.
-
-    OTLP attribute values are typed (stringValue, intValue, boolValue, etc.).
-    Handles both JSON-style (``stringValue``) and protobuf-converted
-    (``string_value``) field names. We check each with ``is not None`` to
-    avoid dropping falsy values like empty strings, ``0``, or ``False``.
-    """
-    for attr in attrs:
-        if attr.get("key") == key:
-            value = attr.get("value", {})
-            str_val = value.get("stringValue", value.get("string_value"))
-            if str_val is not None:
-                return str(str_val)
-            int_val = value.get("intValue", value.get("int_value"))
-            if int_val is not None:
-                return str(int_val)
-            bool_val = value.get("boolValue", value.get("bool_value"))
-            if bool_val is not None:
-                return str(bool_val)
-    return None
-
-
-def _first_attr(attrs: list[dict[str, Any]], *keys: str) -> str | None:
-    """Return the first matching attribute from the given keys."""
-    for key in keys:
-        val = _get_attr(attrs, key)
-        if val is not None:
-            return val
-    return None
 
 
 def _parse_arguments(raw: str | None, span_name: str = "") -> dict[str, Any]:
@@ -70,7 +39,7 @@ def span_to_tool_call(span: dict[str, Any]) -> ToolCall | None:
     attrs = span.get("attributes", [])
 
     # Extract tool name: OTel GenAI > OpenInference > span name fallback
-    name = _first_attr(attrs, "gen_ai.tool.name", "tool.name")
+    name = first_attr(attrs, "gen_ai.tool.name", "tool.name")
     if not name:
         # Fall back to span name (e.g. "execute_tool search_flights")
         span_name = span.get("name", "")
@@ -82,7 +51,7 @@ def span_to_tool_call(span: dict[str, Any]) -> ToolCall | None:
             return None
 
     # Extract arguments
-    raw_args = _first_attr(
+    raw_args = first_attr(
         attrs,
         "gen_ai.tool.call.arguments",
         "tool_call.function.arguments",
@@ -91,10 +60,10 @@ def span_to_tool_call(span: dict[str, Any]) -> ToolCall | None:
     arguments = _parse_arguments(raw_args, span_name=span.get("name", ""))
 
     # Extract result: OTel GenAI > OpenInference output.value
-    result = _first_attr(attrs, "gen_ai.tool.call.result", "output.value")
+    result = first_attr(attrs, "gen_ai.tool.call.result", "output.value")
 
     # Extract tool call ID
-    tool_id = _first_attr(attrs, "gen_ai.tool.call.id", "tool_call.id", "tool.id")
+    tool_id = first_attr(attrs, "gen_ai.tool.call.id", "tool_call.id", "tool.id")
     if not tool_id:
         tool_id = span.get("spanId", span.get("span_id", ""))
 

@@ -3,8 +3,8 @@
 
 from __future__ import annotations
 
-from .config import TraceReceiverConfig
-from .receiver import TraceReceiver
-from .span_converter import spans_to_tool_calls
+from arksim.tracing.config import TraceReceiverConfig
+from arksim.tracing.receiver import TraceReceiver
+from arksim.tracing.span_converter import spans_to_tool_calls
 
 __all__ = ["TraceReceiver", "TraceReceiverConfig", "spans_to_tool_calls"]

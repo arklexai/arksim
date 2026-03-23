@@ -15,20 +15,17 @@ import socket
 
 import pytest
 
-try:
-    from opentelemetry import trace
-    from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
-    from opentelemetry.sdk.resources import Resource
-    from opentelemetry.sdk.trace import TracerProvider
-    from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+pytest.importorskip("opentelemetry", reason="opentelemetry SDK not installed")
 
-    _HAS_OTEL = True
-except ImportError:
-    _HAS_OTEL = False
+from opentelemetry import trace  # noqa: E402
+from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
+    OTLPSpanExporter,  # noqa: E402
+)
+from opentelemetry.sdk.resources import Resource  # noqa: E402
+from opentelemetry.sdk.trace import TracerProvider  # noqa: E402
+from opentelemetry.sdk.trace.export import SimpleSpanProcessor  # noqa: E402
 
-from arksim.tracing.receiver import TraceReceiver
-
-pytestmark = pytest.mark.skipif(not _HAS_OTEL, reason="opentelemetry SDK not installed")
+from arksim.tracing.receiver import TraceReceiver  # noqa: E402
 
 
 @pytest.fixture

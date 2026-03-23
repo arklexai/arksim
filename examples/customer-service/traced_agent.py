@@ -277,4 +277,5 @@ class ToolCallExampleAgent(BaseAgent):
         self._provider.force_flush()
 
     async def close(self) -> None:
-        self._provider.shutdown()
+        if self._provider is not None:
+            self._provider.shutdown()

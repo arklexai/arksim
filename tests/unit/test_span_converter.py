@@ -3,8 +3,8 @@
 
 from __future__ import annotations
 
+from arksim.tracing._attrs import get_attr
 from arksim.tracing.span_converter import (
-    _get_attr,
     span_to_tool_call,
     spans_to_tool_calls,
 )
@@ -177,23 +177,23 @@ class TestSpanToToolCall:
 
 
 class TestGetAttrFalsyValues:
-    """Verify _get_attr handles falsy OTLP attribute values correctly."""
+    """Verify get_attr handles falsy OTLP attribute values correctly."""
 
     def test_empty_string_preserved(self) -> None:
         attrs = [{"key": "k", "value": {"stringValue": ""}}]
-        assert _get_attr(attrs, "k") == ""
+        assert get_attr(attrs, "k") == ""
 
     def test_zero_int_preserved(self) -> None:
         attrs = [{"key": "k", "value": {"intValue": 0}}]
-        assert _get_attr(attrs, "k") == "0"
+        assert get_attr(attrs, "k") == "0"
 
     def test_false_bool_preserved(self) -> None:
         attrs = [{"key": "k", "value": {"boolValue": False}}]
-        assert _get_attr(attrs, "k") == "False"
+        assert get_attr(attrs, "k") == "False"
 
     def test_missing_key_returns_none(self) -> None:
         attrs = [{"key": "other", "value": {"stringValue": "val"}}]
-        assert _get_attr(attrs, "k") is None
+        assert get_attr(attrs, "k") is None
 
 
 class TestSpansToToolCalls:
