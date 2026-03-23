@@ -409,6 +409,90 @@
             letter-spacing: 0.3px;
         }
 
+        .qual-bar-wrapper .failure-bar-row {
+            cursor: pointer;
+            border-radius: 6px;
+            padding: 4px 8px;
+            transition: background 0.15s;
+            user-select: none;
+        }
+        .qual-bar-wrapper .failure-bar-row:hover {
+            background: #f1f5f9;
+        }
+        .qual-bar-wrapper .qual-expand-icon {
+            font-size: 18px;
+            color: #94a3b8;
+            transition: transform 0.2s ease, color 0.2s ease;
+            margin-left: 4px;
+            flex-shrink: 0;
+        }
+        .qual-bar-wrapper .failure-bar-row:hover .qual-expand-icon {
+            color: #475569;
+        }
+        .qual-bar-wrapper.expanded .qual-expand-icon {
+            transform: rotate(180deg);
+            color: #3b82f6;
+        }
+        .qual-turn-details {
+            display: none;
+            margin: 0 0 12px 0;
+            padding: 8px 12px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #334155;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .qual-turn-details.open {
+            display: block;
+        }
+        .qual-turn-details .qual-turn-group {
+            margin-bottom: 6px;
+        }
+        .qual-turn-details .qual-turn-group:last-child {
+            margin-bottom: 0;
+        }
+        .qual-turn-details .qual-turn-conv-label {
+            font-weight: 600;
+            font-size: 12px;
+            color: #334155;
+            margin-bottom: 4px;
+        }
+        .qual-turn-details .qual-turn-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+        .qual-turn-chip {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 8px;
+            border-radius: 999px;
+            background-color: #eff6ff;
+            color: #1d4ed8;
+            font-size: 11px;
+            font-weight: 500;
+            border: 1px solid #bfdbfe;
+            cursor: pointer;
+            transition: background-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .qual-turn-chip:hover {
+            background-color: #dbeafe;
+            color: #1e3a8a;
+            box-shadow: 0 1px 3px rgba(37, 99, 235, 0.3);
+        }
+        .qual-turn-details .qual-turn-empty {
+            color: #94a3b8;
+            font-style: italic;
+        }
+        .message-wrapper.highlight-turn > .message-container > .message-bubble {
+            box-shadow: 0 0 0 2px #3b82f6;
+            border-radius: 12px;
+            transition: box-shadow 0.3s ease;
+        }
+
         /* Table Styles */
         .table-section {
             margin-top: 40px;
@@ -1834,7 +1918,7 @@
         }
 
         // Open modal with conversation details
-        function openModal(chatId) {
+        function openModal(chatId, highlightTurnId) {
             // Extract the numeric ID from chat_id (e.g., "conv_0" -> 0)
             const numericId = parseInt(chatId.replace('conv_', ''));
 
@@ -1962,10 +2046,9 @@
                 // For agent messages, add expandable UI
                 let expandBtnHtml = '';
                 let extraInfoHtml = '';
+                const currentTurnId = agentTurnIndex;
 
                 if (!isUser) {
-                    // Find corresponding per_turn data for this agent message
-                    const currentTurnId = agentTurnIndex;
                     const perTurnRow = perTurnData.find(row =>
                         row.chat_id === chatId &&
                         parseInt(row.turn_id) === currentTurnId
@@ -2074,8 +2157,12 @@
                     agentTurnIndex++;
                 }
 
+                const turnAttr = !isUser ? ` data-turn-id="${currentTurnId}"` : '';
+                const highlightClass = (!isUser && highlightTurnId !== undefined && currentTurnId === highlightTurnId)
+                    ? ' highlight-turn' : '';
+
                 modalContent += `
-                    <div class="message-wrapper ${message.role === 'simulated_user' ? 'user' : message.role}">
+                    <div class="message-wrapper ${message.role === 'simulated_user' ? 'user' : message.role}${highlightClass}"${turnAttr}>
                         <div class="message-container">
                             <div class="message-avatar">${avatar}</div>
                             <div class="message-bubble">
@@ -2094,10 +2181,22 @@
             modalBody.innerHTML = modalContent;
             modal.classList.add('show');
 
-            // Reset scroll position to top
+            // Scroll to highlighted turn, or reset to top
             const modalContentElement = modal.querySelector('.modal-content');
             if (modalContentElement) {
-                modalContentElement.scrollTop = 0;
+                if (highlightTurnId !== undefined) {
+                    const target = modalBody.querySelector(`.message-wrapper[data-turn-id="${highlightTurnId}"]`);
+                    if (target) {
+                        // Let the modal render, then scroll
+                        requestAnimationFrame(() => {
+                            target.scrollIntoView({ block: 'center' });
+                        });
+                    } else {
+                        modalContentElement.scrollTop = 0;
+                    }
+                } else {
+                    modalContentElement.scrollTop = 0;
+                }
             }
         }
 
@@ -2293,12 +2392,14 @@
                 group.appendChild(nameEl);
 
                 const entries = Object.entries(labels); // already sorted desc by count
-                const maxCount = Math.max(...entries.map(([, v]) => v.occurrences));
 
                 entries.forEach(([label, item], idx) => {
                     const metricColors = QUAL_LABEL_COLORS[metricName] || {};
                     const color = metricColors[label] || QUAL_PALETTE[idx % QUAL_PALETTE.length];
-                    const barWidth = maxCount > 0 ? (item.occurrences / maxCount) * 100 : 0;
+                    const barWidth = item.percentage;
+
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'qual-bar-wrapper';
 
                     const row = document.createElement('div');
                     row.className = 'failure-bar-row';
@@ -2310,8 +2411,49 @@
                             </div>
                         </div>
                         <div class="failure-bar-stat">${item.percentage}%</div>
+                        <span class="qual-expand-icon material-icons">expand_more</span>
                     `;
-                    group.appendChild(row);
+
+                    const details = document.createElement('div');
+                    details.className = 'qual-turn-details';
+
+                    // Find matching turns from perTurnData
+                    const isAbf = metricName === 'agent_behavior_failure';
+                    const matchingTurns = perTurnData.filter(t => {
+                        if (isAbf) return t.agent_behavior_failure_label === label;
+                        return (t.qual_scores || []).some(
+                            q => q.name === metricName && q.value === label
+                        );
+                    });
+
+                    if (matchingTurns.length === 0) {
+                        details.innerHTML = '<div class="qual-turn-empty">No matching turns found</div>';
+                    } else {
+                        // Group turns by conversation
+                        const grouped = {};
+                        matchingTurns.forEach(t => {
+                            if (!grouped[t.chat_id]) grouped[t.chat_id] = [];
+                            grouped[t.chat_id].push(t.turn_id);
+                        });
+                        details.innerHTML = Object.entries(grouped).map(([chatId, turnIds]) =>
+                            `<div class="qual-turn-group">` +
+                            `<div class="qual-turn-conv-label">${escapeHtml(chatLabel(chatId))}</div>` +
+                            `<div class="qual-turn-chips">` +
+                            turnIds.map(tid =>
+                                `<button class="qual-turn-chip" data-chat-id="${escapeHtml(chatId)}" data-turn-id="${tid}" onclick="openModal(this.getAttribute('data-chat-id'), parseInt(this.getAttribute('data-turn-id')))">Turn ${tid}</button>`
+                            ).join('') +
+                            `</div></div>`
+                        ).join('');
+                    }
+
+                    row.addEventListener('click', () => {
+                        const isOpen = details.classList.toggle('open');
+                        wrapper.classList.toggle('expanded', isOpen);
+                    });
+
+                    wrapper.appendChild(row);
+                    wrapper.appendChild(details);
+                    group.appendChild(wrapper);
                 });
 
                 container.appendChild(group);
