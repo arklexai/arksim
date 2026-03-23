@@ -68,14 +68,13 @@ This example demonstrates **trajectory matching**, which compares the agent's ac
 
 ### Scenarios
 
-The 8 scenarios cover all 4 match modes with authentication flow variations:
+The 7 scenarios cover all 4 match modes with authentication flow variations:
 
 | Scenario | Mode | What it tests |
 |----------|------|---------------|
-| `order_status_check` | `contains` | Basic tool call with extras allowed |
-| `cancel_processing_order` | `unordered` | Both tools required, any order |
-| `product_search_with_budget` | `within` | Agent restricted to allowed tool set |
-| `nonexistent_order_lookup` | `contains` | Error path with extras allowed |
+| `order_status_check` | `contains` | Auth + order lookup, extras allowed |
+| `product_search_with_budget` | `within` | Agent restricted to search only |
+| `nonexistent_order_lookup` | `contains` | Auth + error path, extras allowed |
 | `auth_cancel_order` | `strict` | Full auth flow in exact order |
 | `auth_check_order` | `unordered` | Auth + lookup, any order |
 | `auth_product_search` | `contains` | Auth required, extras allowed |
