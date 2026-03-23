@@ -5,6 +5,8 @@ Evaluator package for agent and user evaluation.
 
 from __future__ import annotations
 
+from arksim.scenario.entities import AssertionType, ToolCallsAssertion
+
 from .base_metric import (
     ChatMessage,
     QualitativeMetric,
@@ -43,4 +45,6 @@ __all__ = [
     "run_evaluation",
     "TrajectoryResult",
     "match_trajectory",
+    "AssertionType",
+    "ToolCallsAssertion",
 ]

@@ -4,7 +4,11 @@
 from __future__ import annotations
 
 from arksim.evaluator.trajectory_matching import match_trajectory
-from arksim.scenario.entities import ExpectedToolCall
+from arksim.scenario.entities import (
+    AssertionType,
+    ExpectedToolCall,
+    ToolCallsAssertion,
+)
 from arksim.simulation_engine.tool_types import ToolCall
 
 
@@ -342,11 +346,16 @@ class TestConversationLevelTrajectory:
                     goal="Cancel order",
                     agent_context="ctx",
                     user_profile="profile",
-                    expected_tool_calls=[
-                        _etc("get_order"),
-                        _etc("cancel_order"),
+                    assertions=[
+                        ToolCallsAssertion(
+                            type="tool_calls",
+                            expected=[
+                                _etc("get_order"),
+                                _etc("cancel_order"),
+                            ],
+                            match_mode="strict",
+                        ),
                     ],
-                    match_mode="strict",
                 ),
             ],
         )
@@ -443,11 +452,16 @@ class TestConversationLevelTrajectory:
                     goal="Cancel order",
                     agent_context="ctx",
                     user_profile="profile",
-                    expected_tool_calls=[
-                        _etc("get_order"),
-                        _etc("cancel_order"),
+                    assertions=[
+                        ToolCallsAssertion(
+                            type="tool_calls",
+                            expected=[
+                                _etc("get_order"),
+                                _etc("cancel_order"),
+                            ],
+                            match_mode="strict",
+                        ),
                     ],
-                    match_mode="strict",
                 ),
             ],
         )
@@ -546,7 +560,7 @@ class TestConversationLevelTrajectory:
                     goal="Check order",
                     agent_context="ctx",
                     user_profile="profile",
-                    # No expected_tool_calls
+                    # No assertions
                 ),
             ],
         )
@@ -623,11 +637,16 @@ class TestConversationLevelTrajectory:
                     goal="Cancel order",
                     agent_context="ctx",
                     user_profile="profile",
-                    expected_tool_calls=[
-                        _etc("get_order"),
-                        _etc("cancel_order"),
+                    assertions=[
+                        ToolCallsAssertion(
+                            type="tool_calls",
+                            expected=[
+                                _etc("get_order"),
+                                _etc("cancel_order"),
+                            ],
+                            match_mode="unordered",
+                        ),
                     ],
-                    match_mode="unordered",
                 ),
             ],
         )
@@ -682,3 +701,88 @@ class TestConversationLevelTrajectory:
         turn = turn_results["c1"][0]
         assert turn.turn_behavior_failure == "disobey user request"
         assert "[Trajectory]" in turn.turn_behavior_failure_reason
+
+
+# ── Assertion schema tests ──
+
+
+class TestAssertionSchema:
+    """Tests for the typed assertions list on Scenario."""
+
+    def test_find_assertion_returns_tool_calls(self) -> None:
+        from arksim.scenario.entities import Scenario
+
+        scenario = Scenario(
+            scenario_id="s1",
+            user_id="u1",
+            goal="g",
+            agent_context="ctx",
+            user_profile="profile",
+            assertions=[
+                ToolCallsAssertion(
+                    type="tool_calls",
+                    expected=[_etc("get_order")],
+                    match_mode="contains",
+                ),
+            ],
+        )
+        result = scenario.find_assertion(AssertionType.TOOL_CALLS)
+        assert result is not None
+        assert isinstance(result, ToolCallsAssertion)
+        assert result.expected[0].name == "get_order"
+        assert result.match_mode == "contains"
+
+    def test_find_assertion_returns_none_when_empty(self) -> None:
+        from arksim.scenario.entities import Scenario
+
+        scenario = Scenario(
+            scenario_id="s1",
+            user_id="u1",
+            goal="g",
+            agent_context="ctx",
+            user_profile="profile",
+        )
+        assert scenario.find_assertion(AssertionType.TOOL_CALLS) is None
+
+    def test_find_assertion_returns_none_for_missing_type(self) -> None:
+        from arksim.scenario.entities import Scenario
+
+        scenario = Scenario(
+            scenario_id="s1",
+            user_id="u1",
+            goal="g",
+            agent_context="ctx",
+            user_profile="profile",
+            assertions=[
+                ToolCallsAssertion(
+                    type="tool_calls",
+                    expected=[_etc("get_order")],
+                ),
+            ],
+        )
+        # Ask for a type that doesn't exist
+        assert scenario.find_assertion("outcome") is None
+
+    def test_discriminated_union_parsing_from_dict(self) -> None:
+        from arksim.scenario.entities import Scenario
+
+        data = {
+            "scenario_id": "s1",
+            "user_id": "u1",
+            "goal": "g",
+            "agent_context": "ctx",
+            "user_profile": "profile",
+            "assertions": [
+                {
+                    "type": "tool_calls",
+                    "expected": [{"name": "get_order"}],
+                    "match_mode": "strict",
+                }
+            ],
+        }
+        scenario = Scenario.model_validate(data)
+        assert len(scenario.assertions) == 1
+        tc = scenario.assertions[0]
+        assert isinstance(tc, ToolCallsAssertion)
+        assert tc.expected[0].name == "get_order"
+        assert tc.match_mode == "strict"

@@ -14,7 +14,7 @@ from tqdm import tqdm
 
 from arksim.llms.chat import LLM
 from arksim.scenario import Scenarios
-from arksim.scenario.entities import ExpectedToolCall
+from arksim.scenario.entities import AssertionType, ExpectedToolCall
 from arksim.simulation_engine import Conversation, Simulation
 from arksim.utils.module_loader import load_module_from_file
 from arksim.utils.output import load_json_file, save_json_file
@@ -75,10 +75,11 @@ class Evaluator:
         self._scenario_expected: dict[str, tuple[list[ExpectedToolCall], str]] = {}
         if scenarios:
             for s in scenarios.scenarios:
-                if s.expected_tool_calls:
+                tc_assertion = s.find_assertion(AssertionType.TOOL_CALLS)
+                if tc_assertion:
                     self._scenario_expected[s.scenario_id] = (
-                        s.expected_tool_calls,
-                        s.match_mode,
+                        tc_assertion.expected,
+                        tc_assertion.match_mode,
                     )
 
         logger.info(f"Evaluator initialized: num_workers={params.num_workers}")
@@ -147,7 +148,7 @@ class Evaluator:
         """Run conversation-level trajectory matching and attribute failures.
 
         Aggregates all tool calls across a conversation's turns, matches
-        against the scenario's expected_tool_calls, and attributes any
+        against the scenario's tool_calls assertions, and attributes any
         failure to the last turn that had tool calls.
 
         Note: when ``num_convos_per_scenario > 1``, every conversation
@@ -714,7 +715,7 @@ def run_evaluation(
         simulation: Optional in-memory simulation output from run_simulation.
             If not provided, load from settings.simulation_file_path.
         scenarios: Optional in-memory scenarios. Used for trajectory matching
-            (when scenarios define expected_tool_calls) and HTML report context.
+            (when scenarios define tool_calls assertions) and HTML report context.
             If not provided, load from settings.scenario_file_path.
     """
     if simulation is None:
