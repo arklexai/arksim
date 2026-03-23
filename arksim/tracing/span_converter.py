@@ -49,7 +49,7 @@ def _first_attr(attrs: list[dict[str, Any]], *keys: str) -> str | None:
     return None
 
 
-def _parse_arguments(raw: str | None) -> dict[str, Any]:
+def _parse_arguments(raw: str | None, span_name: str = "") -> dict[str, Any]:
     """Parse a JSON string into a dict, returning empty dict on failure."""
     if not raw:
         return {}
@@ -57,6 +57,11 @@ def _parse_arguments(raw: str | None) -> dict[str, Any]:
         parsed = json.loads(raw)
         return parsed if isinstance(parsed, dict) else {}
     except (json.JSONDecodeError, TypeError):
+        logger.warning(
+            "Malformed JSON in tool call arguments for span %r: %s",
+            span_name,
+            raw[:200],
+        )
         return {}
 
 
@@ -83,7 +88,7 @@ def span_to_tool_call(span: dict[str, Any]) -> ToolCall | None:
         "tool_call.function.arguments",
         "tool.parameters",
     )
-    arguments = _parse_arguments(raw_args)
+    arguments = _parse_arguments(raw_args, span_name=span.get("name", ""))
 
     # Extract result: OTel GenAI > OpenInference output.value
     result = _first_attr(attrs, "gen_ai.tool.call.result", "output.value")

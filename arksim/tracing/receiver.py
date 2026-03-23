@@ -297,6 +297,20 @@ class TraceReceiver:
                     reader.readexactly(content_length), timeout=30
                 )
 
+            # Reject protobuf when opentelemetry-proto is not installed
+            is_protobuf = "protobuf" in content_type or "proto" in content_type
+            if is_protobuf and not _HAS_PROTOBUF:
+                logger.warning(
+                    "Received protobuf payload but opentelemetry-proto is not "
+                    "installed. Install with: pip install arksim[otel]"
+                )
+                self._send_response(
+                    writer,
+                    HTTPStatus.UNSUPPORTED_MEDIA_TYPE,
+                    b'{"error": "Protobuf not supported. Install with: pip install arksim[otel]"}',
+                )
+                return
+
             await self._handle_traces(body, content_type)
             self._send_response(writer, HTTPStatus.OK, b"{}")
 
@@ -331,12 +345,6 @@ class TraceReceiver:
         is_protobuf = "protobuf" in content_type or "proto" in content_type
 
         if is_protobuf:
-            if not _HAS_PROTOBUF:
-                logger.warning(
-                    "Received protobuf payload but opentelemetry-proto is not "
-                    "installed. Install it with: pip install opentelemetry-proto"
-                )
-                return
             try:
                 payload = _parse_protobuf_payload(body)
             except Exception:
