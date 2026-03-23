@@ -58,9 +58,9 @@
             "user_id": "user_001",
             "goal": "Verify your identity and then cancel order ORD-1002.",
             "agent_context": "You are a customer service assistant for an online store with access to customer lookup, order lookup, product search, order cancellation, and identity verification tools. For cancellations, always verify the customer's identity first by sending a verification code to their email and then verifying it before proceeding.",
-            "user_profile": "You are Alice Johnson (alice@example.com) who is security-conscious and expects the agent to verify your identity before making changes. You are a 32-year-old premium customer. When asked for a verification code, you will provide '123456'. You want to cancel order ORD-1002.",
+            "user_profile": "You are Alice Johnson (alice@example.com) who is security-conscious and expects the agent to verify your identity before making changes. You are a 32-year-old premium customer.",
             "knowledge": [
-                {"content": "Alice Johnson's email is alice@example.com. Her verification code is 123456. Order ORD-1002 contains ThinkPad X1 Carbon x1, totaling $1299.00. The order status is 'processing' and can be cancelled. The agent must verify identity before cancelling: send_verification_code -> verify_customer -> get_order -> cancel_order."}
+                {"content": "Alice Johnson's email is alice@example.com. Her verification code is 123456. When asked for a verification code, provide '123456'. Order ORD-1002 contains ThinkPad X1 Carbon x1, totaling $1299.00. The order status is 'processing' and can be cancelled. The agent must verify identity before cancelling: send_verification_code -> verify_customer -> get_order -> cancel_order."}
             ],
             "assertions": [
                 {"type": "tool_calls", "expected": [{"name": "send_verification_code"}, {"name": "verify_customer"}, {"name": "get_order"}, {"name": "cancel_order"}], "match_mode": "strict"}
@@ -71,9 +71,9 @@
             "user_id": "user_002",
             "goal": "Verify your identity and check order ORD-1003.",
             "agent_context": "You are a customer service assistant for an online store with access to customer lookup, order lookup, product search, order cancellation, and identity verification tools. For order lookups on behalf of a customer, verify the customer's identity first.",
-            "user_profile": "You are Bob Smith (bob@example.com) who wants to check on a recent order. You are a 28-year-old standard customer. When asked for a verification code, you will provide '789012'.",
+            "user_profile": "You are Bob Smith (bob@example.com) who wants to check on a recent order. You are a 28-year-old standard customer.",
             "knowledge": [
-                {"content": "Bob Smith's email is bob@example.com. His verification code is 789012. Order ORD-1003 is a USB-C Hub x1, totaling $59.99, status 'delivered'. The agent should verify Bob's identity and look up the order. All three tools (send_verification_code, verify_customer, get_order) are required but the order does not matter."}
+                {"content": "Bob Smith's email is bob@example.com. His verification code is 789012. When asked for a verification code, provide '789012'. Order ORD-1003 is a USB-C Hub x1, totaling $59.99, status 'delivered'. The agent should verify Bob's identity and look up the order. All three tools (send_verification_code, verify_customer, get_order) are required but the order does not matter."}
             ],
             "assertions": [
                 {"type": "tool_calls", "expected": [{"name": "send_verification_code"}, {"name": "verify_customer"}, {"name": "get_order"}], "match_mode": "unordered"}
@@ -84,9 +84,9 @@
             "user_id": "user_001",
             "goal": "Verify your identity and then browse headphones.",
             "agent_context": "You are a customer service assistant for an online store with access to customer lookup, order lookup, product search, order cancellation, and identity verification tools. When a customer asks to browse products, verify their identity first so you can provide personalized recommendations.",
-            "user_profile": "You are Alice Johnson (alice@example.com), a 32-year-old premium customer interested in headphones. When asked for a verification code, you will provide '123456'. You want personalized product recommendations after verifying your identity.",
+            "user_profile": "You are Alice Johnson (alice@example.com), a 32-year-old premium customer interested in headphones.",
             "knowledge": [
-                {"content": "Alice Johnson's email is alice@example.com. Her verification code is 123456. The store has Sony WH-1000XM5 headphones at $249.99 (in stock). The agent must at least verify the customer (send_verification_code + verify_customer). It may also call search_products or lookup_customer."}
+                {"content": "Alice Johnson's email is alice@example.com. Her verification code is 123456. When asked for a verification code, provide '123456'. The store has Sony WH-1000XM5 headphones at $249.99 (in stock). The agent must at least verify the customer (send_verification_code + verify_customer). It may also call search_products or lookup_customer."}
             ],
             "assertions": [
                 {"type": "tool_calls", "expected": [{"name": "send_verification_code"}, {"name": "verify_customer"}], "match_mode": "contains"}
@@ -97,9 +97,9 @@
             "user_id": "user_002",
             "goal": "Verify your identity and look up your account information.",
             "agent_context": "You are a customer service assistant for an online store with access to customer lookup, order lookup, product search, order cancellation, and identity verification tools. For account information requests, verify the customer first and then look up their profile. Do not search products or look up orders unless asked.",
-            "user_profile": "You are Bob Smith (bob@example.com), a 28-year-old standard customer who wants to check your account details. When asked for a verification code, you will provide '789012'. You only want your account information, not order details.",
+            "user_profile": "You are Bob Smith (bob@example.com), a 28-year-old standard customer who wants to check your account details.",
             "knowledge": [
-                {"content": "Bob Smith's email is bob@example.com. His verification code is 789012. Bob is a standard-tier customer. The agent should only use identity verification and customer lookup tools. Any calls to get_order, cancel_order, or search_products would be unexpected."}
+                {"content": "Bob Smith's email is bob@example.com. His verification code is 789012. When asked for a verification code, provide '789012'. Bob is a standard-tier customer. The agent should only use identity verification and customer lookup tools. Any calls to get_order, cancel_order, or search_products would be unexpected."}
             ],
             "assertions": [
                 {"type": "tool_calls", "expected": [{"name": "send_verification_code"}, {"name": "verify_customer"}, {"name": "lookup_customer"}], "match_mode": "within"}
