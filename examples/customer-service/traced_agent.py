@@ -3,7 +3,9 @@
 
 Same SQLite-backed agent as custom_agent.py, but instead of returning
 tool calls in AgentResponse, it pushes them as OTel spans to arksim's
-trace receiver. This exercises the full trace receiver pipeline:
+trace receiver. This demonstrates the trace receiver capture path.
+custom_agent.py demonstrates the AgentResponse capture path. Both
+can coexist since the simulator deduplicates by ID and (name, args).
 
     Agent executes tools -> OTel spans pushed -> arksim captures -> evaluator scores
 

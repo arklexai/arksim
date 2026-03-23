@@ -6,7 +6,8 @@ tool call spans, and buffers them keyed by ``(conversation_id, turn_id)`` so
 the simulator can collect them after each agent turn.
 
 Protobuf support requires ``opentelemetry-proto`` (installed automatically
-with any OTel exporter package). Falls back to JSON-only when unavailable.
+with any OTel exporter package, or via ``pip install arksim[otel]``).
+Falls back to JSON-only when unavailable; protobuf payloads get HTTP 415.
 """
 
 from __future__ import annotations
