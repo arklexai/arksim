@@ -32,7 +32,7 @@ dependencies = [
 
 [project.urls]
 Homepage = "https://github.com/arklexai/arksim"
-Documentation = "https://docs.arklex.ai/overview"
+Documentation = "https://docs.arklex.ai/main/overview"
 Repository = "https://github.com/arklexai/arksim"
 Issues = "https://github.com/arklexai/arksim/issues"
 Changelog = "https://github.com/arklexai/arksim/blob/main/CHANGELOG.md"

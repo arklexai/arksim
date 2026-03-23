@@ -10,14 +10,14 @@
     <a href="https://pypi.org/project/arksim/"><img alt="PyPI" src="https://img.shields.io/pypi/v/arksim.svg?cacheSeconds=300"></a>
     <a href="https://www.python.org/downloads/"><img alt="Python" src="https://img.shields.io/pypi/pyversions/arksim.svg?cacheSeconds=300"></a>
     <a href="https://github.com/arklexai/arksim/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/badge/license-Apache--2.0-blue.svg"></a>
-    <a href="https://docs.arklex.ai/overview"><img alt="Docs" src="https://img.shields.io/badge/docs-arklex.ai-brightgreen.svg"></a>
+    <a href="https://docs.arklex.ai/main/overview"><img alt="Docs" src="https://img.shields.io/badge/docs-arklex.ai-brightgreen.svg"></a>
     <a href="https://github.com/arklexai/arksim/stargazers"><img alt="GitHub Stars" src="https://img.shields.io/github/stars/arklexai/arksim.svg?style=social"></a>
     <a href="https://github.com/arklexai/arksim/issues"><img alt="GitHub Issues" src="https://img.shields.io/github/issues/arklexai/arksim.svg"></a>
     <a href="https://github.com/arklexai/arksim/pulls"><img alt="PRs Welcome" src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg"></a>
     <a href="https://arxiv.org/abs/2510.11997"><img alt="2510.11997" src="https://img.shields.io/badge/arXiv-2510.11997-b31b1b.svg"></a>
   </p>
   <p align="center">
-    <a href="https://docs.arklex.ai/overview">Documentation</a> · <a href="examples/">Examples</a> · <a href="https://github.com/arklexai/arksim/issues">Report a Bug</a>
+    <a href="https://docs.arklex.ai/main/overview">Documentation</a> · <a href="examples/">Examples</a> · <a href="https://github.com/arklexai/arksim/issues">Report a Bug</a>
   </p>
 </p>
 
@@ -392,7 +392,7 @@ Both approaches upload two artifacts after every run (pass or fail):
 - **`arksim-html-report`** - download, unzip, and open `final_report.html` in your browser
 - **`arksim-full-results`** - raw simulation and evaluation JSONs for programmatic analysis
 
-See [examples/ci/](examples/ci/) for full templates and [CI Integration docs](https://docs.arklex.ai/ci-integration) for a step-by-step setup guide.
+See [examples/ci/](examples/ci/) for full templates and [CI Integration docs](https://docs.arklex.ai/main/ci-integration) for a step-by-step setup guide.
 
 ---
 
