@@ -28,6 +28,10 @@ logger = logging.getLogger(__name__)
 # Maximum accepted payload size (10 MB). Requests exceeding this are rejected.
 _MAX_PAYLOAD_BYTES = 10 * 1024 * 1024
 
+# Short delay after the first trace arrives to catch trailing spans
+# from multi-batch pushes (e.g. parallel tool execution).
+_SETTLE_SECONDS = 0.1
+
 # Try to import protobuf support for parsing real OTel SDK payloads.
 try:
     from google.protobuf.json_format import MessageToDict
@@ -177,26 +181,48 @@ class TraceReceiver:
             await self._server.wait_closed()
             self._server = None
             logger.info("Trace receiver stopped")
+        self._spans.clear()
+        self._events.clear()
 
     async def wait_for_traces(
         self, conversation_id: str, turn_id: int
     ) -> list[ToolCall]:
         """Wait for tool call spans for the given conversation turn.
 
-        Always waits the full ``wait_timeout`` to allow multi-batch trace
-        pushes to arrive. Returns collected ToolCall objects. If no traces
-        arrive within the timeout, logs a warning and returns an empty list.
+        Uses event-based signaling with a settling window. When traces
+        arrive, waits an additional short period to catch trailing spans
+        from multi-batch pushes, then drains immediately. Falls back to
+        the full ``wait_timeout`` if no traces arrive.
         """
         key = (conversation_id, turn_id)
 
-        # Wait the full timeout so that agents pushing traces in multiple
-        # batches (e.g. parallel tool execution) have time to deliver all
-        # spans before we drain the buffer.
-        await asyncio.sleep(self.wait_timeout)
+        async with self._lock:
+            event = self._events.setdefault(key, asyncio.Event())
 
+        # Wait for the first trace to arrive, up to wait_timeout
+        timed_out = False
+        try:
+            await asyncio.wait_for(event.wait(), timeout=self.wait_timeout)
+        except asyncio.TimeoutError:
+            timed_out = True
+
+        if not timed_out:
+            # Traces arrived; settle briefly to catch trailing batches
+            await asyncio.sleep(_SETTLE_SECONDS)
+
+        # Drain buffer and clean up stale entries for this conversation
         async with self._lock:
             spans = self._spans.pop(key, [])
             self._events.pop(key, None)
+            # Clean up any stale entries for older turns of this conversation.
+            # Safe because each conversation runs on a single coroutine,
+            # so turns are always awaited sequentially.
+            stale_keys = [
+                k for k in self._spans if k[0] == conversation_id and k[1] < turn_id
+            ]
+            for k in stale_keys:
+                del self._spans[k]
+                self._events.pop(k, None)
 
         tool_calls = spans_to_tool_calls(spans)
         if tool_calls:
@@ -208,7 +234,9 @@ class TraceReceiver:
             )
         else:
             logger.warning(
-                "No tool call traces received for (%s, %d) within %.1fs timeout",
+                "No tool call traces received for (%s, %d) within %.1fs timeout. "
+                "Verify the agent sets arksim.conversation_id and arksim.turn_id "
+                "as span/resource attributes.",
                 conversation_id,
                 turn_id,
                 self.wait_timeout,
