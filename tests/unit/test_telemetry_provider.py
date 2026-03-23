@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import pytest
 
+pytest.importorskip("opentelemetry", reason="opentelemetry SDK not installed")
+
 from arksim.telemetry.config import TelemetryConfig
 from arksim.telemetry.provider import (
     _NoOpSpan,
