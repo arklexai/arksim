@@ -16,6 +16,7 @@ from arksim.llms.chat import LLM
 from arksim.scenario import Scenarios
 from arksim.scenario.entities import AssertionType, ExpectedToolCall
 from arksim.simulation_engine import Conversation, Simulation
+from arksim.telemetry.instrumentation import eval_conversation_span, evaluation_span
 from arksim.utils.module_loader import load_module_from_file
 from arksim.utils.output import load_json_file, save_json_file
 
@@ -229,6 +230,23 @@ class Evaluator:
         simulation_id = simulation.simulation_id
         logger.info(f"Starting evaluation of {len(conversations)} conversations")
 
+        with evaluation_span(
+            evaluation_id="pending",
+            simulation_id=simulation_id,
+            num_conversations=len(conversations),
+        ) as eval_span:
+            return self._evaluate_inner(
+                conversations, simulation_id, on_progress, eval_span
+            )
+
+    def _evaluate_inner(
+        self,
+        conversations: list[Conversation],
+        simulation_id: str,
+        on_progress: Callable[[int, int], None] | None,
+        eval_span: object,
+    ) -> Evaluation:
+        """Core evaluation logic (extracted to keep indentation manageable)."""
         # Pre-process to count total turns for accurate progress tracking
         processed_entries: list[tuple[list[TurnItem], ConvoItem]] = []
         total_turns = 0
@@ -333,6 +351,21 @@ class Evaluator:
                 convo_item = gc_futures[future]
                 try:
                     convo_eval = future.result()
+                    with eval_conversation_span(
+                        conversation_id=convo_eval.conversation_id,
+                    ) as c_span:
+                        c_span.set_attribute(
+                            "arksim.evaluation.overall_agent_score",
+                            convo_eval.overall_agent_score,
+                        )
+                        c_span.set_attribute(
+                            "arksim.evaluation.goal_completion_score",
+                            convo_eval.goal_completion_score,
+                        )
+                        c_span.set_attribute(
+                            "arksim.evaluation.status",
+                            convo_eval.evaluation_status,
+                        )
                     convo_score_list.append(convo_eval)
                 except Exception as e:
                     logger.error(
@@ -380,6 +413,11 @@ class Evaluator:
         )
         self.total_turns = sum(len(conv.turn_scores) for conv in convo_score_list)
         self.total_conversations = len(conversations)
+
+        # Update span with the actual evaluation ID
+        eval_span.set_attribute(  # type: ignore[union-attr]
+            "arksim.evaluation.id", self.evaluation_results.evaluation_id
+        )
 
         logger.info(
             f"Evaluation complete: {self.total_conversations} conversations, "
@@ -728,6 +766,13 @@ def run_evaluation(
             load_json_file(settings.simulation_file_path)
         )
 
+    # Set up telemetry if configured
+    tel_cfg = settings.telemetry
+    if tel_cfg and tel_cfg.enabled:
+        from arksim.telemetry import setup_telemetry
+
+        setup_telemetry(tel_cfg)
+
     # Load scenarios early so they're available for both trajectory matching
     # and (later) the HTML report.
     if scenarios is None and settings.scenario_file_path:
@@ -739,65 +784,73 @@ def run_evaluation(
                 "scenario context will be unavailable"
             )
 
-    llm = LLM(
-        model=settings.model,
-        provider=settings.provider,
-    )
-    custom_metrics, custom_qualitative_metrics = _load_custom_metrics(
-        settings.custom_metrics_file_paths
-    )
-
-    params = EvaluationParams(
-        output_dir=settings.output_dir,
-        num_workers=settings.num_workers,
-        custom_metrics=custom_metrics,
-        custom_qualitative_metrics=custom_qualitative_metrics,
-        metrics_to_run=settings.metrics_to_run or None,
-    )
-
-    evaluator = Evaluator(
-        params=params,
-        llm=llm,
-        scenarios=scenarios,
-    )
-    evaluator_output = evaluator.evaluate(simulation, on_progress=on_progress)
-    evaluator.display_evaluation_summary()
-    evaluator.save_results()
-
-    if settings.generate_html_report:
-        from arksim.utils.html_report.generate_html_report import (
-            HtmlReportParams,
-            generate_html_report,
+    try:
+        llm = LLM(
+            model=settings.model,
+            provider=settings.provider,
+        )
+        custom_metrics, custom_qualitative_metrics = _load_custom_metrics(
+            settings.custom_metrics_file_paths
         )
 
-        html_output_path = os.path.join(settings.output_dir, "final_report.html")
+        params = EvaluationParams(
+            output_dir=settings.output_dir,
+            num_workers=settings.num_workers,
+            custom_metrics=custom_metrics,
+            custom_qualitative_metrics=custom_qualitative_metrics,
+            metrics_to_run=settings.metrics_to_run or None,
+        )
 
-        logger.info("Generating HTML report...")
-        all_custom = list(custom_metrics) + list(custom_qualitative_metrics)
-        metric_descriptions = {
-            m.name: m.description for m in all_custom if m.description
-        }
-        metric_ranges = {m.name: tuple(m.score_range) for m in custom_metrics}
-        qual_label_colors = {
-            m.name: m.label_colors for m in custom_qualitative_metrics if m.label_colors
-        }
-        report_params = HtmlReportParams(
-            simulation=simulation,
-            evaluation=evaluator_output,
+        evaluator = Evaluator(
+            params=params,
+            llm=llm,
             scenarios=scenarios,
-            output_path=html_output_path,
-            chat_id_to_label=evaluator.chat_id_to_label,
-            metric_descriptions=metric_descriptions,
-            metric_ranges=metric_ranges,
-            qual_label_colors=qual_label_colors,
-            evaluation_model=settings.model,
-            evaluation_provider=settings.provider,
         )
-        generate_html_report(report_params)
+        evaluator_output = evaluator.evaluate(simulation, on_progress=on_progress)
+        evaluator.display_evaluation_summary()
+        evaluator.save_results()
 
-        logger.info("Successfully generated standalone HTML report!")
-        logger.info(
-            f"You can now open {os.path.abspath(html_output_path)} directly in your browser.",
-        )
+        if settings.generate_html_report:
+            from arksim.utils.html_report.generate_html_report import (
+                HtmlReportParams,
+                generate_html_report,
+            )
 
-    return evaluator_output
+            html_output_path = os.path.join(settings.output_dir, "final_report.html")
+
+            logger.info("Generating HTML report...")
+            all_custom = list(custom_metrics) + list(custom_qualitative_metrics)
+            metric_descriptions = {
+                m.name: m.description for m in all_custom if m.description
+            }
+            metric_ranges = {m.name: tuple(m.score_range) for m in custom_metrics}
+            qual_label_colors = {
+                m.name: m.label_colors
+                for m in custom_qualitative_metrics
+                if m.label_colors
+            }
+            report_params = HtmlReportParams(
+                simulation=simulation,
+                evaluation=evaluator_output,
+                scenarios=scenarios,
+                output_path=html_output_path,
+                chat_id_to_label=evaluator.chat_id_to_label,
+                metric_descriptions=metric_descriptions,
+                metric_ranges=metric_ranges,
+                qual_label_colors=qual_label_colors,
+                evaluation_model=settings.model,
+                evaluation_provider=settings.provider,
+            )
+            generate_html_report(report_params)
+
+            logger.info("Successfully generated standalone HTML report!")
+            logger.info(
+                f"You can now open {os.path.abspath(html_output_path)} directly in your browser.",
+            )
+
+        return evaluator_output
+    finally:
+        if tel_cfg and tel_cfg.enabled:
+            from arksim.telemetry import shutdown_telemetry
+
+            shutdown_telemetry()

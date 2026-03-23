@@ -16,6 +16,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, model_validat
 
 from arksim.config.utils import resolve_model_paths
 from arksim.constants import DEFAULT_MODEL, DEFAULT_PROVIDER
+from arksim.telemetry.config import TelemetryConfig
 from arksim.utils.concurrency import validate_num_workers
 
 from .base_metric import (
@@ -102,6 +103,10 @@ class EvaluationInput(BaseModel):
             "Any evaluated turn whose label appears in the list fails the run; "
             "turns where the metric did not run are skipped."
         ),
+    )
+    telemetry: TelemetryConfig | None = Field(
+        default=None,
+        description="OTel telemetry export configuration",
     )
 
     @model_validator(mode="before")
