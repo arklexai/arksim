@@ -356,3 +356,56 @@ async def test_trace_merge_nested_dict_arguments() -> None:
     tc_list = agent_msgs[0].get("tool_calls", [])
     # Should have 1 tool call (deduped by name+args), not crash with TypeError
     assert len(tc_list) == 1
+
+
+@pytest.mark.asyncio
+async def test_trace_merge_three_way_overlap() -> None:
+    """Agent returns A+B, traces return B'+C. Result should be A, B, C."""
+    receiver = AsyncMock()
+    receiver.wait_for_traces = AsyncMock(
+        return_value=[
+            ToolCall(id="span-b", name="lookup", arguments={"id": "42"}),
+            ToolCall(id="c", name="cancel", arguments={"id": "99"}),
+        ]
+    )
+
+    sim = _make_simulator(trace_receiver=receiver)
+
+    mock_agent = AsyncMock()
+    mock_agent.get_chat_id = AsyncMock(return_value="conv-1")
+    mock_agent.execute = AsyncMock(
+        return_value=AgentResponse(
+            content="result",
+            tool_calls=[
+                ToolCall(id="a", name="search", arguments={"q": "test"}),
+                ToolCall(id="b", name="lookup", arguments={"id": "42"}),
+            ],
+        )
+    )
+    mock_agent.close = AsyncMock()
+
+    sim.llm.call_async = AsyncMock(side_effect=["hello", "###STOP###"])
+
+    with patch(
+        "arksim.simulation_engine.simulator.create_agent",
+        return_value=mock_agent,
+    ):
+        state = await sim._run_single_conversation(
+            profile="test user",
+            goal="test goal",
+            knowledge=[{"content": "k1"}],
+            agent_context="context",
+            max_turns=3,
+            scenario_id="s1",
+        )
+
+    assert state is not None
+    agent_msgs = [m for m in state.conversation_history if m.get("role") == "user"]
+    assert len(agent_msgs) == 1
+    tc_list = agent_msgs[0].get("tool_calls", [])
+    assert len(tc_list) == 3
+    names = [tc["name"] for tc in tc_list]
+    assert names == ["search", "lookup", "cancel"]
+    ids = [tc["id"] for tc in tc_list]
+    assert "b" in ids
+    assert "span-b" not in ids

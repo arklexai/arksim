@@ -382,3 +382,132 @@ async def test_receiver_rejects_oversized_payload(_unused_port: int) -> None:
         assert b"413" in response
         writer.close()
         await writer.wait_closed()
+
+
+@pytest.mark.asyncio
+async def test_receiver_concurrent_wait_no_cross_contamination(
+    _unused_port: int,
+) -> None:
+    """Two concurrent wait_for_traces calls get only their own traces."""
+    port = _unused_port
+    async with TraceReceiver(port=port, wait_timeout=2.0) as receiver:
+        payload_a = _make_otlp_payload(
+            "conv-a",
+            0,
+            [
+                {
+                    "name": "tool_a",
+                    "spanId": "sa",
+                    "attributes": [
+                        {
+                            "key": "gen_ai.tool.name",
+                            "value": {"stringValue": "tool_a"},
+                        },
+                    ],
+                    "status": {},
+                }
+            ],
+        )
+        payload_b = _make_otlp_payload(
+            "conv-b",
+            0,
+            [
+                {
+                    "name": "tool_b",
+                    "spanId": "sb",
+                    "attributes": [
+                        {
+                            "key": "gen_ai.tool.name",
+                            "value": {"stringValue": "tool_b"},
+                        },
+                    ],
+                    "status": {},
+                }
+            ],
+        )
+        await _push_traces(port, payload_a)
+        await _push_traces(port, payload_b)
+
+        results = await asyncio.gather(
+            receiver.wait_for_traces("conv-a", 0),
+            receiver.wait_for_traces("conv-b", 0),
+        )
+
+        tc_a, tc_b = results
+        assert len(tc_a) == 1
+        assert tc_a[0].name == "tool_a"
+        assert len(tc_b) == 1
+        assert tc_b[0].name == "tool_b"
+
+
+class TestAttributePrecedence:
+    def test_span_level_overrides_resource_level(self) -> None:
+        """When both resource and span have arksim.conversation_id, span wins."""
+        payload = {
+            "resourceSpans": [
+                {
+                    "resource": {
+                        "attributes": [
+                            {
+                                "key": "arksim.conversation_id",
+                                "value": {"stringValue": "resource-conv"},
+                            },
+                            {
+                                "key": "arksim.turn_id",
+                                "value": {"intValue": "0"},
+                            },
+                        ]
+                    },
+                    "scopeSpans": [
+                        {
+                            "spans": [
+                                {
+                                    "name": "tool",
+                                    "spanId": "s1",
+                                    "attributes": [
+                                        {
+                                            "key": "arksim.conversation_id",
+                                            "value": {"stringValue": "span-conv"},
+                                        },
+                                    ],
+                                    "status": {},
+                                }
+                            ]
+                        }
+                    ],
+                }
+            ]
+        }
+        grouped = _extract_spans_with_routing(payload)
+        assert ("span-conv", 0) in grouped
+        assert ("resource-conv", 0) not in grouped
+
+
+@pytest.mark.asyncio
+async def test_receiver_415_when_protobuf_unavailable(_unused_port: int) -> None:
+    """Protobuf payload returns 415 when opentelemetry-proto is not installed."""
+    import arksim.tracing.receiver as recv_module
+
+    port = _unused_port
+    original = recv_module._HAS_PROTOBUF
+    recv_module._HAS_PROTOBUF = False
+    try:
+        async with TraceReceiver(port=port, wait_timeout=0.1):
+            reader, writer = await asyncio.open_connection("127.0.0.1", port)
+            body = b"\x00\x01\x02"
+            request = (
+                f"POST /v1/traces HTTP/1.1\r\n"
+                f"Host: 127.0.0.1:{port}\r\n"
+                f"Content-Length: {len(body)}\r\n"
+                f"Content-Type: application/x-protobuf\r\n"
+                f"\r\n"
+            ).encode() + body
+            writer.write(request)
+            await writer.drain()
+            response = await asyncio.wait_for(reader.read(4096), timeout=5)
+            assert b"415" in response
+            assert b"arksim[otel]" in response
+            writer.close()
+            await writer.wait_closed()
+    finally:
+        recv_module._HAS_PROTOBUF = original
