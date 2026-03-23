@@ -412,11 +412,26 @@
         .qual-bar-wrapper .failure-bar-row {
             cursor: pointer;
             border-radius: 6px;
-            padding: 2px 0;
+            padding: 4px 8px;
             transition: background 0.15s;
+            user-select: none;
         }
         .qual-bar-wrapper .failure-bar-row:hover {
             background: #f1f5f9;
+        }
+        .qual-bar-wrapper .qual-expand-icon {
+            font-size: 18px;
+            color: #94a3b8;
+            transition: transform 0.2s ease, color 0.2s ease;
+            margin-left: 4px;
+            flex-shrink: 0;
+        }
+        .qual-bar-wrapper .failure-bar-row:hover .qual-expand-icon {
+            color: #475569;
+        }
+        .qual-bar-wrapper.expanded .qual-expand-icon {
+            transform: rotate(180deg);
+            color: #3b82f6;
         }
         .qual-turn-details {
             display: none;
@@ -2396,6 +2411,7 @@
                             </div>
                         </div>
                         <div class="failure-bar-stat">${item.percentage}%</div>
+                        <span class="qual-expand-icon material-icons">expand_more</span>
                     `;
 
                     const details = document.createElement('div');
