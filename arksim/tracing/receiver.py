@@ -134,12 +134,15 @@ class TraceReceiver:
 
     Usage::
 
-        async with TraceReceiver(port=4318, wait_timeout=5.0) as receiver:
+        async with TraceReceiver(host="127.0.0.1", port=4318, wait_timeout=5.0) as receiver:
             # ... run simulation turns ...
             tool_calls = await receiver.wait_for_traces("conv-1", 0)
     """
 
-    def __init__(self, port: int = 4318, wait_timeout: float = 5.0) -> None:
+    def __init__(
+        self, host: str = "127.0.0.1", port: int = 4318, wait_timeout: float = 5.0
+    ) -> None:
+        self.host = host
         self.port = port
         self.wait_timeout = wait_timeout
         self._spans: dict[tuple[str, int], list[dict[str, Any]]] = defaultdict(list)
@@ -157,11 +160,14 @@ class TraceReceiver:
     async def start(self) -> None:
         """Start the HTTP server."""
         self._server = await asyncio.start_server(
-            self._handle_connection, "127.0.0.1", self.port
+            self._handle_connection, self.host, self.port
         )
         proto_status = "protobuf+JSON" if _HAS_PROTOBUF else "JSON only"
         logger.info(
-            "Trace receiver listening on 127.0.0.1:%d (%s)", self.port, proto_status
+            "Trace receiver listening on %s:%d (%s)",
+            self.host,
+            self.port,
+            proto_status,
         )
 
     async def stop(self) -> None:

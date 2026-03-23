@@ -438,7 +438,9 @@ async def run_simulation(
         from arksim.tracing import TraceReceiver as _TraceReceiver
 
         trace_receiver = _TraceReceiver(
-            port=trace_cfg.port, wait_timeout=trace_cfg.wait_timeout
+            host=trace_cfg.host,
+            port=trace_cfg.port,
+            wait_timeout=trace_cfg.wait_timeout,
         )
         await trace_receiver.start()
 

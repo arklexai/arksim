@@ -52,8 +52,11 @@ num_workers: 50
 
 # OTel trace receiver for capturing tool calls from agents that handle
 # tools internally (e.g. OpenAI function calling, LangChain agents).
-# Agents push OTLP/HTTP JSON traces to POST /v1/traces on this receiver.
+# Agents must set arksim.conversation_id and arksim.turn_id as span
+# or resource attributes for traces to route correctly.
+# See docs/trace-receiver.md for full guide.
 # trace_receiver:
 #   enabled: true
+#   host: 127.0.0.1   # use 0.0.0.0 for container deployments
 #   port: 4318
 #   wait_timeout: 5  # seconds to wait for traces after each agent response
