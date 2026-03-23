@@ -33,8 +33,22 @@ DB_PATH = Path(__file__).parent / "store.db"
 
 
 def _init_db() -> None:
-    """Create and populate the SQLite database if it doesn't exist."""
+    """Create the SQLite database or reset mutable state.
+
+    On first run, creates all tables and inserts seed data.
+    On subsequent runs, resets order statuses so each simulation
+    starts from a clean state (prevents cross-conversation side
+    effects when num_conversations_per_scenario > 1).
+    """
     if DB_PATH.exists():
+        conn = sqlite3.connect(DB_PATH)
+        conn.executescript("""
+            UPDATE orders SET status = 'shipped' WHERE id = 'ORD-1001';
+            UPDATE orders SET status = 'processing' WHERE id = 'ORD-1002';
+            UPDATE orders SET status = 'delivered' WHERE id = 'ORD-1003';
+            UPDATE orders SET status = 'cancelled' WHERE id = 'ORD-1004';
+        """)
+        conn.close()
         return
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()

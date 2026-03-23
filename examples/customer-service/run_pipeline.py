@@ -52,7 +52,7 @@ async def main() -> None:
 
     # -- Step 1: Run Simulation ----------------------------------------------
     print("=" * 60)
-    print("Step 1/2: Running Simulation...")
+    print("Step 1/3: Running Simulation...")
     print("=" * 60)
 
     scenario_output = Scenarios.load(scenario_file_path)
@@ -80,7 +80,7 @@ async def main() -> None:
 
     # -- Step 2: Evaluate (with custom metrics) ------------------------------
     print("\n" + "=" * 60)
-    print("Step 2/2: Evaluating Results...")
+    print("Step 2/3: Evaluating Results...")
     print("=" * 60)
 
     evaluator_params = EvaluationParams(
