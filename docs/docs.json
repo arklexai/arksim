@@ -12,8 +12,6 @@
     "versions": [
       {
         "version": "0.3.x",
-        "tag": "Latest",
-        "default": true,
         "pages": [
           "v0.3.x/overview",
           {
@@ -53,7 +51,9 @@
               "v0.3.x/contact-email"
             ]
           }
-        ]
+        ],
+        "tag": "Latest",
+        "default": true
       },
       {
         "version": "0.2.0",
@@ -167,15 +167,15 @@
   },
   "contextual": {
     "options": [
-     "copy",
-     "view",
-     "chatgpt",
-     "claude",
-     "perplexity",
-     "mcp",
-     "cursor",
-     "vscode"
-   ]
+      "copy",
+      "view",
+      "chatgpt",
+      "claude",
+      "perplexity",
+      "mcp",
+      "cursor",
+      "vscode"
+    ]
   },
   "fonts": {
     "family": "DM Sans",
