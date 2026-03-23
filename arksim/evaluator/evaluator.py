@@ -16,7 +16,11 @@ from arksim.llms.chat import LLM
 from arksim.scenario import Scenarios
 from arksim.scenario.entities import AssertionType, ExpectedToolCall
 from arksim.simulation_engine import Conversation, Simulation
-from arksim.telemetry.instrumentation import eval_conversation_span, evaluation_span
+from arksim.telemetry.instrumentation import (
+    eval_conversation_span,
+    evaluation_span,
+    record_evaluation_result,
+)
 from arksim.utils.module_loader import load_module_from_file
 from arksim.utils.output import load_json_file, save_json_file
 
@@ -366,6 +370,26 @@ class Evaluator:
                             "arksim.evaluation.status",
                             convo_eval.evaluation_status,
                         )
+                        # Record per-metric evaluation result events
+                        record_evaluation_result(
+                            c_span,
+                            metric_name="goal_completion",
+                            score_value=convo_eval.goal_completion_score,
+                            score_label=convo_eval.evaluation_status,
+                        )
+                        record_evaluation_result(
+                            c_span,
+                            metric_name="overall_agent_score",
+                            score_value=convo_eval.overall_agent_score,
+                            score_label=convo_eval.evaluation_status,
+                        )
+                        for turn_eval in convo_eval.turn_scores:
+                            for score in turn_eval.scores:
+                                record_evaluation_result(
+                                    c_span,
+                                    metric_name=score.name,
+                                    score_value=score.value,
+                                )
                     convo_score_list.append(convo_eval)
                 except Exception as e:
                     logger.error(

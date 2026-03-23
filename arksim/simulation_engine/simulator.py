@@ -57,10 +57,14 @@ class Simulator:
         agent_config: AgentConfig,
         simulator_params: SimulationParams,
         llm: LLM,
+        model: str = "",
+        provider: str = "",
     ) -> None:
         self.agent_config = agent_config
         self.simulator_params = simulator_params
         self.llm = llm
+        self._model = model
+        self._provider = provider
         self.simulation: Simulation | None = None
 
     def _render_simulated_user_prompt(
@@ -179,6 +183,8 @@ class Simulator:
                         async with agent_execute_span(
                             agent_name=self.agent_config.agent_name,
                             agent_type=self.agent_config.agent_type,
+                            model=self._model,
+                            provider=self._provider,
                         ):
                             result = await agent.execute(
                                 user_query=output,
@@ -461,6 +467,8 @@ async def run_simulation(
             agent_config=agent_config,
             simulator_params=simulation_params,
             llm=llm,
+            model=settings.model,
+            provider=settings.provider or "",
         )
         simulation_output = await simulator.simulate(
             scenarios,

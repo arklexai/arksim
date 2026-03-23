@@ -12,15 +12,27 @@ logger = logging.getLogger(__name__)
 _TELEMETRY_ACTIVE = False
 
 
+def _get_service_version() -> str:
+    """Return the arksim package version, or 'unknown' if unavailable."""
+    try:
+        from arksim import __version__
+
+        return __version__
+    except Exception:
+        return "unknown"
+
+
 def setup_telemetry(config: TelemetryConfig) -> None:
-    """Configure the global OTel TracerProvider with an OTLP exporter.
+    """Configure the global OTel TracerProvider and MeterProvider with OTLP exporters.
 
     Raises ``RuntimeError`` if the OpenTelemetry SDK is not installed.
     """
     global _TELEMETRY_ACTIVE  # noqa: PLW0603
 
     try:
-        from opentelemetry import trace
+        from opentelemetry import metrics, trace
+        from opentelemetry.sdk.metrics import MeterProvider
+        from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
         from opentelemetry.sdk.resources import Resource
         from opentelemetry.sdk.trace import TracerProvider
         from opentelemetry.sdk.trace.export import BatchSpanProcessor
@@ -34,6 +46,14 @@ def setup_telemetry(config: TelemetryConfig) -> None:
 
     resolved_headers = resolve_env_vars(dict(config.headers))
 
+    resource = Resource.create(
+        {
+            "service.name": config.service_name,
+            "service.version": _get_service_version(),
+        }
+    )
+
+    # --- Trace exporter ---
     if config.protocol == "grpc":
         try:
             from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
@@ -45,7 +65,7 @@ def setup_telemetry(config: TelemetryConfig) -> None:
                 "Install it with: pip install opentelemetry-exporter-otlp-proto-grpc"
             ) from None
 
-        exporter = OTLPSpanExporter(
+        span_exporter = OTLPSpanExporter(
             endpoint=config.endpoint,
             headers=tuple(resolved_headers.items()) or None,
             insecure=config.insecure,
@@ -61,20 +81,45 @@ def setup_telemetry(config: TelemetryConfig) -> None:
                 "Install it with: pip install opentelemetry-exporter-otlp-proto-http"
             ) from None
 
-        exporter = OTLPSpanExporter(
+        span_exporter = OTLPSpanExporter(
             endpoint=config.endpoint,
             headers=resolved_headers or None,
         )
 
-    resource = Resource.create(
-        {
-            "service.name": config.service_name,
-        }
-    )
+    # --- Metric exporter ---
+    try:
+        if config.protocol == "grpc":
+            from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import (
+                OTLPMetricExporter,
+            )
 
-    provider = TracerProvider(resource=resource)
-    provider.add_span_processor(BatchSpanProcessor(exporter))
-    trace.set_tracer_provider(provider)
+            metric_exporter = OTLPMetricExporter(
+                endpoint=config.endpoint,
+                headers=tuple(resolved_headers.items()) or None,
+                insecure=config.insecure,
+            )
+        else:
+            from opentelemetry.exporter.otlp.proto.http.metric_exporter import (
+                OTLPMetricExporter,
+            )
+
+            metric_exporter = OTLPMetricExporter(
+                endpoint=config.endpoint,
+                headers=resolved_headers or None,
+            )
+
+        metric_reader = PeriodicExportingMetricReader(metric_exporter)
+        meter_provider = MeterProvider(
+            resource=resource, metric_readers=[metric_reader]
+        )
+        metrics.set_meter_provider(meter_provider)
+    except ImportError:
+        logger.warning("Metric exporter not available; only traces will be exported")
+
+    # --- Trace provider ---
+    trace_provider = TracerProvider(resource=resource)
+    trace_provider.add_span_processor(BatchSpanProcessor(span_exporter))
+    trace.set_tracer_provider(trace_provider)
     _TELEMETRY_ACTIVE = True
 
     logger.info(
@@ -85,20 +130,24 @@ def setup_telemetry(config: TelemetryConfig) -> None:
 
 
 def shutdown_telemetry() -> None:
-    """Flush pending spans and shut down the global TracerProvider."""
+    """Flush pending spans/metrics and shut down global providers."""
     global _TELEMETRY_ACTIVE  # noqa: PLW0603
 
     if not _TELEMETRY_ACTIVE:
         return
 
     try:
-        from opentelemetry import trace
+        from opentelemetry import metrics, trace
 
         provider = trace.get_tracer_provider()
         if hasattr(provider, "shutdown"):
             provider.shutdown()
+
+        meter_provider = metrics.get_meter_provider()
+        if hasattr(meter_provider, "shutdown"):
+            meter_provider.shutdown()
     except Exception:
-        logger.warning("Failed to shut down telemetry provider", exc_info=True)
+        logger.warning("Failed to shut down telemetry providers", exc_info=True)
     finally:
         _TELEMETRY_ACTIVE = False
 
@@ -115,8 +164,20 @@ def get_tracer(name: str = "arksim") -> object:
 
         return trace.get_tracer(name)
     except ImportError:
-        # SDK not installed; return a no-op proxy that accepts any method call.
         return _NoOpTracer()
+
+
+def get_meter(name: str = "arksim") -> object:
+    """Return a meter from the global provider.
+
+    Returns a no-op meter if the OTel SDK is not installed.
+    """
+    try:
+        from opentelemetry import metrics
+
+        return metrics.get_meter(name)
+    except ImportError:
+        return _NoOpMeter()
 
 
 class _NoOpTracer:
@@ -155,4 +216,24 @@ class _NoOpSpan:
         pass
 
     def add_event(self, name: str, attributes: dict[str, object] | None = None) -> None:
+        pass
+
+
+class _NoOpMeter:
+    """No-op meter stand-in."""
+
+    def create_histogram(self, name: str, **kwargs: object) -> _NoOpInstrument:
+        return _NoOpInstrument()
+
+    def create_counter(self, name: str, **kwargs: object) -> _NoOpInstrument:
+        return _NoOpInstrument()
+
+
+class _NoOpInstrument:
+    """No-op metric instrument."""
+
+    def record(self, value: float, attributes: dict[str, object] | None = None) -> None:
+        pass
+
+    def add(self, value: int, attributes: dict[str, object] | None = None) -> None:
         pass
