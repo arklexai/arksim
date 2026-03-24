@@ -36,6 +36,8 @@ from .utils.constants import (
     EVALUATION_PARTIAL_FAILURE_THRESHOLD,
     GOAL_COMPLETION_SCORE_WEIGHT,
     SCORE_NOT_COMPUTED,
+    SEVERITY_RANK,
+    SKIP_OUTCOMES,
     TURN_SUCCESS_RATIO_SCORE_WEIGHT,
 )
 from .utils.enums import (
@@ -47,11 +49,6 @@ from .utils.enums import (
 from .utils.error_messages import SKIPPED_GOOD_PERFORMANCE_REASON
 
 logger = logging.getLogger(__name__)
-
-_SKIP_OUTCOMES = {
-    EvaluationOutcomes.SKIPPED_GOOD_PERFORMANCE.value,
-    EvaluationOutcomes.AgentBehaviorFailureType.NO_FAILURE.value,
-}
 
 
 def _should_run(name: str, metrics_to_run: list[str] | None) -> bool:
@@ -203,18 +200,17 @@ def evaluate_turn(
         )
         qual_scores.append(tool_qual_as_agent)
 
-        if tool_qual.value not in _SKIP_OUTCOMES:
-            if turn_behavior_failure in _SKIP_OUTCOMES:
+        if tool_qual.value not in SKIP_OUTCOMES:
+            if turn_behavior_failure in SKIP_OUTCOMES:
                 turn_behavior_failure = tool_qual.value
                 turn_behavior_failure_reason = tool_qual_as_agent.reason
             else:
                 # Both agent and tool call failures detected. Keep the
                 # higher-severity label so safety issues are not masked.
-                _SEVERITY_RANK = {"critical": 0, "high": 1, "medium": 2, "low": 3}
-                tool_sev = _SEVERITY_RANK.get(
+                tool_sev = SEVERITY_RANK.get(
                     AGENT_BEHAVIOR_FAILURE_SEVERITY.get(tool_qual.value, ""), 99
                 )
-                agent_sev = _SEVERITY_RANK.get(
+                agent_sev = SEVERITY_RANK.get(
                     AGENT_BEHAVIOR_FAILURE_SEVERITY.get(turn_behavior_failure, ""), 99
                 )
                 if tool_sev < agent_sev:
@@ -222,7 +218,7 @@ def evaluate_turn(
                     turn_behavior_failure_reason = tool_qual_as_agent.reason
                 else:
                     turn_behavior_failure_reason += (
-                        f" [Tool call] {tool_qual.reason or ''}"
+                        f"\n[Tool call] {tool_qual.reason or ''}"
                     )
 
     return TurnEvaluation(
@@ -263,7 +259,7 @@ def evaluate_goal_completion(
         goal_completion_reason = ""
 
     behavior_failures = sum(
-        1 for t in turns_details if t.turn_behavior_failure not in _SKIP_OUTCOMES
+        1 for t in turns_details if t.turn_behavior_failure not in SKIP_OUTCOMES
     )
     num_turns = convo_item.turns
     turn_success_ratio = (

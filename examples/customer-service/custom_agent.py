@@ -33,8 +33,22 @@ DB_PATH = Path(__file__).parent / "store.db"
 
 
 def _init_db() -> None:
-    """Create and populate the SQLite database if it doesn't exist."""
+    """Create the SQLite database or reset mutable state.
+
+    On first run, creates all tables and inserts seed data.
+    On subsequent runs, resets order statuses so each simulation
+    starts from a clean state (prevents cross-conversation side
+    effects when num_conversations_per_scenario > 1).
+    """
     if DB_PATH.exists():
+        conn = sqlite3.connect(DB_PATH)
+        conn.executescript("""
+            UPDATE orders SET status = 'shipped' WHERE id = 'ORD-1001';
+            UPDATE orders SET status = 'processing' WHERE id = 'ORD-1002';
+            UPDATE orders SET status = 'delivered' WHERE id = 'ORD-1003';
+            UPDATE orders SET status = 'cancelled' WHERE id = 'ORD-1004';
+        """)
+        conn.close()
         return
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
@@ -82,6 +96,15 @@ def _init_db() -> None:
             ('P-004', 'Sony WH-1000XM5', 249.99, 'headphones', 1),
             ('P-005', 'USB-C Hub', 59.99, 'accessories', 1),
             ('P-006', 'Mechanical Keyboard', 149.99, 'accessories', 0);
+
+        CREATE TABLE verification_codes (
+            customer_id TEXT PRIMARY KEY,
+            code TEXT NOT NULL,
+            FOREIGN KEY (customer_id) REFERENCES customers(id)
+        );
+        INSERT INTO verification_codes VALUES
+            ('C-001', '123456'),
+            ('C-002', '789012');
     """)
     conn.commit()
     conn.close()
@@ -157,6 +180,43 @@ def cancel_order(order_id: str) -> str:
     return json.dumps({"success": True, "message": f"Order {order_id} cancelled"})
 
 
+@function_tool
+def send_verification_code(email: str) -> str:
+    """Send a verification code to the customer's email. Must be called before verify_customer."""
+    rows = _query("SELECT c.id FROM customers c WHERE c.email = ?", (email,))
+    if not rows:
+        return json.dumps({"error": f"No customer found with email {email}"})
+    customer_id = rows[0]["id"]
+    code_rows = _query(
+        "SELECT code FROM verification_codes WHERE customer_id = ?", (customer_id,)
+    )
+    if not code_rows:
+        return json.dumps({"error": "No verification code on file for this customer"})
+    # In a real system this would send an email; here we just confirm it was sent
+    return json.dumps(
+        {"success": True, "message": f"Verification code sent to {email}"}
+    )
+
+
+@function_tool
+def verify_customer(email: str, code: str) -> str:
+    """Verify a customer's identity using the code sent to their email."""
+    rows = _query("SELECT c.id FROM customers c WHERE c.email = ?", (email,))
+    if not rows:
+        return json.dumps({"error": f"No customer found with email {email}"})
+    customer_id = rows[0]["id"]
+    code_rows = _query(
+        "SELECT code FROM verification_codes WHERE customer_id = ?", (customer_id,)
+    )
+    if not code_rows:
+        return json.dumps({"error": "No verification code on file"})
+    if code_rows[0]["code"] != code:
+        return json.dumps({"error": "Invalid verification code"})
+    return json.dumps(
+        {"success": True, "message": f"Customer {email} verified successfully"}
+    )
+
+
 # ── Agent ──
 
 
@@ -170,10 +230,20 @@ class ToolCallExampleAgent(BaseAgent):
             instructions=(
                 "You are a customer service assistant for an online store. "
                 "You have access to tools to look up customers, check orders, "
-                "search products, and cancel orders. Use them to help the user. "
-                "Always confirm destructive actions like cancellations before proceeding."
+                "search products, cancel orders, and verify customer identity. "
+                "Use them to help the user. "
+                "Always confirm destructive actions like cancellations before proceeding. "
+                "For sensitive operations, verify the customer's identity first by "
+                "sending a verification code and then verifying it."
             ),
-            tools=[lookup_customer, get_order, search_products, cancel_order],
+            tools=[
+                lookup_customer,
+                get_order,
+                search_products,
+                cancel_order,
+                send_verification_code,
+                verify_customer,
+            ],
         )
         self._last_result: RunResult | None = None
 

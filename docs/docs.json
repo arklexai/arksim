@@ -130,6 +130,7 @@
             "pages": [
               "main/insurance-customer-service-agent-evaluation",
               "main/e-commerce-customer-service-agent-evaluation",
+              "main/customer-service-tool-calling-agent-evaluation",
               "main/personal-ai-assistant-openclaw-evaluation"
             ]
           },

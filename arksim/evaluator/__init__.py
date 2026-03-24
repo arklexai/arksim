@@ -5,6 +5,8 @@ Evaluator package for agent and user evaluation.
 
 from __future__ import annotations
 
+from arksim.scenario.entities import AssertionType, ToolCallsAssertion
+
 from .base_metric import (
     ChatMessage,
     QualitativeMetric,
@@ -24,6 +26,7 @@ from .thresholds import (
     check_numeric_thresholds,
     check_qualitative_failure_labels,
 )
+from .trajectory_matching import TrajectoryResult, match_trajectory
 
 __all__ = [
     "ChatMessage",
@@ -40,4 +43,8 @@ __all__ = [
     "check_qualitative_failure_labels",
     "format_chat_history",
     "run_evaluation",
+    "TrajectoryResult",
+    "match_trajectory",
+    "AssertionType",
+    "ToolCallsAssertion",
 ]
