@@ -26,6 +26,9 @@ def get_attr(attrs: list[dict[str, Any]], key: str) -> str | None:
             bool_val = value.get("boolValue", value.get("bool_value"))
             if bool_val is not None:
                 return str(bool_val)
+            double_val = value.get("doubleValue", value.get("double_value"))
+            if double_val is not None:
+                return str(double_val)
     return None
 
 

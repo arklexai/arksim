@@ -71,7 +71,8 @@ class TestSpanToToolCall:
         assert tc.name == "book_hotel"
         assert tc.id == "ghi789"
 
-    def test_plain_span_name_fallback(self) -> None:
+    def test_plain_span_name_without_prefix_returns_none(self) -> None:
+        """Spans without tool attributes or execute_tool prefix are skipped."""
         span = {
             "name": "my_custom_tool",
             "spanId": "jkl012",
@@ -79,8 +80,7 @@ class TestSpanToToolCall:
             "status": {},
         }
         tc = span_to_tool_call(span)
-        assert tc is not None
-        assert tc.name == "my_custom_tool"
+        assert tc is None
 
     def test_empty_span_name_returns_none(self) -> None:
         span = {"name": "", "spanId": "", "attributes": [], "status": {}}

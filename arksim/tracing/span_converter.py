@@ -24,7 +24,15 @@ def _parse_arguments(raw: str | None, span_name: str = "") -> dict[str, Any]:
         return {}
     try:
         parsed = json.loads(raw)
-        return parsed if isinstance(parsed, dict) else {}
+        if not isinstance(parsed, dict):
+            logger.warning(
+                "Tool call arguments for span %r parsed as %s, expected dict: %s",
+                span_name,
+                type(parsed).__name__,
+                raw[:200],
+            )
+            return {}
+        return parsed
     except (json.JSONDecodeError, TypeError):
         logger.warning(
             "Malformed JSON in tool call arguments for span %r: %s",
@@ -38,15 +46,16 @@ def span_to_tool_call(span: dict[str, Any]) -> ToolCall | None:
     """Convert a single OTLP span dict to a ToolCall, or None if not a tool span."""
     attrs = span.get("attributes", [])
 
-    # Extract tool name: OTel GenAI > OpenInference > span name fallback
+    # Extract tool name: OTel GenAI > OpenInference > span name prefix.
+    # Only convert spans that have a tool-specific attribute or the
+    # "execute_tool " span name prefix. This filters out non-tool spans
+    # (HTTP clients, DB queries, parent spans) that may be routed here
+    # when using resource-level conversation_id with automatic instrumentation.
     name = first_attr(attrs, "gen_ai.tool.name", "tool.name")
     if not name:
-        # Fall back to span name (e.g. "execute_tool search_flights")
         span_name = span.get("name", "")
         if span_name.startswith("execute_tool "):
             name = span_name[len("execute_tool ") :]
-        elif span_name:
-            name = span_name
         else:
             return None
 

@@ -17,7 +17,7 @@ trace_receiver:
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
 | `enabled` | bool | `false` | Enable the trace receiver |
-| `host` | string | `127.0.0.1` | Bind address for the HTTP server |
+| `host` | string | `127.0.0.1` | Bind address (`0.0.0.0` for containers; use only in trusted networks) |
 | `port` | int | `4318` | Port number (1-65535) |
 | `wait_timeout` | float | `5.0` | Max seconds to wait for traces per turn |
 

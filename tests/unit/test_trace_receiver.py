@@ -293,7 +293,7 @@ async def test_receiver_deduplication_across_keys(_unused_port: int) -> None:
 
 @pytest.mark.asyncio
 async def test_receiver_invalid_json(_unused_port: int) -> None:
-    """Invalid JSON body is handled gracefully."""
+    """Invalid JSON body returns 400 so OTel exporters can retry."""
     port = _unused_port
     async with TraceReceiver(port=port, wait_timeout=0.1):
         body = b"not json at all"
@@ -308,7 +308,7 @@ async def test_receiver_invalid_json(_unused_port: int) -> None:
         writer.write(request)
         await writer.drain()
         response = await asyncio.wait_for(reader.read(4096), timeout=5)
-        assert b"200" in response
+        assert b"400" in response
         writer.close()
         await writer.wait_closed()
 

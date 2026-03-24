@@ -48,16 +48,26 @@ except ImportError:
 def _parse_protobuf_payload(body: bytes) -> dict[str, Any]:
     """Deserialize an OTLP protobuf payload into the same dict structure as OTLP JSON.
 
-    Uses ``including_default_value_fields=True`` so that zero-valued fields
-    (e.g. ``int_value=0`` for ``arksim.turn_id=0``) are not silently dropped.
+    Preserves zero-valued fields (e.g. ``int_value=0`` for ``arksim.turn_id=0``)
+    so they are not silently dropped. Uses ``always_print_fields_with_no_presence``
+    on protobuf 4.24+ and falls back to ``including_default_value_fields`` on
+    older versions.
     """
     request = ExportTraceServiceRequest()
     request.ParseFromString(body)
-    return MessageToDict(
-        request,
-        preserving_proto_field_name=True,
-        always_print_fields_with_no_presence=True,
-    )
+    try:
+        return MessageToDict(
+            request,
+            preserving_proto_field_name=True,
+            always_print_fields_with_no_presence=True,
+        )
+    except TypeError:
+        # protobuf < 4.24: always_print_fields_with_no_presence not available
+        return MessageToDict(
+            request,
+            preserving_proto_field_name=True,
+            including_default_value_fields=True,
+        )
 
 
 def _extract_spans_with_routing(
@@ -82,12 +92,20 @@ def _extract_spans_with_routing(
             for span in scope_span.get("spans", []):
                 span_attrs = span.get("attributes", [])
 
-                # Look up routing keys: span attrs take precedence
-                conv_id = get_attr(span_attrs, "arksim.conversation_id") or get_attr(
-                    resource_attrs, "arksim.conversation_id"
+                # Look up routing keys: span attrs take precedence.
+                # Use `is not None` (not `or`) to preserve falsy values
+                # like empty strings, since get_attr returns None for missing.
+                span_conv = get_attr(span_attrs, "arksim.conversation_id")
+                conv_id = (
+                    span_conv
+                    if span_conv is not None
+                    else get_attr(resource_attrs, "arksim.conversation_id")
                 )
-                raw_turn = get_attr(span_attrs, "arksim.turn_id") or get_attr(
-                    resource_attrs, "arksim.turn_id"
+                span_turn = get_attr(span_attrs, "arksim.turn_id")
+                raw_turn = (
+                    span_turn
+                    if span_turn is not None
+                    else get_attr(resource_attrs, "arksim.turn_id")
                 )
 
                 if conv_id is None or raw_turn is None:
@@ -297,8 +315,15 @@ class TraceReceiver:
                 )
                 return
 
-            await self._handle_traces(body, is_protobuf=is_protobuf)
-            await self._send_response(writer, HTTPStatus.OK, b"{}")
+            parsed_ok = await self._handle_traces(body, is_protobuf=is_protobuf)
+            if parsed_ok:
+                await self._send_response(writer, HTTPStatus.OK, b"{}")
+            else:
+                await self._send_response(
+                    writer,
+                    HTTPStatus.BAD_REQUEST,
+                    b'{"error": "Failed to parse trace payload"}',
+                )
 
         except (asyncio.TimeoutError, ConnectionError, asyncio.IncompleteReadError):
             logger.debug("Connection error in trace receiver")
@@ -328,28 +353,33 @@ class TraceReceiver:
         writer.write(response)
         await writer.drain()
 
-    async def _handle_traces(self, body: bytes, *, is_protobuf: bool = False) -> None:
-        """Parse OTLP body (protobuf or JSON) and buffer spans by routing key."""
+    async def _handle_traces(self, body: bytes, *, is_protobuf: bool = False) -> bool:
+        """Parse OTLP body (protobuf or JSON) and buffer spans by routing key.
+
+        Returns True on success, False on parse failure.
+        """
         if is_protobuf:
             try:
                 payload = _parse_protobuf_payload(body)
             except Exception:
                 logger.warning("Failed to parse protobuf trace payload")
-                return
+                return False
         else:
             try:
                 payload = json.loads(body)
             except (json.JSONDecodeError, TypeError):
                 logger.warning("Invalid JSON in trace payload")
-                return
+                return False
 
         grouped = _extract_spans_with_routing(payload)
         if not grouped:
             logger.debug("No routable spans in trace payload")
-            return
+            return True
 
         async with self._lock:
             for key, spans in grouped.items():
                 self._spans[key].extend(spans)
                 event = self._events.setdefault(key, asyncio.Event())
                 event.set()
+
+        return True
