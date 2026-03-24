@@ -40,11 +40,17 @@ class RasaAgent(BaseAgent):
         return self._chat_id
 
     async def execute(self, user_query: str, **kwargs: object) -> str:
-        response = await self._client.post(
-            self._endpoint,
-            json={"sender": self._chat_id, "message": user_query},
-        )
-        response.raise_for_status()
+        try:
+            response = await self._client.post(
+                self._endpoint,
+                json={"sender": self._chat_id, "message": user_query},
+            )
+            response.raise_for_status()
+        except httpx.ConnectError:
+            msg = (
+                f"Could not connect to Rasa server at {self._endpoint}. Is it running?"
+            )
+            raise RuntimeError(msg) from None
 
         messages = response.json()
         texts = [m["text"] for m in messages if "text" in m]
