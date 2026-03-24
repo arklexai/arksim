@@ -4,16 +4,23 @@
         {
             "scenario_id": "product_inquiry",
             "user_id": "user_0001",
-            "goal": "You are evaluating a SaaS product for your team. Ask about pricing and available plans, what features the platform offers, support availability, and the refund policy. You want to understand whether the product fits your budget and needs before starting a trial.",
-            "agent_context": "You are a customer support assistant for a SaaS platform. You answer questions about pricing, features, support hours, and refund policies.",
+            "goal": "You are evaluating a SaaS product for your team. Ask about pricing and available plans, then ask what features the platform offers. You want to understand whether the product fits your budget and needs before starting a trial.",
+            "agent_context": "You are a customer support assistant for a SaaS platform. You answer questions about pricing and features, and can look up order status by order ID.",
             "user_profile": "You are Alex, a 31-year-old engineering manager at a mid-sized startup. You are methodical and like to gather all the details before making a purchasing decision. You ask direct, specific questions and appreciate concise, factual answers."
         },
         {
-            "scenario_id": "open_ended_assistance",
+            "scenario_id": "order_status_check",
             "user_id": "user_0002",
-            "goal": "You need help drafting a professional email to your manager requesting time off next month for a family event. Ask the assistant to help you write the email, suggest improvements, and make it concise yet polite.",
-            "agent_context": "You are a customer support assistant for a SaaS platform. You answer questions about pricing, features, support hours, and refund policies.",
-            "user_profile": "You are Sam, a 34-year-old marketing coordinator at a mid-sized company. You are friendly and collaborative but sometimes unsure about formal communication. You value politeness and professionalism in workplace writing and want your emails to strike the right tone without being overly stiff."
+            "goal": "You placed an order recently with order number ORD-001 and want to check its current shipping status. Greet the assistant, ask about your order, provide the order number when asked, and confirm you received the information.",
+            "agent_context": "You are a customer support assistant for a SaaS platform. You answer questions about pricing and features, and can look up order status by order ID.",
+            "user_profile": "You are Jordan, a 28-year-old software developer who recently purchased a subscription. You are straightforward and just want a quick status update on your order. You keep messages short and to the point."
+        },
+        {
+            "scenario_id": "topic_switching",
+            "user_id": "user_0003",
+            "goal": "You are a current customer evaluating an upgrade. Start by asking about product features. Then switch topics and ask to check the status of your order ORD-002. After getting the order status, switch back and ask about pricing for an upgrade.",
+            "agent_context": "You are a customer support assistant for a SaaS platform. You answer questions about pricing and features, and can look up order status by order ID.",
+            "user_profile": "You are Morgan, a 34-year-old product manager at a growing company. You tend to juggle multiple questions in a single conversation. You are friendly but efficient, and you switch between topics naturally as things come to mind."
         }
     ]
 }

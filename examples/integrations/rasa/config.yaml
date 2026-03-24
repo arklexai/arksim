@@ -15,10 +15,10 @@ agent_config:
 scenario_file_path: ./scenarios.json
 
 # Number of conversations per scenario to generate
-num_conversations_per_scenario: 1
+num_conversations_per_scenario: 3
 
 # Maximum turns per conversation
-max_turns: 5
+max_turns: 8
 
 # Output file path for simulation results
 output_file_path: ./results/simulation/simulation.json
