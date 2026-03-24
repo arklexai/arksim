@@ -1,20 +1,24 @@
 # Rasa Pro Integration
 
-This example demonstrates how to evaluate a [Rasa Pro](https://rasa.com/) assistant with ArkSim. The Rasa bot uses [CALM](https://rasa.com/docs/pro/), Rasa's LLM-powered dialogue engine, which replaces traditional NLU pipelines with flow-based conversation management.
+This example shows how to simulate and evaluate a [Rasa Pro](https://rasa.com/) assistant built with [CALM](https://rasa.com/docs/pro/), Rasa's LLM-powered dialogue engine. CALM replaces traditional NLU pipelines with flow-based conversation management, where an LLM routes user messages to the right flow based on natural language descriptions.
 
-The integration communicates with Rasa via its REST webhook channel, making setup straightforward: point ArkSim at a running Rasa server and run your scenarios.
+The integration connects to Rasa via its REST webhook channel. Point ArkSim at a running Rasa server, define your scenarios, and get a full evaluation report.
 
-## What This Example Tests
+## What This Example Covers
 
-ArkSim runs three scenarios against the CALM assistant to evaluate different capabilities:
+The included CALM assistant handles customer support queries through five flows: greetings, goodbyes, pricing questions, feature questions, and a multi-step order status lookup with slot filling and a custom action.
 
-| Scenario | What It Tests |
-|----------|---------------|
+ArkSim runs three scenarios against it:
+
+| Scenario | What It Exercises |
+|----------|-------------------|
 | **Product inquiry** | Simple Q&A flow routing (pricing, features) |
 | **Order status check** | Multi-step flow with slot filling and a custom action |
-| **Topic switching** | Context management across flow transitions |
+| **Topic switching** | Context management when switching between flows mid-conversation |
 
-Each scenario runs 3 times to evaluate consistency, which matters because CALM's LLM-based routing is non-deterministic.
+Each scenario runs 3 times to test consistency across runs, since CALM's LLM-based routing is non-deterministic.
+
+After the run, ArkSim generates an evaluation report (`evaluation/final_report.html`) scoring each conversation on goal completion, helpfulness, coherence, relevance, and more. It also surfaces specific failure patterns like repeated responses, missing information, or incorrect behavior, so you know exactly where to improve.
 
 ## Prerequisites
 
