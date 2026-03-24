@@ -1,0 +1,36 @@
+flows:
+  greet:
+    description: The user greets or says hello.
+    steps:
+      - action: utter_greet
+
+  goodbye:
+    description: The user says goodbye or ends the conversation.
+    steps:
+      - action: utter_goodbye
+
+  ask_pricing:
+    description: The user asks about pricing, plans, costs, or subscription fees.
+    steps:
+      - action: utter_pricing
+
+  ask_features:
+    description: The user asks about product features, capabilities, or integrations.
+    steps:
+      - action: utter_features
+
+  check_order_status:
+    description: The user wants to check the status of an order or shipment.
+    steps:
+      - collect: order_id
+        ask_before: utter_ask_order_id
+        description: the order number or ID to look up
+      - action: action_check_order_status
+        next:
+          - if: slots.order_status = "not_found"
+            then:
+              - action: utter_order_not_found
+                next: END
+          - else: show_status
+      - action: utter_order_status
+        id: show_status
