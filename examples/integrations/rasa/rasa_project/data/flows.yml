@@ -23,7 +23,6 @@ flows:
     description: The user wants to check the status of an order or shipment.
     steps:
       - collect: order_id
-        ask_before: utter_ask_order_id
         description: the order number or ID to look up
       - action: action_check_order_status
         next:
