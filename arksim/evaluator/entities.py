@@ -51,7 +51,7 @@ class EvaluationInput(BaseModel):
         description="Path to the simulation output file",
     )
     output_dir: str | None = Field(
-        default="./evaluation",
+        default="./results/evaluation",
         description="Output directory for evaluation results",
     )
     model: str = Field(default=DEFAULT_MODEL, description="LLM model for evaluation")

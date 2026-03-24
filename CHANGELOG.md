@@ -5,6 +5,31 @@ All notable changes to ArkSim will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.2](https://github.com/arklexai/arksim/compare/v0.3.1...v0.3.2) (2026-03-20)
+
+
+### Added
+
+* **examples:** add Rasa integration example ([#99](https://github.com/arklexai/arksim/issues/99)) ([bfe200d](https://github.com/arklexai/arksim/commit/bfe200d261acaf3fa260d433da7c1101f6cb12c1))
+* **examples:** update integration examples and add docs page ([#110](https://github.com/arklexai/arksim/issues/110)) ([0102ea2](https://github.com/arklexai/arksim/commit/0102ea28df229977f600dc5ce40394a4f2032114))
+
+
+### Fixed
+
+* **ui:** handle missing output path when no sidebar config selected ([#106](https://github.com/arklexai/arksim/issues/106)) ([9a84334](https://github.com/arklexai/arksim/commit/9a843346a981a14c639c659ebbb5f0f657547da3))
+
+
+### Documentation
+
+* add versioned documentation structure with automated snapshots ([#104](https://github.com/arklexai/arksim/issues/104)) ([17d6aed](https://github.com/arklexai/arksim/commit/17d6aede141544732a49db2de52ae3a77c620ce4))
+* update readme quickstart section with documentation ([#112](https://github.com/arklexai/arksim/issues/112)) ([d0d63d9](https://github.com/arklexai/arksim/commit/d0d63d91eb6c37364bde5d482fccd416c95f5bc4))
+
+
+### Changed
+
+* add colors for qualitative metrics ([#109](https://github.com/arklexai/arksim/issues/109)) ([42abaf1](https://github.com/arklexai/arksim/commit/42abaf17099af3ad68818888f90c7359f86913fa))
+* fix tests for simulation schema version update ([#113](https://github.com/arklexai/arksim/issues/113)) ([641fd5e](https://github.com/arklexai/arksim/commit/641fd5e42779de499c31dcafd62dcf7018df0951))
+
 ## [0.3.1](https://github.com/arklexai/arksim/compare/v0.3.0...v0.3.1) (2026-03-17)
 
 
