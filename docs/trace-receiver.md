@@ -76,7 +76,7 @@ with tracer.start_as_current_span("execute_tool search_flights") as span:
 provider.force_flush()
 ```
 
-**Important:** If the agent runs in the same process as arksim, the OTel exporter uses synchronous HTTP (`requests` library). Wrap the trace push in `asyncio.to_thread()` to avoid blocking the event loop. See `examples/tool-calls/traced_agent.py` for a complete example.
+**Important:** If the agent runs in the same process as arksim, the OTel exporter uses synchronous HTTP (`requests` library). Wrap the trace push in `asyncio.to_thread()` to avoid blocking the event loop. See `examples/customer-service/traced_agent.py` for a complete example.
 
 ## Capture Paths
 
