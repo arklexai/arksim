@@ -49,7 +49,7 @@ Each scenario runs 3 times to evaluate consistency, which matters because CALM's
 
 ## Usage
 
-Start the Rasa server (from `rasa_project/`):
+Start the Rasa server (from `rasa_project/`). Custom actions run in-process via `actions_module`, so no separate action server is needed.
 
 ```bash
 cd rasa_project

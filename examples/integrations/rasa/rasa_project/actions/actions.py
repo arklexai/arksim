@@ -10,8 +10,8 @@ from rasa_sdk.events import SlotSet
 from rasa_sdk.executor import CollectingDispatcher
 
 _ORDERS: dict[str, str] = {
-    "ORD-001": "Shipped - expected delivery March 28",
-    "ORD-002": "Processing - estimated ship date March 26",
+    "ORD-001": "Shipped - in transit, arriving in 2-3 business days",
+    "ORD-002": "Processing - estimated to ship within 24 hours",
 }
 
 
