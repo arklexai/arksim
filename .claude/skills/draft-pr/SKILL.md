@@ -2,11 +2,7 @@
 name: draft-pr
 description: Generate a PR title and description from your changes
 disable-model-invocation: true
-allowed-tools:
-  - Bash
-  - Read
-  - Grep
-  - Glob
+allowed-tools: Bash, Read, Grep, Glob
 ---
 
 # Draft PR
@@ -17,10 +13,9 @@ Analyze commits and diff to produce a ready-to-use PR title and description.
 
 1. **Analyze commits and diff**
    ```bash
-   BASE="main"
-   git log --oneline "$BASE"..HEAD
-   git diff --stat "$BASE"..HEAD
-   git diff "$BASE"..HEAD
+   git log --oneline main..HEAD
+   git diff --stat main..HEAD
+   git diff main..HEAD
    ```
 
 2. **Determine type and scope**
@@ -33,34 +28,19 @@ Analyze commits and diff to produce a ready-to-use PR title and description.
    - Max 72 characters
    - Use imperative mood, lowercase after colon
 
-4. **Read PR template**
-   ```bash
-   cat .github/pull_request_template.md
-   ```
+4. **Read and fill the PR template**
 
-5. **Fill out the template**
-   - Summary: describe what the PR does and why
-   - Changes: list key modifications as bullet points
-   - Documentation: check the appropriate box
-   - How to Test: fill in verification steps
-   - Notes: mention trade-offs or follow-up work if relevant
+   Read `.github/pull_request_template.md` and fill in each section with real content from the commits and diff. Strip all HTML comments and placeholder text.
 
-6. **Check changelog**
-   - Remind to add entry in CHANGELOG.md under `[Unreleased]`
-   - Suggest the entry text based on the changes
-
-7. **Validate description**
+5. **Validate description**
    - Ensure at least 20 characters of real content (excluding template boilerplate)
 
 ## Output
 
-Print the title and full PR body, ready to copy:
+Print the title and filled PR template body in raw markdown format, ready to copy:
 
 ```
 Title: <type>(<scope>): <description>
 
-Body:
-<filled-out PR template>
+<filled-out PR template in raw markdown>
 ```
-
-Remind about CHANGELOG.md if no entry was found.
