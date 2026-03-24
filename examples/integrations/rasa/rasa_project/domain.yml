@@ -1,16 +1,17 @@
 version: "3.1"
 
-intents:
-  - greet
-  - goodbye
-  - ask_pricing
-  - ask_features
-  - ask_support_hours
-  - ask_refund_policy
-  - out_of_scope
-
 actions:
-  - action_llm_response
+  - action_check_order_status
+
+slots:
+  order_id:
+    type: text
+    mappings:
+      - type: from_llm
+  order_status:
+    type: text
+    mappings:
+      - type: controlled
 
 responses:
   utter_greet:
@@ -21,12 +22,12 @@ responses:
     - text: "We offer three plans: Starter at $29/month, Professional at $79/month, and Enterprise with custom pricing. All plans include a 14-day free trial."
   utter_features:
     - text: "Our platform includes real-time analytics, team collaboration, API access, and custom integrations. Professional and Enterprise plans also include priority support and advanced reporting."
-  utter_support_hours:
-    - text: "Our support team is available Monday through Friday, 9 AM to 6 PM Eastern Time. Enterprise customers have access to 24/7 priority support."
-  utter_refund_policy:
-    - text: "We offer a full refund within 30 days of purchase, no questions asked. After 30 days, we provide prorated refunds for annual plans."
-  utter_default:
-    - text: "I'm not sure I understand. Could you rephrase that?"
+  utter_order_status:
+    - text: "Your order {order_id} is currently: {order_status}"
+  utter_order_not_found:
+    - text: "Sorry, I couldn't find an order with ID {order_id}. Please double-check and try again."
+  utter_ask_order_id:
+    - text: "Sure, I can look that up. What is your order number?"
 
 session_config:
   session_expiration_time: 60
