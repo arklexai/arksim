@@ -1,0 +1,458 @@
+{
+    "schema_version": "v1.1",
+    "simulator_version": "v1-test",
+    "simulation_id": "eval-test-simulation",
+    "generated_at": "2026-03-24T00:00:00Z",
+    "conversations": [
+        {
+            "conversation_id": "conv-home-tiers",
+            "scenario_id": "scenario-home-tiers",
+            "conversation_history": [
+                {
+                    "turn_id": 0,
+                    "message_id": "msg-home-tiers-0u",
+                    "role": "simulated_user",
+                    "content": "Hi, I just bought a condo and I'm looking into home insurance. What does a basic policy cover?",
+                    "tool_calls": null
+                },
+                {
+                    "turn_id": 0,
+                    "message_id": "msg-home-tiers-0a",
+                    "role": "assistant",
+                    "content": "Congratulations on your new condo! A basic home insurance policy typically covers your dwelling against perils like fire, windstorm, and theft. It also includes personal property coverage for your belongings and liability protection if someone is injured on your property. Would you like more details on any of these coverages?",
+                    "tool_calls": null,
+                    "test.expected_label": "no failure"
+                },
+                {
+                    "turn_id": 1,
+                    "message_id": "msg-home-tiers-1u",
+                    "role": "simulated_user",
+                    "content": "Yes, what about water damage? Is that included?",
+                    "tool_calls": null
+                },
+                {
+                    "turn_id": 1,
+                    "message_id": "msg-home-tiers-1a",
+                    "role": "assistant",
+                    "content": "Water damage coverage depends on the type of policy you choose. Basic Form policies cover sudden and accidental water damage, such as a burst pipe. However, they typically exclude gradual damage like slow leaks or sewer backup. For broader protection, you may want to consider a Comprehensive Form policy or add optional endorsements. Would you like me to explain the different policy tiers?",
+                    "tool_calls": null,
+                    "test.expected_label": "no failure"
+                },
+                {
+                    "turn_id": 2,
+                    "message_id": "msg-home-tiers-2u",
+                    "role": "simulated_user",
+                    "content": "That would be helpful, yes.",
+                    "tool_calls": null
+                },
+                {
+                    "turn_id": 2,
+                    "message_id": "msg-home-tiers-2a",
+                    "role": "assistant",
+                    "content": "We offer three tiers: Basic Form covers named perils only, Broad Form extends coverage to additional risks like accidental water damage, and Comprehensive Form covers all risks except those specifically excluded. Most homeowners find that Broad Form offers the best balance of coverage and cost. Would you like a quote for any of these?",
+                    "tool_calls": null,
+                    "test.expected_label": "no failure"
+                }
+            ],
+            "simulated_user_prompt": {
+                "simulated_user_prompt_template": "",
+                "variables": {
+                    "scenario.agent_context": "XYZ Insurance, a core business within XYZ Bank Group, is one of Canada's leading providers of life, health, home, auto, and travel insurance. XYZ Insurance offers coverage for individuals and families across all provinces, with competitive rates and online policy management.",
+                    "scenario.goal": "You want to understand what a basic home insurance policy covers and whether water damage is included, so you can decide which tier of coverage to purchase for your new condo.",
+                    "scenario.knowledge": [
+                        "Home Insurance Overview: XYZ Insurance offers three tiers of home insurance: Basic Form (named perils), Broad Form (extended coverage), and Comprehensive Form (all-risk). Basic Form covers fire, windstorm, hail, theft, and vandalism. Broad Form adds accidental water damage, falling objects, and weight of snow. Comprehensive Form covers all risks except those specifically excluded (e.g., earthquake, flood). All tiers include personal property coverage and liability protection up to $1,000,000."
+                    ],
+                    "scenario.user_profile": "You are Jordan Chen who is open to experience, conscientious, introverted, agreeable, and emotionally stable."
+                }
+            }
+        },
+        {
+            "conversation_id": "conv-water-damage-claim",
+            "scenario_id": "scenario-water-damage-claim",
+            "conversation_history": [
+                {
+                    "turn_id": 0,
+                    "message_id": "msg-water-0u",
+                    "role": "simulated_user",
+                    "content": "I got a letter saying my water damage claim was denied. My water heater broke and flooded the basement.",
+                    "tool_calls": null
+                },
+                {
+                    "turn_id": 0,
+                    "message_id": "msg-water-0a",
+                    "role": "assistant",
+                    "content": "I'm sorry to hear about that. Water heater failures can sometimes be denied if the unit exceeded its expected lifespan. Could you tell me how old the water heater was? That will help me understand why the claim may have been denied.",
+                    "tool_calls": null,
+                    "test.expected_label": "no failure"
+                },
+                {
+                    "turn_id": 1,
+                    "message_id": "msg-water-1u",
+                    "role": "simulated_user",
+                    "content": "It was about 17 years old. But it just suddenly broke, I didn't do anything wrong.",
+                    "tool_calls": null
+                },
+                {
+                    "turn_id": 1,
+                    "message_id": "msg-water-1a",
+                    "role": "assistant",
+                    "content": "I understand your frustration. Unfortunately, most policies exclude damage from appliances that exceed their expected service life. For water heaters, the typical threshold is 15 years. Since yours was 17 years old, it falls outside the covered range. However, you do have options to appeal the decision. Would you like to know more about the appeals process?",
+                    "tool_calls": null,
+                    "test.expected_label": "no failure"
+                },
+                {
+                    "turn_id": 2,
+                    "message_id": "msg-water-2u",
+                    "role": "simulated_user",
+                    "content": "Yes, what can I do to fight this?",
+                    "tool_calls": null
+                },
+                {
+                    "turn_id": 2,
+                    "message_id": "msg-water-2a",
+                    "role": "assistant",
+                    "content": "You can start by requesting a formal review of the denial in writing. Include any maintenance records showing the water heater was properly maintained. If the internal review upholds the denial, you can escalate to the provincial insurance ombudsman. You may also consult with an insurance lawyer for a legal opinion. Would you like me to provide the contact information for our claims review department?",
+                    "tool_calls": null,
+                    "test.expected_label": "no failure"
+                }
+            ],
+            "simulated_user_prompt": {
+                "simulated_user_prompt_template": "",
+                "variables": {
+                    "scenario.agent_context": "XYZ Insurance, a core business within XYZ Bank Group, is one of Canada's leading providers of life, health, home, auto, and travel insurance.",
+                    "scenario.goal": "You want to get your denied water damage claim overturned or learn how to fight it, including legal options.",
+                    "scenario.knowledge": [
+                        "Water Damage Claims: XYZ Insurance covers sudden and accidental water damage under Broad Form and Comprehensive Form policies. Claims may be denied if the source appliance (e.g., water heater, dishwasher) exceeds its expected service life. For water heaters, the exclusion applies to units older than 15 years. Policyholders can appeal claim denials through a formal written review process. If the internal review upholds the denial, policyholders may escalate to the provincial insurance ombudsman or seek legal counsel."
+                    ],
+                    "scenario.user_profile": "You are Maria Santos who is closed to experience, conscientious, extroverted, antagonistic, and neurotic."
+                }
+            }
+        },
+        {
+            "conversation_id": "conv-renewal",
+            "scenario_id": "scenario-renewal",
+            "conversation_history": [
+                {
+                    "turn_id": 0,
+                    "message_id": "msg-renewal-0u",
+                    "role": "simulated_user",
+                    "content": "I want to renew my home insurance. I have the Basic Form plan right now.",
+                    "tool_calls": null
+                },
+                {
+                    "turn_id": 0,
+                    "message_id": "msg-renewal-0a",
+                    "role": "assistant",
+                    "content": "I'd be happy to help you with your renewal! Before we proceed, have you considered upgrading to our Broad Form coverage? It includes additional protections like accidental water damage and falling objects, which many homeowners find valuable.",
+                    "tool_calls": null,
+                    "test.expected_label": "no failure"
+                },
+                {
+                    "turn_id": 1,
+                    "message_id": "msg-renewal-1u",
+                    "role": "simulated_user",
+                    "content": "No, I just want to renew what I have at the same price.",
+                    "tool_calls": null
+                },
+                {
+                    "turn_id": 1,
+                    "message_id": "msg-renewal-1a",
+                    "role": "assistant",
+                    "content": "I understand. Unfortunately renewal rates can increase based on market conditions. Shall I proceed with the renewal at the updated rate?",
+                    "tool_calls": null,
+                    "test.expected_label": "no failure"
+                },
+                {
+                    "turn_id": 2,
+                    "message_id": "msg-renewal-2u",
+                    "role": "simulated_user",
+                    "content": "Can I get a loyalty discount? I've been a customer for 8 years.",
+                    "tool_calls": null
+                },
+                {
+                    "turn_id": 2,
+                    "message_id": "msg-renewal-2a",
+                    "role": "assistant",
+                    "content": "Yes! As a returning customer with 8 years of continuous coverage you are eligible for our loyalty discount. Returning customers with 5 or more years qualify for up to 5% off. I can apply that discount to your renewal. Would you like to proceed?",
+                    "tool_calls": null,
+                    "test.expected_label": "no failure"
+                }
+            ],
+            "simulated_user_prompt": {
+                "simulated_user_prompt_template": "",
+                "variables": {
+                    "scenario.agent_context": "XYZ Insurance, a core business within XYZ Bank Group, is one of Canada's leading providers of life, health, home, auto, and travel insurance.",
+                    "scenario.goal": "You want to renew your Basic Form home insurance and get the best price possible as a long-term customer.",
+                    "scenario.knowledge": [
+                        "Home Insurance Renewal: XYZ Insurance offers annual renewal for all home insurance tiers. Renewal rates may increase based on market conditions, claims history, and property reassessment. Returning customers with 5+ years of continuous coverage are eligible for loyalty discounts of up to 5%. Basic Form renewal can be completed online or by phone."
+                    ],
+                    "scenario.user_profile": "You are David Park who is closed to experience, conscientious, introverted, agreeable, and emotionally stable."
+                }
+            }
+        },
+        {
+            "conversation_id": "conv-fi-contradiction-deductible",
+            "scenario_id": "scenario-fi-contradiction-deductible",
+            "conversation_history": [
+                {
+                    "turn_id": 0,
+                    "message_id": "msg-fi-ded-0u",
+                    "role": "simulated_user",
+                    "content": "What is the deductible on the Basic Form home insurance?",
+                    "tool_calls": null
+                },
+                {
+                    "turn_id": 0,
+                    "message_id": "msg-fi-ded-0a",
+                    "role": "assistant",
+                    "content": "The Basic Form home insurance has a standard deductible of $500 per claim.",
+                    "tool_calls": null,
+                    "test.expected_label": "false information"
+                }
+            ],
+            "simulated_user_prompt": {
+                "simulated_user_prompt_template": "",
+                "variables": {
+                    "scenario.agent_context": "",
+                    "scenario.goal": "Understand the Basic Form deductible amount.",
+                    "scenario.knowledge": [
+                        "XYZ Insurance home deductibles: Basic Form has a $1,000 standard deductible. Broad Form has a $750 standard deductible. Comprehensive Form has a $500 standard deductible."
+                    ],
+                    "scenario.user_profile": "",
+                    "test.description": "Agent states $500 deductible — knowledge says Basic Form is $1,000. The $500 applies to Comprehensive Form."
+                }
+            }
+        },
+        {
+            "conversation_id": "conv-fi-contradiction-no-exceptions",
+            "scenario_id": "scenario-fi-contradiction-no-exceptions",
+            "conversation_history": [
+                {
+                    "turn_id": 0,
+                    "message_id": "msg-fi-exc-0u",
+                    "role": "simulated_user",
+                    "content": "My 18-year-old water heater burst. Am I covered?",
+                    "tool_calls": null
+                },
+                {
+                    "turn_id": 0,
+                    "message_id": "msg-fi-exc-0a",
+                    "role": "assistant",
+                    "content": "While appliances over 15 years old are generally excluded, we can make exceptions on a case-by-case basis for well-maintained units. I'd recommend filing a claim and our adjusters will review it.",
+                    "tool_calls": null,
+                    "test.expected_label": "false information"
+                }
+            ],
+            "simulated_user_prompt": {
+                "simulated_user_prompt_template": "",
+                "variables": {
+                    "scenario.agent_context": "",
+                    "scenario.goal": "Find out if an old appliance failure is covered.",
+                    "scenario.knowledge": [
+                        "XYZ Insurance water damage policy states that claims for appliances older than 15 years are excluded from coverage. There are no exceptions to this age limit."
+                    ],
+                    "scenario.user_profile": "",
+                    "test.description": "Agent implies case-by-case exceptions are possible — knowledge explicitly states there are no exceptions."
+                }
+            }
+        },
+        {
+            "conversation_id": "conv-fi-contradiction-pricing",
+            "scenario_id": "scenario-fi-contradiction-pricing",
+            "conversation_history": [
+                {
+                    "turn_id": 0,
+                    "message_id": "msg-fi-price-0u",
+                    "role": "simulated_user",
+                    "content": "What are your pricing plans?",
+                    "tool_calls": null
+                },
+                {
+                    "turn_id": 0,
+                    "message_id": "msg-fi-price-0a",
+                    "role": "assistant",
+                    "content": "We offer plans starting from $49/month for small businesses with up to 500 conversations per month.",
+                    "tool_calls": null,
+                    "test.expected_label": "false information"
+                }
+            ],
+            "simulated_user_prompt": {
+                "simulated_user_prompt_template": "",
+                "variables": {
+                    "scenario.agent_context": "",
+                    "scenario.goal": "Understand pricing plans.",
+                    "scenario.knowledge": [
+                        "Our pricing is based on the number of conversations and features you need. We offer flexible plans starting from $99/month for small businesses up to enterprise solutions with custom pricing. The basic plan includes up to 1,000 conversations per month."
+                    ],
+                    "scenario.user_profile": "",
+                    "test.description": "Agent says $49/month and 500 conversations — knowledge says $99/month and 1,000 conversations."
+                }
+            }
+        },
+        {
+            "conversation_id": "conv-fi-incomplete-omits-peril",
+            "scenario_id": "scenario-fi-incomplete-omits-peril",
+            "conversation_history": [
+                {
+                    "turn_id": 0,
+                    "message_id": "msg-fi-peril-0u",
+                    "role": "simulated_user",
+                    "content": "What does Basic Form cover?",
+                    "tool_calls": null
+                },
+                {
+                    "turn_id": 0,
+                    "message_id": "msg-fi-peril-0a",
+                    "role": "assistant",
+                    "content": "Basic Form covers common perils like fire, theft, and windstorm.",
+                    "tool_calls": null,
+                    "test.expected_label": "lack of specific information"
+                }
+            ],
+            "simulated_user_prompt": {
+                "simulated_user_prompt_template": "",
+                "variables": {
+                    "scenario.agent_context": "",
+                    "scenario.goal": "Understand what Basic Form covers.",
+                    "scenario.knowledge": [
+                        "Basic Form covers fire, windstorm, hail, theft, and vandalism."
+                    ],
+                    "scenario.user_profile": "",
+                    "test.description": "Agent uses 'like' to signal a partial list, omitting 'hail' and 'vandalism' — vague and incomplete, not contradictory."
+                }
+            }
+        },
+        {
+            "conversation_id": "conv-fi-vague-appeals",
+            "scenario_id": "scenario-fi-vague-appeals",
+            "conversation_history": [
+                {
+                    "turn_id": 0,
+                    "message_id": "msg-fi-appeal-0u",
+                    "role": "simulated_user",
+                    "content": "How can I appeal a denied claim?",
+                    "tool_calls": null
+                },
+                {
+                    "turn_id": 0,
+                    "message_id": "msg-fi-appeal-0a",
+                    "role": "assistant",
+                    "content": "You can appeal through our internal review process.",
+                    "tool_calls": null,
+                    "test.expected_label": "lack of specific information"
+                }
+            ],
+            "simulated_user_prompt": {
+                "simulated_user_prompt_template": "",
+                "variables": {
+                    "scenario.agent_context": "",
+                    "scenario.goal": "Learn how to appeal a denied claim.",
+                    "scenario.knowledge": [
+                        "Policyholders can appeal claim denials through a formal written review process."
+                    ],
+                    "scenario.user_profile": "",
+                    "test.description": "Agent's answer is vague and omits that the appeal must be submitted in writing — incomplete, not contradictory."
+                }
+            }
+        },
+        {
+            "conversation_id": "conv-fi-incomplete-omits-limit",
+            "scenario_id": "scenario-fi-incomplete-omits-limit",
+            "conversation_history": [
+                {
+                    "turn_id": 0,
+                    "message_id": "msg-fi-limit-0u",
+                    "role": "simulated_user",
+                    "content": "What liability coverage does home insurance provide?",
+                    "tool_calls": null
+                },
+                {
+                    "turn_id": 0,
+                    "message_id": "msg-fi-limit-0a",
+                    "role": "assistant",
+                    "content": "Yes, home insurance includes liability coverage.",
+                    "tool_calls": null,
+                    "test.expected_label": "lack of specific information"
+                }
+            ],
+            "simulated_user_prompt": {
+                "simulated_user_prompt_template": "",
+                "variables": {
+                    "scenario.agent_context": "",
+                    "scenario.goal": "Understand liability coverage.",
+                    "scenario.knowledge": [
+                        "Home insurance includes liability coverage up to $1,000,000."
+                    ],
+                    "scenario.user_profile": "",
+                    "test.description": "User asked what liability coverage provides — agent only confirms it exists without stating the $1,000,000 limit — incomplete, not contradictory."
+                }
+            }
+        },
+        {
+            "conversation_id": "conv-fi-extra-info-no-contradiction",
+            "scenario_id": "scenario-fi-extra-info-no-contradiction",
+            "conversation_history": [
+                {
+                    "turn_id": 0,
+                    "message_id": "msg-fi-extra-0u",
+                    "role": "simulated_user",
+                    "content": "Tell me about Basic Form.",
+                    "tool_calls": null
+                },
+                {
+                    "turn_id": 0,
+                    "message_id": "msg-fi-extra-0a",
+                    "role": "assistant",
+                    "content": "Basic Form covers fire, windstorm, hail, theft, and vandalism. We also offer bundle discounts when you combine home and auto insurance.",
+                    "tool_calls": null,
+                    "test.expected_label": "no failure"
+                }
+            ],
+            "simulated_user_prompt": {
+                "simulated_user_prompt_template": "",
+                "variables": {
+                    "scenario.agent_context": "",
+                    "scenario.goal": "Understand Basic Form coverage.",
+                    "scenario.knowledge": [
+                        "Basic Form covers fire, windstorm, hail, theft, and vandalism."
+                    ],
+                    "scenario.user_profile": "",
+                    "test.description": "Agent correctly lists all covered perils and adds bundle discount info not in knowledge — no contradiction."
+                }
+            }
+        },
+        {
+            "conversation_id": "conv-fi-incomplete-claim-docs",
+            "scenario_id": "scenario-fi-incomplete-claim-docs",
+            "conversation_history": [
+                {
+                    "turn_id": 0,
+                    "message_id": "msg-fi-docs-0u",
+                    "role": "simulated_user",
+                    "content": "What documents do I need to submit with my water damage claim?",
+                    "tool_calls": null
+                },
+                {
+                    "turn_id": 0,
+                    "message_id": "msg-fi-docs-0a",
+                    "role": "assistant",
+                    "content": "You'll need to provide documentation of the damage. Our claims team will guide you through the process.",
+                    "tool_calls": null,
+                    "test.expected_label": "lack of specific information"
+                }
+            ],
+            "simulated_user_prompt": {
+                "simulated_user_prompt_template": "",
+                "variables": {
+                    "scenario.agent_context": "",
+                    "scenario.goal": "Know what documents to include with a claim.",
+                    "scenario.knowledge": [
+                        "To file a water damage claim, policyholders must submit: photos of all damage, a repair estimate from a licensed contractor, and receipts for any emergency repairs already completed."
+                    ],
+                    "scenario.user_profile": "",
+                    "test.description": "Agent gives a vague answer — knowledge specifies photos, repair estimates, and receipts. Incomplete, not contradictory."
+                }
+            }
+        }
+    ]
+}
