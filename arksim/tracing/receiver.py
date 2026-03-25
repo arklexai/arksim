@@ -16,6 +16,7 @@ import asyncio
 import contextlib
 import json
 import logging
+import threading
 from collections import defaultdict
 from http import HTTPStatus
 from typing import Any
@@ -150,9 +151,16 @@ class TraceReceiver:
         self.port = port
         self.wait_timeout = wait_timeout
         self._spans: dict[tuple[str, int], list[dict[str, Any]]] = defaultdict(list)
+        self._direct_tool_calls: dict[tuple[str, int], list[ToolCall]] = defaultdict(
+            list
+        )
         self._events: dict[tuple[str, int], asyncio.Event] = {}
+        # Threading events for direct injection signaling (works across threads)
+        self._direct_events: dict[tuple[str, int], threading.Event] = {}
         self._server: asyncio.Server | None = None
         self._lock = asyncio.Lock()
+        self._submit_lock = threading.Lock()
+        self._loop: asyncio.AbstractEventLoop | None = None
 
     async def __aenter__(self) -> TraceReceiver:
         await self.start()
@@ -163,6 +171,7 @@ class TraceReceiver:
 
     async def start(self) -> None:
         """Start the HTTP server."""
+        self._loop = asyncio.get_running_loop()
         self._server = await asyncio.start_server(
             self._handle_connection, self.host, self.port
         )
@@ -182,7 +191,31 @@ class TraceReceiver:
             self._server = None
             logger.info("Trace receiver stopped")
         self._spans.clear()
+        self._direct_tool_calls.clear()
         self._events.clear()
+        self._direct_events.clear()
+
+    def submit_tool_calls(
+        self, conversation_id: str, turn_id: int, tool_calls: list[ToolCall]
+    ) -> None:
+        """Inject tool calls directly, bypassing HTTP.
+
+        Use this when the agent runs in the same process as arksim.
+        Thread-safe: can be called from any thread or from the event loop
+        thread (e.g. a TracingProcessor callback during Runner.run).
+        """
+        if not tool_calls or self._loop is None:
+            return
+
+        key = (conversation_id, turn_id)
+
+        # Write to the buffer and signal immediately. Both the threading
+        # lock and threading.Event work from any thread without needing
+        # the event loop.
+        with self._submit_lock:
+            self._direct_tool_calls[key].extend(tool_calls)
+            evt = self._direct_events.setdefault(key, threading.Event())
+            evt.set()
 
     async def wait_for_traces(
         self, conversation_id: str, turn_id: int
@@ -197,26 +230,41 @@ class TraceReceiver:
         key = (conversation_id, turn_id)
 
         async with self._lock:
-            event = self._events.setdefault(key, asyncio.Event())
+            http_event = self._events.setdefault(key, asyncio.Event())
 
-        # Wait for the first trace to arrive, up to wait_timeout
-        timed_out = False
-        try:
-            await asyncio.wait_for(event.wait(), timeout=self.wait_timeout)
-        except asyncio.TimeoutError:
-            timed_out = True
+        # Also prepare a threading event for direct injection
+        with self._submit_lock:
+            direct_event = self._direct_events.setdefault(key, threading.Event())
+
+        # Wait for either HTTP spans or direct injection to arrive.
+        # Check direct_event in a polling loop since threading.Event
+        # and asyncio.Event can't be awaited together.
+        timed_out = True
+        deadline = asyncio.get_event_loop().time() + self.wait_timeout
+        while asyncio.get_event_loop().time() < deadline:
+            # Check direct injection (instant, no await)
+            if direct_event.is_set():
+                timed_out = False
+                break
+            # Check HTTP path (short wait to yield to event loop)
+            try:
+                remaining = deadline - asyncio.get_event_loop().time()
+                await asyncio.wait_for(
+                    http_event.wait(), timeout=min(0.1, max(0, remaining))
+                )
+                timed_out = False
+                break
+            except asyncio.TimeoutError:
+                continue
 
         if not timed_out:
             # Traces arrived; settle briefly to catch trailing batches
             await asyncio.sleep(_SETTLE_SECONDS)
 
-        # Drain buffer and clean up stale entries for this conversation
+        # Drain both buffers and clean up stale entries
         async with self._lock:
             spans = self._spans.pop(key, [])
             self._events.pop(key, None)
-            # Clean up any stale entries for older turns of this conversation.
-            # Safe because each conversation runs on a single coroutine,
-            # so turns are always awaited sequentially.
             stale_keys = [
                 k for k in self._spans if k[0] == conversation_id and k[1] < turn_id
             ]
@@ -224,7 +272,16 @@ class TraceReceiver:
                 del self._spans[k]
                 self._events.pop(k, None)
 
-        tool_calls = spans_to_tool_calls(spans)
+        # Drain direct buffer under the threading lock
+        with self._submit_lock:
+            direct = self._direct_tool_calls.pop(key, [])
+            self._direct_events.pop(key, None)
+            for k in stale_keys:
+                self._direct_tool_calls.pop(k, None)
+                self._direct_events.pop(k, None)
+
+        # Merge: HTTP-received spans (converted) + directly submitted ToolCalls
+        tool_calls = spans_to_tool_calls(spans) + direct
         if tool_calls:
             logger.debug(
                 "Collected %d tool calls for (%s, %d)",

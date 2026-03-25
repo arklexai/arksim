@@ -147,6 +147,11 @@ class Simulator:
                 "chat_id": conversation_id,
                 "user_goal": goal,
                 "knowledge": knowledge,
+                **(
+                    {"trace_receiver": self.trace_receiver}
+                    if self.trace_receiver is not None
+                    else {}
+                ),
             }
 
             turn_state: dict[str, Any] = {}
