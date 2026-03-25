@@ -1,0 +1,179 @@
+---
+title: "Trace Receiver"
+description: "Capture tool calls from OTel-instrumented agents without changing their return values."
+---
+
+## Overview
+
+The trace receiver is a lightweight OTLP/HTTP server that captures tool call spans from agents that handle tools internally. Instead of requiring agents to return tool calls in `AgentResponse`, agents push OpenTelemetry traces to the receiver, and arksim attaches the captured tool calls to `Message.tool_calls` for evaluation.
+
+This is useful when:
+- Your agent uses an SDK that handles tool calling internally (e.g. OpenAI Agents SDK, LangChain)
+- You cannot modify the agent's return value to include `AgentResponse`
+- You want to capture tool calls from an agent running in a separate process
+
+---
+
+## Configuration
+
+Add a `trace_receiver` block to your simulation config:
+
+```yaml
+trace_receiver:
+  enabled: true
+  host: 127.0.0.1   # bind address
+  port: 4318         # IANA-assigned OTLP/HTTP standard port
+  wait_timeout: 5    # seconds to wait for traces after each agent response
+```
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `enabled` | bool | `false` | Enable the trace receiver |
+| `host` | string | `127.0.0.1` | Bind address (`0.0.0.0` for containers, trusted networks only) |
+| `port` | int | `4318` | Port number (1-65535) |
+| `wait_timeout` | float | `5.0` | Max seconds to wait for traces per turn |
+
+---
+
+## Capture Paths
+
+arksim supports three ways to capture tool calls. They can be combined freely, and arksim deduplicates by tool call ID first, then by `(name, arguments)` signature.
+
+### 1. AgentResponse (no trace receiver needed)
+
+The agent returns `AgentResponse(content=..., tool_calls=[...])` from `execute()`. This is the simplest path and requires no extra infrastructure.
+
+### 2. Direct injection (same process)
+
+When the agent runs in the same process as arksim, the trace receiver passes its reference to the agent via `metadata["trace_receiver"]`. The agent's `TracingProcessor` calls `receiver.submit_tool_calls()` to inject tool calls directly into the receiver's buffer, bypassing HTTP entirely.
+
+This is the recommended path for same-process agents because it avoids event loop contention between the OTel HTTP exporter and the async receiver.
+
+### 3. HTTP export (separate process)
+
+When the agent runs in a separate process, it exports OTel spans via `OTLPSpanExporter` to `POST /v1/traces` on the receiver's port. The receiver accepts both protobuf (`application/x-protobuf`) and JSON payloads.
+
+```bash
+pip install arksim[otel]  # for protobuf support
+```
+
+Without `arksim[otel]`, protobuf payloads are rejected with HTTP 415. JSON payloads work without extra dependencies.
+
+---
+
+## Agent Instrumentation
+
+### Using TracingProcessor (recommended)
+
+For agents built with the OpenAI Agents SDK, implement a `TracingProcessor` that converts `FunctionSpanData` to `ToolCall` objects. This is the same pattern used by [Braintrust](https://www.braintrust.dev/docs/integrations/agent-frameworks/openai-agents-sdk) and [OpenInference](https://langwatch.ai/docs/integration/python/integrations/open-ai-agents).
+
+```python
+from agents.tracing import TracingProcessor, Span, Trace, set_trace_processors
+from agents.tracing.span_data import FunctionSpanData
+from arksim.simulation_engine.tool_types import ToolCall
+
+class MyTracingProcessor(TracingProcessor):
+    def on_span_end(self, span):
+        if not isinstance(span.span_data, FunctionSpanData):
+            return
+
+        # Build ToolCall from SDK span data
+        tc = ToolCall(
+            id=span.span_id,
+            name=span.span_data.name,
+            arguments=json.loads(span.span_data.input or "{}"),
+        )
+
+        # Direct injection (same process)
+        receiver = ...  # from metadata["trace_receiver"]
+        receiver.submit_tool_calls(conversation_id, turn_id, [tc])
+
+    # ... other required methods (on_trace_start, on_trace_end, etc.)
+
+set_trace_processors([MyTracingProcessor()])
+```
+
+See `examples/customer-service/traced_agent.py` for a complete implementation with concurrent conversation support via trace_id mapping.
+
+### Using raw OTel spans (any framework)
+
+For agents not using the OpenAI Agents SDK, create OTel spans with routing attributes:
+
+```python
+from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+from opentelemetry.sdk.resources import Resource
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+
+provider = TracerProvider(
+    resource=Resource.create({
+        "service.name": "my-agent",
+        "arksim.conversation_id": metadata["chat_id"],
+    })
+)
+provider.add_span_processor(
+    SimpleSpanProcessor(OTLPSpanExporter(endpoint="http://127.0.0.1:4318/v1/traces"))
+)
+tracer = provider.get_tracer("my-agent")
+
+with tracer.start_as_current_span("execute_tool search_flights") as span:
+    span.set_attribute("arksim.turn_id", metadata["turn_id"])
+    span.set_attribute("gen_ai.tool.name", "search_flights")
+    span.set_attribute("gen_ai.tool.call.arguments", '{"origin": "NYC"}')
+    span.set_attribute("gen_ai.tool.call.result", '{"flights": [...]}')
+
+provider.force_flush()
+```
+
+### Routing attributes
+
+| Attribute | Where | Description |
+|-----------|-------|-------------|
+| `arksim.conversation_id` | Resource or span | Conversation ID from `metadata["chat_id"]` |
+| `arksim.turn_id` | Span | Turn index from `metadata["turn_id"]` |
+
+### Supported tool call attributes
+
+The receiver parses tool call data from two OTLP attribute families:
+
+**OTel GenAI semconv** (recommended):
+- `gen_ai.tool.name`, `gen_ai.tool.call.arguments`, `gen_ai.tool.call.result`, `gen_ai.tool.call.id`
+
+**OpenInference (Arize)**:
+- `tool.name`, `tool_call.function.arguments` or `tool.parameters`, `output.value`, `tool_call.id` or `tool.id`
+
+Only spans with a recognized tool name attribute or the `execute_tool ` span name prefix are converted. Other spans (HTTP, DB, parent) are filtered out.
+
+---
+
+## Same-Process Considerations
+
+When the traced agent and arksim run in the same process:
+
+<Warning>
+Use `num_workers: 1` in your config. The OpenAI Agents SDK's global trace context does not reliably propagate across many concurrent async traces. This limitation applies only to same-process tracing. Agents in separate processes can use any parallelism level.
+</Warning>
+
+The direct injection path (`submit_tool_calls`) avoids the HTTP deadlock that would otherwise occur when the OTel exporter and the trace receiver share an event loop. arksim automatically passes the receiver reference to the agent via `metadata["trace_receiver"]` when the trace receiver is enabled.
+
+```yaml
+# config_traced.yaml
+num_workers: 1  # required for same-process tracing
+
+trace_receiver:
+  enabled: true
+  port: 4318
+  wait_timeout: 5
+```
+
+---
+
+## Deduplication
+
+When both `AgentResponse` and the trace receiver provide tool calls for the same turn, arksim merges and deduplicates:
+
+1. **By ID**: tool calls with matching IDs are deduplicated (AgentResponse wins)
+2. **By signature**: tool calls with matching `(name, arguments)` are deduplicated (AgentResponse wins)
+3. **Unique**: tool calls from either source that don't match anything are included
+
+This allows both capture paths to coexist safely.
