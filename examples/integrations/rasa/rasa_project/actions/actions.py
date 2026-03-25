@@ -1,51 +1,32 @@
 # SPDX-License-Identifier: Apache-2.0
-"""Custom action that forwards unrecognized messages to an LLM."""
+"""Custom action that looks up order status from a mock database."""
 
 from __future__ import annotations
 
 from typing import Any
 
-from openai import AsyncOpenAI
 from rasa_sdk import Action, Tracker
+from rasa_sdk.events import SlotSet
 from rasa_sdk.executor import CollectingDispatcher
 
-_client = AsyncOpenAI()
+_ORDERS: dict[str, str] = {
+    "ORD-001": "Shipped - in transit, arriving in 2-3 business days",
+    "ORD-002": "Processing - estimated to ship within 24 hours",
+}
 
-_SYSTEM_PROMPT = (
-    "You are a helpful assistant that answers user questions clearly and accurately."
-)
 
-
-class ActionLLMResponse(Action):
-    """Send the conversation to an LLM and return its response."""
+class ActionCheckOrderStatus(Action):
+    """Look up order status by order ID."""
 
     def name(self) -> str:
-        return "action_llm_response"
+        return "action_check_order_status"
 
-    async def run(
+    def run(
         self,
         dispatcher: CollectingDispatcher,
         tracker: Tracker,
         domain: dict[str, Any],
     ) -> list[dict[str, Any]]:
-        messages: list[dict[str, str]] = [
-            {"role": "system", "content": _SYSTEM_PROMPT},
-        ]
-        for event in tracker.events_after_latest_restart():
-            if event.get("event") == "user":
-                text = event.get("text", "")
-                if text:
-                    messages.append({"role": "user", "content": text})
-            elif event.get("event") == "bot":
-                text = event.get("text", "")
-                if text:
-                    messages.append({"role": "assistant", "content": text})
-
-        response = await _client.chat.completions.create(
-            model="gpt-4o",
-            messages=messages,
-        )
-
-        reply = response.choices[0].message.content or ""
-        dispatcher.utter_message(text=reply)
-        return []
+        order_id = tracker.get_slot("order_id") or ""
+        status = _ORDERS.get(order_id.upper(), "not_found")
+        return [SlotSet("order_status", status)]

@@ -2,22 +2,15 @@ recipe: default.v1
 
 language: en
 
+assistant_id: rasa_customer_support
+
 pipeline:
-- name: WhitespaceTokenizer
-- name: CountVectorsFeaturizer
-- name: CountVectorsFeaturizer
-  analyzer: char_wb
-  min_ngram: 1
-  max_ngram: 4
-- name: DIETClassifier
-  epochs: 100
-- name: FallbackClassifier
-  threshold: 0.5
-  ambiguity_threshold: 0.1
+  - name: CompactLLMCommandGenerator
+    llm:
+      model_group: openai_llm
+    flow_retrieval:
+      embeddings:
+        model_group: openai_embeddings
 
 policies:
-- name: MemoizationPolicy
-- name: RulePolicy
-  core_fallback_threshold: 0.3
-  core_fallback_action_name: action_default_fallback
-  enable_fallback_prediction: true
+  - name: FlowPolicy
