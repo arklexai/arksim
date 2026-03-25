@@ -1,5 +1,3 @@
 # Dependencies for the traced agent variant (traced_agent.py).
 # The standard custom_agent.py only needs openai-agents.
 openai-agents
-opentelemetry-sdk
-opentelemetry-exporter-otlp-proto-http
