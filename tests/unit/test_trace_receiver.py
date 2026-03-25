@@ -511,3 +511,83 @@ async def test_receiver_415_when_protobuf_unavailable(_unused_port: int) -> None
             await writer.wait_closed()
     finally:
         recv_module._HAS_PROTOBUF = original
+
+
+# ── Direct injection (submit_tool_calls) ──
+
+
+@pytest.mark.asyncio
+async def test_submit_tool_calls_direct_injection(_unused_port: int) -> None:
+    """submit_tool_calls injects ToolCalls directly, bypassing HTTP."""
+    from arksim.simulation_engine.tool_types import ToolCall
+
+    port = _unused_port
+    async with TraceReceiver(port=port, wait_timeout=2.0) as receiver:
+        tc = ToolCall(id="direct-1", name="search", arguments={"q": "test"})
+        receiver.submit_tool_calls("conv-1", 0, [tc])
+
+        result = await receiver.wait_for_traces("conv-1", 0)
+        assert len(result) == 1
+        assert result[0].name == "search"
+        assert result[0].id == "direct-1"
+        assert result[0].arguments == {"q": "test"}
+
+
+@pytest.mark.asyncio
+async def test_submit_tool_calls_multiple_turns(_unused_port: int) -> None:
+    """Direct injection routes to the correct turn."""
+    from arksim.simulation_engine.tool_types import ToolCall
+
+    port = _unused_port
+    async with TraceReceiver(port=port, wait_timeout=2.0) as receiver:
+        receiver.submit_tool_calls(
+            "conv-1", 0, [ToolCall(id="t0", name="tool_a", arguments={})]
+        )
+        receiver.submit_tool_calls(
+            "conv-1", 1, [ToolCall(id="t1", name="tool_b", arguments={})]
+        )
+
+        tc0 = await receiver.wait_for_traces("conv-1", 0)
+        tc1 = await receiver.wait_for_traces("conv-1", 1)
+        assert len(tc0) == 1
+        assert tc0[0].name == "tool_a"
+        assert len(tc1) == 1
+        assert tc1[0].name == "tool_b"
+
+
+@pytest.mark.asyncio
+async def test_submit_tool_calls_mixed_with_http(_unused_port: int) -> None:
+    """Direct injection and HTTP spans are merged for the same turn."""
+    from arksim.simulation_engine.tool_types import ToolCall
+
+    port = _unused_port
+    async with TraceReceiver(port=port, wait_timeout=2.0) as receiver:
+        # Direct injection
+        receiver.submit_tool_calls(
+            "conv-mix", 0, [ToolCall(id="direct-1", name="lookup", arguments={})]
+        )
+
+        # HTTP span
+        payload = _make_otlp_payload(
+            "conv-mix",
+            0,
+            [
+                {
+                    "name": "execute_tool search",
+                    "spanId": "http-1",
+                    "attributes": [
+                        {
+                            "key": "gen_ai.tool.name",
+                            "value": {"stringValue": "search"},
+                        },
+                    ],
+                    "status": {},
+                }
+            ],
+        )
+        await _push_traces(port, payload)
+
+        result = await receiver.wait_for_traces("conv-mix", 0)
+        names = {tc.name for tc in result}
+        assert names == {"lookup", "search"}
+        assert len(result) == 2
