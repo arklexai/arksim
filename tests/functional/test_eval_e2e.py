@@ -2,7 +2,7 @@
 """End-to-end evaluation tests using eval_test_simulation.json.
 
 All scenarios live in tests/test_data/eval_test_simulation.json, which is a
-standard Simulation format (schema_version v1.1). Each conversation carries a
+standard Simulation format (schema_version v1.1). Each turn in a conversation carries a
 "test.expected_label" variable that records the correct agent behavior failure
 label for that scenario.
 
@@ -36,7 +36,9 @@ from arksim.evaluator.utils.prompts import goal_completion_system_prompt
 from arksim.evaluator.utils.schema import QualSchema, ScoreSchema, UniqueErrorsSchema
 from arksim.simulation_engine.entities import Simulation
 
-_SIM_PATH = pathlib.Path(__file__).parent.parent / "test_data" / "eval_test_simulation.json"
+_SIM_PATH = (
+    pathlib.Path(__file__).parent.parent / "test_data" / "eval_test_simulation.json"
+)
 
 _requires_openai = pytest.mark.skipif(
     not os.getenv("OPENAI_API_KEY"),
@@ -81,7 +83,9 @@ def _expected_labels() -> dict[str, str]:
 def _mock_llm(score: int = 4, behavior_label: str = "no failure") -> MagicMock:
     llm = MagicMock()
 
-    def _side_effect(messages: list, schema: type | None = None, **kw: object) -> object:
+    def _side_effect(
+        messages: list, schema: type | None = None, **kw: object
+    ) -> object:
         if schema is UniqueErrorsSchema:
             return UniqueErrorsSchema(unique_errors=[])
         if schema is not None and hasattr(schema, "model_fields"):
@@ -93,7 +97,9 @@ def _mock_llm(score: int = 4, behavior_label: str = "no failure") -> MagicMock:
                 and goal_completion_system_prompt.strip() in m.get("content", "")
                 for m in messages
             )
-            return ScoreSchema(score=1 if is_goal_completion else score, reason="mock score")
+            return ScoreSchema(
+                score=1 if is_goal_completion else score, reason="mock score"
+            )
         return "text response"
 
     llm.call.side_effect = _side_effect
@@ -102,6 +108,7 @@ def _mock_llm(score: int = 4, behavior_label: str = "no failure") -> MagicMock:
 
 def _real_llm() -> object:
     from arksim.llms.chat import LLM
+
     return LLM(model="gpt-4.1", provider="openai")
 
 
@@ -141,13 +148,13 @@ class TestEvalE2EStructure:
 
         id_to_expected_turns = {}
         for conv in sim.conversations:
-            pairs = sum(
-                1 for m in conv.conversation_history if m.role == "assistant"
-            )
+            pairs = sum(1 for m in conv.conversation_history if m.role == "assistant")
             id_to_expected_turns[conv.conversation_id] = pairs
 
         for conv in result.conversations:
-            assert len(conv.turn_scores) == id_to_expected_turns[conv.conversation_id], (
+            assert (
+                len(conv.turn_scores) == id_to_expected_turns[conv.conversation_id]
+            ), (
                 f"{conv.conversation_id}: expected "
                 f"{id_to_expected_turns[conv.conversation_id]} turns, "
                 f"got {len(conv.turn_scores)}"
@@ -159,7 +166,13 @@ class TestEvalE2EStructure:
             params=EvaluationParams(output_dir="/tmp/eval_e2e", num_workers=1),
             llm=_mock_llm(score=4),
         ).evaluate(sim)
-        expected = {"helpfulness", "coherence", "verbosity", "relevance", "faithfulness"}
+        expected = {
+            "helpfulness",
+            "coherence",
+            "verbosity",
+            "relevance",
+            "faithfulness",
+        }
         for conv in result.conversations:
             for turn in conv.turn_scores:
                 names = {s.name for s in turn.scores}
@@ -183,10 +196,13 @@ class TestEvalE2EStructure:
         sim = _load_simulation()
         # Pick a conversation that has non-empty knowledge
         conv_with_knowledge = next(
-            c for c in sim.conversations
+            c
+            for c in sim.conversations
             if c.simulated_user_prompt.variables.get("scenario.knowledge")
         )
-        snippet = conv_with_knowledge.simulated_user_prompt.variables["scenario.knowledge"][0][:30]
+        snippet = conv_with_knowledge.simulated_user_prompt.variables[
+            "scenario.knowledge"
+        ][0][:30]
 
         llm = _mock_llm(score=4)
         # Run only the single conversation to keep the check focused
@@ -255,7 +271,9 @@ class TestEvalE2ELabelClassification:
             llm=_real_llm(),
         ).evaluate(single)
 
-        actual_labels = [t.turn_behavior_failure for t in result.conversations[0].turn_scores]
+        actual_labels = [
+            t.turn_behavior_failure for t in result.conversations[0].turn_scores
+        ]
         return expected_label, actual_labels
 
     # Build parametrize list at collection time from the simulation file
