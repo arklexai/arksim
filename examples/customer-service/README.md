@@ -53,31 +53,34 @@ arksim simulate-evaluate config_custom.yaml
 python run_pipeline.py
 ```
 
-### Traced agent (OTel spans)
+### Traced agent (TracingProcessor)
 
-The example includes a traced agent variant (`traced_agent.py`) that pushes tool calls as OTel spans instead of returning them in `AgentResponse`. This exercises the full trace receiver pipeline:
+The example includes a traced agent variant (`traced_agent.py`) that captures tool calls via the OpenAI Agents SDK's `TracingProcessor` interface instead of returning them in `AgentResponse`. This follows the same integration pattern as [Braintrust](https://www.braintrust.dev/docs/integrations/agent-frameworks/openai-agents-sdk) and [OpenInference](https://langwatch.ai/docs/integration/python/integrations/open-ai-agents).
 
 ```
-Agent executes tools -> OTel spans pushed -> arksim captures -> evaluator scores
+Agent executes tools -> SDK fires TracingProcessor.on_span_end
+-> ArksimTracingProcessor injects ToolCalls -> arksim captures -> evaluator scores
 ```
 
-The traced agent uses OpenTelemetry's `OTLPSpanExporter` to push protobuf spans to arksim's built-in trace receiver on port 4318 (IANA-assigned OTLP/HTTP standard). arksim waits for spans after each agent turn, converts them to `ToolCall` objects, and merges them into `Message.tool_calls`. The simulator deduplicates by ID and (name, args), so both paths can coexist.
+When running in the same process as arksim, tool calls are injected directly into the receiver's buffer via `submit_tool_calls()` (no HTTP, no serialization). For agents in separate processes, the HTTP export path via `OTLPSpanExporter` is also supported.
 
 ```bash
 pip install -r requirements-traced.txt
 arksim simulate-evaluate config_traced.yaml
 ```
 
+**Important:** Same-process tracing requires `num_workers: 1` because the OpenAI Agents SDK's global trace context does not reliably propagate across many concurrent async traces. Agents in separate processes can use any parallelism level.
+
 The trace receiver is configured in config_traced.yaml:
 
 ```yaml
 trace_receiver:
   enabled: true
-  port: 4318        # IANA-assigned OTLP/HTTP standard port
-  wait_timeout: 3   # seconds to wait for traces after each agent turn
+  port: 4318
+  wait_timeout: 5
 ```
 
-When `trace_receiver.enabled` is false or omitted, arksim only captures tool calls from `AgentResponse` (the standard path).
+When `trace_receiver.enabled` is false or omitted, arksim only captures tool calls from `AgentResponse` (the standard path). See the [Trace Receiver docs](https://docs.arklex.ai/main/trace-receiver) for full details on capture paths, routing attributes, and deduplication.
 
 ## Trajectory matching
 
