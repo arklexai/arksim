@@ -8,13 +8,14 @@ The integration connects to Rasa via its REST webhook channel. Point ArkSim at a
 
 The included CALM assistant handles customer support queries through five flows: greetings, goodbyes, pricing questions, feature questions, and a multi-step order status lookup with slot filling and a custom action.
 
-ArkSim runs three scenarios against it:
+ArkSim runs four scenarios against it:
 
 | Scenario | What It Exercises |
 |----------|-------------------|
 | **Product inquiry** | Simple Q&A flow routing (pricing, features) |
 | **Order status check** | Multi-step flow with slot filling and a custom action |
 | **Topic switching** | Context management when switching between flows mid-conversation |
+| **Unknown order** | Error handling when an order ID is not found |
 
 Each scenario runs 3 times to test consistency across runs, since CALM's LLM-based routing is non-deterministic.
 
@@ -74,7 +75,7 @@ By default the agent connects to `http://localhost:5005/webhooks/rest/webhook`. 
 |------|-------------|
 | `custom_agent.py` | ArkSim agent wrapper (async HTTP via `httpx`) |
 | `config.yaml` | ArkSim simulator configuration |
-| `scenarios.json` | Three evaluation scenarios |
+| `scenarios.json` | Evaluation scenarios |
 | `rasa_project/config.yml` | CALM pipeline configuration |
 | `rasa_project/domain.yml` | Slots, responses, and session settings |
 | `rasa_project/endpoints.yml` | LLM model groups and action endpoint |

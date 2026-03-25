@@ -46,11 +46,11 @@ class RasaAgent(BaseAgent):
                 json={"sender": self._chat_id, "message": user_query},
             )
             response.raise_for_status()
-        except httpx.ConnectError:
+        except httpx.ConnectError as exc:
             msg = (
                 f"Could not connect to Rasa server at {self._endpoint}. Is it running?"
             )
-            raise RuntimeError(msg) from None
+            raise RuntimeError(msg) from exc
 
         messages = response.json()
         texts = [m["text"] for m in messages if "text" in m]

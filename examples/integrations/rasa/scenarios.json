@@ -21,6 +21,13 @@
             "goal": "You are a current customer evaluating an upgrade. Start by asking about product features. Then switch topics and ask to check the status of your order ORD-002. After getting the order status, switch back and ask about pricing for an upgrade.",
             "agent_context": "You are a customer support assistant for a SaaS platform. You answer questions about pricing and features, and can look up order status by order ID.",
             "user_profile": "You are Morgan, a 34-year-old product manager at a growing company. You tend to juggle multiple questions in a single conversation. You are friendly but efficient, and you switch between topics naturally as things come to mind."
+        },
+        {
+            "scenario_id": "unknown_order",
+            "user_id": "user_0004",
+            "goal": "You want to check the status of order ORD-999. When the assistant tells you the order was not found, ask them to double-check or try again. Accept the result if they confirm the order does not exist.",
+            "agent_context": "You are a customer support assistant for a SaaS platform. You answer questions about pricing and features, and can look up order status by order ID.",
+            "user_profile": "You are Riley, a 26-year-old freelance designer who thinks they may have the wrong order number. You are polite but persistent, and you want to make sure the lookup was done correctly before giving up."
         }
     ]
 }
