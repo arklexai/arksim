@@ -233,10 +233,10 @@ class TraceReceiver:
                 turn_id,
             )
         else:
-            logger.warning(
-                "No tool call traces received for (%s, %d) within %.1fs timeout. "
-                "Verify the agent sets arksim.conversation_id and arksim.turn_id "
-                "as span/resource attributes.",
+            # Debug, not warning: agents may produce pure text responses
+            # with no tool calls on some turns, which is normal behavior.
+            logger.debug(
+                "No tool call traces received for (%s, %d) within %.1fs timeout",
                 conversation_id,
                 turn_id,
                 self.wait_timeout,
@@ -248,7 +248,11 @@ class TraceReceiver:
     async def _handle_connection(
         self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter
     ) -> None:
-        """Handle a raw TCP connection as a minimal HTTP request."""
+        """Handle a raw TCP connection as a minimal HTTP/1.1 request.
+
+        Uses Content-Length for body framing. Chunked Transfer-Encoding is
+        not supported since OTel SDK exporters always send Content-Length.
+        """
         try:
             # Read request line
             request_line = await asyncio.wait_for(reader.readline(), timeout=10)
@@ -302,7 +306,7 @@ class TraceReceiver:
                 )
 
             # Reject protobuf when opentelemetry-proto is not installed
-            is_protobuf = "protobuf" in content_type or "proto" in content_type
+            is_protobuf = "application/x-protobuf" in content_type
             if is_protobuf and not _HAS_PROTOBUF:
                 logger.warning(
                     "Received protobuf payload but opentelemetry-proto is not "

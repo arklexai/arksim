@@ -13,10 +13,16 @@ max_turns: 3
 output_file_path: ./results/simulation/simulation_traced.json
 simulated_user_prompt_template: null
 
+# When the traced agent runs in the same process as arksim, use
+# num_workers: 1 to avoid event loop contention between the OTel
+# exporter and the trace receiver. For agents in separate processes,
+# higher parallelism works fine.
+num_workers: 1
+
 trace_receiver:
   enabled: true
   port: 4318
-  wait_timeout: 3
+  wait_timeout: 10
 
 metrics_to_run:
   - helpfulness
@@ -25,4 +31,3 @@ metrics_to_run:
 
 model: gpt-4.1-mini
 provider: openai
-num_workers: 50
