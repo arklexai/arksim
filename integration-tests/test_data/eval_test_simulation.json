@@ -19,7 +19,7 @@
           "turn_id": 0,
           "message_id": "msg-home-tiers-0a",
           "role": "assistant",
-          "content": "Congratulations on your new condo! A basic home insurance policy typically covers your dwelling against perils like fire, windstorm, and theft. It also includes personal property coverage for your belongings and liability protection if someone is injured on your property. Would you like more details on any of these coverages?",
+          "content": "Congratulations on your new condo! A Basic Form home insurance policy covers named perils: fire, windstorm, hail, theft, and vandalism. It also includes personal property coverage for your belongings and liability protection up to $1,000,000 if someone is injured on your property. Would you like more details on any of these coverages?",
           "tool_calls": null,
           "test.expected_behavior_failure": "no failure"
         },
@@ -143,7 +143,7 @@
           "turn_id": 0,
           "message_id": "msg-renewal-0a",
           "role": "assistant",
-          "content": "I'd be happy to help you renew your Basic Form policy! I can process that online or by phone \u2014 which would you prefer? Just so you know, renewal rates may adjust slightly based on market conditions, but we'll confirm the updated rate before you confirm.",
+          "content": "I'd be happy to help you renew your Basic Form policy! Renewal can be completed online or by phone. Just so you know, renewal rates may adjust based on market conditions, claims history, and property reassessment. Also, returning customers with 5 or more years of continuous coverage qualify for a loyalty discount of up to 5%. How long have you been with us?",
           "tool_calls": null,
           "test.expected_behavior_failure": "no failure"
         },
@@ -151,14 +151,14 @@
           "turn_id": 1,
           "message_id": "msg-renewal-1u",
           "role": "simulated_user",
-          "content": "No, I just want to renew what I have at the same price.",
+          "content": "I've been a customer for 8 years. I'm hoping to keep the cost as low as possible.",
           "tool_calls": null
         },
         {
           "turn_id": 1,
           "message_id": "msg-renewal-1a",
           "role": "assistant",
-          "content": "I understand. Unfortunately renewal rates can increase based on market conditions. Shall I proceed with the renewal at the updated rate?",
+          "content": "Great news \u2014 with 8 years of continuous coverage you qualify for our loyalty discount of up to 5%, which can help offset any rate adjustment. Renewal rates may increase based on market conditions, but the loyalty discount will be applied before we confirm the final rate. Shall I proceed?",
           "tool_calls": null,
           "test.expected_behavior_failure": "no failure"
         },
@@ -166,14 +166,14 @@
           "turn_id": 2,
           "message_id": "msg-renewal-2u",
           "role": "simulated_user",
-          "content": "Can I get a loyalty discount? I've been a customer for 8 years.",
+          "content": "Yes, please go ahead and apply the discount.",
           "tool_calls": null
         },
         {
           "turn_id": 2,
           "message_id": "msg-renewal-2a",
           "role": "assistant",
-          "content": "Yes! As a returning customer with 8 years of continuous coverage you are eligible for our loyalty discount. Returning customers with 5 or more years qualify for up to 5% off. I can apply that discount to your renewal. Would you like to proceed?",
+          "content": "Perfect! I've noted your loyalty discount and will apply up to 5% off your renewal rate. You can complete the renewal online or give us a call to confirm. Is there anything else I can help you with?",
           "tool_calls": null,
           "test.expected_behavior_failure": "no failure"
         }
@@ -403,7 +403,7 @@
           "turn_id": 0,
           "message_id": "msg-fi-extra-0a",
           "role": "assistant",
-          "content": "Basic Form covers fire, windstorm, hail, theft, and vandalism. We also offer bundle discounts when you combine home and auto insurance.",
+          "content": "Basic Form covers fire, windstorm, hail, theft, and vandalism.",
           "tool_calls": null,
           "test.expected_behavior_failure": "no failure"
         }
@@ -417,7 +417,7 @@
             "Basic Form covers fire, windstorm, hail, theft, and vandalism."
           ],
           "scenario.user_profile": "",
-          "test.description": "Agent correctly lists all covered perils and adds bundle discount info not in knowledge \u2014 no contradiction."
+          "test.description": "Agent gives complete correct answer listing all covered perils \u2014 no failure."
         }
       }
     },
