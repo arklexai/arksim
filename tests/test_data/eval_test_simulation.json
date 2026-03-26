@@ -34,7 +34,7 @@
                     "turn_id": 1,
                     "message_id": "msg-home-tiers-1a",
                     "role": "assistant",
-                    "content": "Water damage coverage depends on the type of policy you choose. Basic Form policies cover sudden and accidental water damage, such as a burst pipe. However, they typically exclude gradual damage like slow leaks or sewer backup. For broader protection, you may want to consider a Comprehensive Form policy or add optional endorsements. Would you like me to explain the different policy tiers?",
+                    "content": "Water damage coverage depends on the type of policy you choose. Basic Form does not cover water damage — it only covers named perils like fire, windstorm, hail, theft, and vandalism. If you want water damage protection, you would need Broad Form, which adds accidental water damage, or Comprehensive Form for the broadest coverage. Would you like me to explain the different policy tiers?",
                     "tool_calls": null,
                     "test.expected_label": "no failure"
                 },
