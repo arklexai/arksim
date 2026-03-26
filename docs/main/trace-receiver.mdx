@@ -63,37 +63,29 @@ Without `arksim[otel]`, protobuf payloads are rejected with HTTP 415. JSON paylo
 
 ## Agent Instrumentation
 
-### Using TracingProcessor (recommended)
+### Using ArksimTracingProcessor (recommended)
 
-For agents built with the OpenAI Agents SDK, implement a `TracingProcessor` that converts `FunctionSpanData` to `ToolCall` objects. This is the same pattern used by [Braintrust](https://www.braintrust.dev/docs/integrations/agent-frameworks/openai-agents-sdk) and [OpenInference](https://langwatch.ai/docs/integration/python/integrations/open-ai-agents).
+For agents built with the OpenAI Agents SDK, arksim ships a ready-to-use `TracingProcessor`. This follows the same pattern as [Braintrust](https://www.braintrust.dev/docs/integrations/agent-frameworks/openai-agents-sdk) and [LangWatch](https://langwatch.ai/docs/integration/python/integrations/open-ai-agents).
 
 ```python
-from agents.tracing import TracingProcessor, Span, Trace, set_trace_processors
-from agents.tracing.span_data import FunctionSpanData
-from arksim.simulation_engine.tool_types import ToolCall
+from agents.tracing import set_trace_processors
+from arksim.tracing import ArksimTracingProcessor
 
-class MyTracingProcessor(TracingProcessor):
-    def on_span_end(self, span):
-        if not isinstance(span.span_data, FunctionSpanData):
-            return
-
-        # Build ToolCall from SDK span data
-        tc = ToolCall(
-            id=span.span_id,
-            name=span.span_data.name,
-            arguments=json.loads(span.span_data.input or "{}"),
-        )
-
-        # Direct injection (same process)
-        receiver = ...  # from metadata["trace_receiver"]
-        receiver.submit_tool_calls(conversation_id, turn_id, [tc])
-
-    # ... other required methods (on_trace_start, on_trace_end, etc.)
-
-set_trace_processors([MyTracingProcessor()])
+processor = ArksimTracingProcessor()
+set_trace_processors([processor])
 ```
 
-See `examples/customer-service/traced_agent.py` for a complete implementation with concurrent conversation support via trace_id mapping.
+The processor handles concurrent conversations by mapping SDK trace_ids to `(conversation_id, turn_id)` context. Register context before each `Runner.run()` call:
+
+```python
+from agents.tracing import trace as sdk_trace
+
+with sdk_trace(workflow_name="agent_turn", group_id=chat_id) as t:
+    processor.register_context(t.trace_id, chat_id, turn_id, receiver)
+    result = await Runner.run(agent, input=input_list)
+```
+
+Requires `pip install openai-agents`. See `examples/customer-service/traced_agent.py` for a complete working example.
 
 ### Using raw OTel spans (any framework)
 

@@ -54,7 +54,7 @@ num_workers: 50
 # tools internally (e.g. OpenAI function calling, LangChain agents).
 # Agents must set arksim.conversation_id and arksim.turn_id as span
 # or resource attributes for traces to route correctly.
-# See docs/trace-receiver.md for full guide.
+# See docs/main/trace-receiver.mdx for full guide.
 # trace_receiver:
 #   enabled: true
 #   host: 127.0.0.1   # use 0.0.0.0 for container deployments
