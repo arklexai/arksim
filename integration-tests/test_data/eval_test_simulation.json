@@ -158,7 +158,7 @@
           "turn_id": 1,
           "message_id": "msg-renewal-1a",
           "role": "assistant",
-          "content": "Great news \u2014 with 8 years of continuous coverage you qualify for our loyalty discount of up to 5%, which can help offset any rate adjustment. Renewal rates may increase based on market conditions, but the loyalty discount will be applied before we confirm the final rate. Shall I proceed?",
+          "content": "Great news \u2014 with 8 years of continuous coverage you qualify for our loyalty discount of up to 5%. Renewal rates may increase based on market conditions, claims history, and property reassessment, but the loyalty discount will be applied before we confirm the final rate. Shall I proceed?",
           "tool_calls": null,
           "test.expected_behavior_failure": "no failure"
         },
