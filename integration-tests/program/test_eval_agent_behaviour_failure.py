@@ -26,9 +26,7 @@ from .conftest import OPENAI_MODEL, requires_openai
 pytestmark = [pytest.mark.integration, requires_openai]
 
 _SIM_PATH = (
-    pathlib.Path(__file__).parent.parent
-    / "test_data"
-    / "eval_test_simulation.json"
+    pathlib.Path(__file__).parent.parent / "test_data" / "eval_test_simulation.json"
 )
 
 # Labels that indicate a real failure — skipped/system outcomes are excluded
