@@ -74,7 +74,9 @@ _conv_ids = [c["conversation_id"] for c in _sim_data["conversations"]]
 
 
 @pytest.mark.parametrize("conv_id", _conv_ids)
-def test_conversation_matches_expected_label(conv_id: str) -> None:
+def test_conversation_matches_expected_label(
+    conv_id: str, tmp_path: pathlib.Path
+) -> None:
     """For each conversation, at least one turn must match the expected label,
     or all turns must be 'no failure' when the expected label is 'no failure'."""
     sim = _load_simulation()
@@ -89,7 +91,7 @@ def test_conversation_matches_expected_label(conv_id: str) -> None:
         conversations=[conv],
     )
     result = Evaluator(
-        params=EvaluationParams(output_dir="/tmp/eval_e2e_real", num_workers=1),
+        params=EvaluationParams(output_dir=str(tmp_path), num_workers=1),
         llm=_real_llm(),
     ).evaluate(single)
 
