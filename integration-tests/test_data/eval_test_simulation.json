@@ -21,7 +21,7 @@
                     "role": "assistant",
                     "content": "Congratulations on your new condo! A basic home insurance policy typically covers your dwelling against perils like fire, windstorm, and theft. It also includes personal property coverage for your belongings and liability protection if someone is injured on your property. Would you like more details on any of these coverages?",
                     "tool_calls": null,
-                    "test.expected_label": "no failure"
+                    "test.expected_behavior_failure": "no failure"
                 },
                 {
                     "turn_id": 1,
@@ -36,7 +36,7 @@
                     "role": "assistant",
                     "content": "Water damage coverage depends on the type of policy you choose. Basic Form does not cover water damage — it only covers named perils like fire, windstorm, hail, theft, and vandalism. If you want water damage protection, you would need Broad Form, which adds accidental water damage, or Comprehensive Form for the broadest coverage. Would you like me to explain the different policy tiers?",
                     "tool_calls": null,
-                    "test.expected_label": "no failure"
+                    "test.expected_behavior_failure": "no failure"
                 },
                 {
                     "turn_id": 2,
@@ -51,7 +51,7 @@
                     "role": "assistant",
                     "content": "We offer three tiers: Basic Form covers named perils only, Broad Form extends coverage to additional risks like accidental water damage, and Comprehensive Form covers all risks except those specifically excluded. Most homeowners find that Broad Form offers the best balance of coverage and cost. Would you like a quote for any of these?",
                     "tool_calls": null,
-                    "test.expected_label": "no failure"
+                    "test.expected_behavior_failure": "no failure"
                 }
             ],
             "simulated_user_prompt": {
@@ -83,7 +83,7 @@
                     "role": "assistant",
                     "content": "I'm sorry to hear about that. Water heater failures can sometimes be denied if the unit exceeded its expected lifespan. Could you tell me how old the water heater was? That will help me understand why the claim may have been denied.",
                     "tool_calls": null,
-                    "test.expected_label": "no failure"
+                    "test.expected_behavior_failure": "no failure"
                 },
                 {
                     "turn_id": 1,
@@ -98,7 +98,7 @@
                     "role": "assistant",
                     "content": "I understand your frustration. Unfortunately, most policies exclude damage from appliances that exceed their expected service life. For water heaters, the typical threshold is 15 years. Since yours was 17 years old, it falls outside the covered range. However, you do have options to appeal the decision. Would you like to know more about the appeals process?",
                     "tool_calls": null,
-                    "test.expected_label": "no failure"
+                    "test.expected_behavior_failure": "no failure"
                 },
                 {
                     "turn_id": 2,
@@ -113,7 +113,7 @@
                     "role": "assistant",
                     "content": "You can start by requesting a formal review of the denial in writing. Include any maintenance records showing the water heater was properly maintained. If the internal review upholds the denial, you can escalate to the provincial insurance ombudsman. You may also consult with an insurance lawyer for a legal opinion. Would you like me to provide the contact information for our claims review department?",
                     "tool_calls": null,
-                    "test.expected_label": "no failure"
+                    "test.expected_behavior_failure": "no failure"
                 }
             ],
             "simulated_user_prompt": {
@@ -145,7 +145,7 @@
                     "role": "assistant",
                     "content": "I'd be happy to help you with your renewal! Before we proceed, have you considered upgrading to our Broad Form coverage? It includes additional protections like accidental water damage and falling objects, which many homeowners find valuable.",
                     "tool_calls": null,
-                    "test.expected_label": "no failure"
+                    "test.expected_behavior_failure": "no failure"
                 },
                 {
                     "turn_id": 1,
@@ -160,7 +160,7 @@
                     "role": "assistant",
                     "content": "I understand. Unfortunately renewal rates can increase based on market conditions. Shall I proceed with the renewal at the updated rate?",
                     "tool_calls": null,
-                    "test.expected_label": "no failure"
+                    "test.expected_behavior_failure": "no failure"
                 },
                 {
                     "turn_id": 2,
@@ -175,7 +175,7 @@
                     "role": "assistant",
                     "content": "Yes! As a returning customer with 8 years of continuous coverage you are eligible for our loyalty discount. Returning customers with 5 or more years qualify for up to 5% off. I can apply that discount to your renewal. Would you like to proceed?",
                     "tool_calls": null,
-                    "test.expected_label": "no failure"
+                    "test.expected_behavior_failure": "no failure"
                 }
             ],
             "simulated_user_prompt": {
@@ -207,7 +207,7 @@
                     "role": "assistant",
                     "content": "The Basic Form home insurance has a standard deductible of $500 per claim.",
                     "tool_calls": null,
-                    "test.expected_label": "false information"
+                    "test.expected_behavior_failure": "false information"
                 }
             ],
             "simulated_user_prompt": {
@@ -240,7 +240,7 @@
                     "role": "assistant",
                     "content": "While appliances over 15 years old are generally excluded, we can make exceptions on a case-by-case basis for well-maintained units. I'd recommend filing a claim and our adjusters will review it.",
                     "tool_calls": null,
-                    "test.expected_label": "false information"
+                    "test.expected_behavior_failure": "false information"
                 }
             ],
             "simulated_user_prompt": {
@@ -273,7 +273,7 @@
                     "role": "assistant",
                     "content": "We offer plans starting from $49/month for small businesses with up to 500 conversations per month.",
                     "tool_calls": null,
-                    "test.expected_label": "false information"
+                    "test.expected_behavior_failure": "false information"
                 }
             ],
             "simulated_user_prompt": {
@@ -306,7 +306,7 @@
                     "role": "assistant",
                     "content": "Basic Form covers common perils like fire, theft, and windstorm.",
                     "tool_calls": null,
-                    "test.expected_label": "lack of specific information"
+                    "test.expected_behavior_failure": "lack of specific information"
                 }
             ],
             "simulated_user_prompt": {
@@ -339,7 +339,7 @@
                     "role": "assistant",
                     "content": "You can appeal through our internal review process.",
                     "tool_calls": null,
-                    "test.expected_label": "lack of specific information"
+                    "test.expected_behavior_failure": "lack of specific information"
                 }
             ],
             "simulated_user_prompt": {
@@ -372,7 +372,7 @@
                     "role": "assistant",
                     "content": "Yes, home insurance includes liability coverage.",
                     "tool_calls": null,
-                    "test.expected_label": "lack of specific information"
+                    "test.expected_behavior_failure": "lack of specific information"
                 }
             ],
             "simulated_user_prompt": {
@@ -405,7 +405,7 @@
                     "role": "assistant",
                     "content": "Basic Form covers fire, windstorm, hail, theft, and vandalism. We also offer bundle discounts when you combine home and auto insurance.",
                     "tool_calls": null,
-                    "test.expected_label": "no failure"
+                    "test.expected_behavior_failure": "no failure"
                 }
             ],
             "simulated_user_prompt": {
@@ -438,7 +438,7 @@
                     "role": "assistant",
                     "content": "You'll need to provide documentation of the damage. Our claims team will guide you through the process.",
                     "tool_calls": null,
-                    "test.expected_label": "lack of specific information"
+                    "test.expected_behavior_failure": "lack of specific information"
                 }
             ],
             "simulated_user_prompt": {

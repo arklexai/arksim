@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 """Integration tests verifying the evaluator correctly detects agent behaviour failures.
 
-Each conversation in eval_test_simulation.json has a ``test.expected_label``
+Each conversation in eval_test_simulation.json has a ``test.expected_behavior_failure``
 field on each assistant message. Tests are parametrized directly from the
 simulation file, so adding a new scenario to the JSON automatically adds a
 new test case.
@@ -26,11 +26,19 @@ from .conftest import OPENAI_MODEL, requires_openai
 pytestmark = [pytest.mark.integration, requires_openai]
 
 _SIM_PATH = (
-    pathlib.Path(__file__).parent.parent.parent
-    / "tests"
+    pathlib.Path(__file__).parent.parent
     / "test_data"
     / "eval_test_simulation.json"
 )
+
+# Labels that indicate a real failure — skipped/system outcomes are excluded
+_FAILURE_LABELS = {
+    "false information",
+    "lack of specific information",
+    "disobey user request",
+    "failure to ask for clarification",
+    "repetition",
+}
 
 
 def _load_simulation() -> Simulation:
@@ -39,9 +47,9 @@ def _load_simulation() -> Simulation:
 
 
 def _expected_labels() -> dict[str, str]:
-    """Return {conversation_id: expected_label} read from the raw JSON.
+    """Return {conversation_id: expected_behavior_failure} read from the raw JSON.
 
-    ``test.expected_label`` is stored on assistant messages in
+    ``test.expected_behavior_failure`` is stored on assistant messages in
     ``conversation_history``, not in ``simulated_user_prompt.variables``, so
     we read the raw JSON rather than the Pydantic-parsed model (which drops
     unknown fields on Message).
@@ -53,9 +61,10 @@ def _expected_labels() -> dict[str, str]:
     raw = json.loads(_SIM_PATH.read_text())
     for conv in raw["conversations"]:
         labels = [
-            msg["test.expected_label"]
+            msg["test.expected_behavior_failure"]
             for msg in conv["conversation_history"]
-            if msg.get("role") == "assistant" and "test.expected_label" in msg
+            if msg.get("role") == "assistant"
+            and "test.expected_behavior_failure" in msg
         ]
         non_pass = [lbl for lbl in labels if lbl != "no failure"]
         result[conv["conversation_id"]] = non_pass[0] if non_pass else "no failure"
@@ -101,9 +110,9 @@ def test_conversation_matches_expected_label(
 
     if expected_label == "no failure":
         for label in actual_labels:
-            assert label != "false information", (
+            assert label not in _FAILURE_LABELS, (
                 f"[{conv_id}] {description}\n"
-                f"No contradiction exists — should not be 'false information'. "
+                f"Clean conversation should have no failure label. "
                 f"Got {actual_labels}"
             )
     else:

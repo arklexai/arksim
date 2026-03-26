@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-OPENAI_MODEL = os.environ.get("TEST_OPENAI_MODEL", "gpt-5.1")
+OPENAI_MODEL = os.environ.get("TEST_OPENAI_MODEL", "gpt-5.4")
 ANTHROPIC_MODEL = os.environ.get("TEST_ANTHROPIC_MODEL", "claude-sonnet-4-6")
 GOOGLE_MODEL = os.environ.get("TEST_GOOGLE_MODEL", "gemini-3-flash-preview")
 

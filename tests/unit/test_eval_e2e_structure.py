@@ -19,7 +19,10 @@ from arksim.evaluator.utils.schema import QualSchema, ScoreSchema, UniqueErrorsS
 from arksim.simulation_engine.entities import Simulation
 
 _SIM_PATH = (
-    pathlib.Path(__file__).parent.parent / "test_data" / "eval_test_simulation.json"
+    pathlib.Path(__file__).parent.parent.parent
+    / "integration-tests"
+    / "test_data"
+    / "eval_test_simulation.json"
 )
 
 
