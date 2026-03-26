@@ -143,7 +143,7 @@
           "turn_id": 0,
           "message_id": "msg-renewal-0a",
           "role": "assistant",
-          "content": "I'd be happy to help you with your renewal! Before we proceed, have you considered upgrading to our Broad Form coverage? It includes additional protections like accidental water damage and falling objects, which many homeowners find valuable.",
+          "content": "I'd be happy to help you renew your Basic Form policy! I can process that online or by phone \u2014 which would you prefer? Just so you know, renewal rates may adjust slightly based on market conditions, but we'll confirm the updated rate before you confirm.",
           "tool_calls": null,
           "test.expected_behavior_failure": "no failure"
         },
