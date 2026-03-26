@@ -5,8 +5,16 @@ import pytest
 
 pytest.importorskip("opentelemetry", reason="opentelemetry SDK not installed")
 
-from arksim.telemetry.config import TelemetryConfig
-from arksim.telemetry.provider import (
+_has_grpc = True
+try:
+    import opentelemetry.exporter.otlp.proto.grpc.trace_exporter  # noqa: F401
+except ImportError:
+    _has_grpc = False
+
+requires_grpc = pytest.mark.skipif(not _has_grpc, reason="gRPC exporter not installed")
+
+from arksim.telemetry.config import TelemetryConfig  # noqa: E402
+from arksim.telemetry.provider import (  # noqa: E402
     _NoOpSpan,
     _NoOpTracer,
     get_tracer,
@@ -27,6 +35,7 @@ def _reset_otel_provider() -> None:
 
 
 class TestSetupTelemetry:
+    @requires_grpc
     def test_setup_creates_provider(self) -> None:
         """setup_telemetry should configure the global tracer provider."""
         from opentelemetry import trace
@@ -60,6 +69,7 @@ class TestSetupTelemetry:
         finally:
             shutdown_telemetry()
 
+    @requires_grpc
     def test_setup_with_headers(self) -> None:
         """setup_telemetry should resolve and pass headers."""
         cfg = TelemetryConfig(
@@ -77,6 +87,7 @@ class TestShutdownTelemetry:
         """shutdown_telemetry should be safe to call when not set up."""
         shutdown_telemetry()  # Should not raise
 
+    @requires_grpc
     def test_double_shutdown_is_safe(self) -> None:
         """Calling shutdown twice should be safe."""
         cfg = TelemetryConfig(
@@ -91,6 +102,7 @@ class TestShutdownTelemetry:
 
 
 class TestGetTracer:
+    @requires_grpc
     def test_returns_tracer_after_setup(self) -> None:
         cfg = TelemetryConfig(
             enabled=True,
