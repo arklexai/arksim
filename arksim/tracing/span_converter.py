@@ -94,7 +94,7 @@ def span_to_tool_call(span: dict[str, Any]) -> ToolCall | None:
 def spans_to_tool_calls(spans: list[dict[str, Any]]) -> list[ToolCall]:
     """Convert a list of OTLP span dicts to ToolCall objects.
 
-    Spans that cannot be parsed as tool calls are skipped with a warning.
+    Spans without recognized tool attributes are silently skipped.
     """
     tool_calls: list[ToolCall] = []
     for span in spans:

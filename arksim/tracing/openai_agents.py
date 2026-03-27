@@ -8,10 +8,12 @@ arksim's trace receiver. This follows the same pattern as Braintrust's
 
 Usage::
 
-    from arksim.tracing.openai_agents import ArksimTracingProcessor
+    from arksim.tracing import ArksimTracingProcessor
 
-    processor = ArksimTracingProcessor()
-    set_trace_processors([processor])
+    processor = ArksimTracingProcessor(receiver=receiver)
+
+    async with processor.trace(conversation_id=chat_id, turn_id=turn_id):
+        result = await Runner.run(agent, input=input_list)
 
 Requires: ``pip install openai-agents``
 """
@@ -20,6 +22,8 @@ from __future__ import annotations
 
 import json
 import threading
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from typing import Any
 
 from arksim.simulation_engine.tool_types import ToolCall
@@ -50,12 +54,14 @@ class ArksimTracingProcessor(_Base):  # type: ignore[misc]
     installed.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, receiver: object = None) -> None:
         if not _HAS_AGENTS_SDK:
             raise ImportError(
                 "ArksimTracingProcessor requires the OpenAI Agents SDK. "
                 "Install with: pip install openai-agents"
             )
+        self._receiver = receiver
+        self._registered = False
         # Maps SDK trace_id -> (conversation_id, turn_id, receiver_ref)
         self._trace_contexts: dict[str, tuple[str, int, object]] = {}
         self._lock = threading.Lock()
@@ -70,6 +76,42 @@ class ArksimTracingProcessor(_Base):  # type: ignore[misc]
         """Register routing context for an upcoming ``Runner.run()`` trace."""
         with self._lock:
             self._trace_contexts[trace_id] = (conversation_id, turn_id, receiver)
+
+    @asynccontextmanager
+    async def trace(
+        self,
+        conversation_id: str,
+        turn_id: int,
+        receiver: object = None,
+    ) -> AsyncIterator[None]:
+        """Context manager that wraps an agent turn for trace capture.
+
+        Handles processor registration, SDK trace context, and
+        conversation routing in a single call::
+
+            async with processor.trace(conversation_id=chat_id, turn_id=turn_id):
+                result = await Runner.run(agent, input=input_list)
+
+        Args:
+            conversation_id: Conversation ID for routing traces.
+            turn_id: Turn index within the conversation.
+            receiver: Optional receiver override. Falls back to the
+                receiver passed at ``__init__``.
+        """
+        from agents.tracing import set_trace_processors
+        from agents.tracing import trace as sdk_trace
+
+        if not self._registered:
+            set_trace_processors([self])
+            self._registered = True
+
+        resolved_receiver = receiver if receiver is not None else self._receiver
+
+        with sdk_trace(workflow_name="agent_turn", group_id=conversation_id) as t:
+            self.register_context(
+                t.trace_id, conversation_id, turn_id, resolved_receiver
+            )
+            yield
 
     def on_trace_start(self, _trace: Trace) -> None:
         pass
@@ -114,7 +156,7 @@ class ArksimTracingProcessor(_Base):  # type: ignore[misc]
         # Build error string (SpanError is a TypedDict)
         error = None
         if span.error is not None:
-            error = span.error["message"]
+            error = span.error.get("message", "unknown error")
 
         tc = ToolCall(
             id=span.span_id,

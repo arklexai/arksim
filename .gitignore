@@ -61,3 +61,5 @@ uv.lock
 !.claude/skills/
 !.claude/rules/
 !.claude/settings.json
+docs/superpowers/
+.worktrees/

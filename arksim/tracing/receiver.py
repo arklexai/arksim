@@ -240,15 +240,16 @@ class TraceReceiver:
         # Check direct_event in a polling loop since threading.Event
         # and asyncio.Event can't be awaited together.
         timed_out = True
-        deadline = asyncio.get_event_loop().time() + self.wait_timeout
-        while asyncio.get_event_loop().time() < deadline:
+        loop = asyncio.get_running_loop()
+        deadline = loop.time() + self.wait_timeout
+        while loop.time() < deadline:
             # Check direct injection (instant, no await)
             if direct_event.is_set():
                 timed_out = False
                 break
             # Check HTTP path (short wait to yield to event loop)
             try:
-                remaining = deadline - asyncio.get_event_loop().time()
+                remaining = deadline - loop.time()
                 await asyncio.wait_for(
                     http_event.wait(), timeout=min(0.1, max(0, remaining))
                 )
