@@ -61,6 +61,22 @@ Without `arksim[otel]`, protobuf payloads are rejected with HTTP 415. JSON paylo
 
 ---
 
+## Connector Support
+
+Trace correlation depends on the agent connector type:
+
+| Connector | Trace Correlation | Mechanism | Status |
+|-----------|------------------|-----------|--------|
+| Python connector | In-process | `ArksimTracingProcessor.trace()` | Supported |
+| A2A | Protocol-level | `task_id` / `context_id` | Supported |
+| Chat Completions | W3C Trace Context | `traceparent` header | Planned |
+
+<Info>
+Chat Completions agents running externally do not yet have automatic trace correlation. This is planned via W3C Trace Context propagation, where the simulator injects a `traceparent` header into each request and the receiver correlates incoming spans by trace ID. No changes to the external agent are required if it uses any OTel-instrumented HTTP server.
+</Info>
+
+---
+
 ## Agent Instrumentation
 
 ### Using ArksimTracingProcessor (recommended)
@@ -68,22 +84,16 @@ Without `arksim[otel]`, protobuf payloads are rejected with HTTP 415. JSON paylo
 For agents built with the OpenAI Agents SDK, arksim ships a ready-to-use `TracingProcessor`. This follows the same pattern as [Braintrust](https://www.braintrust.dev/docs/integrations/agent-frameworks/openai-agents-sdk) and [LangWatch](https://langwatch.ai/docs/integration/python/integrations/open-ai-agents).
 
 ```python
-from agents.tracing import set_trace_processors
 from arksim.tracing import ArksimTracingProcessor
 
-processor = ArksimTracingProcessor()
-set_trace_processors([processor])
-```
+processor = ArksimTracingProcessor(receiver=receiver)
 
-The processor handles concurrent conversations by mapping SDK trace_ids to `(conversation_id, turn_id)` context. Register context before each `Runner.run()` call:
-
-```python
-from agents.tracing import trace as sdk_trace
-
-with sdk_trace(workflow_name="agent_turn", group_id=chat_id) as t:
-    processor.register_context(t.trace_id, chat_id, turn_id, receiver)
+# Per turn:
+async with processor.trace(conversation_id=chat_id, turn_id=turn_id):
     result = await Runner.run(agent, input=input_list)
 ```
+
+The `.trace()` context manager handles processor registration, SDK trace context, and conversation routing internally. For advanced use cases (custom trace grouping, manual context management), `register_context()` is still available.
 
 Requires `pip install openai-agents`. See `examples/customer-service/traced_agent.py` for a complete working example.
 
