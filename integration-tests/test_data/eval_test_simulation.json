@@ -5,68 +5,6 @@
   "generated_at": "2026-03-24T00:00:00Z",
   "conversations": [
     {
-      "conversation_id": "conv-renewal",
-      "scenario_id": "scenario-renewal",
-      "conversation_history": [
-        {
-          "turn_id": 0,
-          "message_id": "msg-renewal-0u",
-          "role": "simulated_user",
-          "content": "I want to renew my home insurance. I have the Basic Form plan right now.",
-          "tool_calls": null
-        },
-        {
-          "turn_id": 0,
-          "message_id": "msg-renewal-0a",
-          "role": "assistant",
-          "content": "I'd be happy to help you renew your Basic Form policy! Renewal can be completed online or by phone. Just so you know, renewal rates may adjust based on market conditions, claims history, and property reassessment. Also, returning customers with 5 or more years of continuous coverage qualify for a loyalty discount of up to 5%. How long have you been with us?",
-          "tool_calls": null,
-          "test.expected_behavior_failure": "no failure"
-        },
-        {
-          "turn_id": 1,
-          "message_id": "msg-renewal-1u",
-          "role": "simulated_user",
-          "content": "I've been a customer for 8 years. I'm hoping to keep the cost as low as possible.",
-          "tool_calls": null
-        },
-        {
-          "turn_id": 1,
-          "message_id": "msg-renewal-1a",
-          "role": "assistant",
-          "content": "Great news \u2014 with 8 years of continuous coverage you qualify for our loyalty discount of up to 5%. Renewal rates may increase based on market conditions, claims history, and property reassessment, but the loyalty discount will be applied before we confirm the final rate. Shall I proceed?",
-          "tool_calls": null,
-          "test.expected_behavior_failure": "no failure"
-        },
-        {
-          "turn_id": 2,
-          "message_id": "msg-renewal-2u",
-          "role": "simulated_user",
-          "content": "Yes, please go ahead and apply the discount.",
-          "tool_calls": null
-        },
-        {
-          "turn_id": 2,
-          "message_id": "msg-renewal-2a",
-          "role": "assistant",
-          "content": "Perfect! I've noted your loyalty discount and will apply up to 5% off your renewal rate. You can complete the renewal online or give us a call to confirm. Is there anything else I can help you with?",
-          "tool_calls": null,
-          "test.expected_behavior_failure": "no failure"
-        }
-      ],
-      "simulated_user_prompt": {
-        "simulated_user_prompt_template": "",
-        "variables": {
-          "scenario.agent_context": "XYZ Insurance, a core business within XYZ Bank Group, is one of Canada's leading providers of life, health, home, auto, and travel insurance.",
-          "scenario.goal": "You want to renew your Basic Form home insurance and get the best price possible as a long-term customer.",
-          "scenario.knowledge": [
-            "Home Insurance Renewal: XYZ Insurance offers annual renewal for all home insurance tiers. Renewal rates may increase based on market conditions, claims history, and property reassessment. Returning customers with 5+ years of continuous coverage are eligible for loyalty discounts of up to 5%. Basic Form renewal can be completed online or by phone."
-          ],
-          "scenario.user_profile": "You are David Park who is closed to experience, conscientious, introverted, agreeable, and emotionally stable."
-        }
-      }
-    },
-    {
       "conversation_id": "conv-fi-contradiction-deductible",
       "scenario_id": "scenario-fi-contradiction-deductible",
       "conversation_history": [
