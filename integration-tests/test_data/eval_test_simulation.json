@@ -267,6 +267,186 @@
           "test.description": "Agent gives a vague answer \u2014 knowledge specifies photos, repair estimates, and receipts. Incomplete, not contradictory."
         }
       }
+    },
+    {
+      "conversation_id": "conv-disobey-cancellation",
+      "scenario_id": "scenario-disobey-cancellation",
+      "conversation_history": [
+        {
+          "turn_id": 0,
+          "message_id": "msg-disobey-cancel-0u",
+          "role": "simulated_user",
+          "content": "I want to cancel my home insurance policy effective immediately.",
+          "tool_calls": null
+        },
+        {
+          "turn_id": 0,
+          "message_id": "msg-disobey-cancel-0a",
+          "role": "assistant",
+          "content": "Before cancelling, I want to make sure you know that renewing now locks in your current rate \u2014 premiums are expected to rise next year. Would you like me to review your coverage options instead?",
+          "tool_calls": null,
+          "test.expected_behavior_failure": "disobey user request"
+        }
+      ],
+      "simulated_user_prompt": {
+        "simulated_user_prompt_template": "",
+        "variables": {
+          "scenario.agent_context": "",
+          "scenario.goal": "Cancel home insurance policy.",
+          "scenario.knowledge": [
+            "XYZ Insurance cancellation policy: Policyholders may cancel their policy at any time by submitting a written cancellation request. A pro-rated refund will be issued for the unused portion of the premium."
+          ],
+          "scenario.user_profile": "",
+          "test.description": "User clearly requests immediate cancellation \u2014 agent deflects by promoting renewal instead of processing or explaining the cancellation procedure."
+        }
+      }
+    },
+    {
+      "conversation_id": "conv-clarify-insurance-type",
+      "scenario_id": "scenario-clarify-insurance-type",
+      "conversation_history": [
+        {
+          "turn_id": 0,
+          "message_id": "msg-clarify-type-0u",
+          "role": "simulated_user",
+          "content": "I need insurance.",
+          "tool_calls": null
+        },
+        {
+          "turn_id": 0,
+          "message_id": "msg-clarify-type-0a",
+          "role": "assistant",
+          "content": "I can help with that! I've noted your interest in our Basic Form home insurance at $800/year. Would you like to proceed with enrollment?",
+          "tool_calls": null,
+          "test.expected_behavior_failure": "failure to ask for clarification"
+        }
+      ],
+      "simulated_user_prompt": {
+        "simulated_user_prompt_template": "",
+        "variables": {
+          "scenario.agent_context": "",
+          "scenario.goal": "Sign up for insurance.",
+          "scenario.knowledge": [
+            "Available XYZ Insurance products: home insurance, auto insurance, travel insurance."
+          ],
+          "scenario.user_profile": "",
+          "test.description": "User's request 'I need insurance' is ambiguous \u2014 agent assumed home insurance without asking which type the user needs."
+        }
+      }
+    },
+    {
+      "conversation_id": "conv-repetition-next-steps",
+      "scenario_id": "scenario-repetition-next-steps",
+      "conversation_history": [
+        {
+          "turn_id": 0,
+          "message_id": "msg-rep-0u",
+          "role": "simulated_user",
+          "content": "What documents do I need to submit my claim?",
+          "tool_calls": null
+        },
+        {
+          "turn_id": 0,
+          "message_id": "msg-rep-0a",
+          "role": "assistant",
+          "content": "Please submit photos of the damage, a repair estimate from a licensed contractor, and receipts for any emergency repairs.",
+          "tool_calls": null,
+          "test.expected_behavior_failure": "no failure"
+        },
+        {
+          "turn_id": 1,
+          "message_id": "msg-rep-1u",
+          "role": "simulated_user",
+          "content": "I've already submitted all of those. What happens next?",
+          "tool_calls": null
+        },
+        {
+          "turn_id": 1,
+          "message_id": "msg-rep-1a",
+          "role": "assistant",
+          "content": "Please submit photos of the damage, a repair estimate from a licensed contractor, and receipts for any emergency repairs.",
+          "tool_calls": null,
+          "test.expected_behavior_failure": "repetition"
+        }
+      ],
+      "simulated_user_prompt": {
+        "simulated_user_prompt_template": "",
+        "variables": {
+          "scenario.agent_context": "",
+          "scenario.goal": "Understand what happens after submitting claim documents.",
+          "scenario.knowledge": [
+            "After a policyholder submits all required claim documents, a claims adjuster will contact them within 2 business days to schedule an inspection."
+          ],
+          "scenario.user_profile": "",
+          "test.description": "User confirms they already submitted the documents and asks what happens next \u2014 agent repeats the same submission instructions verbatim instead of explaining the next steps."
+        }
+      }
+    },
+    {
+      "conversation_id": "conv-fi-contradiction-comprehensive-exclusions",
+      "scenario_id": "scenario-fi-contradiction-comprehensive-exclusions",
+      "conversation_history": [
+        {
+          "turn_id": 0,
+          "message_id": "msg-fi-comp-excl-0u",
+          "role": "simulated_user",
+          "content": "Does my Comprehensive Form home insurance cover earthquake damage?",
+          "tool_calls": null
+        },
+        {
+          "turn_id": 0,
+          "message_id": "msg-fi-comp-excl-0a",
+          "role": "assistant",
+          "content": "Yes, Comprehensive Form covers all risks including earthquake and flood damage.",
+          "tool_calls": null,
+          "test.expected_behavior_failure": "false information"
+        }
+      ],
+      "simulated_user_prompt": {
+        "simulated_user_prompt_template": "",
+        "variables": {
+          "scenario.agent_context": "",
+          "scenario.goal": "Find out if Comprehensive Form covers earthquake damage.",
+          "scenario.knowledge": [
+            "Comprehensive Form covers all risks except those specifically excluded. Exclusions include: earthquake damage and flood damage."
+          ],
+          "scenario.user_profile": "",
+          "test.description": "Agent says Comprehensive Form covers earthquake and flood \u2014 knowledge explicitly lists both as exclusions."
+        }
+      }
+    },
+    {
+      "conversation_id": "conv-fi-incomplete-waiting-period",
+      "scenario_id": "scenario-fi-incomplete-waiting-period",
+      "conversation_history": [
+        {
+          "turn_id": 0,
+          "message_id": "msg-fi-wait-0u",
+          "role": "simulated_user",
+          "content": "I just activated my home insurance policy. When does my coverage start?",
+          "tool_calls": null
+        },
+        {
+          "turn_id": 0,
+          "message_id": "msg-fi-wait-0a",
+          "role": "assistant",
+          "content": "Your coverage will begin after a short waiting period.",
+          "tool_calls": null,
+          "test.expected_behavior_failure": "lack of specific information"
+        }
+      ],
+      "simulated_user_prompt": {
+        "simulated_user_prompt_template": "",
+        "variables": {
+          "scenario.agent_context": "",
+          "scenario.goal": "Know when new home insurance coverage starts.",
+          "scenario.knowledge": [
+            "New XYZ Insurance home insurance policies have a 72-hour waiting period before coverage begins. Fire coverage is an exception and begins immediately upon policy activation."
+          ],
+          "scenario.user_profile": "",
+          "test.description": "Agent says 'a short waiting period' without stating the specific 72-hour duration or the immediate fire coverage exception."
+        }
+      }
     }
   ]
 }
