@@ -335,36 +335,21 @@
       }
     },
     {
-      "conversation_id": "conv-repetition-next-steps",
-      "scenario_id": "scenario-repetition-next-steps",
+      "conversation_id": "conv-repetition-deductibles",
+      "scenario_id": "scenario-repetition-deductibles",
       "conversation_history": [
         {
           "turn_id": 0,
-          "message_id": "msg-rep-0u",
+          "message_id": "msg-rep-ded-0u",
           "role": "simulated_user",
-          "content": "What documents do I need to submit my claim?",
+          "content": "What are the deductibles for all three coverage tiers?",
           "tool_calls": null
         },
         {
           "turn_id": 0,
-          "message_id": "msg-rep-0a",
+          "message_id": "msg-rep-ded-0a",
           "role": "assistant",
-          "content": "Please submit photos of the damage, a repair estimate from a licensed contractor, and receipts for any emergency repairs.",
-          "tool_calls": null,
-          "test.expected_behavior_failure": "no failure"
-        },
-        {
-          "turn_id": 1,
-          "message_id": "msg-rep-1u",
-          "role": "simulated_user",
-          "content": "I've already submitted all of those. What happens next?",
-          "tool_calls": null
-        },
-        {
-          "turn_id": 1,
-          "message_id": "msg-rep-1a",
-          "role": "assistant",
-          "content": "Please submit photos of the damage, a repair estimate from a licensed contractor, and receipts for any emergency repairs.",
+          "content": "Basic Form has a $1,000 deductible, Broad Form has a $750 deductible, and Comprehensive Form has a $500 deductible. To summarize: Basic Form is $1,000, Broad Form is $750, and Comprehensive Form is $500 per claim.",
           "tool_calls": null,
           "test.expected_behavior_failure": "repetition"
         }
@@ -373,12 +358,12 @@
         "simulated_user_prompt_template": "",
         "variables": {
           "scenario.agent_context": "",
-          "scenario.goal": "Understand what happens after submitting claim documents.",
+          "scenario.goal": "Understand deductibles for all coverage tiers.",
           "scenario.knowledge": [
-            "After a policyholder submits all required claim documents, a claims adjuster will contact them within 2 business days to schedule an inspection."
+            "XYZ Insurance home deductibles: Basic Form has a $1,000 standard deductible. Broad Form has a $750 standard deductible. Comprehensive Form has a $500 standard deductible."
           ],
           "scenario.user_profile": "",
-          "test.description": "User confirms they already submitted the documents and asks what happens next \u2014 agent repeats the same submission instructions verbatim instead of explaining the next steps."
+          "test.description": "Agent states all three deductibles correctly then immediately restates the same three figures verbatim as a 'summary' \u2014 redundant within a single turn."
         }
       }
     },
