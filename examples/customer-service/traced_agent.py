@@ -11,12 +11,9 @@ Auth:    export OPENAI_API_KEY="<your-key>"
 
 from __future__ import annotations
 
-import threading
 import uuid
 
 from agents import Agent, Runner, RunResult
-from agents.tracing import set_trace_processors
-from agents.tracing import trace as sdk_trace
 
 # Import shared tools and DB setup from the standard agent
 from custom_agent import (
@@ -32,20 +29,6 @@ from custom_agent import (
 from arksim.config import AgentConfig
 from arksim.simulation_engine.agent.base import BaseAgent
 from arksim.tracing import ArksimTracingProcessor
-
-# Shared singleton processor
-_processor_lock = threading.Lock()
-_shared_processor: ArksimTracingProcessor | None = None
-
-
-def _get_shared_processor() -> ArksimTracingProcessor:
-    """Get or create the shared tracing processor singleton."""
-    global _shared_processor
-    with _processor_lock:
-        if _shared_processor is None:
-            _shared_processor = ArksimTracingProcessor()
-            set_trace_processors([_shared_processor])
-        return _shared_processor
 
 
 class TracedToolCallAgent(BaseAgent):
@@ -77,7 +60,7 @@ class TracedToolCallAgent(BaseAgent):
             ],
         )
         self._last_result: RunResult | None = None
-        self._processor = _get_shared_processor()
+        self._processor = ArksimTracingProcessor()
 
     async def get_chat_id(self) -> str:
         return self._chat_id
@@ -95,8 +78,9 @@ class TracedToolCallAgent(BaseAgent):
         else:
             input_list = [{"role": "user", "content": user_query}]
 
-        with sdk_trace(workflow_name="agent_turn", group_id=chat_id) as t:
-            self._processor.register_context(t.trace_id, chat_id, turn_id, receiver)
+        async with self._processor.trace(
+            conversation_id=chat_id, turn_id=turn_id, receiver=receiver
+        ):
             self._last_result = await Runner.run(self._agent, input=input_list)
 
         return self._last_result.final_output
