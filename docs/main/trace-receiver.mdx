@@ -65,14 +65,14 @@ Without `arksim[otel]`, protobuf payloads are rejected with HTTP 415. JSON paylo
 
 Trace correlation depends on the agent connector type:
 
-| Connector | Trace Correlation | Mechanism | Status |
-|-----------|------------------|-----------|--------|
-| Python connector | In-process | `ArksimTracingProcessor.trace()` | Supported |
-| A2A | Protocol-level | `task_id` / `context_id` | Supported |
-| Chat Completions | W3C Trace Context | `traceparent` header | Planned |
+| Connector | Trace Correlation | Mechanism |
+|-----------|------------------|-----------|
+| Python connector | In-process | `ArksimTracingProcessor.trace()` |
+| A2A | Protocol-level | `task_id` / `context_id` |
+| Chat Completions | Not yet supported | — |
 
 <Info>
-Chat Completions agents running externally do not yet have automatic trace correlation. This is planned via W3C Trace Context propagation, where the simulator injects a `traceparent` header into each request and the receiver correlates incoming spans by trace ID. No changes to the external agent are required if it uses any OTel-instrumented HTTP server.
+Chat Completions agents running externally do not yet have automatic trace correlation. If you need tool call capture for a Chat Completions agent, use the Python connector with `ArksimTracingProcessor` instead.
 </Info>
 
 ---
