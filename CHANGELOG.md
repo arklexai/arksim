@@ -172,6 +172,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `lack of specific information` prompt now requires knowledge to be present before flagging, and includes a knowledge-grounded example matching the `false information` pattern
+- `false information` boundary note tightened to only flag direct contradictions with knowledge
+- Functional e2e tests covering the full evaluation pipeline and correct agent behavior failure detection, including positive and negative examples for `false information`
 - Simulator now respects `num_conversations_per_scenario`, previously only 1 conversation was generated per scenario
 
 ### Added

@@ -245,8 +245,10 @@ assistant: In Quebec, home insurance is mandatory for mortgage holders. Our Basi
 Output: {"label": "disobey user request", "reason": "The agent incorrectly interpreted 'in French' as a question about Quebec coverage options, instead of the user's actual request for policy documents in the French language. The agent ignored the user's request entirely."}
 
 Lack of specific information
-Definition: When the agent provides only a generic or partial answer, omitting important elements necessary to fully address the user's query. This assumes the agent has the required knowledge and tools. IMPORTANT: This category only applies when the information provided is CORRECT but incomplete. If any information provided contradicts or is not supported by the knowledge base, use "false information" instead.
+Definition: When the agent provides only a generic or partial answer, omitting important elements necessary to fully address the user's query. This assumes the agent has the required knowledge and tools. IMPORTANT: This category only applies when knowledge is provided — without knowledge there is no ground truth for what the agent should have included, so do not flag this category if no knowledge is given. This category only applies when the information provided is CORRECT but incomplete. If any information provided contradicts the knowledge base, use "false information" instead.
 Example:
+
+Knowledge: To file a water damage claim, policyholders must submit: photos of all damage, a repair estimate from a licensed contractor, and receipts for any emergency repairs already completed.
 
 Conversation up to the last assistant turn: [
 assistant: Hi there! How can I help you?
@@ -255,10 +257,10 @@ assistant: I'm sorry to hear about the flooding. You can file a claim by logging
 user: What documents do I need to submit with my claim?
 assistant: You'll need to provide documentation of the damage. Our claims team will guide you through the process. If you have any other questions, feel free to ask!
 ]
-Output: {"label": "lack of specific information", "reason": "The output is missing specific details about required documentation such as photos of damage, repair estimates, and the receipts for emergency repairs that the knowledge base specifies."}
+Output: {"label": "lack of specific information", "reason": "The knowledge specifies three required documents — photos of all damage, a contractor repair estimate, and emergency repair receipts — but the assistant gave only a vague reference to 'documentation'. The response is correct but omits all the required specifics."}
 
 False information
-Definition: When the agent provides hallucinated, fabricated, or contextually inaccurate information, including facts, details, or claims that contradict or are not supported by the provided knowledge or context. This includes cases where the agent provides incorrect numerical values or other factual details that differ from what is stated in the knowledge base, even if the response is also incomplete.
+Definition: When the agent provides information that directly contradicts what is stated in the provided knowledge or context.
 Example 1:
 Knowledge: XYZ Insurance home deductibles range from $500 to $2,500 depending on the policy tier. Basic Form has a $1,000 standard deductible. Broad Form has a $750 standard deductible. Comprehensive Form has a $500 standard deductible.
 
