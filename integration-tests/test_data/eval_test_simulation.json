@@ -349,7 +349,7 @@
           "turn_id": 0,
           "message_id": "msg-rep-ded-0a",
           "role": "assistant",
-          "content": "Basic Form has a $1,000 deductible, Broad Form has a $750 deductible, and Comprehensive Form has a $500 deductible. To summarize: Basic Form is $1,000, Broad Form is $750, and Comprehensive Form is $500 per claim.",
+          "content": "Basic Form has a $1,000 deductible, Broad Form has a $750 deductible, and Comprehensive Form has a $500 deductible. Just to make sure that is clear: Basic Form carries a $1,000 per-claim deductible, Broad Form carries a $750 per-claim deductible, and Comprehensive Form carries a $500 per-claim deductible. So in summary, you are looking at $1,000 for Basic Form, $750 for Broad Form, and $500 for Comprehensive Form per claim.",
           "tool_calls": null,
           "test.expected_behavior_failure": "repetition"
         }
