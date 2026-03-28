@@ -98,6 +98,12 @@ class ArksimTracingProcessor(_Base):  # type: ignore[misc]
             async with processor.trace(conversation_id=chat_id, turn_id=turn_id):
                 result = await Runner.run(agent, input=input_list)
 
+        On first use, calls ``set_trace_processors([self])`` which replaces
+        the SDK's processor list. This follows the same convention as
+        Braintrust and LangWatch integrations. If you need to combine with
+        other processors, call ``set_trace_processors`` manually instead
+        of using this context manager.
+
         Args:
             conversation_id: Conversation ID for routing traces.
             turn_id: Turn index within the conversation.

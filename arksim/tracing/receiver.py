@@ -190,6 +190,7 @@ class TraceReceiver:
             await self._server.wait_closed()
             self._server = None
             logger.info("Trace receiver stopped")
+        self._loop = None
         self._spans.clear()
         self._direct_tool_calls.clear()
         self._events.clear()
@@ -364,8 +365,13 @@ class TraceReceiver:
                 await self._send_response(writer, HTTPStatus.NOT_FOUND)
                 return
 
-            # Reject invalid or oversized payloads
-            if content_length < 0 or content_length > _MAX_PAYLOAD_BYTES:
+            # Reject malformed Content-Length
+            if content_length < 0:
+                await self._send_response(writer, HTTPStatus.BAD_REQUEST)
+                return
+
+            # Reject oversized payloads
+            if content_length > _MAX_PAYLOAD_BYTES:
                 logger.warning(
                     "Trace payload too large (%d bytes), rejecting",
                     content_length,

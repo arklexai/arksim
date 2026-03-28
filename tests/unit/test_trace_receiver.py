@@ -591,3 +591,45 @@ async def test_submit_tool_calls_mixed_with_http(_unused_port: int) -> None:
         names = {tc.name for tc in result}
         assert names == {"lookup", "search"}
         assert len(result) == 2
+
+
+@pytest.mark.asyncio
+async def test_submit_tool_calls_after_stop_warns(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """submit_tool_calls after stop() should warn, not silently buffer."""
+    from arksim.simulation_engine.tool_types import ToolCall
+
+    receiver = TraceReceiver(host="127.0.0.1", port=0, wait_timeout=1.0)
+    await receiver.start()
+    await receiver.stop()
+
+    tc = ToolCall(id="tc-1", name="tool", arguments={})
+    with caplog.at_level("WARNING", logger="arksim.tracing.receiver"):
+        receiver.submit_tool_calls("conv-1", 0, [tc])
+
+    assert "receiver is not running" in caplog.text
+    assert len(receiver._direct_tool_calls) == 0
+
+
+@pytest.mark.asyncio
+async def test_negative_content_length_returns_400(_unused_port: int) -> None:
+    """Negative Content-Length should return 400 Bad Request, not 413."""
+    port = _unused_port
+    receiver = TraceReceiver(host="127.0.0.1", port=port, wait_timeout=1.0)
+    await receiver.start()
+
+    try:
+        reader, writer = await asyncio.open_connection("127.0.0.1", port)
+        request = "POST /v1/traces HTTP/1.1\r\nContent-Length: -1\r\n\r\n"
+        writer.write(request.encode())
+        await writer.drain()
+
+        response = await asyncio.wait_for(reader.read(4096), timeout=5)
+        response_str = response.decode()
+        assert "400" in response_str, f"Expected 400, got: {response_str}"
+
+        writer.close()
+        await writer.wait_closed()
+    finally:
+        await receiver.stop()

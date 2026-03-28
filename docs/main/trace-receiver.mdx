@@ -99,7 +99,7 @@ Requires `pip install openai-agents`. See `examples/customer-service/traced_agen
 
 ### Using raw OTel spans (any framework)
 
-For agents not using the OpenAI Agents SDK, create OTel spans with routing attributes:
+For agents not using the OpenAI Agents SDK, create OTel spans with routing attributes. The `conversation_id` and `turn_id` values come from arksim's metadata dict (passed to your agent's `execute()` via `kwargs["metadata"]`):
 
 ```python
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
@@ -107,10 +107,13 @@ from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 
+conversation_id = "your-conversation-id"  # from metadata["chat_id"]
+turn_id = 0                               # from metadata["turn_id"]
+
 provider = TracerProvider(
     resource=Resource.create({
         "service.name": "my-agent",
-        "arksim.conversation_id": metadata["chat_id"],
+        "arksim.conversation_id": conversation_id,
     })
 )
 provider.add_span_processor(
@@ -119,7 +122,7 @@ provider.add_span_processor(
 tracer = provider.get_tracer("my-agent")
 
 with tracer.start_as_current_span("execute_tool search_flights") as span:
-    span.set_attribute("arksim.turn_id", metadata["turn_id"])
+    span.set_attribute("arksim.turn_id", turn_id)
     span.set_attribute("gen_ai.tool.name", "search_flights")
     span.set_attribute("gen_ai.tool.call.arguments", '{"origin": "NYC"}')
     span.set_attribute("gen_ai.tool.call.result", '{"flights": [...]}')
