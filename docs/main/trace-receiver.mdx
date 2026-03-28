@@ -69,7 +69,7 @@ Trace correlation depends on the agent connector type:
 |-----------|------------------|-----------|
 | Python connector | In-process | `ArksimTracingProcessor.trace()` |
 | A2A | Protocol-level | `task_id` / `context_id` |
-| Chat Completions | Not yet supported | — |
+| Chat Completions | Not yet supported | - |
 
 <Info>
 Chat Completions agents running externally do not yet have automatic trace correlation. If you need tool call capture for a Chat Completions agent, use the Python connector with `ArksimTracingProcessor` instead.

@@ -262,21 +262,27 @@ class TraceReceiver:
             # Traces arrived; settle briefly to catch trailing batches
             await asyncio.sleep(_SETTLE_SECONDS)
 
-        # Drain both buffers and clean up stale entries
+        # Drain both buffers and clean up stale entries from earlier turns.
+        # Compute stale keys from both buffers so cleanup works regardless
+        # of which capture path the agent uses.
         async with self._lock:
             spans = self._spans.pop(key, [])
             self._events.pop(key, None)
-            stale_keys = [
+            stale_keys = {
                 k for k in self._spans if k[0] == conversation_id and k[1] < turn_id
-            ]
+            }
             for k in stale_keys:
                 del self._spans[k]
                 self._events.pop(k, None)
 
-        # Drain direct buffer under the threading lock
         with self._submit_lock:
             direct = self._direct_tool_calls.pop(key, [])
             self._direct_events.pop(key, None)
+            stale_keys |= {
+                k
+                for k in self._direct_tool_calls
+                if k[0] == conversation_id and k[1] < turn_id
+            }
             for k in stale_keys:
                 self._direct_tool_calls.pop(k, None)
                 self._direct_events.pop(k, None)

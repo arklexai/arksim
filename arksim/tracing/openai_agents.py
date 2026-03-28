@@ -21,6 +21,7 @@ Requires: ``pip install openai-agents``
 from __future__ import annotations
 
 import json
+import logging
 import threading
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
@@ -30,6 +31,8 @@ if TYPE_CHECKING:
     from arksim.tracing.receiver import TraceReceiver
 
 from arksim.simulation_engine.tool_types import ToolCall
+
+logger = logging.getLogger(__name__)
 
 try:
     from agents.tracing import Span, Trace, TracingProcessor
@@ -173,6 +176,12 @@ class ArksimTracingProcessor(_Base):  # type: ignore[misc]
         # In-process: inject directly into receiver buffer
         if receiver is not None:
             receiver.submit_tool_calls(conversation_id, turn_id, [tc])
+        else:
+            logger.debug(
+                "Tool call %s captured but no receiver registered for trace %s",
+                tc.name,
+                span.trace_id,
+            )
 
     def shutdown(self) -> None:
         pass
