@@ -59,6 +59,8 @@ pip install arksim[otel]  # for protobuf support
 
 Without `arksim[otel]`, protobuf payloads are rejected with HTTP 415. JSON payloads work without extra dependencies.
 
+For HTTP agents, text-only turns (no tool calls) block for the full `wait_timeout` since the receiver cannot distinguish "no spans yet" from "turn complete with no tool calls." The `ArksimTracingProcessor` handles this automatically for same-process agents via `signal_turn_complete()`. For HTTP agents, consider using a lower `wait_timeout` (e.g., 2s) if most turns produce text-only responses.
+
 ---
 
 ## Connector Support
