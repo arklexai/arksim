@@ -267,8 +267,10 @@ class TraceReceiver:
             except asyncio.TimeoutError:
                 continue
 
-        if not timed_out:
-            # Traces arrived; settle briefly to catch trailing batches
+        if not timed_out and http_event.is_set():
+            # HTTP traces arrived; settle briefly to catch trailing batches
+            # from multi-batch pushes. Skip for direct injection since all
+            # tool calls are synchronously buffered before wait_for_traces.
             await asyncio.sleep(_SETTLE_SECONDS)
 
         # Drain both buffers and clean up stale entries from earlier turns.
