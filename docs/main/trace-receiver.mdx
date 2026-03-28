@@ -86,16 +86,28 @@ For agents built with the OpenAI Agents SDK, arksim ships a ready-to-use `Tracin
 ```python
 from arksim.tracing import ArksimTracingProcessor
 
-processor = ArksimTracingProcessor(receiver=receiver)
+processor = ArksimTracingProcessor()
 
-# Per turn:
-async with processor.trace(conversation_id=chat_id, turn_id=turn_id):
+# Per turn (receiver comes from metadata["trace_receiver"]):
+async with processor.trace(conversation_id=chat_id, turn_id=turn_id, receiver=receiver):
     result = await Runner.run(agent, input=input_list)
 ```
 
-The `.trace()` context manager handles processor registration, SDK trace context, and conversation routing internally. For advanced use cases (custom trace grouping, manual context management), `register_context()` is still available.
+The `.trace()` context manager handles processor registration, SDK trace context, and conversation routing internally. The `receiver` reference is passed via `metadata["trace_receiver"]` when the trace receiver is enabled (see Metadata Keys below). For advanced use cases (custom trace grouping, manual context management), `register_context()` is still available.
 
 Requires `pip install openai-agents`. See `examples/customer-service/traced_agent.py` for a complete working example.
+
+### Metadata keys
+
+arksim passes a `metadata` dict to your agent's `execute()` via `kwargs["metadata"]`. When the trace receiver is enabled, it includes:
+
+| Key | Type | Description |
+|-----|------|-------------|
+| `chat_id` | `str` | Conversation ID assigned by `agent.get_chat_id()` |
+| `turn_id` | `int` | Zero-based turn index within the conversation |
+| `trace_receiver` | `TraceReceiver` or absent | Receiver reference (present only when `trace_receiver.enabled` is true) |
+
+The `chat_id` and `turn_id` values are always present (regardless of trace receiver). The `trace_receiver` key is only added when tracing is active.
 
 ### Using raw OTel spans (any framework)
 

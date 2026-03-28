@@ -227,6 +227,18 @@ class TraceReceiver:
             evt = self._direct_events.setdefault(key, threading.Event())
             evt.set()
 
+    def signal_turn_complete(self, conversation_id: str, turn_id: int) -> None:
+        """Signal that a turn has finished, allowing ``wait_for_traces`` to return.
+
+        Called by ``ArksimTracingProcessor.trace()`` after the turn exits.
+        This ensures ``wait_for_traces`` returns immediately for text-only
+        turns (no tool calls) instead of blocking for the full timeout.
+        """
+        key = (conversation_id, turn_id)
+        with self._submit_lock:
+            evt = self._direct_events.setdefault(key, threading.Event())
+            evt.set()
+
     async def wait_for_traces(
         self, conversation_id: str, turn_id: int
     ) -> list[ToolCall]:

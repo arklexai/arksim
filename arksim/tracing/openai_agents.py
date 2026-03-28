@@ -126,6 +126,13 @@ class ArksimTracingProcessor(_Base):  # type: ignore[misc]
             )
             yield
 
+        # Signal the receiver that this turn is done so wait_for_traces
+        # returns immediately, even if no tool calls were submitted
+        # (pure text response). Without this, text-only turns block for
+        # the full wait_timeout.
+        if resolved_receiver is not None:
+            resolved_receiver.signal_turn_complete(conversation_id, turn_id)
+
     def on_trace_start(self, _trace: Trace) -> None:
         pass
 
