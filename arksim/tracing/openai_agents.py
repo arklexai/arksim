@@ -10,9 +10,9 @@ Usage::
 
     from arksim.tracing import ArksimTracingProcessor
 
-    processor = ArksimTracingProcessor(receiver=receiver)
+    processor = ArksimTracingProcessor()
 
-    async with processor.trace(conversation_id=chat_id, turn_id=turn_id):
+    async with processor.trace(conversation_id=chat_id, turn_id=turn_id, receiver=receiver):
         result = await Runner.run(agent, input=input_list)
 
 Requires: ``pip install openai-agents``
@@ -164,7 +164,9 @@ class ArksimTracingProcessor(_Base):  # type: ignore[misc]
                 if isinstance(parsed, dict):
                     arguments = parsed
             except (json.JSONDecodeError, TypeError):
-                pass
+                logger.warning(
+                    "Malformed JSON in tool call arguments for %s", data.name
+                )
 
         # Build result string
         result = None

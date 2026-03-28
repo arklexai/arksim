@@ -633,3 +633,16 @@ async def test_negative_content_length_returns_400(_unused_port: int) -> None:
         await writer.wait_closed()
     finally:
         await receiver.stop()
+
+
+@pytest.mark.asyncio
+async def test_signal_turn_complete_unblocks_wait(_unused_port: int) -> None:
+    """signal_turn_complete lets wait_for_traces return immediately with no tool calls."""
+    port = _unused_port
+    async with TraceReceiver(port=port, wait_timeout=5.0) as receiver:
+        receiver.signal_turn_complete("conv-1", 0)
+        t0 = asyncio.get_event_loop().time()
+        result = await receiver.wait_for_traces("conv-1", 0)
+        elapsed = asyncio.get_event_loop().time() - t0
+        assert result == []
+        assert elapsed < 0.5  # must not wait full 5s timeout
