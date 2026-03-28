@@ -24,7 +24,10 @@ import json
 import threading
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from arksim.tracing.receiver import TraceReceiver
 
 from arksim.simulation_engine.tool_types import ToolCall
 
@@ -54,7 +57,7 @@ class ArksimTracingProcessor(_Base):  # type: ignore[misc]
     installed.
     """
 
-    def __init__(self, receiver: object = None) -> None:
+    def __init__(self, receiver: TraceReceiver | None = None) -> None:
         if not _HAS_AGENTS_SDK:
             raise ImportError(
                 "ArksimTracingProcessor requires the OpenAI Agents SDK. "
@@ -63,7 +66,7 @@ class ArksimTracingProcessor(_Base):  # type: ignore[misc]
         self._receiver = receiver
         self._registered = False
         # Maps SDK trace_id -> (conversation_id, turn_id, receiver_ref)
-        self._trace_contexts: dict[str, tuple[str, int, object]] = {}
+        self._trace_contexts: dict[str, tuple[str, int, TraceReceiver | None]] = {}
         self._lock = threading.Lock()
 
     def register_context(
@@ -71,7 +74,7 @@ class ArksimTracingProcessor(_Base):  # type: ignore[misc]
         trace_id: str,
         conversation_id: str,
         turn_id: int,
-        receiver: object = None,
+        receiver: TraceReceiver | None = None,
     ) -> None:
         """Register routing context for an upcoming ``Runner.run()`` trace."""
         with self._lock:
@@ -82,7 +85,7 @@ class ArksimTracingProcessor(_Base):  # type: ignore[misc]
         self,
         conversation_id: str,
         turn_id: int,
-        receiver: object = None,
+        receiver: TraceReceiver | None = None,
     ) -> AsyncIterator[None]:
         """Context manager that wraps an agent turn for trace capture.
 
@@ -101,9 +104,10 @@ class ArksimTracingProcessor(_Base):  # type: ignore[misc]
         from agents.tracing import set_trace_processors
         from agents.tracing import trace as sdk_trace
 
-        if not self._registered:
-            set_trace_processors([self])
-            self._registered = True
+        with self._lock:
+            if not self._registered:
+                set_trace_processors([self])
+                self._registered = True
 
         resolved_receiver = receiver if receiver is not None else self._receiver
 

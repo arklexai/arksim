@@ -347,8 +347,8 @@ class TraceReceiver:
                 await self._send_response(writer, HTTPStatus.NOT_FOUND)
                 return
 
-            # Reject oversized payloads
-            if content_length > _MAX_PAYLOAD_BYTES:
+            # Reject invalid or oversized payloads
+            if content_length < 0 or content_length > _MAX_PAYLOAD_BYTES:
                 logger.warning(
                     "Trace payload too large (%d bytes), rejecting",
                     content_length,
