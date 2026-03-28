@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 * **tracing:** add OTLP/HTTP trace receiver for capturing tool calls from OTel-instrumented agents
+* **tracing:** add `ArksimTracingProcessor` with `.trace()` context manager for OpenAI Agents SDK integration
+* **tracing:** add direct injection via `submit_tool_calls()` for same-process agents (no HTTP overhead)
+* **tracing:** add protobuf support via `arksim[otel]` pip extra
+* **tracing:** add dual attribute convention support (OTel GenAI semconv and OpenInference)
 
 ## [0.3.3](https://github.com/arklexai/arksim/compare/v0.3.2...v0.3.3) (2026-03-27)
 

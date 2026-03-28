@@ -204,7 +204,16 @@ class TraceReceiver:
         Thread-safe: can be called from any thread or from the event loop
         thread (e.g. a TracingProcessor callback during Runner.run).
         """
-        if not tool_calls or self._loop is None:
+        if not tool_calls:
+            return
+        if self._loop is None:
+            logger.warning(
+                "submit_tool_calls called but receiver is not running "
+                "(call start() first). %d tool calls discarded for (%s, %d).",
+                len(tool_calls),
+                conversation_id,
+                turn_id,
+            )
             return
 
         key = (conversation_id, turn_id)
