@@ -5,6 +5,32 @@ All notable changes to ArkSim will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.3](https://github.com/arklexai/arksim/compare/v0.3.2...v0.3.3) (2026-03-27)
+
+
+### Added
+
+* **eval:** add deterministic trajectory matching for tool calls ([#111](https://github.com/arklexai/arksim/issues/111)) ([1d0e81a](https://github.com/arklexai/arksim/commit/1d0e81a0a3632ecd6f31d4dca0856df6d2c7ff0e))
+* **examples:** upgrade Rasa integration to Rasa Pro with CALM ([#123](https://github.com/arklexai/arksim/issues/123)) ([0f5ccfa](https://github.com/arklexai/arksim/commit/0f5ccfa28207e35d014d99c276c6a74c0a755e5d))
+
+
+### Fixed
+
+* **evaluator:** tighten agent behavior failure prompts and add e2e test ([#125](https://github.com/arklexai/arksim/issues/125)) ([a77a413](https://github.com/arklexai/arksim/commit/a77a41334141459179a3eb313812a145f23ce27f))
+
+
+### Documentation
+
+* remove unrelated image in ci-integration page ([#120](https://github.com/arklexai/arksim/issues/120)) ([8bdf05b](https://github.com/arklexai/arksim/commit/8bdf05b010808cfe0d7408bc7108d4705802a1a1))
+* snapshot v0.3.2 from main ([#116](https://github.com/arklexai/arksim/issues/116)) ([a04bcef](https://github.com/arklexai/arksim/commit/a04bcef290f21a545651501ac33de66ce0565101))
+* update docs links to use main branch docs ([#117](https://github.com/arklexai/arksim/issues/117)) ([bd133b3](https://github.com/arklexai/arksim/commit/bd133b33e4287f5d33ee53054adc0c73aca86c48))
+
+
+### Changed
+
+* add Claude Code standards, skills, and hooks ([#122](https://github.com/arklexai/arksim/issues/122)) ([f52cbfc](https://github.com/arklexai/arksim/commit/f52cbfc3e156100d0fc15a2c5bd8a8030788e11b))
+* improve evaluation metrics display in html report ([#119](https://github.com/arklexai/arksim/issues/119)) ([a05a964](https://github.com/arklexai/arksim/commit/a05a96484cab92d03f4e3d02cb6ab275a1bc7b9c))
+
 ## [0.3.2](https://github.com/arklexai/arksim/compare/v0.3.1...v0.3.2) (2026-03-20)
 
 
@@ -172,6 +198,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `lack of specific information` prompt now requires knowledge to be present before flagging, and includes a knowledge-grounded example matching the `false information` pattern
+- `false information` boundary note tightened to only flag direct contradictions with knowledge
+- Functional e2e tests covering the full evaluation pipeline and correct agent behavior failure detection, including positive and negative examples for `false information`
 - Simulator now respects `num_conversations_per_scenario`, previously only 1 conversation was generated per scenario
 
 ### Added

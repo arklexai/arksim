@@ -50,11 +50,11 @@ Beyond numeric scores, evaluation detects the type of failure in each underperfo
 
 | Failure type                       | Description                                              |
 | ---------------------------------- | -------------------------------------------------------- |
-| `lack of specific information`     | Generic or partial answer that omits important details   |
-| `failure to ask for clarification` | Proceeds with an assumption instead of asking the user   |
-| `disobey user request`             | Completely ignores what the user asked                   |
-| `repetition`                       | Restates previous content without adding value           |
-| `false information`                | Contradicts/fabricates information relative to knowledge |
+| `lack of specific information`     | Correct but incomplete answer that omits details present in the knowledge |
+| `failure to ask for clarification` | Proceeds with an assumption instead of asking the user                    |
+| `disobey user request`             | Completely ignores what the user asked                                    |
+| `repetition`                       | Restates previous content without adding value                            |
+| `false information`                | Directly contradicts what is stated in the knowledge                      |
 | `no failure`                       | No failure detected                                      |
 
 Across all conversations, duplicate failures are deduplicated into a **unique errors** list with occurrence counts.

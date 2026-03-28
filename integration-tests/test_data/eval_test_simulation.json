@@ -1,0 +1,272 @@
+{
+  "schema_version": "v1.1",
+  "simulator_version": "v1-test",
+  "simulation_id": "eval-test-simulation",
+  "generated_at": "2026-03-24T00:00:00Z",
+  "conversations": [
+    {
+      "conversation_id": "conv-fi-contradiction-deductible",
+      "scenario_id": "scenario-fi-contradiction-deductible",
+      "conversation_history": [
+        {
+          "turn_id": 0,
+          "message_id": "msg-fi-ded-0u",
+          "role": "simulated_user",
+          "content": "What is the deductible on the Basic Form home insurance?",
+          "tool_calls": null
+        },
+        {
+          "turn_id": 0,
+          "message_id": "msg-fi-ded-0a",
+          "role": "assistant",
+          "content": "The Basic Form home insurance has a standard deductible of $500 per claim.",
+          "tool_calls": null,
+          "test.expected_behavior_failure": "false information"
+        }
+      ],
+      "simulated_user_prompt": {
+        "simulated_user_prompt_template": "",
+        "variables": {
+          "scenario.agent_context": "",
+          "scenario.goal": "Understand the Basic Form deductible amount.",
+          "scenario.knowledge": [
+            "XYZ Insurance home deductibles: Basic Form has a $1,000 standard deductible. Broad Form has a $750 standard deductible. Comprehensive Form has a $500 standard deductible."
+          ],
+          "scenario.user_profile": "",
+          "test.description": "Agent states $500 deductible \u2014 knowledge says Basic Form is $1,000. The $500 applies to Comprehensive Form."
+        }
+      }
+    },
+    {
+      "conversation_id": "conv-fi-contradiction-no-exceptions",
+      "scenario_id": "scenario-fi-contradiction-no-exceptions",
+      "conversation_history": [
+        {
+          "turn_id": 0,
+          "message_id": "msg-fi-exc-0u",
+          "role": "simulated_user",
+          "content": "My 18-year-old water heater burst. Am I covered?",
+          "tool_calls": null
+        },
+        {
+          "turn_id": 0,
+          "message_id": "msg-fi-exc-0a",
+          "role": "assistant",
+          "content": "While appliances over 15 years old are generally excluded, we can make exceptions on a case-by-case basis for well-maintained units. I'd recommend filing a claim and our adjusters will review it.",
+          "tool_calls": null,
+          "test.expected_behavior_failure": "false information"
+        }
+      ],
+      "simulated_user_prompt": {
+        "simulated_user_prompt_template": "",
+        "variables": {
+          "scenario.agent_context": "",
+          "scenario.goal": "Find out if an old appliance failure is covered.",
+          "scenario.knowledge": [
+            "XYZ Insurance water damage policy states that claims for appliances older than 15 years are excluded from coverage. There are no exceptions to this age limit."
+          ],
+          "scenario.user_profile": "",
+          "test.description": "Agent implies case-by-case exceptions are possible \u2014 knowledge explicitly states there are no exceptions."
+        }
+      }
+    },
+    {
+      "conversation_id": "conv-fi-contradiction-pricing",
+      "scenario_id": "scenario-fi-contradiction-pricing",
+      "conversation_history": [
+        {
+          "turn_id": 0,
+          "message_id": "msg-fi-price-0u",
+          "role": "simulated_user",
+          "content": "What are your pricing plans?",
+          "tool_calls": null
+        },
+        {
+          "turn_id": 0,
+          "message_id": "msg-fi-price-0a",
+          "role": "assistant",
+          "content": "We offer plans starting from $49/month for small businesses with up to 500 conversations per month.",
+          "tool_calls": null,
+          "test.expected_behavior_failure": "false information"
+        }
+      ],
+      "simulated_user_prompt": {
+        "simulated_user_prompt_template": "",
+        "variables": {
+          "scenario.agent_context": "",
+          "scenario.goal": "Understand pricing plans.",
+          "scenario.knowledge": [
+            "Our pricing is based on the number of conversations and features you need. We offer flexible plans starting from $99/month for small businesses up to enterprise solutions with custom pricing. The basic plan includes up to 1,000 conversations per month."
+          ],
+          "scenario.user_profile": "",
+          "test.description": "Agent says $49/month and 500 conversations \u2014 knowledge says $99/month and 1,000 conversations."
+        }
+      }
+    },
+    {
+      "conversation_id": "conv-fi-incomplete-omits-peril",
+      "scenario_id": "scenario-fi-incomplete-omits-peril",
+      "conversation_history": [
+        {
+          "turn_id": 0,
+          "message_id": "msg-fi-peril-0u",
+          "role": "simulated_user",
+          "content": "What does Basic Form cover?",
+          "tool_calls": null
+        },
+        {
+          "turn_id": 0,
+          "message_id": "msg-fi-peril-0a",
+          "role": "assistant",
+          "content": "Basic Form covers common perils like fire, theft, and windstorm.",
+          "tool_calls": null,
+          "test.expected_behavior_failure": "lack of specific information"
+        }
+      ],
+      "simulated_user_prompt": {
+        "simulated_user_prompt_template": "",
+        "variables": {
+          "scenario.agent_context": "",
+          "scenario.goal": "Understand what Basic Form covers.",
+          "scenario.knowledge": [
+            "Basic Form covers fire, windstorm, hail, theft, and vandalism."
+          ],
+          "scenario.user_profile": "",
+          "test.description": "Agent uses 'like' to signal a partial list, omitting 'hail' and 'vandalism' \u2014 vague and incomplete, not contradictory."
+        }
+      }
+    },
+    {
+      "conversation_id": "conv-fi-vague-appeals",
+      "scenario_id": "scenario-fi-vague-appeals",
+      "conversation_history": [
+        {
+          "turn_id": 0,
+          "message_id": "msg-fi-appeal-0u",
+          "role": "simulated_user",
+          "content": "How can I appeal a denied claim?",
+          "tool_calls": null
+        },
+        {
+          "turn_id": 0,
+          "message_id": "msg-fi-appeal-0a",
+          "role": "assistant",
+          "content": "You can appeal through our internal review process.",
+          "tool_calls": null,
+          "test.expected_behavior_failure": "lack of specific information"
+        }
+      ],
+      "simulated_user_prompt": {
+        "simulated_user_prompt_template": "",
+        "variables": {
+          "scenario.agent_context": "",
+          "scenario.goal": "Learn how to appeal a denied claim.",
+          "scenario.knowledge": [
+            "Policyholders can appeal claim denials through a formal written review process."
+          ],
+          "scenario.user_profile": "",
+          "test.description": "Agent's answer is vague and omits that the appeal must be submitted in writing \u2014 incomplete, not contradictory."
+        }
+      }
+    },
+    {
+      "conversation_id": "conv-fi-incomplete-omits-limit",
+      "scenario_id": "scenario-fi-incomplete-omits-limit",
+      "conversation_history": [
+        {
+          "turn_id": 0,
+          "message_id": "msg-fi-limit-0u",
+          "role": "simulated_user",
+          "content": "What liability coverage does home insurance provide?",
+          "tool_calls": null
+        },
+        {
+          "turn_id": 0,
+          "message_id": "msg-fi-limit-0a",
+          "role": "assistant",
+          "content": "Yes, home insurance includes liability coverage.",
+          "tool_calls": null,
+          "test.expected_behavior_failure": "lack of specific information"
+        }
+      ],
+      "simulated_user_prompt": {
+        "simulated_user_prompt_template": "",
+        "variables": {
+          "scenario.agent_context": "",
+          "scenario.goal": "Understand liability coverage.",
+          "scenario.knowledge": [
+            "Home insurance includes liability coverage up to $1,000,000."
+          ],
+          "scenario.user_profile": "",
+          "test.description": "User asked what liability coverage provides \u2014 agent only confirms it exists without stating the $1,000,000 limit \u2014 incomplete, not contradictory."
+        }
+      }
+    },
+    {
+      "conversation_id": "conv-fi-extra-info-no-contradiction",
+      "scenario_id": "scenario-fi-extra-info-no-contradiction",
+      "conversation_history": [
+        {
+          "turn_id": 0,
+          "message_id": "msg-fi-extra-0u",
+          "role": "simulated_user",
+          "content": "What perils does Basic Form cover?",
+          "tool_calls": null
+        },
+        {
+          "turn_id": 0,
+          "message_id": "msg-fi-extra-0a",
+          "role": "assistant",
+          "content": "Basic Form covers fire, windstorm, hail, theft, and vandalism.",
+          "tool_calls": null,
+          "test.expected_behavior_failure": "no failure"
+        }
+      ],
+      "simulated_user_prompt": {
+        "simulated_user_prompt_template": "",
+        "variables": {
+          "scenario.agent_context": "",
+          "scenario.goal": "Understand Basic Form coverage.",
+          "scenario.knowledge": [
+            "Basic Form covers fire, windstorm, hail, theft, and vandalism."
+          ],
+          "scenario.user_profile": "",
+          "test.description": "Agent gives complete correct answer listing all covered perils \u2014 no failure."
+        }
+      }
+    },
+    {
+      "conversation_id": "conv-fi-incomplete-claim-docs",
+      "scenario_id": "scenario-fi-incomplete-claim-docs",
+      "conversation_history": [
+        {
+          "turn_id": 0,
+          "message_id": "msg-fi-docs-0u",
+          "role": "simulated_user",
+          "content": "What documents do I need to submit with my water damage claim?",
+          "tool_calls": null
+        },
+        {
+          "turn_id": 0,
+          "message_id": "msg-fi-docs-0a",
+          "role": "assistant",
+          "content": "You'll need to provide documentation of the damage. Our claims team will guide you through the process.",
+          "tool_calls": null,
+          "test.expected_behavior_failure": "lack of specific information"
+        }
+      ],
+      "simulated_user_prompt": {
+        "simulated_user_prompt_template": "",
+        "variables": {
+          "scenario.agent_context": "",
+          "scenario.goal": "Know what documents to include with a claim.",
+          "scenario.knowledge": [
+            "To file a water damage claim, policyholders must submit: photos of all damage, a repair estimate from a licensed contractor, and receipts for any emergency repairs already completed."
+          ],
+          "scenario.user_profile": "",
+          "test.description": "Agent gives a vague answer \u2014 knowledge specifies photos, repair estimates, and receipts. Incomplete, not contradictory."
+        }
+      }
+    }
+  ]
+}
