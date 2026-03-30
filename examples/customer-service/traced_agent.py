@@ -5,6 +5,10 @@ Uses arksim's ``ArksimTracingProcessor`` to capture tool calls via the
 OpenAI Agents SDK's ``TracingProcessor`` interface. Compare with
 ``custom_agent.py`` which returns tool calls in ``AgentResponse``.
 
+The simulator sets trace routing context automatically via ``contextvars``,
+so the agent does not need any tracing-specific wrapping. Just register
+the processor once and run your agent normally.
+
 Install: pip install openai-agents
 Auth:    export OPENAI_API_KEY="<your-key>"
 """
@@ -30,12 +34,18 @@ from arksim.config import AgentConfig
 from arksim.simulation_engine.agent.base import BaseAgent
 from arksim.tracing import ArksimTracingProcessor
 
+# Register processor once at module load. The simulator manages routing
+# context via contextvars, so no per-turn setup is needed in the agent.
+_processor = ArksimTracingProcessor()
+_processor._ensure_registered()
+
 
 class TracedToolCallAgent(BaseAgent):
     """Agent that captures tool calls via ArksimTracingProcessor.
 
-    When ``metadata["trace_receiver"]`` is provided (same-process),
-    tool calls are injected directly into the receiver's buffer.
+    Tool calls are captured automatically by the processor's
+    ``on_span_end`` callback. The simulator injects routing context
+    (conversation_id, turn_id, receiver) via ``contextvars``.
     """
 
     def __init__(self, agent_config: AgentConfig) -> None:
@@ -60,17 +70,11 @@ class TracedToolCallAgent(BaseAgent):
             ],
         )
         self._last_result: RunResult | None = None
-        self._processor = ArksimTracingProcessor()
 
     async def get_chat_id(self) -> str:
         return self._chat_id
 
     async def execute(self, user_query: str, **kwargs: object) -> str:
-        metadata = kwargs.get("metadata", {})
-        turn_id = metadata.get("turn_id", 0)
-        chat_id = metadata.get("chat_id", self._chat_id)
-        receiver = metadata.get("trace_receiver")
-
         if self._last_result is not None:
             input_list = self._last_result.to_input_list() + [
                 {"role": "user", "content": user_query}
@@ -78,11 +82,7 @@ class TracedToolCallAgent(BaseAgent):
         else:
             input_list = [{"role": "user", "content": user_query}]
 
-        async with self._processor.trace(
-            conversation_id=chat_id, turn_id=turn_id, receiver=receiver
-        ):
-            self._last_result = await Runner.run(self._agent, input=input_list)
-
+        self._last_result = await Runner.run(self._agent, input=input_list)
         return self._last_result.final_output
 
     async def close(self) -> None:

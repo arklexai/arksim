@@ -23,6 +23,8 @@ from arksim.utils.output import save_json_file_async
 if TYPE_CHECKING:
     from arksim.tracing import TraceReceiver
 
+from arksim.tracing.context import _clear_trace_context, _set_trace_context
+
 from .agent.factory import create_agent
 from .core import TURN_KNOWLEDGE_FN
 from .entities import (
@@ -175,10 +177,21 @@ class Simulator:
                     break
 
                 metadata["turn_id"] = turn
+
+                # Set trace routing context so processors can read it
+                # without the agent passing it explicitly.
+                if self.trace_receiver is not None:
+                    _set_trace_context(conversation_id, turn, self.trace_receiver)
+
                 result = await agent.execute(
                     user_query=output,
                     metadata=metadata,
                 )
+
+                # Signal turn complete and clear context
+                if self.trace_receiver is not None:
+                    self.trace_receiver.signal_turn_complete(conversation_id, turn)
+                    _clear_trace_context()
 
                 # Normalize response
                 if isinstance(result, AgentResponse):

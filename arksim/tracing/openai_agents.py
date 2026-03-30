@@ -5,9 +5,16 @@ Provides ``ArksimTracingProcessor``, a ``TracingProcessor`` implementation
 that captures tool calls from the OpenAI Agents SDK and injects them into
 arksim's trace receiver.
 
-Usage::
+When used with arksim's simulator, routing context is set automatically
+via ``contextvars``. No wrapping or setup is needed in the agent::
 
+    from agents import add_trace_processor
     from arksim.tracing import ArksimTracingProcessor
+
+    add_trace_processor(ArksimTracingProcessor())
+
+For standalone use (outside arksim's simulator), use the ``.trace()``
+context manager to provide routing context explicitly::
 
     processor = ArksimTracingProcessor()
 
@@ -30,6 +37,11 @@ if TYPE_CHECKING:
     from arksim.tracing.receiver import TraceReceiver
 
 from arksim.simulation_engine.tool_types import ToolCall
+from arksim.tracing.context import (
+    trace_conversation_id,
+    trace_receiver_ref,
+    trace_turn_id,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -52,35 +64,24 @@ class ArksimTracingProcessor(_Base):  # type: ignore[misc]
     to a ``ToolCall`` and injects it directly into the receiver's buffer
     via ``submit_tool_calls()`` (no HTTP, no serialization).
 
-    Handles concurrent conversations by mapping SDK trace_ids to
-    ``(conversation_id, turn_id, receiver_ref)`` context.
+    Routing context is resolved in this order:
+    1. ``contextvars`` set by the simulator (automatic, zero setup)
+    2. Explicit context from ``.trace()`` context manager (standalone use)
 
     Raises ``ImportError`` at instantiation if ``openai-agents`` is not
     installed.
     """
 
-    def __init__(self, receiver: TraceReceiver | None = None) -> None:
+    def __init__(self) -> None:
         if not _HAS_AGENTS_SDK:
             raise ImportError(
                 "ArksimTracingProcessor requires the OpenAI Agents SDK. "
                 "Install with: pip install openai-agents"
             )
-        self._receiver = receiver
         self._registered = False
-        # Maps SDK trace_id -> (conversation_id, turn_id, receiver_ref)
-        self._trace_contexts: dict[str, tuple[str, int, TraceReceiver | None]] = {}
         self._lock = threading.Lock()
-
-    def register_context(
-        self,
-        trace_id: str,
-        conversation_id: str,
-        turn_id: int,
-        receiver: TraceReceiver | None = None,
-    ) -> None:
-        """Register routing context for an upcoming ``Runner.run()`` trace."""
-        with self._lock:
-            self._trace_contexts[trace_id] = (conversation_id, turn_id, receiver)
+        # Explicit context from .trace() (for standalone use outside simulator)
+        self._trace_contexts: dict[str, tuple[str, int, TraceReceiver | None]] = {}
 
     @asynccontextmanager
     async def trace(
@@ -89,46 +90,45 @@ class ArksimTracingProcessor(_Base):  # type: ignore[misc]
         turn_id: int,
         receiver: TraceReceiver | None = None,
     ) -> AsyncIterator[None]:
-        """Context manager that wraps an agent turn for trace capture.
+        """Context manager for standalone use (outside arksim's simulator).
 
-        Handles processor registration, SDK trace context, and
-        conversation routing in a single call::
+        When using arksim's simulator, this is not needed. The simulator
+        sets routing context automatically via ``contextvars``.
 
-            async with processor.trace(conversation_id=chat_id, turn_id=turn_id):
+        For standalone use, this handles SDK trace context and routing::
+
+            async with processor.trace(conversation_id=cid, turn_id=tid, receiver=recv):
                 result = await Runner.run(agent, input=input_list)
-
-        On first use, calls ``add_trace_processor(self)`` to register with
-        the SDK's tracing system. This stacks with any existing processors
-        rather than replacing them.
 
         Args:
             conversation_id: Conversation ID for routing traces.
             turn_id: Turn index within the conversation.
-            receiver: Optional receiver override. Falls back to the
-                receiver passed at ``__init__``.
+            receiver: Receiver to submit tool calls to.
         """
-        from agents.tracing import add_trace_processor
         from agents.tracing import trace as sdk_trace
 
-        with self._lock:
-            if not self._registered:
-                add_trace_processor(self)
-                self._registered = True
-
-        resolved_receiver = receiver if receiver is not None else self._receiver
+        self._ensure_registered()
 
         with sdk_trace(workflow_name="agent_turn", group_id=conversation_id) as t:
-            self.register_context(
-                t.trace_id, conversation_id, turn_id, resolved_receiver
-            )
+            with self._lock:
+                self._trace_contexts[t.trace_id] = (
+                    conversation_id,
+                    turn_id,
+                    receiver,
+                )
             yield
 
-        # Signal the receiver that this turn is done so wait_for_traces
-        # returns immediately, even if no tool calls were submitted
-        # (pure text response). Without this, text-only turns block for
-        # the full wait_timeout.
-        if resolved_receiver is not None:
-            resolved_receiver.signal_turn_complete(conversation_id, turn_id)
+        if receiver is not None:
+            receiver.signal_turn_complete(conversation_id, turn_id)
+
+    def _ensure_registered(self) -> None:
+        """Register this processor with the SDK on first use."""
+        with self._lock:
+            if not self._registered:
+                from agents.tracing import add_trace_processor
+
+                add_trace_processor(self)
+                self._registered = True
 
     def on_trace_start(self, _trace: Trace) -> None:
         pass
@@ -145,12 +145,23 @@ class ArksimTracingProcessor(_Base):  # type: ignore[misc]
         if not isinstance(span.span_data, FunctionSpanData):
             return
 
+        # Resolve routing: explicit .trace() context first, then contextvars
+        conversation_id: str | None = None
+        turn_id: int | None = None
+        receiver: TraceReceiver | None = None
+
         with self._lock:
             ctx = self._trace_contexts.get(span.trace_id)
-        if ctx is None:
+        if ctx is not None:
+            conversation_id, turn_id, receiver = ctx
+        else:
+            conversation_id = trace_conversation_id.get()
+            turn_id = trace_turn_id.get()
+            receiver = trace_receiver_ref.get()
+
+        if conversation_id is None or turn_id is None:
             return
 
-        conversation_id, turn_id, receiver = ctx
         data = span.span_data
 
         # Parse arguments from JSON string

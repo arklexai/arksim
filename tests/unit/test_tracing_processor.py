@@ -44,15 +44,15 @@ def _make_non_function_span(*, trace_id: str = "trace-1") -> SimpleNamespace:
     )
 
 
-class TestOnSpanEnd:
-    """Test ArksimTracingProcessor.on_span_end behavior."""
+class TestOnSpanEndExplicitContext:
+    """Test on_span_end with explicit register_context (standalone .trace() path)."""
 
     def test_function_span_submits_tool_call(self) -> None:
         """A FunctionSpanData span with registered context submits a ToolCall."""
         processor = ArksimTracingProcessor()
         receiver = MagicMock()
 
-        processor.register_context("trace-1", "conv-1", 0, receiver)
+        processor._trace_contexts["trace-1"] = ("conv-1", 0, receiver)
         span = _make_function_span()
         processor.on_span_end(span)
 
@@ -73,31 +73,24 @@ class TestOnSpanEnd:
         processor = ArksimTracingProcessor()
         receiver = MagicMock()
 
-        processor.register_context("trace-1", "conv-1", 0, receiver)
+        processor._trace_contexts["trace-1"] = ("conv-1", 0, receiver)
         span = _make_non_function_span()
         processor.on_span_end(span)
 
         receiver.submit_tool_calls.assert_not_called()
 
     def test_unregistered_trace_id_is_skipped(self) -> None:
-        """Spans from traces without registered context are ignored."""
+        """Spans without registered context or contextvars are ignored."""
         processor = ArksimTracingProcessor()
-        receiver = MagicMock()
-
-        # Register for trace-1, but span comes from trace-unknown
-        processor.register_context("trace-1", "conv-1", 0, receiver)
         span = _make_function_span(trace_id="trace-unknown")
         processor.on_span_end(span)
-
-        receiver.submit_tool_calls.assert_not_called()
+        # No crash, no submit
 
     def test_no_receiver_does_not_crash(self) -> None:
         """When receiver is None, on_span_end completes without error."""
         processor = ArksimTracingProcessor()
-
-        processor.register_context("trace-1", "conv-1", 0, receiver=None)
+        processor._trace_contexts["trace-1"] = ("conv-1", 0, None)
         span = _make_function_span()
-        # Should not raise
         processor.on_span_end(span)
 
     def test_error_span_captures_message(self) -> None:
@@ -105,7 +98,7 @@ class TestOnSpanEnd:
         processor = ArksimTracingProcessor()
         receiver = MagicMock()
 
-        processor.register_context("trace-1", "conv-1", 0, receiver)
+        processor._trace_contexts["trace-1"] = ("conv-1", 0, receiver)
         span = _make_function_span(error={"message": "connection timeout"})
         processor.on_span_end(span)
 
@@ -117,7 +110,7 @@ class TestOnSpanEnd:
         processor = ArksimTracingProcessor()
         receiver = MagicMock()
 
-        processor.register_context("trace-1", "conv-1", 0, receiver)
+        processor._trace_contexts["trace-1"] = ("conv-1", 0, receiver)
         span = _make_function_span(error={"code": 500})
         processor.on_span_end(span)
 
@@ -129,7 +122,7 @@ class TestOnSpanEnd:
         processor = ArksimTracingProcessor()
         receiver = MagicMock()
 
-        processor.register_context("trace-1", "conv-1", 0, receiver)
+        processor._trace_contexts["trace-1"] = ("conv-1", 0, receiver)
         span = _make_function_span(input_json="not valid json")
         processor.on_span_end(span)
 
@@ -141,7 +134,7 @@ class TestOnSpanEnd:
         processor = ArksimTracingProcessor()
         receiver = MagicMock()
 
-        processor.register_context("trace-1", "conv-1", 0, receiver)
+        processor._trace_contexts["trace-1"] = ("conv-1", 0, receiver)
         span = _make_function_span(input_json='["a", "b"]')
         processor.on_span_end(span)
 
@@ -153,8 +146,7 @@ class TestOnSpanEnd:
         processor = ArksimTracingProcessor()
         receiver = MagicMock()
 
-        processor.register_context("trace-1", "conv-1", 0, receiver)
-        # Use a SimpleNamespace with dict output to simulate non-string
+        processor._trace_contexts["trace-1"] = ("conv-1", 0, receiver)
         from agents.tracing.span_data import FunctionSpanData
 
         span_data = FunctionSpanData(
@@ -178,7 +170,7 @@ class TestOnSpanEnd:
         processor = ArksimTracingProcessor()
         receiver = MagicMock()
 
-        processor.register_context("trace-1", "conv-1", 0, receiver)
+        processor._trace_contexts["trace-1"] = ("conv-1", 0, receiver)
         span = _make_function_span(input_json=None, output=None)
         processor.on_span_end(span)
 
@@ -187,21 +179,89 @@ class TestOnSpanEnd:
         assert tc_list[0].result is None
 
 
+class TestOnSpanEndContextVars:
+    """Test on_span_end with contextvars (simulator-managed path)."""
+
+    def test_contextvar_routing(self) -> None:
+        """on_span_end reads routing from contextvars when no explicit context."""
+        from arksim.tracing.context import (
+            trace_conversation_id,
+            trace_receiver_ref,
+            trace_turn_id,
+        )
+
+        processor = ArksimTracingProcessor()
+        receiver = MagicMock()
+
+        trace_conversation_id.set("cv-conv")
+        trace_turn_id.set(3)
+        trace_receiver_ref.set(receiver)
+
+        try:
+            span = _make_function_span(trace_id="unregistered-trace")
+            processor.on_span_end(span)
+
+            receiver.submit_tool_calls.assert_called_once()
+            args = receiver.submit_tool_calls.call_args
+            assert args[0][0] == "cv-conv"
+            assert args[0][1] == 3
+        finally:
+            trace_conversation_id.set(None)
+            trace_turn_id.set(None)
+            trace_receiver_ref.set(None)
+
+    def test_explicit_context_takes_precedence(self) -> None:
+        """Explicit register_context wins over contextvars."""
+        from arksim.tracing.context import (
+            trace_conversation_id,
+            trace_receiver_ref,
+            trace_turn_id,
+        )
+
+        processor = ArksimTracingProcessor()
+        explicit_receiver = MagicMock()
+        cv_receiver = MagicMock()
+
+        processor._trace_contexts["trace-1"] = ("explicit-conv", 0, explicit_receiver)
+        trace_conversation_id.set("cv-conv")
+        trace_turn_id.set(99)
+        trace_receiver_ref.set(cv_receiver)
+
+        try:
+            span = _make_function_span(trace_id="trace-1")
+            processor.on_span_end(span)
+
+            explicit_receiver.submit_tool_calls.assert_called_once()
+            cv_receiver.submit_tool_calls.assert_not_called()
+            assert (
+                explicit_receiver.submit_tool_calls.call_args[0][0] == "explicit-conv"
+            )
+        finally:
+            trace_conversation_id.set(None)
+            trace_turn_id.set(None)
+            trace_receiver_ref.set(None)
+
+    def test_no_context_anywhere_skips_silently(self) -> None:
+        """No explicit context and no contextvars: span is skipped."""
+        processor = ArksimTracingProcessor()
+        span = _make_function_span(trace_id="no-context")
+        processor.on_span_end(span)
+        # No crash
+
+
 class TestContextLifecycle:
-    """Test register_context / on_trace_end lifecycle."""
+    """Test on_trace_end lifecycle."""
 
     def test_on_trace_end_cleans_up_context(self) -> None:
         """After on_trace_end, spans from that trace are no longer processed."""
         processor = ArksimTracingProcessor()
         receiver = MagicMock()
 
-        processor.register_context("trace-1", "conv-1", 0, receiver)
+        processor._trace_contexts["trace-1"] = ("conv-1", 0, receiver)
 
-        # Simulate trace end
         trace_mock = SimpleNamespace(trace_id="trace-1")
         processor.on_trace_end(trace_mock)
 
-        # Subsequent spans should be skipped
         span = _make_function_span(trace_id="trace-1")
         processor.on_span_end(span)
 
@@ -213,8 +273,8 @@ class TestContextLifecycle:
         receiver_a = MagicMock()
         receiver_b = MagicMock()
 
-        processor.register_context("trace-a", "conv-a", 0, receiver_a)
-        processor.register_context("trace-b", "conv-b", 1, receiver_b)
+        processor._trace_contexts["trace-a"] = ("conv-a", 0, receiver_a)
+        processor._trace_contexts["trace-b"] = ("conv-b", 1, receiver_b)
 
         processor.on_span_end(_make_function_span(trace_id="trace-a", name="tool_a"))
         processor.on_span_end(_make_function_span(trace_id="trace-b", name="tool_b"))
@@ -223,13 +283,12 @@ class TestContextLifecycle:
         tc_b = receiver_b.submit_tool_calls.call_args[0][2]
         assert tc_a[0].name == "tool_a"
         assert tc_b[0].name == "tool_b"
-        # Each receiver called exactly once
         assert receiver_a.submit_tool_calls.call_count == 1
         assert receiver_b.submit_tool_calls.call_count == 1
 
 
 class TestTraceContextManager:
-    """Test ArksimTracingProcessor.trace() context manager behavior."""
+    """Test .trace() context manager (standalone use path)."""
 
     @pytest.mark.asyncio
     async def test_trace_registers_and_cleans_up_context(self) -> None:
@@ -242,42 +301,28 @@ class TestTraceContextManager:
         assert len(processor._trace_contexts) == 0
 
     @pytest.mark.asyncio
-    async def test_init_receiver_used_when_no_per_call_override(self) -> None:
-        """Receiver passed at __init__ is used when no per-call override given."""
+    async def test_trace_with_receiver(self) -> None:
+        """Receiver passed to .trace() is used for tool call submission."""
         receiver = MagicMock()
-        processor = ArksimTracingProcessor(receiver=receiver)
+        receiver.signal_turn_complete = MagicMock()
+        processor = ArksimTracingProcessor()
 
-        async with processor.trace("conv-1", turn_id=0):
+        async with processor.trace("conv-1", turn_id=0, receiver=receiver):
             trace_id = list(processor._trace_contexts.keys())[0]
             span = _make_function_span(trace_id=trace_id)
             processor.on_span_end(span)
 
         receiver.submit_tool_calls.assert_called_once()
-
-    @pytest.mark.asyncio
-    async def test_per_call_receiver_overrides_init_receiver(self) -> None:
-        """Receiver passed to .trace() overrides the one passed at __init__."""
-        init_receiver = MagicMock()
-        call_receiver = MagicMock()
-        processor = ArksimTracingProcessor(receiver=init_receiver)
-
-        async with processor.trace("conv-1", turn_id=0, receiver=call_receiver):
-            trace_id = list(processor._trace_contexts.keys())[0]
-            span = _make_function_span(trace_id=trace_id)
-            processor.on_span_end(span)
-
-        call_receiver.submit_tool_calls.assert_called_once()
-        init_receiver.submit_tool_calls.assert_not_called()
+        receiver.signal_turn_complete.assert_called_once_with("conv-1", 0)
 
     @pytest.mark.asyncio
     async def test_trace_without_receiver_does_not_crash(self) -> None:
-        """No crash when neither init nor per-call receiver is provided."""
+        """No crash when no receiver is provided."""
         processor = ArksimTracingProcessor()
 
         async with processor.trace("conv-1", turn_id=0):
             trace_id = list(processor._trace_contexts.keys())[0]
             span = _make_function_span(trace_id=trace_id)
-            # Should not raise even with no receiver
             processor.on_span_end(span)
 
     @pytest.mark.asyncio
