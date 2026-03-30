@@ -21,7 +21,7 @@ __all__ = [
 def __getattr__(name: str) -> object:
     """Lazy import for optional dependencies."""
     if name == "ArksimTracingProcessor":
-        from arksim.tracing.openai_agents import ArksimTracingProcessor
+        from arksim.tracing.openai import ArksimTracingProcessor
 
         return ArksimTracingProcessor
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

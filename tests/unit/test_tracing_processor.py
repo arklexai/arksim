@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-"""Tests for arksim.tracing.openai_agents.ArksimTracingProcessor."""
+"""Tests for arksim.tracing.openai.ArksimTracingProcessor."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ import pytest
 
 pytest.importorskip("agents", reason="openai-agents SDK not installed")
 
-from arksim.tracing.openai_agents import ArksimTracingProcessor
+from arksim.tracing.openai import ArksimTracingProcessor
 
 
 def _make_function_span(
