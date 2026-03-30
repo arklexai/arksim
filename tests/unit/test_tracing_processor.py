@@ -330,12 +330,21 @@ class TestTraceContextManager:
         """add_trace_processor is invoked only on the first .trace() call."""
         from unittest.mock import patch
 
-        processor = ArksimTracingProcessor()
+        import arksim.tracing as _tracing_pkg
 
-        with patch("agents.tracing.add_trace_processor") as mock_add:
-            async with processor.trace("conv-1", turn_id=0):
-                pass
-            async with processor.trace("conv-2", turn_id=1):
-                pass
+        # Reset the package-level singleton so this test starts clean
+        old = _tracing_pkg._registered_processor
+        _tracing_pkg._registered_processor = None
 
-        mock_add.assert_called_once()
+        try:
+            processor = ArksimTracingProcessor()
+
+            with patch("agents.tracing.add_trace_processor") as mock_add:
+                async with processor.trace("conv-1", turn_id=0):
+                    pass
+                async with processor.trace("conv-2", turn_id=1):
+                    pass
+
+            mock_add.assert_called_once()
+        finally:
+            _tracing_pkg._registered_processor = old

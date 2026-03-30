@@ -7,6 +7,13 @@ from arksim.tracing.config import TraceReceiverConfig
 from arksim.tracing.receiver import TraceReceiver
 from arksim.tracing.span_converter import spans_to_tool_calls
 
+# Singleton tracking for ArksimTracingProcessor registration.
+# Lives here (not in openai.py) because the dynamic module loader
+# creates fresh module copies with unique sys.modules names, so
+# module-level globals in openai.py don't persist across loads.
+# This package __init__ is loaded once and cached in sys.modules.
+_registered_processor: object | None = None
+
 __all__ = [
     "ArksimTracingProcessor",
     "TraceReceiver",

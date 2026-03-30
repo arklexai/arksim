@@ -122,13 +122,21 @@ class ArksimTracingProcessor(_Base):  # type: ignore[misc]
             receiver.signal_turn_complete(conversation_id, turn_id)
 
     def _ensure_registered(self) -> None:
-        """Register this processor with the SDK on first use."""
-        with self._lock:
-            if not self._registered:
-                from agents.tracing import add_trace_processor
+        """Register this processor with the SDK on first use.
 
-                add_trace_processor(self)
-                self._registered = True
+        Uses a package-level guard (``arksim.tracing._registered_processor``)
+        to prevent duplicate registrations even when the module is loaded
+        multiple times by arksim's dynamic module loader.
+        """
+        import arksim.tracing as _tracing_pkg
+
+        with self._lock:
+            if _tracing_pkg._registered_processor is not None:
+                return
+            from agents.tracing import add_trace_processor
+
+            add_trace_processor(self)
+            _tracing_pkg._registered_processor = self
 
     def on_trace_start(self, _trace: Trace) -> None:
         pass
