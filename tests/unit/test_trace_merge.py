@@ -36,6 +36,7 @@ def _make_simulator(
 async def test_trace_merge_appends_new_tool_calls() -> None:
     """Traced tool calls not in AgentResponse are appended."""
     receiver = AsyncMock()
+    receiver.signal_turn_complete = MagicMock()
     receiver.wait_for_traces = AsyncMock(
         return_value=[
             ToolCall(id="traced-1", name="search", arguments={"q": "test"}),
@@ -87,6 +88,7 @@ async def test_trace_merge_appends_new_tool_calls() -> None:
 async def test_trace_merge_deduplicates_by_id() -> None:
     """Traced tool calls with the same ID as explicit ones are skipped."""
     receiver = AsyncMock()
+    receiver.signal_turn_complete = MagicMock()
     receiver.wait_for_traces = AsyncMock(
         return_value=[
             ToolCall(id="shared-id", name="search", arguments={"q": "test"}),
@@ -142,6 +144,7 @@ async def test_trace_merge_deduplicates_by_name_args() -> None:
     ID while AgentResponse carries an SDK-assigned ID.
     """
     receiver = AsyncMock()
+    receiver.signal_turn_complete = MagicMock()
     receiver.wait_for_traces = AsyncMock(
         return_value=[
             # Different ID, same (name, args)
@@ -191,6 +194,7 @@ async def test_trace_merge_deduplicates_by_name_args() -> None:
 async def test_trace_merge_adds_unique_traced_calls() -> None:
     """Traced tool calls with different name/args are added alongside explicit ones."""
     receiver = AsyncMock()
+    receiver.signal_turn_complete = MagicMock()
     receiver.wait_for_traces = AsyncMock(
         return_value=[
             ToolCall(id="traced-1", name="fetch_data", arguments={"url": "/api"}),
@@ -312,6 +316,7 @@ async def test_turn_id_passed_in_metadata() -> None:
 async def test_trace_merge_nested_dict_arguments() -> None:
     """Dedup handles nested dict arguments without crashing."""
     receiver = AsyncMock()
+    receiver.signal_turn_complete = MagicMock()
     receiver.wait_for_traces = AsyncMock(
         return_value=[
             ToolCall(
@@ -367,6 +372,7 @@ async def test_trace_merge_nested_dict_arguments() -> None:
 async def test_trace_merge_three_way_overlap() -> None:
     """Agent returns A+B, traces return B'+C. Result should be A, B, C."""
     receiver = AsyncMock()
+    receiver.signal_turn_complete = MagicMock()
     receiver.wait_for_traces = AsyncMock(
         return_value=[
             ToolCall(id="span-b", name="lookup", arguments={"id": "42"}),

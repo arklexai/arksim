@@ -37,7 +37,7 @@ from arksim.tracing import ArksimTracingProcessor
 # Register processor once at module load. The simulator manages routing
 # context via contextvars, so no per-turn setup is needed in the agent.
 _processor = ArksimTracingProcessor()
-_processor._ensure_registered()
+_processor.ensure_registered()
 
 
 class TracedToolCallAgent(BaseAgent):

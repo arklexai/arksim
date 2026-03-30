@@ -6,12 +6,13 @@ that captures tool calls from the OpenAI Agents SDK and injects them into
 arksim's trace receiver.
 
 When used with arksim's simulator, routing context is set automatically
-via ``contextvars``. No wrapping or setup is needed in the agent::
+via ``contextvars``. Register the processor once and run your agent
+normally::
 
-    from agents import add_trace_processor
     from arksim.tracing import ArksimTracingProcessor
 
-    add_trace_processor(ArksimTracingProcessor())
+    processor = ArksimTracingProcessor()
+    processor.ensure_registered()
 
 For standalone use (outside arksim's simulator), use the ``.trace()``
 context manager to provide routing context explicitly::
@@ -107,7 +108,7 @@ class ArksimTracingProcessor(_Base):  # type: ignore[misc]
         """
         from agents.tracing import trace as sdk_trace
 
-        self._ensure_registered()
+        self.ensure_registered()
 
         with sdk_trace(workflow_name="agent_turn", group_id=conversation_id) as t:
             with self._lock:
@@ -121,7 +122,7 @@ class ArksimTracingProcessor(_Base):  # type: ignore[misc]
         if receiver is not None:
             receiver.signal_turn_complete(conversation_id, turn_id)
 
-    def _ensure_registered(self) -> None:
+    def ensure_registered(self) -> None:
         """Register this processor with the SDK on first use.
 
         Uses a package-level guard (``arksim.tracing._registered_processor``)

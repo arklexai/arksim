@@ -45,9 +45,9 @@ The agent returns `AgentResponse(content=..., tool_calls=[...])` from `execute()
 
 ### 2. Direct injection (same process)
 
-When the agent runs in the same process as arksim, the trace receiver passes its reference to the agent via `metadata["trace_receiver"]`. The agent's `TracingProcessor` calls `receiver.submit_tool_calls()` to inject tool calls directly into the receiver's buffer, bypassing HTTP entirely.
+When the agent runs in the same process as arksim, the simulator passes routing context to the `TracingProcessor` via `contextvars`. The processor's `on_span_end` callback reads the context and calls `receiver.submit_tool_calls()` to inject tool calls directly into the receiver's buffer, bypassing HTTP entirely.
 
-This is the recommended path for same-process agents because it avoids event loop contention between the OTel HTTP exporter and the async receiver.
+This is the recommended path for same-process agents because it avoids event loop contention between the OTel HTTP exporter and the async receiver. No wrapping or manual context management is needed in the agent.
 
 ### 3. HTTP export (separate process)
 
@@ -91,7 +91,7 @@ Register the processor once, then run your agent normally. The simulator sets ro
 from arksim.tracing import ArksimTracingProcessor
 
 processor = ArksimTracingProcessor()
-processor._ensure_registered()
+processor.ensure_registered()
 
 # In your agent's execute():
 result = await Runner.run(agent, input=input_list)
@@ -180,7 +180,7 @@ When the traced agent and arksim run in the same process:
 Use `num_workers: 1` in your config. The OpenAI Agents SDK's global trace context does not reliably propagate across many concurrent async traces. This limitation applies only to same-process tracing. Agents in separate processes can use any parallelism level.
 </Warning>
 
-The direct injection path (`submit_tool_calls`) avoids the HTTP deadlock that would otherwise occur when the OTel exporter and the trace receiver share an event loop. arksim automatically passes the receiver reference to the agent via `metadata["trace_receiver"]` when the trace receiver is enabled.
+The direct injection path (`submit_tool_calls`) avoids the HTTP deadlock that would otherwise occur when the OTel exporter and the trace receiver share an event loop. The simulator automatically passes routing context to the processor via `contextvars` when the trace receiver is enabled.
 
 ```yaml
 # config_traced.yaml

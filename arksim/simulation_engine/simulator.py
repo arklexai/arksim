@@ -183,15 +183,17 @@ class Simulator:
                 if self.trace_receiver is not None:
                     _set_trace_context(conversation_id, turn, self.trace_receiver)
 
-                result = await agent.execute(
-                    user_query=output,
-                    metadata=metadata,
-                )
-
-                # Signal turn complete and clear context
-                if self.trace_receiver is not None:
-                    self.trace_receiver.signal_turn_complete(conversation_id, turn)
-                    _clear_trace_context()
+                try:
+                    result = await agent.execute(
+                        user_query=output,
+                        metadata=metadata,
+                    )
+                finally:
+                    # Clear context and signal turn complete even if
+                    # agent.execute() raises, to avoid stale contextvars.
+                    if self.trace_receiver is not None:
+                        self.trace_receiver.signal_turn_complete(conversation_id, turn)
+                        _clear_trace_context()
 
                 # Normalize response
                 if isinstance(result, AgentResponse):
