@@ -98,11 +98,9 @@ class ArksimTracingProcessor(_Base):  # type: ignore[misc]
             async with processor.trace(conversation_id=chat_id, turn_id=turn_id):
                 result = await Runner.run(agent, input=input_list)
 
-        On first use, calls ``set_trace_processors([self])`` which replaces
-        the SDK's processor list. This follows the same convention as
-        Braintrust and LangWatch integrations. If you need to combine with
-        other processors, call ``set_trace_processors`` manually instead
-        of using this context manager.
+        On first use, calls ``add_trace_processor(self)`` to register with
+        the SDK's tracing system. This stacks with existing processors
+        (Braintrust, LangWatch, etc.) rather than replacing them.
 
         Args:
             conversation_id: Conversation ID for routing traces.
@@ -110,12 +108,12 @@ class ArksimTracingProcessor(_Base):  # type: ignore[misc]
             receiver: Optional receiver override. Falls back to the
                 receiver passed at ``__init__``.
         """
-        from agents.tracing import set_trace_processors
+        from agents.tracing import add_trace_processor
         from agents.tracing import trace as sdk_trace
 
         with self._lock:
             if not self._registered:
-                set_trace_processors([self])
+                add_trace_processor(self)
                 self._registered = True
 
         resolved_receiver = receiver if receiver is not None else self._receiver

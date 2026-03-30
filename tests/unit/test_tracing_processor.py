@@ -281,16 +281,16 @@ class TestTraceContextManager:
             processor.on_span_end(span)
 
     @pytest.mark.asyncio
-    async def test_set_trace_processors_called_once(self) -> None:
-        """set_trace_processors is invoked only on the first .trace() call."""
+    async def test_add_trace_processor_called_once(self) -> None:
+        """add_trace_processor is invoked only on the first .trace() call."""
         from unittest.mock import patch
 
         processor = ArksimTracingProcessor()
 
-        with patch("agents.tracing.set_trace_processors") as mock_set:
+        with patch("agents.tracing.add_trace_processor") as mock_add:
             async with processor.trace("conv-1", turn_id=0):
                 pass
             async with processor.trace("conv-2", turn_id=1):
                 pass
 
-        mock_set.assert_called_once()
+        mock_add.assert_called_once()
