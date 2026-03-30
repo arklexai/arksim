@@ -66,8 +66,8 @@ class ArksimTracingProcessor(_Base):  # type: ignore[misc]
     via ``submit_tool_calls()`` (no HTTP, no serialization).
 
     Routing context is resolved in this order:
-    1. ``contextvars`` set by the simulator (automatic, zero setup)
-    2. Explicit context from ``.trace()`` context manager (standalone use)
+    1. Explicit context from ``.trace()`` context manager (standalone use)
+    2. ``contextvars`` set by the simulator (automatic, zero setup)
 
     Raises ``ImportError`` at instantiation if ``openai-agents`` is not
     installed.
