@@ -169,19 +169,28 @@ class TraceReceiver:
     async def __aexit__(self, *exc: object) -> None:
         await self.stop()
 
-    async def start(self) -> None:
-        """Start the HTTP server."""
+    async def start(self, *, start_http: bool = True) -> None:
+        """Start the receiver.
+
+        Args:
+            start_http: Whether to start the HTTP listener for cross-process
+                agents. Same-process agents only need the buffer and
+                ``submit_tool_calls()``, not the HTTP server.
+        """
         self._loop = asyncio.get_running_loop()
-        self._server = await asyncio.start_server(
-            self._handle_connection, self.host, self.port
-        )
-        proto_status = "protobuf+JSON" if _HAS_PROTOBUF else "JSON only"
-        logger.info(
-            "Trace receiver listening on %s:%d (%s)",
-            self.host,
-            self.port,
-            proto_status,
-        )
+        if start_http:
+            self._server = await asyncio.start_server(
+                self._handle_connection, self.host, self.port
+            )
+            proto_status = "protobuf+JSON" if _HAS_PROTOBUF else "JSON only"
+            logger.info(
+                "Trace receiver listening on %s:%d (%s)",
+                self.host,
+                self.port,
+                proto_status,
+            )
+        else:
+            logger.info("Trace receiver started (direct injection only)")
 
     async def stop(self) -> None:
         """Stop the HTTP server and clean up."""

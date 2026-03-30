@@ -474,7 +474,31 @@ async def run_simulation(
             port=trace_cfg.port,
             wait_timeout=trace_cfg.wait_timeout,
         )
-        await trace_receiver.start()
+
+        # Same-process agents use direct injection via contextvars,
+        # so no HTTP listener is needed. Cross-process agents (Chat
+        # Completions, A2A) need the HTTP endpoint for OTel export.
+        is_same_process = agent_config.agent_type == AgentType.CUSTOM.value
+        await trace_receiver.start(start_http=not is_same_process)
+
+        # Register the OpenAI Agents SDK processor for same-process
+        # agents. The simulator owns registration (not the agent) because:
+        # 1. arksim's dynamic module loader creates fresh module copies
+        #    per conversation, so module-level registration in the agent
+        #    would duplicate processors (7 conversations = 7 registrations)
+        # 2. The agent shouldn't need any tracing-specific code at all;
+        #    the simulator + contextvars handle everything
+        if is_same_process:
+            try:
+                from arksim.tracing.openai import ArksimTracingProcessor
+
+                processor = ArksimTracingProcessor()
+                processor.ensure_registered()
+            except ImportError:
+                logger.debug(
+                    "openai-agents not installed, skipping "
+                    "ArksimTracingProcessor registration"
+                )
 
     try:
         simulator = Simulator(

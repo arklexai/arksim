@@ -1,13 +1,13 @@
 # SPDX-License-Identifier: Apache-2.0
 """Traced variant of the customer-service example agent.
 
-Uses arksim's ``ArksimTracingProcessor`` to capture tool calls via the
+Captures tool calls via arksim's ``ArksimTracingProcessor`` and the
 OpenAI Agents SDK's ``TracingProcessor`` interface. Compare with
 ``custom_agent.py`` which returns tool calls in ``AgentResponse``.
 
-The simulator sets trace routing context automatically via ``contextvars``,
-so the agent does not need any tracing-specific wrapping. Just register
-the processor once and run your agent normally.
+No tracing-specific code is needed in the agent. The simulator handles
+processor registration and routing context via ``contextvars``. This
+agent just uses the SDK normally and returns the text output.
 
 Install: pip install openai-agents
 Auth:    export OPENAI_API_KEY="<your-key>"
@@ -32,20 +32,15 @@ from custom_agent import (
 
 from arksim.config import AgentConfig
 from arksim.simulation_engine.agent.base import BaseAgent
-from arksim.tracing import ArksimTracingProcessor
-
-# Register processor once at module load. The simulator manages routing
-# context via contextvars, so no per-turn setup is needed in the agent.
-_processor = ArksimTracingProcessor()
-_processor.ensure_registered()
 
 
 class TracedToolCallAgent(BaseAgent):
     """Agent that captures tool calls via ArksimTracingProcessor.
 
     Tool calls are captured automatically by the processor's
-    ``on_span_end`` callback. The simulator injects routing context
-    (conversation_id, turn_id, receiver) via ``contextvars``.
+    ``on_span_end`` callback. The simulator registers the processor
+    and injects routing context (conversation_id, turn_id, receiver)
+    via ``contextvars``. No tracing code is needed here.
     """
 
     def __init__(self, agent_config: AgentConfig) -> None:
