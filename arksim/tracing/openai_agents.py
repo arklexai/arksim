@@ -3,8 +3,7 @@
 
 Provides ``ArksimTracingProcessor``, a ``TracingProcessor`` implementation
 that captures tool calls from the OpenAI Agents SDK and injects them into
-arksim's trace receiver. This follows the same pattern as Braintrust's
-``BraintrustTracingProcessor`` and LangWatch's ``OpenAIAgentsInstrumentor``.
+arksim's trace receiver.
 
 Usage::
 
@@ -99,8 +98,8 @@ class ArksimTracingProcessor(_Base):  # type: ignore[misc]
                 result = await Runner.run(agent, input=input_list)
 
         On first use, calls ``add_trace_processor(self)`` to register with
-        the SDK's tracing system. This stacks with existing processors
-        (Braintrust, LangWatch, etc.) rather than replacing them.
+        the SDK's tracing system. This stacks with any existing processors
+        rather than replacing them.
 
         Args:
             conversation_id: Conversation ID for routing traces.

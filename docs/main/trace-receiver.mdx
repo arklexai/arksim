@@ -83,7 +83,7 @@ A2A and Chat Completions agents running externally do not yet have automatic tra
 
 ### Using ArksimTracingProcessor (recommended)
 
-For agents built with the OpenAI Agents SDK, arksim ships a ready-to-use `TracingProcessor`. This follows the same pattern as [Braintrust](https://www.braintrust.dev/docs/integrations/agent-frameworks/openai-agents-sdk) and [LangWatch](https://langwatch.ai/docs/integration/python/integrations/open-ai-agents).
+For agents built with the OpenAI Agents SDK, arksim ships a ready-to-use `TracingProcessor` that captures tool calls automatically.
 
 ```python
 from arksim.tracing import ArksimTracingProcessor
