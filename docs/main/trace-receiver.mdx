@@ -69,7 +69,7 @@ Trace correlation depends on the agent connector type:
 
 | Connector | Trace Correlation | Mechanism |
 |-----------|------------------|-----------|
-| Python connector | Supported | `ArksimTracingProcessor.trace()` |
+| Python connector | Supported | `ArksimTracingProcessor` + `contextvars` |
 | A2A | Not yet supported | Protocol has `task_id` / `context_id` (planned) |
 | Chat Completions | Not yet supported | - |
 
@@ -98,7 +98,7 @@ result = await Runner.run(agent, input=input_list)
 # Tool calls are captured automatically, no wrapping needed.
 ```
 
-For standalone use outside arksim's simulator, the `.trace()` context manager provides explicit routing:
+Use `ensure_registered()` when running via `arksim simulate`. Use `.trace()` when calling `Runner.run()` directly in your own script:
 
 ```python
 async with processor.trace(conversation_id=chat_id, turn_id=turn_id, receiver=receiver):
@@ -116,7 +116,7 @@ arksim passes a `metadata` dict to your agent's `execute()` via `kwargs["metadat
 | `chat_id` | `str` | Conversation ID assigned by `agent.get_chat_id()` |
 | `turn_id` | `int` | Zero-based turn index within the conversation |
 
-The `chat_id` and `turn_id` values are always present (regardless of trace receiver). The `trace_receiver` key is only added when tracing is active.
+These keys are always present regardless of whether the trace receiver is enabled. Trace routing context (conversation ID, turn ID, receiver reference) is passed to the processor automatically via `contextvars`, not through metadata.
 
 ### Using raw OTel spans (any framework)
 
