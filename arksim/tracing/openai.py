@@ -127,15 +127,21 @@ class ArksimTracingProcessor(_Base):  # type: ignore[misc]
 
         Safe to call multiple times and from multiple module copies
         (arksim's dynamic module loader creates fresh copies per agent).
-        Checks the SDK's own processor list to avoid duplicates.
+        Checks the SDK's processor list to avoid duplicates, with a
+        fallback to an instance flag if SDK internals change.
         """
         from agents.tracing import add_trace_processor, get_trace_provider
 
         with self._lock:
-            processors = get_trace_provider()._multi_processor._processors
-            if any(isinstance(p, ArksimTracingProcessor) for p in processors):
-                return
+            try:
+                processors = get_trace_provider()._multi_processor._processors
+                if any(isinstance(p, ArksimTracingProcessor) for p in processors):
+                    return
+            except AttributeError:
+                if self._registered:
+                    return
             add_trace_processor(self)
+            self._registered = True
 
     def on_trace_start(self, _trace: Trace) -> None:
         pass
