@@ -646,3 +646,37 @@ async def test_signal_turn_complete_unblocks_wait(_unused_port: int) -> None:
         elapsed = asyncio.get_event_loop().time() - t0
         assert result == []
         assert elapsed < 0.5  # must not wait full 5s timeout
+
+
+@pytest.mark.asyncio
+async def test_start_without_http(_unused_port: int) -> None:
+    """start(start_http=False) skips the TCP listener but direct injection works."""
+    from arksim.simulation_engine.tool_types import ToolCall
+
+    receiver = TraceReceiver(port=_unused_port, wait_timeout=2.0)
+    await receiver.start(start_http=False)
+
+    try:
+        # No server should be running
+        assert receiver._server is None
+
+        # Direct injection still works
+        tc = ToolCall(id="tc-1", name="tool", arguments={"k": "v"})
+        receiver.submit_tool_calls("conv-1", 0, [tc])
+        receiver.signal_turn_complete("conv-1", 0)
+
+        result = await receiver.wait_for_traces("conv-1", 0)
+        assert len(result) == 1
+        assert result[0].name == "tool"
+
+        # HTTP connection should be refused
+        try:
+            _reader, writer = await asyncio.open_connection("127.0.0.1", _unused_port)
+            writer.close()
+            await writer.wait_closed()
+            # If we got here, something is listening (unexpected)
+            raise AssertionError("HTTP connection should have been refused")
+        except (ConnectionRefusedError, OSError):
+            pass  # expected: no server listening
+    finally:
+        await receiver.stop()

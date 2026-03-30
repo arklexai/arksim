@@ -101,11 +101,15 @@ Just enable the trace receiver in your config and run normally. See `examples/cu
 ```python
 from agents.tracing import add_trace_processor
 from arksim.tracing.openai import ArksimTracingProcessor
+from arksim.tracing.receiver import TraceReceiver
 
-add_trace_processor(ArksimTracingProcessor())
+processor = ArksimTracingProcessor()
+add_trace_processor(processor)
 
-async with processor.trace(conversation_id=chat_id, turn_id=turn_id, receiver=receiver):
-    result = await Runner.run(agent, input=input_list)
+async with TraceReceiver(port=4318) as receiver:
+    async with processor.trace(conversation_id="conv-1", turn_id=0, receiver=receiver):
+        result = await Runner.run(agent, input=input_list)
+    tool_calls = await receiver.wait_for_traces("conv-1", 0)
 ```
 
 Requires `pip install openai-agents`.
