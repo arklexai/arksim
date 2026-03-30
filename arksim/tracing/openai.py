@@ -5,21 +5,20 @@ Provides ``ArksimTracingProcessor``, a ``TracingProcessor`` implementation
 that captures tool calls from the OpenAI Agents SDK and injects them into
 arksim's trace receiver.
 
-When used with arksim's simulator, routing context is set automatically
-via ``contextvars``. Register the processor once and run your agent
-normally::
+When used with ``arksim simulate``, the simulator registers the processor
+and sets routing context via ``contextvars`` automatically. The agent
+needs no tracing code at all.
 
-    from arksim.tracing import ArksimTracingProcessor
+For standalone use (outside arksim's simulator), register with the SDK
+directly and use ``.trace()`` for routing context::
 
-    processor = ArksimTracingProcessor()
-    processor.ensure_registered()
-
-For standalone use (outside arksim's simulator), use the ``.trace()``
-context manager to provide routing context explicitly::
+    from agents.tracing import add_trace_processor
+    from arksim.tracing.openai import ArksimTracingProcessor
 
     processor = ArksimTracingProcessor()
+    add_trace_processor(processor)
 
-    async with processor.trace(conversation_id=chat_id, turn_id=turn_id, receiver=receiver):
+    async with processor.trace(conversation_id=cid, turn_id=tid, receiver=recv):
         result = await Runner.run(agent, input=input_list)
 
 Requires: ``pip install openai-agents``
