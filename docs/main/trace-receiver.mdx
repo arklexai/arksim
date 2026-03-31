@@ -22,7 +22,7 @@ Add a `trace_receiver` block to your simulation config:
 trace_receiver:
   enabled: true
   host: 127.0.0.1   # bind address
-  port: 4318         # IANA-assigned OTLP/HTTP standard port
+  port: 4318         # only used for cross-process HTTP export
   wait_timeout: 5    # seconds to wait for traces after each agent response
 ```
 
@@ -127,7 +127,7 @@ These keys are always present regardless of whether the trace receiver is enable
 
 ### Using raw OTel spans (any framework)
 
-For agents not using the OpenAI Agents SDK, create OTel spans with routing attributes. The `conversation_id` and `turn_id` values come from arksim's metadata dict (passed to your agent's `execute()` via `kwargs["metadata"]`):
+For agents not using the OpenAI Agents SDK, create OTel spans with routing attributes. For same-process agents, `conversation_id` and `turn_id` come from arksim's metadata dict (`kwargs["metadata"]`). For cross-process agents, you must coordinate these values with the simulator out-of-band (e.g. via HTTP headers or a shared queue):
 
 ```python
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
@@ -135,8 +135,8 @@ from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 
-conversation_id = "your-conversation-id"  # from metadata["chat_id"]
-turn_id = 0                               # from metadata["turn_id"]
+conversation_id = "your-conversation-id"  # same-process: metadata["chat_id"]
+turn_id = 0                               # same-process: metadata["turn_id"]
 
 provider = TracerProvider(
     resource=Resource.create({
@@ -195,7 +195,7 @@ num_workers: 1  # required for same-process tracing
 
 trace_receiver:
   enabled: true
-  port: 4318
+  port: 4318        # ignored for same-process; used for cross-process HTTP export
   wait_timeout: 5
 ```
 
