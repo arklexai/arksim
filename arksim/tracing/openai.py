@@ -5,15 +5,17 @@ Provides ``ArksimTracingProcessor``, a ``TracingProcessor`` implementation
 that captures tool calls from the OpenAI Agents SDK and injects them into
 arksim's trace receiver.
 
-When used with ``arksim simulate``, the simulator registers the processor
-and sets routing context via ``contextvars`` automatically. The agent
-needs no tracing code at all.
-
-For standalone use (outside arksim's simulator), register with the SDK
-directly and use ``.trace()`` for routing context::
+When used with ``arksim simulate``, the simulator sets routing context
+via ``contextvars`` automatically. The agent registers the processor once
+at module load::
 
     from agents.tracing import add_trace_processor
     from arksim.tracing.openai import ArksimTracingProcessor
+
+    add_trace_processor(ArksimTracingProcessor())
+
+For standalone use (outside arksim's simulator), register with the SDK
+directly and use ``.trace()`` for routing context::
 
     processor = ArksimTracingProcessor()
     add_trace_processor(processor)
@@ -78,7 +80,6 @@ class ArksimTracingProcessor(_Base):  # type: ignore[misc]
                 "ArksimTracingProcessor requires the OpenAI Agents SDK. "
                 "Install with: pip install openai-agents"
             )
-        self._registered = False
         self._lock = threading.Lock()
         # Explicit context from .trace() (for standalone use outside simulator)
         self._trace_contexts: dict[str, tuple[str, int, TraceReceiver | None]] = {}
@@ -107,8 +108,6 @@ class ArksimTracingProcessor(_Base):  # type: ignore[misc]
         """
         from agents.tracing import trace as sdk_trace
 
-        self.ensure_registered()
-
         with sdk_trace(workflow_name="agent_turn", group_id=conversation_id) as t:
             with self._lock:
                 self._trace_contexts[t.trace_id] = (
@@ -120,27 +119,6 @@ class ArksimTracingProcessor(_Base):  # type: ignore[misc]
 
         if receiver is not None:
             receiver.signal_turn_complete(conversation_id, turn_id)
-
-    def ensure_registered(self) -> None:
-        """Register this processor with the SDK if not already registered.
-
-        Safe to call multiple times and from multiple module copies
-        (arksim's dynamic module loader creates fresh copies per agent).
-        Checks the SDK's processor list to avoid duplicates, with a
-        fallback to an instance flag if SDK internals change.
-        """
-        from agents.tracing import add_trace_processor, get_trace_provider
-
-        with self._lock:
-            try:
-                processors = get_trace_provider()._multi_processor._processors
-                if any(isinstance(p, ArksimTracingProcessor) for p in processors):
-                    return
-            except AttributeError:
-                if self._registered:
-                    return
-            add_trace_processor(self)
-            self._registered = True
 
     def on_trace_start(self, _trace: Trace) -> None:
         pass

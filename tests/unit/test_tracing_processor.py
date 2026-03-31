@@ -288,29 +288,39 @@ class TestContextLifecycle:
 
 
 class TestTraceContextManager:
-    """Test .trace() context manager (standalone use path)."""
+    """Test .trace() context manager (standalone use path).
+
+    The processor must be registered with the SDK for on_trace_end to
+    fire (which cleans up _trace_contexts). These tests register once
+    via add_trace_processor, matching the standalone usage pattern.
+    """
+
+    @pytest.fixture(autouse=True)
+    def _register_processor(self) -> None:
+        """Register a processor with the SDK for the test session."""
+        from agents.tracing import add_trace_processor
+
+        self.processor = ArksimTracingProcessor()
+        add_trace_processor(self.processor)
 
     @pytest.mark.asyncio
     async def test_trace_registers_and_cleans_up_context(self) -> None:
         """Context is registered on entry and removed on exit."""
-        processor = ArksimTracingProcessor()
+        async with self.processor.trace("conv-1", turn_id=0):
+            assert len(self.processor._trace_contexts) == 1
 
-        async with processor.trace("conv-1", turn_id=0):
-            assert len(processor._trace_contexts) == 1
-
-        assert len(processor._trace_contexts) == 0
+        assert len(self.processor._trace_contexts) == 0
 
     @pytest.mark.asyncio
     async def test_trace_with_receiver(self) -> None:
         """Receiver passed to .trace() is used for tool call submission."""
         receiver = MagicMock()
         receiver.signal_turn_complete = MagicMock()
-        processor = ArksimTracingProcessor()
 
-        async with processor.trace("conv-1", turn_id=0, receiver=receiver):
-            trace_id = list(processor._trace_contexts.keys())[0]
+        async with self.processor.trace("conv-1", turn_id=0, receiver=receiver):
+            trace_id = list(self.processor._trace_contexts.keys())[0]
             span = _make_function_span(trace_id=trace_id)
-            processor.on_span_end(span)
+            self.processor.on_span_end(span)
 
         receiver.submit_tool_calls.assert_called_once()
         receiver.signal_turn_complete.assert_called_once_with("conv-1", 0)
@@ -318,36 +328,23 @@ class TestTraceContextManager:
     @pytest.mark.asyncio
     async def test_trace_without_receiver_does_not_crash(self) -> None:
         """No crash when no receiver is provided."""
-        processor = ArksimTracingProcessor()
-
-        async with processor.trace("conv-1", turn_id=0):
-            trace_id = list(processor._trace_contexts.keys())[0]
+        async with self.processor.trace("conv-1", turn_id=0):
+            trace_id = list(self.processor._trace_contexts.keys())[0]
             span = _make_function_span(trace_id=trace_id)
-            processor.on_span_end(span)
+            self.processor.on_span_end(span)
 
     @pytest.mark.asyncio
-    async def test_add_trace_processor_called_once(self) -> None:
-        """add_trace_processor is invoked only on the first .trace() call."""
-        from unittest.mock import patch
+    async def test_trace_multiple_turns_isolated(self) -> None:
+        """Multiple .trace() calls create isolated contexts per turn."""
+        receiver = MagicMock()
+        receiver.signal_turn_complete = MagicMock()
 
-        processor = ArksimTracingProcessor()
+        async with self.processor.trace("conv-1", turn_id=0, receiver=receiver):
+            assert len(self.processor._trace_contexts) == 1
+        assert len(self.processor._trace_contexts) == 0
 
-        # Mock the SDK so ensure_registered() sees an empty processor list
-        # on first call, then sees ArksimTracingProcessor on second call.
-        mock_provider = MagicMock()
-        mock_provider._multi_processor._processors = []
+        async with self.processor.trace("conv-1", turn_id=1, receiver=receiver):
+            assert len(self.processor._trace_contexts) == 1
+        assert len(self.processor._trace_contexts) == 0
 
-        with (
-            patch("agents.tracing.add_trace_processor") as mock_add,
-            patch("agents.tracing.get_trace_provider", return_value=mock_provider),
-        ):
-            # First .trace(): empty list, should register
-            async with processor.trace("conv-1", turn_id=0):
-                pass
-            # Simulate SDK having registered the processor
-            mock_provider._multi_processor._processors = [processor]
-            # Second .trace(): already in list, should skip
-            async with processor.trace("conv-2", turn_id=1):
-                pass
-
-        mock_add.assert_called_once()
+        assert receiver.signal_turn_complete.call_count == 2
