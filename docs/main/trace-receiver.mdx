@@ -90,7 +90,10 @@ For agents built with the OpenAI Agents SDK, arksim ships a ready-to-use `Tracin
 ```python
 class MyAgent(BaseAgent):
     async def execute(self, user_query, **kwargs):
-        result = await Runner.run(self._agent, input=input_list)
+        result = await Runner.run(
+            self._agent,
+            input=[{"role": "user", "content": user_query}],
+        )
         return result.final_output
 ```
 
