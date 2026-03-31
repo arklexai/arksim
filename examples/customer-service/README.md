@@ -53,16 +53,18 @@ arksim simulate-evaluate config_custom.yaml
 python run_pipeline.py
 ```
 
-### Traced agent (TracingProcessor)
+### Traced agent (automatic tool call capture)
 
-The example includes a traced agent variant (`traced_agent.py`) that captures tool calls via the OpenAI Agents SDK's `TracingProcessor` interface instead of returning them in `AgentResponse`. This follows the same integration pattern as [Braintrust](https://www.braintrust.dev/docs/integrations/agent-frameworks/openai-agents-sdk) and [OpenInference](https://langwatch.ai/docs/integration/python/integrations/open-ai-agents).
+The example includes a traced agent variant (`traced_agent.py`) that captures tool calls automatically instead of returning them in `AgentResponse`. The agent has zero tracing code. The simulator registers `ArksimTracingProcessor` and passes routing context via `contextvars`.
+
+**How it differs from `custom_agent.py`:**
+- `custom_agent.py` returns `AgentResponse` with explicit tool calls (agent extracts them from `RunResult`)
+- `traced_agent.py` returns plain `str`. Tool calls are captured automatically by the SDK's `TracingProcessor` interface.
 
 ```
-Agent executes tools -> SDK fires TracingProcessor.on_span_end
--> ArksimTracingProcessor injects ToolCalls -> arksim captures -> evaluator scores
+Simulator sets contextvars -> agent.execute() runs normally
+-> SDK fires TracingProcessor.on_span_end -> arksim captures -> evaluator scores
 ```
-
-When running in the same process as arksim, tool calls are injected directly into the receiver's buffer via `submit_tool_calls()` (no HTTP, no serialization). For agents in separate processes, the HTTP export path via `OTLPSpanExporter` is also supported.
 
 ```bash
 pip install -r requirements-traced.txt

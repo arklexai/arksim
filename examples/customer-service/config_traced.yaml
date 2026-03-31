@@ -1,5 +1,6 @@
-# Traced agent variant: pushes tool calls via OTel spans.
-# See traced_agent.py for details and README.md for setup.
+# Traced agent variant: tool calls captured automatically by the simulator.
+# The agent returns plain text; arksim captures tool calls via TracingProcessor.
+# See traced_agent.py and README.md for details.
 
 agent_config:
   agent_type: custom
