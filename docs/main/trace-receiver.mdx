@@ -5,7 +5,7 @@ description: "Capture tool calls from OTel-instrumented agents without changing 
 
 ## Overview
 
-The trace receiver is a lightweight OTLP/HTTP server that captures tool call spans from agents that handle tools internally. Instead of requiring agents to return tool calls in `AgentResponse`, agents push OpenTelemetry traces to the receiver, and arksim attaches the captured tool calls to `Message.tool_calls` for evaluation.
+The trace receiver captures tool calls from agents that handle tools internally. Instead of requiring agents to return tool calls in `AgentResponse`, arksim captures them automatically via the SDK's tracing interface and attaches them to `Message.tool_calls` for evaluation. For same-process agents, this is zero-setup. For cross-process agents, an OTLP/HTTP endpoint accepts OTel span exports.
 
 This is useful when:
 - Your agent uses an SDK that handles tool calling internally (e.g. OpenAI Agents SDK, LangChain)
