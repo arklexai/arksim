@@ -71,8 +71,6 @@ pip install -r requirements-traced.txt
 arksim simulate-evaluate config_traced.yaml
 ```
 
-**Important:** Same-process tracing requires `num_workers: 1` because the OpenAI Agents SDK's global trace context does not reliably propagate across many concurrent async traces. Agents in separate processes can use any parallelism level.
-
 The trace receiver is configured in config_traced.yaml:
 
 ```yaml

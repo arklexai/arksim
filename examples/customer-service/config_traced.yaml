@@ -14,9 +14,6 @@ max_turns: 3
 output_file_path: ./results/simulation/simulation_traced.json
 simulated_user_prompt_template: null
 
-# Sequential execution for same-process tracing. The OpenAI Agents SDK's
-# global trace context does not reliably propagate across many concurrent
-# async traces. For agents in separate processes, use any num_workers.
 num_workers: 1
 
 trace_receiver:

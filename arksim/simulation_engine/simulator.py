@@ -453,22 +453,6 @@ async def run_simulation(
     if trace_cfg and trace_cfg.enabled:
         from arksim.tracing import TraceReceiver as _TraceReceiver
 
-        # Warn about same-process tracing with concurrent workers.
-        # The OpenAI Agents SDK's global trace context does not reliably
-        # propagate across concurrent async traces, which can route tool
-        # calls to the wrong conversation.
-        resolved_workers = resolve_num_workers(
-            settings.num_workers, len(scenarios.scenarios)
-        )
-        if agent_config.agent_type == AgentType.CUSTOM.value and resolved_workers > 1:
-            logger.warning(
-                "trace_receiver is enabled with num_workers=%d and a custom "
-                "(same-process) agent. Same-process tracing requires "
-                "num_workers: 1 to avoid tool calls routing to the wrong "
-                "conversation. Set num_workers: 1 in your config.",
-                resolved_workers,
-            )
-
         trace_receiver = _TraceReceiver(
             host=trace_cfg.host,
             port=trace_cfg.port,

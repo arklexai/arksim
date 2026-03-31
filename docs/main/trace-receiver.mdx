@@ -104,7 +104,7 @@ class MyAgent(BaseAgent):
 
 The module loader caches modules by file path, so the registration runs exactly once regardless of conversation count. See `examples/customer-service/traced_agent.py` for a complete example.
 
-**Standalone (outside `arksim simulate`):** Register the processor with the SDK directly and use `.trace()` for routing context:
+**Standalone (outside `arksim simulate`):** Register the processor and use `.trace()` for routing context. The `.trace()` context manager handles SDK trace context and routes tool calls to the receiver:
 
 ```python
 from agents.tracing import add_trace_processor
@@ -113,11 +113,11 @@ from arksim.tracing.receiver import TraceReceiver
 
 processor = ArksimTracingProcessor()
 add_trace_processor(processor)
+receiver = TraceReceiver(wait_timeout=5.0)
 
-async with TraceReceiver(port=4318) as receiver:
-    async with processor.trace(conversation_id="conv-1", turn_id=0, receiver=receiver):
-        result = await Runner.run(agent, input=input_list)
-    tool_calls = await receiver.wait_for_traces("conv-1", 0)
+async with processor.trace(conversation_id="conv-1", turn_id=0, receiver=receiver):
+    result = await Runner.run(agent, input=input_list)
+tool_calls = await receiver.wait_for_traces("conv-1", 0)
 ```
 
 Requires `pip install openai-agents`.
@@ -189,21 +189,12 @@ Only spans with a recognized tool name attribute or the `execute_tool ` span nam
 
 ## Same-Process Considerations
 
-When the traced agent and arksim run in the same process:
-
-<Warning>
-Use `num_workers: 1` in your config. The OpenAI Agents SDK's global trace context does not reliably propagate across many concurrent async traces. This limitation applies only to same-process tracing. Agents in separate processes can use any parallelism level.
-</Warning>
-
-The direct injection path (`submit_tool_calls`) avoids the HTTP deadlock that would otherwise occur when the OTel exporter and the trace receiver share an event loop. The simulator automatically passes routing context to the processor via `contextvars` when the trace receiver is enabled.
+When the traced agent and arksim run in the same process, tool calls are captured via direct injection (`submit_tool_calls`) rather than HTTP export. The simulator passes routing context to the processor via `contextvars`, which are async-safe and isolate concurrent conversations correctly. Multiple `num_workers` are supported.
 
 ```yaml
-# config_traced.yaml
-num_workers: 1  # required for same-process tracing
-
 trace_receiver:
   enabled: true
-  port: 4318        # ignored for same-process; used for cross-process HTTP export
+  port: 4318        # only used for cross-process HTTP export
   wait_timeout: 5
 ```
 
