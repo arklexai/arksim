@@ -14,6 +14,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * **tracing:** add OTLP/HTTP trace receiver with protobuf and JSON support (`arksim[otel]`)
 * **tracing:** add dual attribute convention support (OTel GenAI semconv and OpenInference)
 * **examples:** add Dify chatbot integration example
+* **evaluator:** focus file generation after evaluation for targeted reruns of failing scenarios
+* **evaluator:** scenario IDs shown in CLI error output alongside focus file paths
+* **report:** scenario IDs displayed in HTML report error cards
 
 ### Changed
 
