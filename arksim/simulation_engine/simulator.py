@@ -16,6 +16,12 @@ from arksim.scenario import (
     KnowledgeItem,
     Scenarios,
 )
+from arksim.telemetry.instrumentation import (
+    agent_execute_span,
+    conversation_span,
+    simulation_span,
+    turn_span,
+)
 from arksim.utils.concurrency import resolve_num_workers
 from arksim.utils.output import save_json_file_async
 
@@ -51,10 +57,14 @@ class Simulator:
         agent_config: AgentConfig,
         simulator_params: SimulationParams,
         llm: LLM,
+        model: str = "",
+        provider: str = "",
     ) -> None:
         self.agent_config = agent_config
         self.simulator_params = simulator_params
         self.llm = llm
+        self._model = model
+        self._provider = provider
         self.simulation: Simulation | None = None
 
     def _render_simulated_user_prompt(
@@ -134,78 +144,103 @@ class Simulator:
             conversation_id = await agent.get_chat_id()
             logger.info(f"Starting conversation {conversation_id} with goal: {goal}")
 
-            history: list[dict[str, Any]] = [
-                {"role": "system", "content": instructional_prompt}
-            ]
-            metadata = {
-                "chat_id": conversation_id,
-                "user_goal": goal,
-                "knowledge": knowledge,
-            }
-
-            turn_state: dict[str, Any] = {}
-            for turn in range(max_turns):
-                output, turn_state = await self._generate_simulated_user_output(
-                    history,
-                    is_multi_knowledge,
-                    knowledge_content,
-                    turn_state,
-                )
-
-                history.append({"role": "assistant", "content": output})
-                if on_turn_complete:
-                    on_turn_complete()
-
-                if STOP_SIGNAL in output:
-                    logger.info(
-                        f"Conversation {conversation_id} stopped "
-                        f"at turn {turn + 1} (STOP signal)"
-                    )
-                    break
-
-                result = await agent.execute(
-                    user_query=output,
-                    metadata=metadata,
-                )
-
-                # Normalize response
-                if isinstance(result, AgentResponse):
-                    answer = result.content
-                    turn_tool_calls = result.tool_calls
-                else:
-                    answer = result
-                    turn_tool_calls = None
-
-                history.append(
-                    {
-                        "role": "user",
-                        "content": answer,
-                        **(
-                            {"tool_calls": [tc.model_dump() for tc in turn_tool_calls]}
-                            if turn_tool_calls
-                            else {}
-                        ),
-                    }
-                )
-
-                if on_turn_display:
-                    on_turn_display(conversation_id, output, answer, turn + 1)
-
-            logger.info(
-                f"Conversation {conversation_id} completed "
-                f"with {len(history) - 1} messages"
-            )
-
-            return ConversationState(
+            async with conversation_span(
                 conversation_id=conversation_id,
                 scenario_id=scenario_id,
-                conversation_history=history,
-                simulated_user_prompt_template=simulated_user_prompt_template,
-                simulated_user_profile=profile,
-                user_goal=goal,
-                knowledge=knowledge_content,
-                agent_context=agent_context,
-            )
+                goal=goal,
+            ) as conv_span:
+                history: list[dict[str, Any]] = [
+                    {"role": "system", "content": instructional_prompt}
+                ]
+                metadata = {
+                    "chat_id": conversation_id,
+                    "user_goal": goal,
+                    "knowledge": knowledge,
+                }
+
+                turn_state: dict[str, Any] = {}
+                for turn in range(max_turns):
+                    async with turn_span(turn_id=turn) as t_span:
+                        output, turn_state = await self._generate_simulated_user_output(
+                            history,
+                            is_multi_knowledge,
+                            knowledge_content,
+                            turn_state,
+                        )
+
+                        history.append({"role": "assistant", "content": output})
+                        if on_turn_complete:
+                            on_turn_complete()
+
+                        if STOP_SIGNAL in output:
+                            t_span.set_attribute("arksim.turn.stop_signal", True)
+                            logger.info(
+                                f"Conversation {conversation_id} stopped "
+                                f"at turn {turn + 1} (STOP signal)"
+                            )
+                            break
+
+                        async with agent_execute_span(
+                            agent_name=self.agent_config.agent_name,
+                            agent_type=self.agent_config.agent_type,
+                            model=self._model,
+                            provider=self._provider,
+                        ):
+                            result = await agent.execute(
+                                user_query=output,
+                                metadata=metadata,
+                            )
+
+                        # Normalize response
+                        if isinstance(result, AgentResponse):
+                            answer = result.content
+                            turn_tool_calls = result.tool_calls
+                        else:
+                            answer = result
+                            turn_tool_calls = None
+
+                        t_span.set_attribute(
+                            "arksim.turn.tool_calls_count",
+                            len(turn_tool_calls) if turn_tool_calls else 0,
+                        )
+
+                        history.append(
+                            {
+                                "role": "user",
+                                "content": answer,
+                                **(
+                                    {
+                                        "tool_calls": [
+                                            tc.model_dump() for tc in turn_tool_calls
+                                        ]
+                                    }
+                                    if turn_tool_calls
+                                    else {}
+                                ),
+                            }
+                        )
+
+                        if on_turn_display:
+                            on_turn_display(conversation_id, output, answer, turn + 1)
+
+                num_turns = len([m for m in history if m.get("role") == "user"])
+                conv_span.set_attribute("arksim.conversation.num_turns", num_turns)
+
+                logger.info(
+                    f"Conversation {conversation_id} completed "
+                    f"with {len(history) - 1} messages"
+                )
+
+                return ConversationState(
+                    conversation_id=conversation_id,
+                    scenario_id=scenario_id,
+                    conversation_history=history,
+                    simulated_user_prompt_template=simulated_user_prompt_template,
+                    simulated_user_profile=profile,
+                    user_goal=goal,
+                    knowledge=knowledge_content,
+                    agent_context=agent_context,
+                )
         except Exception as e:
             logger.error(f"Error simulating conversation: {str(e)}")
             return None
@@ -263,6 +298,8 @@ class Simulator:
         scenarios: Scenarios,
         on_progress: Callable[[int, int], None] | None = None,
         verbose: bool = False,
+        model: str = "",
+        provider: str = "",
     ) -> Simulation:
         num_convos = self.simulator_params.num_convos_per_scenario * len(
             scenarios.scenarios
@@ -273,95 +310,107 @@ class Simulator:
         num_workers = resolve_num_workers(self.simulator_params.num_workers, num_convos)
         logger.info(f"Preparing {len(scenarios.scenarios)} scenarios for simulation")
 
-        pbar = tqdm(
-            total=estimated_total_turns,
-            desc="Simulating conversations",
-            disable=verbose,
-        )
+        async with simulation_span(
+            simulation_id="pending",
+            num_scenarios=len(scenarios.scenarios),
+            num_conversations=num_convos,
+            model=model,
+            provider=provider,
+        ) as sim_span:
+            pbar = tqdm(
+                total=estimated_total_turns,
+                desc="Simulating conversations",
+                disable=verbose,
+            )
 
-        def _verbose_turn_display(
-            convo_id: str, user_msg: str, agent_msg: str, turn: int
-        ) -> None:
-            logger.info(f"\n[{convo_id}] Turn {turn}")
-            logger.info(f"  Simulated User: {user_msg}")
-            logger.info(f"  Agent: {agent_msg}")
+            def _verbose_turn_display(
+                convo_id: str, user_msg: str, agent_msg: str, turn: int
+            ) -> None:
+                logger.info(f"\n[{convo_id}] Turn {turn}")
+                logger.info(f"  Simulated User: {user_msg}")
+                logger.info(f"  Agent: {agent_msg}")
 
-        on_turn_display = _verbose_turn_display if verbose else None
+            on_turn_display = _verbose_turn_display if verbose else None
 
-        def on_turn_complete() -> None:
-            pbar.update(1)
-            if on_progress:
-                on_progress(pbar.n, estimated_total_turns)
+            def on_turn_complete() -> None:
+                pbar.update(1)
+                if on_progress:
+                    on_progress(pbar.n, estimated_total_turns)
 
-        running_tasks = set()
-        results: list[ConversationState] = []
+            running_tasks = set()
+            results: list[ConversationState] = []
 
-        for scenario in scenarios.scenarios:
-            for _ in range(self.simulator_params.num_convos_per_scenario):
-                if len(running_tasks) >= num_workers:
-                    done, running_tasks = await asyncio.wait(
-                        running_tasks, return_when=asyncio.FIRST_COMPLETED
+            for scenario in scenarios.scenarios:
+                for _ in range(self.simulator_params.num_convos_per_scenario):
+                    if len(running_tasks) >= num_workers:
+                        done, running_tasks = await asyncio.wait(
+                            running_tasks, return_when=asyncio.FIRST_COMPLETED
+                        )
+                        for task in done:
+                            try:
+                                result = task.result()
+                                if result is not None:
+                                    results.append(result)
+                            except Exception as e:
+                                logger.error(f"Error processing conversation: {str(e)}")
+                                logger.error(traceback.format_exc())
+
+                    coro = self._run_single_conversation(
+                        scenario.user_profile,
+                        scenario.goal,
+                        scenario.knowledge,
+                        scenario.agent_context,
+                        max_turns,
+                        scenario_id=scenario.scenario_id,
+                        on_turn_complete=on_turn_complete,
+                        on_turn_display=on_turn_display,
                     )
-                    for task in done:
-                        try:
-                            result = task.result()
-                            if result is not None:
-                                results.append(result)
-                        except Exception as e:
-                            logger.error(f"Error processing conversation: {str(e)}")
-                            logger.error(traceback.format_exc())
+                    running_tasks.add(asyncio.create_task(coro))
 
-                coro = self._run_single_conversation(
-                    scenario.user_profile,
-                    scenario.goal,
-                    scenario.knowledge,
-                    scenario.agent_context,
-                    max_turns,
-                    scenario_id=scenario.scenario_id,
-                    on_turn_complete=on_turn_complete,
-                    on_turn_display=on_turn_display,
-                )
-                running_tasks.add(asyncio.create_task(coro))
+            if running_tasks:
+                done, _ = await asyncio.wait(running_tasks)
+                for task in done:
+                    try:
+                        result = task.result()
+                        if result is not None:
+                            results.append(result)
+                    except Exception as e:
+                        logger.error(f"Error processing conversation: {str(e)}")
+                        logger.error(traceback.format_exc())
 
-        if running_tasks:
-            done, _ = await asyncio.wait(running_tasks)
-            for task in done:
-                try:
-                    result = task.result()
-                    if result is not None:
-                        results.append(result)
-                except Exception as e:
-                    logger.error(f"Error processing conversation: {str(e)}")
-                    logger.error(traceback.format_exc())
+            if pbar.n < pbar.total:
+                pbar.total = pbar.n
+                pbar.refresh()
+                if on_progress:
+                    on_progress(pbar.n, pbar.n)
+            pbar.close()
 
-        if pbar.n < pbar.total:
-            pbar.total = pbar.n
-            pbar.refresh()
-            if on_progress:
-                on_progress(pbar.n, pbar.n)
-        pbar.close()
+            # Convert internal states to output conversations
+            conversation_outputs = [
+                self._to_conversation_output(state) for state in results
+            ]
+            conversation_outputs.sort(key=lambda c: c.conversation_id)
 
-        # Convert internal states to output conversations
-        conversation_outputs = [
-            self._to_conversation_output(state) for state in results
-        ]
-        conversation_outputs.sort(key=lambda c: c.conversation_id)
+            self.simulation = Simulation(
+                schema_version=SIMULATION_SCHEMA_VERSION,
+                simulator_version=SIMULATOR_VERSION,
+                conversations=conversation_outputs,
+            )
 
-        self.simulation = Simulation(
-            schema_version=SIMULATION_SCHEMA_VERSION,
-            simulator_version=SIMULATOR_VERSION,
-            conversations=conversation_outputs,
-        )
+            # Update the span with the actual simulation ID
+            sim_span.set_attribute(
+                "arksim.simulation.id", self.simulation.simulation_id
+            )
 
-        total_turns = sum(
-            len([m for m in c.conversation_history if m.role == "assistant"])
-            for c in conversation_outputs
-        )
-        logger.info(
-            f"Simulation complete: {len(conversation_outputs)} conversations, "
-            f"{total_turns} total turns"
-        )
-        return self.simulation
+            total_turns = sum(
+                len([m for m in c.conversation_history if m.role == "assistant"])
+                for c in conversation_outputs
+            )
+            logger.info(
+                f"Simulation complete: {len(conversation_outputs)} conversations, "
+                f"{total_turns} total turns"
+            )
+            return self.simulation
 
     async def save(self) -> None:
         if self.simulation is None:
@@ -406,20 +455,39 @@ async def run_simulation(
         simulated_user_prompt_template=settings.simulated_user_prompt_template,
     )
 
-    simulator = Simulator(
-        agent_config=agent_config,
-        simulator_params=simulation_params,
-        llm=llm,
-    )
-    simulation_output = await simulator.simulate(
-        scenarios, on_progress=on_progress, verbose=verbose
-    )
+    # Set up telemetry if configured (lazy import to avoid hard dep)
+    tel_cfg = settings.telemetry
+    if tel_cfg and tel_cfg.enabled:
+        from arksim.telemetry import setup_telemetry
 
-    if not simulation_output.conversations:
-        raise RuntimeError(
-            "Simulation failed: no conversations were completed successfully. "
-            "Check the errors above for details."
+        setup_telemetry(tel_cfg)
+
+    try:
+        simulator = Simulator(
+            agent_config=agent_config,
+            simulator_params=simulation_params,
+            llm=llm,
+            model=settings.model,
+            provider=settings.provider or "",
+        )
+        simulation_output = await simulator.simulate(
+            scenarios,
+            on_progress=on_progress,
+            verbose=verbose,
+            model=settings.model,
+            provider=settings.provider or "",
         )
 
-    await simulator.save()
-    return simulation_output
+        if not simulation_output.conversations:
+            raise RuntimeError(
+                "Simulation failed: no conversations were completed successfully. "
+                "Check the errors above for details."
+            )
+
+        await simulator.save()
+        return simulation_output
+    finally:
+        if tel_cfg and tel_cfg.enabled:
+            from arksim.telemetry import shutdown_telemetry
+
+            shutdown_telemetry()

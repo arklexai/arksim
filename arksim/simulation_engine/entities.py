@@ -18,6 +18,7 @@ from arksim.config.core.agent import AgentConfig
 from arksim.config.utils import resolve_model_paths
 from arksim.constants import DEFAULT_MODEL, DEFAULT_PROVIDER
 from arksim.simulation_engine.tool_types import ToolCall
+from arksim.telemetry.config import TelemetryConfig
 from arksim.utils.concurrency import validate_num_workers
 
 
@@ -58,6 +59,10 @@ class SimulationInput(BaseModel):
     simulated_user_prompt_template: str | None = Field(
         default=None,
         description="Jinja2 template for the simulated user system prompt",
+    )
+    telemetry: TelemetryConfig | None = Field(
+        default=None,
+        description="OTel telemetry export configuration",
     )
 
     @model_validator(mode="after")
