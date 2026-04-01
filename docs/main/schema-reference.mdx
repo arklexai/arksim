@@ -180,6 +180,22 @@ Written by `arksim evaluate` or the evaluation step of `arksim simulate-evaluate
 
 ---
 
+## Focus files (`focus/error_N.json`, `focus/all_failures.json`)
+
+Written to `{output_dir}/focus/` when unique errors are detected and a scenario file is provided. Each file uses the standard [Scenario input](#scenario-input-scenariosjson) schema.
+
+<ResponseField name="schema_version" type="string" required>
+  Copied from the original scenario file (e.g. `"v1"`).
+</ResponseField>
+
+<ResponseField name="scenarios" type="list[Scenario]" required>
+  Filtered subset of the original scenarios. For `error_N.json`, only scenarios that triggered error group N. For `all_failures.json`, the union of all failing scenarios (deduplicated).
+</ResponseField>
+
+Files are numbered by severity (1 = highest) then by occurrence count. See [Focus Files](./evaluate-conversation#focus-files) for usage.
+
+---
+
 ## Run configuration (`config.yaml`)
 
 The same YAML file can be used for `arksim simulate`, `arksim evaluate`, and `arksim simulate-evaluate`. For `simulate-evaluate`, simulation and evaluation settings are merged from a single config.

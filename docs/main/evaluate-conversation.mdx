@@ -57,7 +57,7 @@ Beyond numeric scores, evaluation detects the type of failure in each underperfo
 | `false information`                | Directly contradicts what is stated in the knowledge                      |
 | `no failure`                       | No failure detected                                      |
 
-Across all conversations, duplicate failures are deduplicated into a **unique errors** list with occurrence counts.
+Across all conversations, duplicate failures are deduplicated into a **unique errors** list with occurrence counts. When errors are found and a scenario file is available, the evaluator automatically generates **focus files** for targeted reruns (see [Focus Files](#focus-files) below).
 
 ---
 
@@ -325,6 +325,8 @@ for convo in evaluator_output.conversations:
 | ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `evaluation.json`   | Full evaluation output: conversations with scores, failure labels, and unique errors. See [Evaluation output](./schema-reference#evaluation-output-evaluationjson) for the schema. |
 | `final_report.html` | High-level summary with metric averages, overall assessment, and top unique errors, rendered for easier browsing and sharing.                                                      |
+| `focus/error_N.json` | Filtered scenario file for error group N (sorted by severity). Only appears when unique errors are detected and a scenario file is provided. See [Focus Files](#focus-files).     |
+| `focus/all_failures.json` | Union of all failing scenarios across every error group. Use this to rerun everything that failed in one pass.                                                                |
 
 ---
 
@@ -353,3 +355,53 @@ Results go to `evaluation.json`: **conversations** (one per run) and **unique_er
 
   Use **`occurrences`** to go from an error to the exact turn; then check **`turn_scores`** and the transcript.
 </Expandable>
+
+---
+
+## Focus Files
+
+When evaluation detects unique errors and a scenario file is provided, the evaluator generates **focus files** in a `focus/` subdirectory. These are filtered scenario files that let you rerun only the failing subset without any manual config.
+
+### How it works
+
+Each unique error group is mapped back to the scenarios that triggered it. The evaluator writes one JSON file per error group plus a combined file with all failing scenarios:
+
+```
+evaluation/
+  evaluation.json
+  final_report.html
+  focus/
+    error_1.json          # scenarios for the highest-severity error
+    error_2.json          # scenarios for the second error
+    all_failures.json     # union of all failing scenarios
+```
+
+Error files are numbered by severity (critical first, then high, medium, low) and by occurrence count within the same severity level.
+
+Each focus file uses the standard [Scenarios schema](./schema-reference#scenario-input-scenariosjson), so it works directly with `--scenario_file_path`:
+
+```bash
+# Rerun only the scenarios that triggered error group 1
+arksim simulate-evaluate config.yaml \
+  --scenario_file_path ./evaluation/focus/error_1.json
+
+# Or rerun all failing scenarios at once
+arksim simulate-evaluate config.yaml \
+  --scenario_file_path ./evaluation/focus/all_failures.json
+```
+
+<Tip>
+  Pass a separate `--output_dir` for each rerun so results do not overwrite the original evaluation. Each rerun produces its own evaluation, report, and focus files (or no focus files if everything passes).
+</Tip>
+
+### Iterative fix workflow
+
+Focus files support an iterative fix-and-verify loop:
+
+1. Run `arksim simulate-evaluate config.yaml` and review the errors
+2. Fix the highest-severity bug in your agent
+3. Rerun with the focus file: `--scenario_file_path ./evaluation/focus/error_1.json --output_dir ./results/rerun_1`
+4. If the error is resolved, move to the next error group
+5. When all targeted reruns pass, do a full battle test with the original scenario file
+
+The focus set shrinks as you fix bugs. Scenarios that pass on rerun will not appear in the new run's focus files.
