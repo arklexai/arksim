@@ -22,6 +22,7 @@ from .entities import (
     EvaluationParams,
 )
 from .evaluator import Evaluator, run_evaluation
+from .focus import FocusFileInfo, generate_focus_files
 from .thresholds import (
     check_numeric_thresholds,
     check_qualitative_failure_labels,
@@ -37,11 +38,13 @@ __all__ = [
     "QualResult",
     "Evaluator",
     "EvaluationParams",
+    "FocusFileInfo",
     "ScoreInput",
     "QuantResult",
     "check_numeric_thresholds",
     "check_qualitative_failure_labels",
     "format_chat_history",
+    "generate_focus_files",
     "run_evaluation",
     "TrajectoryResult",
     "match_trajectory",

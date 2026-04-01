@@ -35,6 +35,7 @@ from .evaluate import (
     evaluate_goal_completion,
     evaluate_turn,
 )
+from .focus import generate_focus_files
 from .trajectory_matching import match_trajectory
 from .utils.constants import (
     SCORE_NOT_COMPUTED,
@@ -761,8 +762,28 @@ def run_evaluation(
         scenarios=scenarios,
     )
     evaluator_output = evaluator.evaluate(simulation, on_progress=on_progress)
-    evaluator.display_evaluation_summary()
     evaluator.save_results()
+
+    # Generate focus files for rerunning failed scenarios
+    focus_infos = []
+    if evaluator_output.unique_errors and scenarios:
+        conv_to_scenario = {
+            c.conversation_id: c.scenario_id for c in simulation.conversations
+        }
+        focus_infos = generate_focus_files(
+            unique_errors=evaluator_output.unique_errors,
+            conv_to_scenario=conv_to_scenario,
+            scenarios=scenarios,
+            output_dir=settings.output_dir,
+        )
+        if focus_infos:
+            logger.info(
+                "Generated %d focus file(s) in %s",
+                len(focus_infos),
+                os.path.join(settings.output_dir, "focus/"),
+            )
+
+    evaluator.display_evaluation_summary()
 
     if settings.generate_html_report:
         from arksim.utils.html_report.generate_html_report import (
