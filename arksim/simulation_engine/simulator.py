@@ -12,6 +12,11 @@ from tqdm import tqdm
 
 from arksim.config import AgentConfig
 from arksim.llms.chat import LLM
+from arksim.llms.chat.base.usage import (
+    UsageTracker,
+    reset_current_tracker,
+    set_current_tracker,
+)
 from arksim.scenario import (
     KnowledgeItem,
     Scenarios,
@@ -29,6 +34,7 @@ from .entities import (
     Simulation,
     SimulationInput,
     SimulationParams,
+    TokenUsage,
 )
 from .tool_types import AgentResponse, ToolCall
 from .utils.prompts import DEFAULT_SIMULATED_USER_PROMPT_TEMPLATE
@@ -411,15 +417,28 @@ async def run_simulation(
         simulator_params=simulation_params,
         llm=llm,
     )
-    simulation_output = await simulator.simulate(
-        scenarios, on_progress=on_progress, verbose=verbose
-    )
+
+    tracker = UsageTracker()
+    token = set_current_tracker(tracker)
+    try:
+        simulation_output = await simulator.simulate(
+            scenarios, on_progress=on_progress, verbose=verbose
+        )
+    finally:
+        reset_current_tracker(token)
 
     if not simulation_output.conversations:
         raise RuntimeError(
             "Simulation failed: no conversations were completed successfully. "
             "Check the errors above for details."
         )
+
+    simulation_output.usage = TokenUsage(
+        total_input_tokens=tracker.total_input_tokens,
+        total_output_tokens=tracker.total_output_tokens,
+        by_model=tracker.summary(),
+    )
+    tracker.log_summary()
 
     await simulator.save()
     return simulation_output

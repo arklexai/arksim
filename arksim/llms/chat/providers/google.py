@@ -9,6 +9,7 @@ from pydantic import BaseModel
 
 from arksim.llms.chat.base.base_llm import BaseLLM
 from arksim.llms.chat.base.types import LLMMessage
+from arksim.llms.chat.base.usage import track_usage
 from arksim.llms.chat.utils import retry
 
 T = TypeVar("T", bound=BaseModel)
@@ -82,6 +83,16 @@ class GoogleLLM(BaseLLM):
 
         return params
 
+    def _track_response_usage(self, response: object) -> None:
+        usage = getattr(response, "usage_metadata", None)
+        if usage:
+            track_usage(
+                self.model,
+                "google",
+                getattr(usage, "prompt_token_count", 0) or 0,
+                getattr(usage, "candidates_token_count", 0) or 0,
+            )
+
     @overload
     def call(
         self, messages: str | list[LLMMessage], schema: type[T], **kwargs: object
@@ -101,6 +112,7 @@ class GoogleLLM(BaseLLM):
     ) -> T | str:
         params = self._prepare_params(messages, schema=schema)
         response = self.client.models.generate_content(**params)
+        self._track_response_usage(response)
         if schema:
             return schema.model_validate_json(response.text)
         return response.text
@@ -124,6 +136,7 @@ class GoogleLLM(BaseLLM):
     ) -> T | str:
         params = self._prepare_params(messages, schema=schema)
         response = await self.client.aio.models.generate_content(**params)
+        self._track_response_usage(response)
         if schema:
             return schema.model_validate_json(response.text)
         return response.text

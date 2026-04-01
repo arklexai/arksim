@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import contextvars
 import inspect
 import logging
 import os
@@ -13,6 +14,11 @@ from datetime import datetime, timezone
 from tqdm import tqdm
 
 from arksim.llms.chat import LLM
+from arksim.llms.chat.base.usage import (
+    UsageTracker,
+    reset_current_tracker,
+    set_current_tracker,
+)
 from arksim.scenario import Scenarios
 from arksim.scenario.entities import AssertionType, ExpectedToolCall
 from arksim.simulation_engine import Conversation, Simulation
@@ -26,6 +32,7 @@ from .entities import (
     Evaluation,
     EvaluationInput,
     EvaluationParams,
+    TokenUsage,
     TurnEvaluation,
     TurnItem,
     UniqueError,
@@ -276,6 +283,7 @@ class Evaluator:
                 inner_workers = 0 if self.params.num_workers == "auto" else num_workers
                 turn_futures = {
                     executor.submit(
+                        contextvars.copy_context().run,
                         evaluate_turn,
                         self.llm,
                         turn_item,
@@ -318,6 +326,7 @@ class Evaluator:
         with ThreadPoolExecutor(max_workers=gc_max_workers) as executor:
             gc_futures = {
                 executor.submit(
+                    contextvars.copy_context().run,
                     evaluate_goal_completion,
                     self.llm,
                     convo_item,
@@ -760,7 +769,21 @@ def run_evaluation(
         llm=llm,
         scenarios=scenarios,
     )
-    evaluator_output = evaluator.evaluate(simulation, on_progress=on_progress)
+
+    tracker = UsageTracker()
+    token = set_current_tracker(tracker)
+    try:
+        evaluator_output = evaluator.evaluate(simulation, on_progress=on_progress)
+    finally:
+        reset_current_tracker(token)
+
+    evaluator_output.usage = TokenUsage(
+        total_input_tokens=tracker.total_input_tokens,
+        total_output_tokens=tracker.total_output_tokens,
+        by_model=tracker.summary(),
+    )
+    tracker.log_summary()
+
     evaluator.display_evaluation_summary()
     evaluator.save_results()
 

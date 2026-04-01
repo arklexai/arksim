@@ -8,6 +8,7 @@ from pydantic import BaseModel
 
 from arksim.llms.chat.base.base_llm import BaseLLM
 from arksim.llms.chat.base.types import LLMMessage
+from arksim.llms.chat.base.usage import track_usage
 from arksim.llms.chat.utils import retry
 
 T = TypeVar("T", bound=BaseModel)
@@ -72,6 +73,16 @@ class AnthropicLLM(BaseLLM):
             params["output_format"] = schema
         return params
 
+    def _track_response_usage(self, response: object) -> None:
+        usage = getattr(response, "usage", None)
+        if usage:
+            track_usage(
+                self.model,
+                "anthropic",
+                usage.input_tokens,
+                usage.output_tokens,
+            )
+
     @overload
     def call(
         self, messages: str | list[LLMMessage], schema: type[T], **kwargs: object
@@ -93,9 +104,11 @@ class AnthropicLLM(BaseLLM):
         # For structured output, return the parsed output
         if schema:
             response = self.client.messages.parse(**params)
+            self._track_response_usage(response)
             return response.parsed_output
         # For text output, return the text (default)
         response = self.client.messages.create(**params)
+        self._track_response_usage(response)
         return response.content[0].text
 
     @overload
@@ -119,7 +132,9 @@ class AnthropicLLM(BaseLLM):
         # For structured output, return the parsed output
         if schema:
             response = await self.async_client.messages.parse(**params)
+            self._track_response_usage(response)
             return response.parsed_output
         # For text output, return the text (default)
         response = await self.async_client.messages.create(**params)
+        self._track_response_usage(response)
         return response.content[0].text

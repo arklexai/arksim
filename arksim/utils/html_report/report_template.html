@@ -1632,6 +1632,15 @@
             </div>
         </div>
 
+        <!-- Token Usage Section -->
+        <div id="tokenUsageSection" style="display:none; margin-top:40px;">
+            <div class="section-title">
+                <span class="material-icons" style="font-size:20px;">data_usage</span>
+                Token Usage
+            </div>
+            <div id="tokenUsageBody"></div>
+        </div>
+
         <!-- Evaluation Prompts Appendix -->
         <div id="promptsAppendixSection" style="display:none; margin-top:40px;">
             <div class="section-title collapsible-header" onclick="togglePromptsAppendix()">
@@ -2552,6 +2561,63 @@
             arrow.classList.toggle('collapsed');
         }
 
+        // Render token usage section
+        function renderTokenUsage() {
+            const data = EMBEDDED_FINAL_REPORT;
+            const simUsage = data.simulation_token_usage;
+            const evalUsage = data.evaluation_token_usage;
+            if (!simUsage && !evalUsage) return;
+
+            const section = document.getElementById('tokenUsageSection');
+            const body = document.getElementById('tokenUsageBody');
+            section.style.display = '';
+
+            function fmtRow(label, usage) {
+                const total = usage.total_input_tokens + usage.total_output_tokens;
+                return `<tr>
+                    <td style="padding:8px 12px">${label}</td>
+                    <td style="padding:8px 12px; text-align:right">${usage.total_input_tokens.toLocaleString()}</td>
+                    <td style="padding:8px 12px; text-align:right">${usage.total_output_tokens.toLocaleString()}</td>
+                    <td style="padding:8px 12px; text-align:right; font-weight:600">${total.toLocaleString()}</td>
+                </tr>`;
+            }
+
+            let rows = '';
+            let totalIn = 0, totalOut = 0;
+            if (simUsage) {
+                rows += fmtRow('Simulation', simUsage);
+                totalIn += simUsage.total_input_tokens;
+                totalOut += simUsage.total_output_tokens;
+            }
+            if (evalUsage) {
+                rows += fmtRow('Evaluation', evalUsage);
+                totalIn += evalUsage.total_input_tokens;
+                totalOut += evalUsage.total_output_tokens;
+            }
+            if (simUsage && evalUsage) {
+                rows += `<tr style="border-top:2px solid #e8ecef; font-weight:700">
+                    <td style="padding:8px 12px">Total</td>
+                    <td style="padding:8px 12px; text-align:right">${totalIn.toLocaleString()}</td>
+                    <td style="padding:8px 12px; text-align:right">${totalOut.toLocaleString()}</td>
+                    <td style="padding:8px 12px; text-align:right">${(totalIn + totalOut).toLocaleString()}</td>
+                </tr>`;
+            }
+
+            body.innerHTML = `<div style="background:white; border-radius:12px; padding:20px; box-shadow:0 2px 8px rgba(0,0,0,0.1)">
+                <table style="width:100%; border-collapse:collapse">
+                    <thead>
+                        <tr style="background:#f8fafc; color:#64748b; font-size:13px; text-transform:uppercase; letter-spacing:0.5px">
+                            <th style="padding:8px 12px; text-align:left">Stage</th>
+                            <th style="padding:8px 12px; text-align:right">Input Tokens</th>
+                            <th style="padding:8px 12px; text-align:right">Output Tokens</th>
+                            <th style="padding:8px 12px; text-align:right">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                </table>
+            </div>`;
+        }
+
         // Render evaluation prompts appendix
         function renderPromptsAppendix() {
             const data = EMBEDDED_FINAL_REPORT;
@@ -2594,6 +2660,7 @@
             renderEvaluationPipeline();
             populateTable();
             renderUniqueErrors();
+            renderTokenUsage();
             renderPromptsAppendix();
         };
     </script>

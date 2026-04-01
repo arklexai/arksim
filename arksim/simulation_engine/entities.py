@@ -169,6 +169,14 @@ class Conversation(BaseModel):
     simulated_user_prompt: SimulatedUserPrompt
 
 
+class TokenUsage(BaseModel):
+    """Token usage summary from LLM calls."""
+
+    total_input_tokens: int = 0
+    total_output_tokens: int = 0
+    by_model: dict[str, dict[str, int]] = Field(default_factory=dict)
+
+
 class Simulation(BaseModel):
     """Top-level envelope for the conversations output file."""
 
@@ -181,3 +189,4 @@ class Simulation(BaseModel):
         )
     )
     conversations: list[Conversation]
+    usage: TokenUsage | None = None

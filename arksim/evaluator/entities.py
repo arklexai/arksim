@@ -228,6 +228,14 @@ class ConversationEvaluation(BaseModel):
     turn_scores: list[TurnEvaluation]
 
 
+class TokenUsage(BaseModel):
+    """Token usage summary from LLM calls."""
+
+    total_input_tokens: int = 0
+    total_output_tokens: int = 0
+    by_model: dict[str, dict[str, int]] = Field(default_factory=dict)
+
+
 class Evaluation(BaseModel):
     """Top-level evaluation output file."""
 
@@ -238,3 +246,4 @@ class Evaluation(BaseModel):
     simulation_id: str
     conversations: list[ConversationEvaluation]
     unique_errors: list[UniqueError]
+    usage: TokenUsage | None = None

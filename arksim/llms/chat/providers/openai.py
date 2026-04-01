@@ -8,6 +8,7 @@ from pydantic import BaseModel
 
 from arksim.llms.chat.base.base_llm import BaseLLM
 from arksim.llms.chat.base.types import LLMMessage
+from arksim.llms.chat.base.usage import track_usage
 from arksim.llms.chat.utils import retry
 
 T = TypeVar("T", bound=BaseModel)
@@ -68,6 +69,13 @@ class OpenAILLM(BaseLLM):
     ) -> T | str:
         params = self._prepare_params(messages, schema=schema)
         response = self.client.responses.parse(**params)
+        if response.usage:
+            track_usage(
+                self.model,
+                "openai",
+                response.usage.input_tokens,
+                response.usage.output_tokens,
+            )
         # For structured output, return the parsed output
         if schema:
             return response.output_parsed
@@ -93,6 +101,13 @@ class OpenAILLM(BaseLLM):
     ) -> T | str:
         params = self._prepare_params(messages, schema=schema)
         response = await self.async_client.responses.parse(**params)
+        if response.usage:
+            track_usage(
+                self.model,
+                "openai",
+                response.usage.input_tokens,
+                response.usage.output_tokens,
+            )
         # For structured output, return the parsed output
         if schema:
             return response.output_parsed
