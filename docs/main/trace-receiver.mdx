@@ -95,7 +95,7 @@ arksim passes a `metadata` dict to your agent's `execute()` via `kwargs["metadat
 | `chat_id` | `str` | Conversation ID assigned by `agent.get_chat_id()` |
 | `turn_id` | `int` | Zero-based turn index within the conversation |
 
-These keys are always present regardless of whether the trace receiver is enabled. Trace routing context is passed to the processor automatically via `contextvars`, not through metadata.
+These keys are always present regardless of whether the trace receiver is enabled. Trace routing context is passed to the processor automatically by the simulator, not through metadata.
 
 ---
 
