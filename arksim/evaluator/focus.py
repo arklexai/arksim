@@ -14,17 +14,11 @@ import os
 from pydantic import BaseModel
 
 from arksim.evaluator.entities import UniqueError
+from arksim.evaluator.utils.constants import SEVERITY_RANK
 from arksim.scenario.entities import Scenario, Scenarios
 from arksim.utils.output import save_json_file
 
 logger = logging.getLogger(__name__)
-
-_SEVERITY_ORDER: dict[str, int] = {
-    "critical": 0,
-    "high": 1,
-    "medium": 2,
-    "low": 3,
-}
 
 
 class FocusFileInfo(BaseModel):
@@ -77,7 +71,7 @@ def build_error_scenario_map(
 
 def _sort_key(error: UniqueError) -> tuple[int, int]:
     """Return a sort key for severity-first, then descending occurrence count."""
-    severity_rank = _SEVERITY_ORDER.get(error.severity, len(_SEVERITY_ORDER))
+    severity_rank = SEVERITY_RANK.get(error.severity, len(SEVERITY_RANK))
     return (severity_rank, -len(error.occurrences))
 
 

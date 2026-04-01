@@ -35,7 +35,7 @@ from .evaluate import (
     evaluate_goal_completion,
     evaluate_turn,
 )
-from .focus import generate_focus_files
+from .focus import FocusFileInfo, generate_focus_files
 from .trajectory_matching import match_trajectory
 from .utils.constants import (
     SCORE_NOT_COMPUTED,
@@ -72,7 +72,7 @@ class Evaluator:
         self.total_conversations: int = 0
         self.chat_id_to_label: dict[str, str] = {}
         self._conv_to_scenario: dict[str, str] = {}
-        self._focus_infos: list = []
+        self._focus_infos: list[FocusFileInfo] = []
 
         # Build scenario_id -> (expected_tool_calls, match_mode) mapping
         self._scenario_expected: dict[str, tuple[list[ExpectedToolCall], str]] = {}
@@ -492,13 +492,11 @@ class Evaluator:
                 f"   - Status: {c.evaluation_status}",
             )
 
-    _SEVERITY_ORDER = {"critical": 0, "high": 1, "medium": 2, "low": 3}
-
     def _display_top_unique_errors(
         self,
         unique_errors: list[UniqueError],
         conv_to_scenario: dict[str, str] | None = None,
-        focus_infos: list | None = None,
+        focus_infos: list[FocusFileInfo] | None = None,
     ) -> None:
         """Display top unique errors sorted by severity then occurrence count."""
         if not unique_errors:
@@ -510,7 +508,7 @@ class Evaluator:
         top_errors = sorted(
             unique_errors,
             key=lambda e: (
-                self._SEVERITY_ORDER.get(e.severity, 2),
+                SEVERITY_RANK.get(e.severity, 2),
                 -len(e.occurrences),
             ),
         )[:5]
