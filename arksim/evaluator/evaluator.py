@@ -71,6 +71,8 @@ class Evaluator:
         self.total_turns: int = 0
         self.total_conversations: int = 0
         self.chat_id_to_label: dict[str, str] = {}
+        self._conv_to_scenario: dict[str, str] = {}
+        self._focus_infos: list = []
 
         # Build scenario_id -> (expected_tool_calls, match_mode) mapping
         self._scenario_expected: dict[str, tuple[list[ExpectedToolCall], str]] = {}
@@ -492,7 +494,12 @@ class Evaluator:
 
     _SEVERITY_ORDER = {"critical": 0, "high": 1, "medium": 2, "low": 3}
 
-    def _display_top_unique_errors(self, unique_errors: list[UniqueError]) -> None:
+    def _display_top_unique_errors(
+        self,
+        unique_errors: list[UniqueError],
+        conv_to_scenario: dict[str, str] | None = None,
+        focus_infos: list | None = None,
+    ) -> None:
         """Display top unique errors sorted by severity then occurrence count."""
         if not unique_errors:
             logger.info(
@@ -532,6 +539,27 @@ class Evaluator:
             logger.info(f"\n{i}. [{severity}] {occ_line}")
             logger.info(f"Unique Error: {desc}")
             logger.info(f"Agent Behavior Failure Category: {category}")
+
+            # Show scenario IDs if mapping is available
+            if conv_to_scenario:
+                scenario_ids = sorted(
+                    {conv_to_scenario[c] for c in occ_convs if c in conv_to_scenario}
+                )
+                if scenario_ids:
+                    logger.info(f"Scenarios: {', '.join(scenario_ids)}")
+
+            # Show focus file path if available
+            if focus_infos:
+                fi = next(
+                    (
+                        f
+                        for f in focus_infos
+                        if f.unique_error_id == err.unique_error_id
+                    ),
+                    None,
+                )
+                if fi:
+                    logger.info(f"Focus file: {fi.file_path}")
 
         logger.info(
             "Note: Suggested fixes are module-level heuristics and may not apply to your architecture."
@@ -653,7 +681,11 @@ class Evaluator:
             self._display_failure_breakdown(dict(failure_counts))
 
         if results.unique_errors:
-            self._display_top_unique_errors(results.unique_errors)
+            self._display_top_unique_errors(
+                results.unique_errors,
+                conv_to_scenario=self._conv_to_scenario,
+                focus_infos=self._focus_infos,
+            )
 
         logger.info(f"\n{'=' * 60}")
 
@@ -782,6 +814,15 @@ def run_evaluation(
                 len(focus_infos),
                 os.path.join(settings.output_dir, "focus/"),
             )
+
+    if focus_infos:
+        evaluator._conv_to_scenario = conv_to_scenario
+        evaluator._focus_infos = focus_infos
+    elif scenarios:
+        # Even without focus files, provide scenario mapping for display
+        evaluator._conv_to_scenario = {
+            c.conversation_id: c.scenario_id for c in simulation.conversations
+        }
 
     evaluator.display_evaluation_summary()
 

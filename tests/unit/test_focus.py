@@ -2,12 +2,15 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 
 import pytest
 
-from arksim.evaluator.entities import Occurrence, UniqueError
+from arksim.evaluator.entities import EvaluationParams, Occurrence, UniqueError
+from arksim.evaluator.evaluator import Evaluator
 from arksim.evaluator.focus import (
+    FocusFileInfo,
     build_error_scenario_map,
     generate_focus_files,
 )
@@ -183,3 +186,45 @@ class TestGenerateFocusFiles:
         assert result == []
         focus_dir = os.path.join(str(tmp_path), "focus")
         assert not os.path.exists(focus_dir)
+
+
+class TestDisplayTopUniqueErrorsWithScenarios:
+    def test_displays_scenario_ids_and_focus_path(
+        self, caplog: pytest.LogCaptureFixture, tmp_path: str
+    ) -> None:
+        params = EvaluationParams(output_dir=str(tmp_path))
+        evaluator = Evaluator(params=params)
+        evaluator.chat_id_to_label = {
+            "conv_1": "Conversation 1",
+            "conv_2": "Conversation 2",
+        }
+
+        errors = [
+            _make_error("err_1", [("conv_1", 0), ("conv_2", 1)]),
+        ]
+        focus_infos = [
+            FocusFileInfo(
+                error_index=1,
+                unique_error_id="err_1",
+                error_description="Error err_1",
+                severity="high",
+                scenario_ids=["scenario_refund", "scenario_clarify"],
+                file_path="/eval/focus/error_1.json",
+            ),
+        ]
+        conv_to_scenario = {
+            "conv_1": "scenario_refund",
+            "conv_2": "scenario_clarify",
+        }
+
+        with caplog.at_level(logging.INFO):
+            evaluator._display_top_unique_errors(
+                errors,
+                conv_to_scenario=conv_to_scenario,
+                focus_infos=focus_infos,
+            )
+
+        log_text = caplog.text
+        assert "scenario_refund" in log_text
+        assert "scenario_clarify" in log_text
+        assert "focus/error_1.json" in log_text
