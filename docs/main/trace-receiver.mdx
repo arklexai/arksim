@@ -49,7 +49,7 @@ class MyAgent(BaseAgent):
         return result.final_output
 ```
 
-The simulator sets routing context via `contextvars` before each call to `execute()`. The processor reads it automatically in `on_span_end` and injects tool calls into the receiver's buffer. No wrapping, no manual context management.
+The simulator automatically passes routing context (conversation ID, turn ID) to the processor before each call to `execute()`. The processor reads it in `on_span_end` and injects tool calls into the receiver's buffer. No wrapping, no manual context management.
 
 The module loader caches modules by file path, so `add_trace_processor` runs exactly once regardless of how many conversations the simulator creates.
 
@@ -109,7 +109,7 @@ The receiver recognizes tool calls from two OTel attribute conventions:
 **OpenInference (Arize)**:
 - `tool.name`, `tool_call.function.arguments` or `tool.parameters`, `output.value`, `tool_call.id` or `tool.id`
 
-Only spans with a recognized tool name attribute or the `execute_tool ` span name prefix are converted. Other spans (HTTP, DB, parent) are filtered out.
+Only spans with a recognized tool name attribute or a span name starting with `execute_tool` (followed by a space and the tool name) are converted. Other spans (HTTP, DB, parent) are filtered out.
 
 ---
 
