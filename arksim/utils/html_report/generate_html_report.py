@@ -133,6 +133,7 @@ class ErrorRow(BaseModel):
     agent_behavior_failure_category: str
     severity: str
     occurrences: dict[str, list[str]]  # {conv_id: ["turn_0", "turn_1", ...]}
+    scenario_ids: list[str] = Field(default_factory=list)
     suggested_fix: str = ""
     best_module_fix_reasoning: str = ""
     occurrence_snippets: list[OccurrenceSnippet] = Field(default_factory=list)
@@ -386,6 +387,7 @@ def _build_error_rows(
     evaluation: Evaluation,
     simulation: Simulation,
     chat_id_to_label: dict[str, str],
+    conv_to_scenario: dict[str, str] | None = None,
 ) -> list[ErrorRow]:
     """Build per-unique-error rows, joining with simulation for occurrence snippets.
 
@@ -393,6 +395,7 @@ def _build_error_rows(
         evaluation: Evaluation result object.
         simulation: Simulation output (used to extract turn message snippets).
         chat_id_to_label: Mapping of conversation IDs to human-readable labels.
+        conv_to_scenario: Optional mapping of conversation IDs to scenario IDs.
 
     Returns:
         List of ErrorRow, one per unique error.
@@ -406,6 +409,13 @@ def _build_error_rows(
             if occ.conversation_id not in occurrences_dict:
                 occurrences_dict[occ.conversation_id] = []
             occurrences_dict[occ.conversation_id].append(f"turn_{occ.turn_id}")
+
+        # Resolve scenario IDs for this error's conversations
+        scenario_ids: list[str] = []
+        if conv_to_scenario:
+            scenario_ids = sorted(
+                {conv_to_scenario[c] for c in occurrences_dict if c in conv_to_scenario}
+            )
 
         snippets: list[OccurrenceSnippet] = []
         for occ in error.occurrences:
@@ -442,6 +452,7 @@ def _build_error_rows(
                 agent_behavior_failure_category=error.behavior_failure_category,
                 severity=error.severity,
                 occurrences=occurrences_dict,
+                scenario_ids=scenario_ids,
                 suggested_fix=getattr(error, "suggested_fix", ""),
                 best_module_fix_reasoning=getattr(
                     error, "best_module_fix_reasoning", ""
@@ -507,8 +518,14 @@ def generate_html_report(params: HtmlReportParams) -> Path:
         raise ValueError("conversations is required (should be in evaluation)")
 
     turn_rows = _build_turn_rows(params.evaluation)
+    conv_to_scenario = {
+        c.conversation_id: c.scenario_id for c in params.simulation.conversations
+    }
     error_rows = _build_error_rows(
-        params.evaluation, params.simulation, params.chat_id_to_label
+        params.evaluation,
+        params.simulation,
+        params.chat_id_to_label,
+        conv_to_scenario=conv_to_scenario,
     )
     simulate_data_dicts = [
         conv.model_dump() for conv in params.simulation.conversations

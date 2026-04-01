@@ -1227,6 +1227,18 @@
             box-shadow: 0 1px 3px rgba(37, 99, 235, 0.3);
         }
 
+        .scenario-id-chip {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 999px;
+            background-color: #f0fdf4;
+            color: #15803d;
+            font-size: 12px;
+            font-weight: 500;
+            border: 1px solid #bbf7d0;
+        }
+
         /* Snippet expand/collapse styles */
         .snippet-toggle-btn {
             background: none;
@@ -1807,6 +1819,23 @@
                     </div>`;
                 }
 
+                // Build scenario IDs markup
+                let scenarioIdsHtml = '';
+                if (Array.isArray(error.scenario_ids) && error.scenario_ids.length > 0) {
+                    const chips = error.scenario_ids
+                        .map(id => `<span class="scenario-id-chip">${escapeHtml(id)}</span>`)
+                        .join(' ');
+                    scenarioIdsHtml = `
+                    <div class="divider"></div>
+                    <div class="error-conversations">
+                        <div class="error-conversations-label">Scenarios</div>
+                        <div class="error-conversations-list">
+                            ${chips}
+                        </div>
+                    </div>
+                    `;
+                }
+
                 const card = document.createElement('div');
                 card.className = 'error-card';
 
@@ -1827,6 +1856,7 @@
                     </div>
                     ${suggestedFixHtml}
                     ${conversationsHtml}
+                    ${scenarioIdsHtml}
                     ${snippetsHtml}
                 `;
 
