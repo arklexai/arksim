@@ -76,7 +76,6 @@ The trace receiver is configured in config_traced.yaml:
 ```yaml
 trace_receiver:
   enabled: true
-  port: 4318
   wait_timeout: 5
 ```
 

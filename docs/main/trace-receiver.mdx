@@ -1,98 +1,45 @@
 ---
-title: "Trace Receiver"
-description: "Capture tool calls from OTel-instrumented agents without changing their return values."
+title: "Tool Call Capture"
+description: "Capture tool calls from agents that handle tools internally."
 ---
 
 ## Overview
 
-The trace receiver captures tool calls from agents that handle tools internally. Instead of requiring agents to return tool calls in `AgentResponse`, arksim captures them automatically via the SDK's tracing interface and attaches them to `Message.tool_calls` for evaluation. For same-process agents, this is zero-setup. For cross-process agents, an OTLP/HTTP endpoint accepts OTel span exports.
+Some agents handle tool calling internally (e.g. OpenAI Agents SDK, LangChain) and only return text. arksim can capture these tool calls automatically so the evaluator can score them, without requiring changes to the agent's return value.
 
-This is useful when:
-- Your agent uses an SDK that handles tool calling internally (e.g. OpenAI Agents SDK, LangChain)
-- You cannot modify the agent's return value to include `AgentResponse`
-- You want to capture tool calls from an agent running in a separate process
+There are two ways to provide tool calls to arksim:
 
----
+1. **Explicit**: Return `AgentResponse(content=..., tool_calls=[...])` from `execute()`. No extra config needed.
+2. **Automatic capture**: Add `trace_receiver: { enabled: true }` to your config. arksim captures tool calls via the SDK's tracing interface. The agent just returns text.
 
-## Configuration
-
-Add a `trace_receiver` block to your simulation config:
-
-```yaml
-trace_receiver:
-  enabled: true
-  host: 127.0.0.1   # bind address
-  port: 4318         # only used for cross-process HTTP export
-  wait_timeout: 5    # seconds to wait for traces after each agent response
-```
-
-| Field | Type | Default | Description |
-|-------|------|---------|-------------|
-| `enabled` | bool | `false` | Enable the trace receiver |
-| `host` | string | `127.0.0.1` | Bind address (`0.0.0.0` for containers, trusted networks only) |
-| `port` | int | `4318` | Port number (1-65535) |
-| `wait_timeout` | float | `5.0` | Max seconds to wait for traces per turn |
+If both are active, arksim deduplicates by tool call ID first, then by `(name, arguments)` signature.
 
 ---
 
-## Capture Paths
+## Automatic Capture (Python Connector)
 
-arksim supports three ways to capture tool calls. They can be combined freely, and arksim deduplicates by tool call ID first, then by `(name, arguments)` signature.
+For agents using the OpenAI Agents SDK with the Python connector, add two things:
 
-### 1. AgentResponse (no trace receiver needed)
-
-The agent returns `AgentResponse(content=..., tool_calls=[...])` from `execute()`. This is the simplest path and requires no extra infrastructure.
-
-### 2. Direct injection (same process)
-
-When the agent runs in the same process as arksim, the simulator passes routing context to the `TracingProcessor` via `contextvars`. The processor's `on_span_end` callback reads the context and calls `receiver.submit_tool_calls()` to inject tool calls directly into the receiver's buffer, bypassing HTTP entirely.
-
-This is the recommended path for same-process agents because it avoids event loop contention between the OTel HTTP exporter and the async receiver. No wrapping or manual context management is needed in the agent.
-
-### 3. HTTP export (separate process)
-
-When the agent runs in a separate process, it exports OTel spans via `OTLPSpanExporter` to `POST /v1/traces` on the receiver's port. The receiver accepts both protobuf (`application/x-protobuf`) and JSON payloads.
-
-```bash
-pip install arksim[otel]  # for protobuf support
-```
-
-Without `arksim[otel]`, protobuf payloads are rejected with HTTP 415. JSON payloads work without extra dependencies.
-
-For HTTP agents, text-only turns (no tool calls) block for the full `wait_timeout` since the receiver cannot distinguish "no spans yet" from "turn complete with no tool calls." The `ArksimTracingProcessor` handles this automatically for same-process agents via `signal_turn_complete()`. For HTTP agents, consider using a lower `wait_timeout` (e.g., 2s) if most turns produce text-only responses.
-
----
-
-## Connector Support
-
-Trace correlation depends on the agent connector type:
-
-| Connector | Trace Correlation | Mechanism |
-|-----------|------------------|-----------|
-| Python connector | Supported | `ArksimTracingProcessor` + `contextvars` |
-| A2A | Not yet supported | Protocol has `task_id` / `context_id` (planned) |
-| Chat Completions | Not yet supported | - |
-
-<Info>
-A2A and Chat Completions agents running externally do not yet have automatic trace correlation. If you need tool call capture, use the Python connector with `ArksimTracingProcessor` instead.
-</Info>
-
----
-
-## Agent Instrumentation
-
-### Using ArksimTracingProcessor (recommended)
-
-For agents built with the OpenAI Agents SDK, arksim ships a ready-to-use `TracingProcessor` that captures tool calls automatically.
-
-**With `arksim simulate`:** Register the processor once at module load. The simulator sets routing context via `contextvars`, so no per-turn wrapping is needed:
+**1. Register the processor at module level in your agent file:**
 
 ```python
 from agents.tracing import add_trace_processor
 from arksim.tracing.openai import ArksimTracingProcessor
 
 add_trace_processor(ArksimTracingProcessor())
+```
 
+**2. Enable the trace receiver in your config:**
+
+```yaml
+trace_receiver:
+  enabled: true
+  wait_timeout: 5
+```
+
+That's it. Your agent's `execute()` method just returns a string:
+
+```python
 class MyAgent(BaseAgent):
     async def execute(self, user_query, **kwargs):
         result = await Runner.run(
@@ -102,27 +49,44 @@ class MyAgent(BaseAgent):
         return result.final_output
 ```
 
-The module loader caches modules by file path, so the registration runs exactly once regardless of conversation count. See `examples/customer-service/traced_agent.py` for a complete example.
+The simulator sets routing context via `contextvars` before each call to `execute()`. The processor reads it automatically in `on_span_end` and injects tool calls into the receiver's buffer. No wrapping, no manual context management.
 
-**Standalone (outside `arksim simulate`):** Register the processor and use `.trace()` for routing context. The `.trace()` context manager handles SDK trace context and routes tool calls to the receiver:
+The module loader caches modules by file path, so `add_trace_processor` runs exactly once regardless of how many conversations the simulator creates.
 
-```python
-from agents.tracing import add_trace_processor
-from arksim.tracing.openai import ArksimTracingProcessor
-from arksim.tracing.receiver import TraceReceiver
-
-processor = ArksimTracingProcessor()
-add_trace_processor(processor)
-receiver = TraceReceiver(wait_timeout=5.0)
-
-async with processor.trace(conversation_id="conv-1", turn_id=0, receiver=receiver):
-    result = await Runner.run(agent, input=input_list)
-tool_calls = await receiver.wait_for_traces("conv-1", 0)
-```
+See `examples/customer-service/traced_agent.py` for a complete working example.
 
 Requires `pip install openai-agents`.
 
-### Metadata keys
+---
+
+## Connector Support
+
+| Connector | Tool Call Capture | How to use |
+|-----------|------------------|------------|
+| Python connector | Supported | `ArksimTracingProcessor` (see above) |
+| A2A | Planned | Protocol has `task_id` / `context_id` for correlation |
+| Chat Completions | Planned | W3C Trace Context for correlation |
+
+<Info>
+A2A and Chat Completions connectors do not yet support automatic tool call capture. If you need tool call evaluation for these connectors, use the Python connector with `ArksimTracingProcessor`.
+</Info>
+
+---
+
+## Configuration Reference
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `enabled` | bool | `false` | Enable automatic tool call capture |
+| `host` | string | `127.0.0.1` | Bind address (used by upcoming cross-connector support) |
+| `port` | int | `4318` | Port number (used by upcoming cross-connector support) |
+| `wait_timeout` | float | `5.0` | Max seconds to wait for tool calls after each agent turn |
+
+For the Python connector, only `enabled` and `wait_timeout` are relevant. The `host` and `port` fields are used by the OTLP/HTTP receiver for upcoming A2A and Chat Completions support.
+
+---
+
+## Metadata Keys
 
 arksim passes a `metadata` dict to your agent's `execute()` via `kwargs["metadata"]`:
 
@@ -131,51 +95,13 @@ arksim passes a `metadata` dict to your agent's `execute()` via `kwargs["metadat
 | `chat_id` | `str` | Conversation ID assigned by `agent.get_chat_id()` |
 | `turn_id` | `int` | Zero-based turn index within the conversation |
 
-These keys are always present regardless of whether the trace receiver is enabled. Trace routing context (conversation ID, turn ID, receiver reference) is passed to the processor automatically via `contextvars`, not through metadata.
+These keys are always present regardless of whether the trace receiver is enabled. Trace routing context is passed to the processor automatically via `contextvars`, not through metadata.
 
-### Using raw OTel spans (any framework)
+---
 
-For agents not using the OpenAI Agents SDK, create OTel spans with routing attributes. For same-process agents, `conversation_id` and `turn_id` come from arksim's metadata dict (`kwargs["metadata"]`). For cross-process agents, you must coordinate these values with the simulator out-of-band (e.g. via HTTP headers or a shared queue):
+## Supported Tool Call Attributes
 
-```python
-from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
-from opentelemetry.sdk.resources import Resource
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import SimpleSpanProcessor
-
-conversation_id = "your-conversation-id"  # same-process: metadata["chat_id"]
-turn_id = 0                               # same-process: metadata["turn_id"]
-
-provider = TracerProvider(
-    resource=Resource.create({
-        "service.name": "my-agent",
-        "arksim.conversation_id": conversation_id,
-    })
-)
-provider.add_span_processor(
-    SimpleSpanProcessor(OTLPSpanExporter(endpoint="http://127.0.0.1:4318/v1/traces"))
-)
-tracer = provider.get_tracer("my-agent")
-
-with tracer.start_as_current_span("execute_tool search_flights") as span:
-    span.set_attribute("arksim.turn_id", turn_id)
-    span.set_attribute("gen_ai.tool.name", "search_flights")
-    span.set_attribute("gen_ai.tool.call.arguments", '{"origin": "NYC"}')
-    span.set_attribute("gen_ai.tool.call.result", '{"flights": [...]}')
-
-provider.force_flush()
-```
-
-### Routing attributes
-
-| Attribute | Where | Description |
-|-----------|-------|-------------|
-| `arksim.conversation_id` | Resource or span | Conversation ID from `metadata["chat_id"]` |
-| `arksim.turn_id` | Span | Turn index from `metadata["turn_id"]` |
-
-### Supported tool call attributes
-
-The receiver parses tool call data from two OTLP attribute families:
+The receiver recognizes tool calls from two OTel attribute conventions:
 
 **OTel GenAI semconv** (recommended):
 - `gen_ai.tool.name`, `gen_ai.tool.call.arguments`, `gen_ai.tool.call.result`, `gen_ai.tool.call.id`
@@ -184,19 +110,6 @@ The receiver parses tool call data from two OTLP attribute families:
 - `tool.name`, `tool_call.function.arguments` or `tool.parameters`, `output.value`, `tool_call.id` or `tool.id`
 
 Only spans with a recognized tool name attribute or the `execute_tool ` span name prefix are converted. Other spans (HTTP, DB, parent) are filtered out.
-
----
-
-## Same-Process Considerations
-
-When the traced agent and arksim run in the same process, tool calls are captured via direct injection (`submit_tool_calls`) rather than HTTP export. The simulator passes routing context to the processor via `contextvars`, which are async-safe and isolate concurrent conversations correctly. Multiple `num_workers` are supported.
-
-```yaml
-trace_receiver:
-  enabled: true
-  port: 4318        # only used for cross-process HTTP export
-  wait_timeout: 5
-```
 
 ---
 
