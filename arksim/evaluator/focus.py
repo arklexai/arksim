@@ -32,7 +32,7 @@ class FocusFileInfo(BaseModel):
     file_path: str
 
 
-def build_error_scenario_map(
+def _build_error_scenario_map(
     unique_errors: list[UniqueError],
     conv_to_scenario: dict[str, str],
 ) -> dict[str, set[str]]:
@@ -103,7 +103,7 @@ def generate_focus_files(
     if not unique_errors:
         return []
 
-    error_scenario_map = build_error_scenario_map(unique_errors, conv_to_scenario)
+    error_scenario_map = _build_error_scenario_map(unique_errors, conv_to_scenario)
     scenario_lookup: dict[str, Scenario] = {
         s.scenario_id: s for s in scenarios.scenarios
     }
@@ -118,7 +118,7 @@ def generate_focus_files(
     for error in sorted_errors:
         mapped_ids = error_scenario_map.get(error.unique_error_id)
         if mapped_ids is None:
-            # All occurrences had unknown conv_ids; already warned in build_error_scenario_map
+            # All occurrences had unknown conv_ids; already warned in _build_error_scenario_map
             continue
 
         matched: list[Scenario] = []
@@ -165,7 +165,9 @@ def generate_focus_files(
         return []
 
     all_scenarios = [
-        scenario_lookup[sid] for sid in all_scenario_ids if sid in scenario_lookup
+        scenario_lookup[sid]
+        for sid in sorted(all_scenario_ids)
+        if sid in scenario_lookup
     ]
     all_file_path = os.path.join(focus_dir, "all_failures.json")
     all_bundle = Scenarios(

@@ -71,9 +71,6 @@ class Evaluator:
         self.total_turns: int = 0
         self.total_conversations: int = 0
         self.chat_id_to_label: dict[str, str] = {}
-        self._conv_to_scenario: dict[str, str] = {}
-        self._focus_infos: list[FocusFileInfo] = []
-
         # Build scenario_id -> (expected_tool_calls, match_mode) mapping
         self._scenario_expected: dict[str, tuple[list[ExpectedToolCall], str]] = {}
         if scenarios:
@@ -508,7 +505,7 @@ class Evaluator:
         top_errors = sorted(
             unique_errors,
             key=lambda e: (
-                SEVERITY_RANK.get(e.severity, 2),
+                SEVERITY_RANK.get(e.severity, len(SEVERITY_RANK)),
                 -len(e.occurrences),
             ),
         )[:5]
@@ -592,7 +589,11 @@ class Evaluator:
             logger.info(f"• {label}: {count} ({pct:.1f}%)")
         logger.info(f"Total evaluations: {total}")
 
-    def display_evaluation_summary(self) -> None:
+    def display_evaluation_summary(
+        self,
+        conv_to_scenario: dict[str, str] | None = None,
+        focus_infos: list[FocusFileInfo] | None = None,
+    ) -> None:
         """Display evaluation summary with agent-specific metrics."""
         logger.info("Displaying evaluation summary")
         results = self.evaluation_results
@@ -681,8 +682,21 @@ class Evaluator:
         if results.unique_errors:
             self._display_top_unique_errors(
                 results.unique_errors,
-                conv_to_scenario=self._conv_to_scenario,
-                focus_infos=self._focus_infos,
+                conv_to_scenario=conv_to_scenario,
+                focus_infos=focus_infos,
+            )
+
+        if focus_infos:
+            logger.info("\nFOCUS FILES FOR TARGETED RERUNS:")
+            logger.info(
+                "  Rerun all failures: arksim simulate-evaluate <config> "
+                "--scenario_file_path %s",
+                os.path.join(
+                    os.path.dirname(focus_infos[0].file_path), "all_failures.json"
+                ),
+            )
+            logger.info(
+                "  Or target a specific error: --scenario_file_path <focus_file>"
             )
 
         logger.info(f"\n{'=' * 60}")
@@ -794,12 +808,16 @@ def run_evaluation(
     evaluator_output = evaluator.evaluate(simulation, on_progress=on_progress)
     evaluator.save_results()
 
-    # Generate focus files for rerunning failed scenarios
-    focus_infos = []
-    if evaluator_output.unique_errors and scenarios:
+    # Build conversation -> scenario mapping once for focus files and display
+    conv_to_scenario: dict[str, str] | None = None
+    if scenarios:
         conv_to_scenario = {
             c.conversation_id: c.scenario_id for c in simulation.conversations
         }
+
+    # Generate focus files for rerunning failed scenarios
+    focus_infos: list[FocusFileInfo] = []
+    if evaluator_output.unique_errors and scenarios and conv_to_scenario:
         focus_infos = generate_focus_files(
             unique_errors=evaluator_output.unique_errors,
             conv_to_scenario=conv_to_scenario,
@@ -813,16 +831,10 @@ def run_evaluation(
                 os.path.join(settings.output_dir, "focus/"),
             )
 
-    if focus_infos:
-        evaluator._conv_to_scenario = conv_to_scenario
-        evaluator._focus_infos = focus_infos
-    elif scenarios:
-        # Even without focus files, provide scenario mapping for display
-        evaluator._conv_to_scenario = {
-            c.conversation_id: c.scenario_id for c in simulation.conversations
-        }
-
-    evaluator.display_evaluation_summary()
+    evaluator.display_evaluation_summary(
+        conv_to_scenario=conv_to_scenario,
+        focus_infos=focus_infos if focus_infos else None,
+    )
 
     if settings.generate_html_report:
         from arksim.utils.html_report.generate_html_report import (
