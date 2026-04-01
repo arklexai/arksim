@@ -41,5 +41,12 @@ def build_error_scenario_map(
                 )
                 continue
             scenario_ids.add(sid)
+        if not scenario_ids:
+            logger.warning(
+                "Dropping error %s: all %d occurrence(s) have unknown conversation_ids",
+                error.unique_error_id,
+                len(error.occurrences),
+            )
+            continue
         error_to_scenarios[error.unique_error_id] = scenario_ids
     return error_to_scenarios
