@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * **evaluator:** scenario IDs shown in CLI error output alongside focus file paths
 * **report:** scenario IDs displayed in HTML report error cards
 * **evaluator:** error-to-scenario mappings included in `evaluation.json` output
+
 ### Changed
 
 * **docs:** rewrite README as a focused landing page (~180 lines) with two quickstart paths, report screenshot, and "Test Your Own Agent" guide
@@ -30,7 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 * **chat-completions:** fix crash when endpoint returns `tool_calls` with `content=None`
-
+* **evaluator:** inject configured LLM into custom metrics instead of requiring metrics to load their own LLM from a hardcoded config file
 ## [0.3.3](https://github.com/arklexai/arksim/compare/v0.3.2...v0.3.3) (2026-03-27)
 
 

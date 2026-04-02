@@ -74,16 +74,21 @@ class QuantitativeMetric(abc.ABC):
             metrics). The range is used to normalise the value for the aggregated
             turn score and to derive a per-metric failure threshold
             (60 % of *max*).
+        llm: Optional LLM instance injected by the evaluator. Custom metrics that
+            need an LLM for scoring should accept ``llm=None`` in their
+            ``__init__`` and pass it to ``super().__init__(llm=llm)``, then use
+            ``self.llm`` instead of constructing their own LLM instance.
 
     Example:
         >>> from arksim.evaluator import QuantitativeMetric, ScoreInput, QuantResult
         >>>
         >>> class MyMetric(QuantitativeMetric):
-        >>>     def __init__(self, name: str, threshold: float = 0.5):
+        >>>     def __init__(self, name: str, threshold: float = 0.5, llm=None):
         >>>         super().__init__(
         >>>             name=name,
         >>>             score_range=(0, 5),
         >>>             additional_input={"threshold": threshold},
+        >>>             llm=llm,
         >>>         )
         >>>
         >>>     def score(self, score_input: ScoreInput) -> QuantResult:
@@ -103,11 +108,28 @@ class QuantitativeMetric(abc.ABC):
         score_range: tuple[float, float] = (1, 5),
         additional_input: dict[str, Any] | None = None,
         description: str = "",
+        llm: Any | None = None,
     ) -> None:
         self.name = name if name is not None else self.__class__.__name__
         self.score_range = score_range
         self.additional_input = additional_input or {}
         self.description = description
+        self._llm = llm
+
+    @property
+    def llm(self) -> Any:
+        if self._llm is None:
+            raise RuntimeError(
+                f"{self.__class__.__name__}.llm is not set. "
+                "Metrics that need an LLM should accept 'llm=None' in __init__ "
+                "and pass it to super().__init__(llm=llm). The evaluator injects "
+                "the configured LLM automatically at load time."
+            )
+        return self._llm
+
+    @llm.setter
+    def llm(self, value: Any) -> None:
+        self._llm = value
 
     @abc.abstractmethod
     def score(self, score_input: ScoreInput) -> QuantResult:
@@ -120,20 +142,31 @@ class QualitativeMetric(abc.ABC):
     Unlike QuantitativeMetric which returns a numeric score, qualitative
     metrics classify behaviour into a categorical label.
 
+    Args:
+        name: The name of the metric. If not provided, uses the class name as default.
+        description: Human-readable description of what the metric measures.
+        label_colors: Mapping of label values to hex colour strings for the report UI.
+        llm: Optional LLM instance injected by the evaluator. Custom metrics that
+            need an LLM for evaluation should accept ``llm=None`` in their
+            ``__init__`` and pass it to ``super().__init__(llm=llm)``, then use
+            ``self.llm`` instead of constructing their own LLM instance.
+
     Example:
         >>> from arksim.evaluator import QualitativeMetric, QualResult, ScoreInput
         >>>
         >>> class MyQualMetric(QualitativeMetric):
-        >>>     def __init__(self):
+        >>>     def __init__(self, llm=None):
         >>>         super().__init__(
         >>>             name="my_qual_metric",
         >>>             label_colors={
         >>>                 "pass": "#22c55e",  # green
         >>>                 "fail": "#ef4444",  # red
         >>>             },
+        >>>             llm=llm,
         >>>         )
         >>>
         >>>     def evaluate(self, score_input: ScoreInput) -> QualResult:
+        >>>         # Use self.llm to call the injected LLM.
         >>>         return QualResult(
         >>>             name=self.name,
         >>>             value="pass",
@@ -146,10 +179,27 @@ class QualitativeMetric(abc.ABC):
         name: str | None = None,
         description: str = "",
         label_colors: dict[str, str] | None = None,
+        llm: Any | None = None,
     ) -> None:
         self.name = name if name is not None else self.__class__.__name__
         self.description = description
         self.label_colors: dict[str, str] = label_colors or {}
+        self._llm = llm
+
+    @property
+    def llm(self) -> Any:
+        if self._llm is None:
+            raise RuntimeError(
+                f"{self.__class__.__name__}.llm is not set. "
+                "Metrics that need an LLM should accept 'llm=None' in __init__ "
+                "and pass it to super().__init__(llm=llm). The evaluator injects "
+                "the configured LLM automatically at load time."
+            )
+        return self._llm
+
+    @llm.setter
+    def llm(self, value: Any) -> None:
+        self._llm = value
 
     @abc.abstractmethod
     def evaluate(self, score_input: ScoreInput) -> QualResult:

@@ -783,12 +783,17 @@ class Evaluator:
 
 def _load_custom_metrics(
     file_paths: list[str],
+    llm: object | None = None,
 ) -> tuple[list[QuantitativeMetric], list[QualitativeMetric]]:
     """Dynamically load QuantitativeMetric and QualitativeMetric subclasses from .py files.
 
     Args:
         file_paths: Paths to Python files containing
             QuantitativeMetric or QualitativeMetric subclass definitions.
+        llm: Optional LLM instance to inject into metrics that accept it.
+            Metrics whose ``__init__`` accepts a ``llm`` keyword argument receive
+            this instance on ``self.llm``.  Metrics that do not accept ``llm``
+            are instantiated without it for backward compatibility.
 
     Returns:
         Tuple of (quantitative metrics, qualitative metrics).
@@ -801,7 +806,11 @@ def _load_custom_metrics(
         for _, obj in inspect.getmembers(module, inspect.isclass):
             if issubclass(obj, QuantitativeMetric) and obj is not QuantitativeMetric:
                 try:
-                    metrics.append(obj())
+                    sig = inspect.signature(obj.__init__)
+                    if "llm" in sig.parameters:
+                        metrics.append(obj(llm=llm))
+                    else:
+                        metrics.append(obj())
                     logger.info(
                         f"Loaded quantitative metric '{obj.__name__}' from {abs_path}"
                     )
@@ -813,7 +822,11 @@ def _load_custom_metrics(
                     ) from e
             elif issubclass(obj, QualitativeMetric) and obj is not QualitativeMetric:
                 try:
-                    qual_metrics.append(obj())
+                    sig = inspect.signature(obj.__init__)
+                    if "llm" in sig.parameters:
+                        qual_metrics.append(obj(llm=llm))
+                    else:
+                        qual_metrics.append(obj())
                     logger.info(
                         f"Loaded qualitative metric '{obj.__name__}' from {abs_path}"
                     )
@@ -868,7 +881,7 @@ def run_evaluation(
         provider=settings.provider,
     )
     custom_metrics, custom_qualitative_metrics = _load_custom_metrics(
-        settings.custom_metrics_file_paths
+        settings.custom_metrics_file_paths, llm=llm
     )
 
     params = EvaluationParams(

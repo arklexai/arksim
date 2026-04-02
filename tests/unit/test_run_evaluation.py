@@ -106,7 +106,7 @@ def test_run_evaluation_uses_in_memory_simulation(
     )
     monkeypatch.setattr("arksim.evaluator.evaluator.LLM", lambda **_kwargs: MagicMock())
     monkeypatch.setattr(
-        "arksim.evaluator.evaluator._load_custom_metrics", lambda _paths: ([], [])
+        "arksim.evaluator.evaluator._load_custom_metrics", lambda _paths, **_kw: ([], [])
     )
 
     class FakeEvaluator:
@@ -157,7 +157,7 @@ def test_run_evaluation_passes_in_memory_scenarios_to_html_report(
 
     monkeypatch.setattr("arksim.evaluator.evaluator.LLM", lambda **_kwargs: MagicMock())
     monkeypatch.setattr(
-        "arksim.evaluator.evaluator._load_custom_metrics", lambda _paths: ([], [])
+        "arksim.evaluator.evaluator._load_custom_metrics", lambda _paths, **_kw: ([], [])
     )
     monkeypatch.setattr(
         "arksim.scenario.Scenarios.load",
