@@ -55,14 +55,14 @@ python run_pipeline.py
 
 ### Traced agent (automatic tool call capture)
 
-The example includes a traced agent variant (`traced_agent.py`) that captures tool calls automatically instead of returning them in `AgentResponse`. The agent registers `ArksimTracingProcessor` once at module load. The simulator passes routing context via `contextvars`.
+The example includes a traced agent variant (`traced_agent.py`) that captures tool calls automatically instead of returning them in `AgentResponse`. The agent registers `ArksimTracingProcessor` once at module load. The simulator passes routing context automatically.
 
 **How it differs from `custom_agent.py`:**
 - `custom_agent.py` returns `AgentResponse` with explicit tool calls (agent extracts them from `RunResult`)
 - `traced_agent.py` returns plain `str`. Tool calls are captured automatically by the SDK's `TracingProcessor` interface.
 
 ```
-Simulator sets contextvars -> agent.execute() runs normally
+Simulator sets routing context -> agent.execute() runs normally
 -> SDK fires TracingProcessor.on_span_end -> arksim captures -> evaluator scores
 ```
 

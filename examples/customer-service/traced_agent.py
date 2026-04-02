@@ -6,9 +6,9 @@ OpenAI Agents SDK's ``TracingProcessor`` interface. Compare with
 ``custom_agent.py`` which returns tool calls in ``AgentResponse``.
 
 The agent registers the processor once at module load. The simulator
-sets routing context via ``contextvars``, so no per-turn wrapping is
-needed. The module loader caches modules by file path, so this
-registration runs exactly once regardless of conversation count.
+sets routing context automatically, so no per-turn wrapping is needed.
+The module loader caches modules by file path, so this registration
+runs exactly once regardless of conversation count.
 
 Install: pip install openai-agents
 Auth:    export OPENAI_API_KEY="<your-key>"
@@ -46,8 +46,8 @@ class TracedToolCallAgent(BaseAgent):
     """Agent that captures tool calls via ArksimTracingProcessor.
 
     Tool calls are captured automatically by the processor's
-    ``on_span_end`` callback. The simulator injects routing context
-    (conversation_id, turn_id, receiver) via ``contextvars``.
+    ``on_span_end`` callback. The simulator sets routing context
+    (conversation_id, turn_id, receiver) before each ``execute()`` call.
     """
 
     def __init__(self, agent_config: AgentConfig) -> None:
