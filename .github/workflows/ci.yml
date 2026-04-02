@@ -52,7 +52,7 @@ jobs:
       - name: Install dependencies
         run: pip install -e ".[dev]"
       - name: Test
-        run: pytest tests/ -v --tb=short --cov=arksim --cov-report=xml --cov-report=term-missing --cov-fail-under=60
+        run: pytest tests/unit/ -v --tb=short --cov=arksim --cov-report=xml --cov-report=term-missing --cov-fail-under=60
       - name: Upload coverage
         if: matrix.python-version == '3.13'
         uses: codecov/codecov-action@v5

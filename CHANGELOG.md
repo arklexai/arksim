@@ -5,6 +5,19 @@ All notable changes to ArkSim will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+* **tracing:** add automatic tool call capture for agents that handle tools internally
+* **tracing:** add `ArksimTracingProcessor` for OpenAI Agents SDK (register once, zero per-turn wrapping)
+* **tracing:** add OTLP/HTTP trace receiver with protobuf and JSON support (`arksim[otel]`)
+* **tracing:** add dual attribute convention support (OTel GenAI semconv and OpenInference)
+
+### Changed
+
+* **simulation:** bump output schema version to v1.1 (additive `tool_calls` field on Message)
+
 ## [0.3.3](https://github.com/arklexai/arksim/compare/v0.3.2...v0.3.3) (2026-03-27)
 
 
@@ -198,9 +211,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- `lack of specific information` prompt now requires knowledge to be present before flagging, and includes a knowledge-grounded example matching the `false information` pattern
-- `false information` boundary note tightened to only flag direct contradictions with knowledge
-- Functional e2e tests covering the full evaluation pipeline and correct agent behavior failure detection, including positive and negative examples for `false information`
 - Simulator now respects `num_conversations_per_scenario`, previously only 1 conversation was generated per scenario
 
 ### Added

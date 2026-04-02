@@ -47,8 +47,11 @@ anthropic = [
 google = [
     "google-genai>=1.26.0",
 ]
+otel = [
+    "opentelemetry-proto>=1.20.0",
+]
 all = [
-    "arksim[azure,anthropic,google]",
+    "arksim[azure,anthropic,google,otel]",
 ]
 dev = [
     "pytest",

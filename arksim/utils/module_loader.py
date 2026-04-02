@@ -5,6 +5,10 @@ Both custom agents and custom metrics need to load user-provided ``.py``
 files at runtime.  This module provides a single, robust loading function
 so the two features share the same validation, error handling, and
 ``sys.path`` / ``sys.modules`` management.
+
+Modules are cached by resolved file path so that module-level code
+(processor registration, connection setup, logging config) runs exactly
+once regardless of how many times the module is loaded.
 """
 
 from __future__ import annotations
@@ -18,9 +22,18 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
+# Cache by resolved file path. arksim only needs fresh class instances
+# (one per conversation), not fresh modules. Caching ensures module-level
+# side effects (processor registration, logging setup, etc.) run once.
+_module_cache: dict[str, types.ModuleType] = {}
+
 
 def load_module_from_file(file_path: str) -> types.ModuleType:
     """Load a Python module from a ``.py`` file path.
+
+    Returns a cached module if the same resolved path was loaded before.
+    This ensures module-level code runs exactly once even when the
+    simulator creates multiple agent instances from the same file.
 
     Args:
         file_path: Absolute or relative path to a ``.py`` file.
@@ -40,6 +53,10 @@ def load_module_from_file(file_path: str) -> types.ModuleType:
         raise ValueError(f"Module path must be a .py file, got: {path}")
     if not path.exists():
         raise FileNotFoundError(f"Module file not found: {path}")
+
+    cache_key = str(path)
+    if cache_key in _module_cache:
+        return _module_cache[cache_key]
 
     # Use a unique name to avoid collisions in sys.modules when multiple
     # files share the same stem (e.g. two different custom_agent.py files).
@@ -66,4 +83,5 @@ def load_module_from_file(file_path: str) -> types.ModuleType:
         sys.modules.pop(module_name, None)
         raise RuntimeError(f"Failed to load module from {path}: {e}") from e
 
+    _module_cache[cache_key] = module
     return module
