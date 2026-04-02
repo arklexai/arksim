@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 """Tests for the shared module loader utility."""
 
+from __future__ import annotations
+
 import sys
 import textwrap
 from pathlib import Path

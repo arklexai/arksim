@@ -7,9 +7,9 @@ description: "Capture tool calls from agents that handle tools internally."
 
 Some agents handle tool calling internally (e.g. OpenAI Agents SDK, LangChain) and only return text. arksim can capture these tool calls so the evaluator can score them.
 
-There are two ways to provide tool calls to arksim:
+There are two ways to provide tool calls to arksim when using the Python connector:
 
-1. **Explicit**: Return `AgentResponse` with tool calls from `execute()`. Works with any connector.
+1. **Explicit**: Return `AgentResponse` with tool calls from `execute()`.
 2. **Automatic capture**: Enable `trace_receiver` in your config. arksim captures tool calls via the SDK's tracing interface. The agent just returns text.
 
 If both are active, arksim deduplicates automatically (see [Deduplication](#deduplication) below).
@@ -21,16 +21,16 @@ If both are active, arksim deduplicates automatically (see [Deduplication](#dedu
 | Connector | Explicit (`AgentResponse`) | Automatic Capture |
 |-----------|--------------------------|-------------------|
 | Python connector | Supported | Supported via `ArksimTracingProcessor` |
-| A2A | Supported | Planned |
-| Chat Completions | Supported | Planned |
+| A2A | Planned | Planned |
+| Chat Completions | Planned | Planned |
 
 <Info>
-Automatic capture currently works with the Python connector only. A2A and Chat Completions support is planned. All connectors support the explicit `AgentResponse` path.
+Both capture methods currently work with the Python connector only. A2A and Chat Completions support is planned.
 </Info>
 
 ---
 
-## Explicit Capture
+## Explicit Capture (Python Connector)
 
 Return `AgentResponse` from your agent's `execute()` method with the tool calls your agent made:
 
@@ -53,7 +53,7 @@ class MyAgent(BaseAgent):
         )
 ```
 
-No extra config needed. This works with all connector types.
+No extra config needed.
 
 ### Metadata keys
 
@@ -64,7 +64,7 @@ arksim passes a `metadata` dict to your agent's `execute()` via `kwargs["metadat
 | `chat_id` | `str` | Conversation ID assigned by `agent.get_chat_id()` |
 | `turn_id` | `int` | Zero-based turn index within the conversation |
 
-These keys are always present regardless of which capture method you use.
+These keys are always present for Python connector agents regardless of which capture method you use.
 
 ---
 

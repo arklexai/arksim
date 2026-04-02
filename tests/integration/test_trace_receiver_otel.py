@@ -51,6 +51,7 @@ def _create_otel_provider(port: int, conv_id: str) -> TracerProvider:
     return provider
 
 
+@pytest.mark.integration
 @pytest.mark.asyncio
 async def test_real_otel_single_tool_call(_unused_port: int) -> None:
     """A single tool call span created with the real OTel SDK is captured."""
@@ -83,6 +84,7 @@ async def test_real_otel_single_tool_call(_unused_port: int) -> None:
     assert tc.error is None
 
 
+@pytest.mark.integration
 @pytest.mark.asyncio
 async def test_real_otel_multiple_tool_calls(_unused_port: int) -> None:
     """Multiple tool call spans in one trace are all captured."""
@@ -113,6 +115,7 @@ async def test_real_otel_multiple_tool_calls(_unused_port: int) -> None:
     assert names == {"search_products", "get_order"}
 
 
+@pytest.mark.integration
 @pytest.mark.asyncio
 async def test_real_otel_error_span(_unused_port: int) -> None:
     """A tool call that errors is captured with the error message."""
@@ -138,6 +141,7 @@ async def test_real_otel_error_span(_unused_port: int) -> None:
     assert tc.error == "Order not found"
 
 
+@pytest.mark.integration
 @pytest.mark.asyncio
 async def test_real_otel_resource_level_routing(_unused_port: int) -> None:
     """conversation_id set on the OTel Resource (not per-span) still routes correctly."""
@@ -160,6 +164,7 @@ async def test_real_otel_resource_level_routing(_unused_port: int) -> None:
     assert tool_calls[0].name == "ping"
 
 
+@pytest.mark.integration
 @pytest.mark.asyncio
 async def test_real_otel_tool_call_id_attribute(_unused_port: int) -> None:
     """gen_ai.tool.call.id attribute is used as the ToolCall.id."""

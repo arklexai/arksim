@@ -311,12 +311,12 @@ class TraceReceiver:
         with self._submit_lock:
             direct = self._direct_tool_calls.pop(key, [])
             self._direct_events.pop(key, None)
-            stale_keys |= {
+            direct_stale = {
                 k
                 for k in self._direct_tool_calls
                 if k[0] == conversation_id and k[1] < turn_id
             }
-            for k in stale_keys:
+            for k in direct_stale:
                 self._direct_tool_calls.pop(k, None)
                 self._direct_events.pop(k, None)
 

@@ -44,6 +44,7 @@ from arksim.tracing.context import (
     trace_receiver_ref,
     trace_turn_id,
 )
+from arksim.tracing.span_converter import _parse_arguments
 
 logger = logging.getLogger(__name__)
 
@@ -154,17 +155,7 @@ class ArksimTracingProcessor(_Base):  # type: ignore[misc]
 
         data = span.span_data
 
-        # Parse arguments from JSON string
-        arguments: dict[str, Any] = {}
-        if data.input:
-            try:
-                parsed = json.loads(data.input)
-                if isinstance(parsed, dict):
-                    arguments = parsed
-            except (json.JSONDecodeError, TypeError):
-                logger.warning(
-                    "Malformed JSON in tool call arguments for %s", data.name
-                )
+        arguments = _parse_arguments(data.input, span_name=data.name)
 
         # Build result string
         result = None
