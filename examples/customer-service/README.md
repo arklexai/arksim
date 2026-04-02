@@ -79,7 +79,7 @@ trace_receiver:
   wait_timeout: 5
 ```
 
-When `trace_receiver.enabled` is false or omitted, arksim only captures tool calls from `AgentResponse` (the standard path). See the [Trace Receiver docs](https://docs.arklex.ai/main/trace-receiver) for full details on capture paths, routing attributes, and deduplication.
+When `trace_receiver.enabled` is false or omitted, arksim only captures tool calls from `AgentResponse` (the standard path). See the [Tool Call Capture docs](https://docs.arklex.ai/main/tool-call-capture) for full details.
 
 ## Trajectory matching
 

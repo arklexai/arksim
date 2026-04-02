@@ -110,7 +110,7 @@
               "main/build-scenario",
               "main/simulate-conversation",
               "main/evaluate-conversation",
-              "main/trace-receiver",
+              "main/tool-call-capture",
               "main/schema-reference"
             ]
           },
