@@ -51,7 +51,8 @@ class ChatCompletionsAgent(BaseAgent):
 
     async def close(self) -> None:
         """Close the persistent HTTP client."""
-        await self._client.aclose()
+        if hasattr(self, "_client"):
+            await self._client.aclose()
 
     async def _post_request(self, payload: dict[str, Any]) -> dict[str, Any]:
         @rate_limit_handler

@@ -13,6 +13,7 @@ Falls back to JSON-only when unavailable; protobuf payloads get HTTP 415.
 from __future__ import annotations
 
 import asyncio
+import base64
 import contextlib
 import json
 import logging
@@ -83,8 +84,6 @@ def _normalize_trace_id(raw: str) -> str:
     if len(raw) == 32 and all(c in "0123456789abcdefABCDEF" for c in raw):
         return raw.lower()
     try:
-        import base64
-
         decoded = base64.b64decode(raw, validate=True)
         return decoded.hex()
     except Exception:

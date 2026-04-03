@@ -58,11 +58,16 @@ class ToolCallBehaviorFailureMetric(AgentBehaviorFailureMetric):
             )
 
         # Select prompt based on tool call source.
-        # When all calls are from response parsing, results are unavailable so
+        # When ALL calls are from response parsing, results are unavailable so
         # we use a reduced prompt that skips Result Usage and Response Integrity.
-        has_request_only = any(
-            getattr(tc, "source", None) == "response_parse" for tc in tool_calls
-        )
+        # Uses all() so mixed-source turns (some OTel with results, some parsed
+        # without) still get the full 6-dimension evaluation.
+        def _get_source(tc: object) -> str | None:
+            if isinstance(tc, dict):
+                return tc.get("source")
+            return getattr(tc, "source", None)
+
+        has_request_only = all(_get_source(tc) == "response_parse" for tc in tool_calls)
         system_prompt = (
             tool_call_behavior_failure_request_only_system_prompt
             if has_request_only

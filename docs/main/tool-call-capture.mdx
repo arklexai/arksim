@@ -158,10 +158,10 @@ The agent must be configured to export OTel spans to `http://{host}:{port}/v1/tr
 
 ## Deduplication
 
-When both `AgentResponse` and automatic capture provide tool calls for the same turn, arksim merges and deduplicates:
+When multiple capture paths provide tool calls for the same turn, arksim merges and deduplicates:
 
 1. **By ID**: tool calls with matching IDs are deduplicated (AgentResponse wins)
-2. **By signature**: tool calls with matching `(name, arguments)` are deduplicated (AgentResponse wins)
+2. **By signature**: tool calls with matching `(name, arguments)` are deduplicated. If the traced version has execution results (non-null `result`) and the existing version does not, the richer version wins. Otherwise AgentResponse wins.
 3. **Unique**: tool calls from either source that don't match anything are included
 
-This allows both capture paths to coexist safely.
+This allows response parsing, OTel capture, and explicit AgentResponse to coexist safely.

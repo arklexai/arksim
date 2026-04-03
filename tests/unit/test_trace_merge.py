@@ -36,6 +36,7 @@ def _make_simulator(
 async def test_trace_merge_appends_new_tool_calls() -> None:
     """Traced tool calls not in AgentResponse are appended."""
     receiver = AsyncMock()
+    receiver.register_trace_id = MagicMock()
     receiver.signal_turn_complete = MagicMock()
     receiver.wait_for_traces = AsyncMock(
         return_value=[
@@ -88,6 +89,7 @@ async def test_trace_merge_appends_new_tool_calls() -> None:
 async def test_trace_merge_deduplicates_by_id() -> None:
     """Traced tool calls with the same ID as explicit ones are skipped."""
     receiver = AsyncMock()
+    receiver.register_trace_id = MagicMock()
     receiver.signal_turn_complete = MagicMock()
     receiver.wait_for_traces = AsyncMock(
         return_value=[
@@ -144,6 +146,7 @@ async def test_trace_merge_deduplicates_by_name_args() -> None:
     ID while AgentResponse carries an SDK-assigned ID.
     """
     receiver = AsyncMock()
+    receiver.register_trace_id = MagicMock()
     receiver.signal_turn_complete = MagicMock()
     receiver.wait_for_traces = AsyncMock(
         return_value=[
@@ -194,6 +197,7 @@ async def test_trace_merge_deduplicates_by_name_args() -> None:
 async def test_trace_merge_adds_unique_traced_calls() -> None:
     """Traced tool calls with different name/args are added alongside explicit ones."""
     receiver = AsyncMock()
+    receiver.register_trace_id = MagicMock()
     receiver.signal_turn_complete = MagicMock()
     receiver.wait_for_traces = AsyncMock(
         return_value=[
@@ -316,6 +320,7 @@ async def test_turn_id_passed_in_metadata() -> None:
 async def test_trace_merge_nested_dict_arguments() -> None:
     """Dedup handles nested dict arguments without crashing."""
     receiver = AsyncMock()
+    receiver.register_trace_id = MagicMock()
     receiver.signal_turn_complete = MagicMock()
     receiver.wait_for_traces = AsyncMock(
         return_value=[
@@ -372,6 +377,7 @@ async def test_trace_merge_nested_dict_arguments() -> None:
 async def test_trace_merge_three_way_overlap() -> None:
     """Agent returns A+B, traces return B'+C. Result should be A, B, C."""
     receiver = AsyncMock()
+    receiver.register_trace_id = MagicMock()
     receiver.signal_turn_complete = MagicMock()
     receiver.wait_for_traces = AsyncMock(
         return_value=[
@@ -426,6 +432,7 @@ async def test_trace_merge_three_way_overlap() -> None:
 async def test_dedup_prefers_toolcall_with_result() -> None:
     """When a traced ToolCall has a result and the explicit one does not, traced wins."""
     receiver = AsyncMock()
+    receiver.register_trace_id = MagicMock()
     receiver.signal_turn_complete = MagicMock()
     # Traced tool call with result
     receiver.wait_for_traces = AsyncMock(
@@ -489,6 +496,7 @@ async def test_dedup_prefers_toolcall_with_result() -> None:
 async def test_source_field_preserved_through_merge() -> None:
     """Source field survives the merge/dedup process for purely traced tool calls."""
     receiver = AsyncMock()
+    receiver.register_trace_id = MagicMock()
     receiver.signal_turn_complete = MagicMock()
     receiver.wait_for_traces = AsyncMock(
         return_value=[

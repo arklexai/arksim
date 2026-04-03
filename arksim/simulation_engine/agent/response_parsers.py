@@ -58,9 +58,7 @@ def parse_openai(result: dict[str, Any]) -> AgentResponse:
 
     msg = choices[0].get("message") or choices[0].get("delta") or {}
     raw_content = msg.get("content")
-    content: str = raw_content if isinstance(raw_content, str) else (raw_content or "")
-    if not isinstance(content, str):
-        content = str(content)
+    content = raw_content if isinstance(raw_content, str) else ""
 
     tool_calls: list[ToolCall] = []
     for tc in msg.get("tool_calls") or []:
