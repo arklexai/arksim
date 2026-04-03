@@ -24,6 +24,7 @@ if TYPE_CHECKING:
     from arksim.tracing import TraceReceiver
 
 from arksim.tracing.context import _clear_trace_context, _set_trace_context
+from arksim.tracing.propagation import generate_traceparent
 
 from .agent.factory import create_agent
 from .core import TURN_KNOWLEDGE_FN
@@ -175,8 +176,18 @@ class Simulator:
 
                 # Set trace routing context so processors can read it
                 # without the agent passing it explicitly.
+                traceparent = None
                 if self.trace_receiver is not None:
-                    _set_trace_context(conversation_id, turn, self.trace_receiver)
+                    if self.agent_config.agent_type != AgentType.CUSTOM.value:
+                        traceparent = generate_traceparent(
+                            self.trace_receiver, conversation_id, turn
+                        )
+                    _set_trace_context(
+                        conversation_id,
+                        turn,
+                        self.trace_receiver,
+                        traceparent=traceparent,
+                    )
 
                 try:
                     result = await agent.execute(
@@ -184,10 +195,13 @@ class Simulator:
                         metadata=metadata,
                     )
                 finally:
-                    # Clear context and signal turn complete even if
-                    # agent.execute() raises, to avoid stale contextvars.
                     if self.trace_receiver is not None:
-                        self.trace_receiver.signal_turn_complete(conversation_id, turn)
+                        # Only signal turn complete for same-process agents.
+                        # Cross-process agents rely on HTTP event + settle window.
+                        if self.agent_config.agent_type == AgentType.CUSTOM.value:
+                            self.trace_receiver.signal_turn_complete(
+                                conversation_id, turn
+                            )
                         _clear_trace_context()
 
                 # Normalize response
@@ -216,6 +230,16 @@ class Simulator:
                             sig = (tc.name, json.dumps(tc.arguments, sort_keys=True))
                             if tc.id not in existing_ids and sig not in existing_sigs:
                                 turn_tool_calls.append(tc)
+                            elif sig in existing_sigs and tc.result is not None:
+                                # Prefer traced version with richer data (has result)
+                                for i, existing in enumerate(turn_tool_calls):
+                                    existing_sig = (
+                                        existing.name,
+                                        json.dumps(existing.arguments, sort_keys=True),
+                                    )
+                                    if existing_sig == sig and existing.result is None:
+                                        turn_tool_calls[i] = tc
+                                        break
 
                 history.append(
                     {
