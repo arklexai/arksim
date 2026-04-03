@@ -23,10 +23,10 @@ from .base_metric import ChatMessage, QualitativeMetric, QualResult, Quantitativ
 from .entities import (
     ConversationEvaluation,
     ConvoItem,
+    ErrorScenarioGroup,  # noqa: F811
     Evaluation,
     EvaluationInput,
     EvaluationParams,
-    FocusFileInfo,
     TurnEvaluation,
     TurnItem,
     UniqueError,
@@ -36,7 +36,7 @@ from .evaluate import (
     evaluate_goal_completion,
     evaluate_turn,
 )
-from .focus import generate_focus_files
+from .focus import FocusFileInfo, generate_focus_files
 from .trajectory_matching import match_trajectory
 from .utils.constants import (
     SCORE_NOT_COMPUTED,
@@ -54,7 +54,7 @@ from .utils.enums import (
 logger = logging.getLogger(__name__)
 
 
-EVALUATION_SCHEMA_VERSION = "v1"
+EVALUATION_SCHEMA_VERSION = "v1.1"
 EVALUATOR_VERSION = "v1"
 
 
@@ -828,11 +828,13 @@ def run_evaluation(
                 len(focus_infos),
                 os.path.join(settings.output_dir, "focus/"),
             )
-            evaluator.evaluation_results.focus_files = [
-                fi.model_copy(
-                    update={
-                        "file_path": os.path.relpath(fi.file_path, settings.output_dir)
-                    }
+            evaluator.evaluation_results.error_scenario_groups = [
+                ErrorScenarioGroup(
+                    error_index=fi.error_index,
+                    unique_error_id=fi.unique_error_id,
+                    error_description=fi.error_description,
+                    severity=fi.severity,
+                    scenario_ids=fi.scenario_ids,
                 )
                 for fi in focus_infos
             ]

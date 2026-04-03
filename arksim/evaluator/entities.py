@@ -228,15 +228,14 @@ class ConversationEvaluation(BaseModel):
     turn_scores: list[TurnEvaluation]
 
 
-class FocusFileInfo(BaseModel):
-    """Metadata about a generated focus file."""
+class ErrorScenarioGroup(BaseModel):
+    """Maps a unique error to the scenarios that triggered it."""
 
     error_index: int
     unique_error_id: str
     error_description: str
     severity: str
     scenario_ids: list[str]
-    file_path: str
 
 
 class Evaluation(BaseModel):
@@ -249,4 +248,4 @@ class Evaluation(BaseModel):
     simulation_id: str
     conversations: list[ConversationEvaluation]
     unique_errors: list[UniqueError]
-    focus_files: list[FocusFileInfo] = Field(default_factory=list)
+    error_scenario_groups: list[ErrorScenarioGroup] = Field(default_factory=list)

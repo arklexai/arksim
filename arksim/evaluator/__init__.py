@@ -17,13 +17,13 @@ from .base_metric import (
     format_chat_history,
 )
 from .entities import (
+    ErrorScenarioGroup,
     Evaluation,
     EvaluationInput,
     EvaluationParams,
-    FocusFileInfo,
 )
 from .evaluator import Evaluator, run_evaluation
-from .focus import generate_focus_files
+from .focus import FocusFileInfo, generate_focus_files
 from .thresholds import (
     check_numeric_thresholds,
     check_qualitative_failure_labels,
@@ -39,6 +39,7 @@ __all__ = [
     "QualResult",
     "Evaluator",
     "EvaluationParams",
+    "ErrorScenarioGroup",
     "FocusFileInfo",
     "ScoreInput",
     "QuantResult",
