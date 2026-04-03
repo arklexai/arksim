@@ -420,3 +420,108 @@ async def test_trace_merge_three_way_overlap() -> None:
     ids = [tc["id"] for tc in tc_list]
     assert "b" in ids
     assert "span-b" not in ids
+
+
+@pytest.mark.asyncio
+async def test_dedup_prefers_toolcall_with_result() -> None:
+    """When a traced ToolCall has a result and the explicit one does not, traced wins."""
+    receiver = AsyncMock()
+    receiver.signal_turn_complete = MagicMock()
+    # Traced tool call with result
+    receiver.wait_for_traces = AsyncMock(
+        return_value=[
+            ToolCall(
+                id="span_1",
+                name="search",
+                arguments={"q": "test"},
+                result='["item1"]',
+                source="otel_trace",
+            )
+        ]
+    )
+
+    sim = _make_simulator(trace_receiver=receiver)
+
+    mock_agent = AsyncMock()
+    mock_agent.get_chat_id = AsyncMock(return_value="conv-1")
+    # Explicit tool call (from response parsing) with no result
+    mock_agent.execute = AsyncMock(
+        return_value=AgentResponse(
+            content="results",
+            tool_calls=[
+                ToolCall(
+                    id="call_1",
+                    name="search",
+                    arguments={"q": "test"},
+                    source="response_parse",
+                )
+            ],
+        )
+    )
+    mock_agent.close = AsyncMock()
+
+    sim.llm.call_async = AsyncMock(side_effect=["hello", "###STOP###"])
+
+    with patch(
+        "arksim.simulation_engine.simulator.create_agent",
+        return_value=mock_agent,
+    ):
+        state = await sim._run_single_conversation(
+            profile="test user",
+            goal="find items",
+            knowledge=[{"content": "k1"}],
+            agent_context="context",
+            max_turns=3,
+            scenario_id="s1",
+        )
+
+    assert state is not None
+    agent_msgs = [m for m in state.conversation_history if m.get("role") == "user"]
+    assert len(agent_msgs) == 1
+    tc_list = agent_msgs[0].get("tool_calls", [])
+    # The traced version with result should replace the explicit one
+    assert len(tc_list) == 1
+    assert tc_list[0]["result"] == '["item1"]'
+    assert tc_list[0]["source"] == "otel_trace"
+
+
+@pytest.mark.asyncio
+async def test_source_field_preserved_through_merge() -> None:
+    """Source field survives the merge/dedup process for purely traced tool calls."""
+    receiver = AsyncMock()
+    receiver.signal_turn_complete = MagicMock()
+    receiver.wait_for_traces = AsyncMock(
+        return_value=[
+            ToolCall(id="t1", name="unique_tool", arguments={}, source="otel_trace")
+        ]
+    )
+
+    sim = _make_simulator(trace_receiver=receiver)
+
+    mock_agent = AsyncMock()
+    mock_agent.get_chat_id = AsyncMock(return_value="conv-1")
+    # Agent returns a plain string (no tool calls in response)
+    mock_agent.execute = AsyncMock(return_value="text only")
+    mock_agent.close = AsyncMock()
+
+    sim.llm.call_async = AsyncMock(side_effect=["hello", "###STOP###"])
+
+    with patch(
+        "arksim.simulation_engine.simulator.create_agent",
+        return_value=mock_agent,
+    ):
+        state = await sim._run_single_conversation(
+            profile="test user",
+            goal="do something",
+            knowledge=[{"content": "k1"}],
+            agent_context="context",
+            max_turns=3,
+            scenario_id="s1",
+        )
+
+    assert state is not None
+    agent_msgs = [m for m in state.conversation_history if m.get("role") == "user"]
+    assert len(agent_msgs) == 1
+    tc_list = agent_msgs[0].get("tool_calls", [])
+    assert len(tc_list) == 1
+    assert tc_list[0]["source"] == "otel_trace"

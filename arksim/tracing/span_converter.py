@@ -88,6 +88,7 @@ def span_to_tool_call(span: dict[str, Any]) -> ToolCall | None:
         arguments=arguments,
         result=result,
         error=error,
+        source="otel_trace",
     )
 
 

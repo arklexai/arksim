@@ -13,6 +13,7 @@ from .base_metric import (
 from .builtin_metrics import AgentBehaviorFailureMetric
 from .utils.enums import AgentBehaviorFailureType, AgentMetrics
 from .utils.prompts import (
+    tool_call_behavior_failure_request_only_system_prompt,
     tool_call_behavior_failure_system_prompt,
     tool_call_behavior_failure_user_prompt,
 )
@@ -28,6 +29,10 @@ class ToolCallBehaviorFailureMetric(AgentBehaviorFailureMetric):
 
     Evaluates: tool selection, parameter correctness, call necessity,
     result usage, action safety, and response integrity.
+
+    When all tool calls originate from response parsing (source="response_parse"),
+    execution results are unavailable. In that case the evaluator uses a
+    reduced prompt that skips Result Usage and Response Integrity dimensions.
     """
 
     DESCRIPTION = (
@@ -52,11 +57,23 @@ class ToolCallBehaviorFailureMetric(AgentBehaviorFailureMetric):
                 reason="No tool calls in this turn",
             )
 
+        # Select prompt based on tool call source.
+        # When all calls are from response parsing, results are unavailable so
+        # we use a reduced prompt that skips Result Usage and Response Integrity.
+        has_request_only = any(
+            getattr(tc, "source", None) == "response_parse" for tc in tool_calls
+        )
+        system_prompt = (
+            tool_call_behavior_failure_request_only_system_prompt
+            if has_request_only
+            else tool_call_behavior_failure_system_prompt
+        )
+
         response = self._llm.call(
             [
                 {
                     "role": "system",
-                    "content": tool_call_behavior_failure_system_prompt,
+                    "content": system_prompt,
                 },
                 {
                     "role": "user",
