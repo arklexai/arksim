@@ -228,6 +228,17 @@ class ConversationEvaluation(BaseModel):
     turn_scores: list[TurnEvaluation]
 
 
+class FocusFileInfo(BaseModel):
+    """Metadata about a generated focus file."""
+
+    error_index: int
+    unique_error_id: str
+    error_description: str
+    severity: str
+    scenario_ids: list[str]
+    file_path: str
+
+
 class Evaluation(BaseModel):
     """Top-level evaluation output file."""
 
@@ -238,3 +249,4 @@ class Evaluation(BaseModel):
     simulation_id: str
     conversations: list[ConversationEvaluation]
     unique_errors: list[UniqueError]
+    focus_files: list[FocusFileInfo] = Field(default_factory=list)

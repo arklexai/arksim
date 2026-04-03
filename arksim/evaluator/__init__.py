@@ -20,9 +20,10 @@ from .entities import (
     Evaluation,
     EvaluationInput,
     EvaluationParams,
+    FocusFileInfo,
 )
 from .evaluator import Evaluator, run_evaluation
-from .focus import FocusFileInfo, generate_focus_files
+from .focus import generate_focus_files
 from .thresholds import (
     check_numeric_thresholds,
     check_qualitative_failure_labels,

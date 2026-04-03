@@ -7,10 +7,14 @@ import os
 
 import pytest
 
-from arksim.evaluator.entities import EvaluationParams, Occurrence, UniqueError
+from arksim.evaluator.entities import (
+    EvaluationParams,
+    FocusFileInfo,
+    Occurrence,
+    UniqueError,
+)
 from arksim.evaluator.evaluator import Evaluator
 from arksim.evaluator.focus import (
-    FocusFileInfo,
     _build_error_scenario_map,
     generate_focus_files,
 )
@@ -228,3 +232,50 @@ class TestDisplayTopUniqueErrorsWithScenarios:
         assert "scenario_refund" in log_text
         assert "scenario_clarify" in log_text
         assert "focus/error_1.json" in log_text
+
+
+class TestEvaluationFocusFilesSerialization:
+    def test_focus_files_included_in_model_dump(self) -> None:
+        from arksim.evaluator.entities import Evaluation
+
+        evaluation = Evaluation(
+            schema_version="v1",
+            generated_at="2026-04-01T00:00:00Z",
+            evaluator_version="v1",
+            evaluation_id="eval-1",
+            simulation_id="sim-1",
+            conversations=[],
+            unique_errors=[],
+            focus_files=[
+                FocusFileInfo(
+                    error_index=1,
+                    unique_error_id="err_1",
+                    error_description="Agent gave wrong refund amount",
+                    severity="critical",
+                    scenario_ids=["scenario_refund"],
+                    file_path="focus/error_1.json",
+                ),
+            ],
+        )
+
+        data = evaluation.model_dump()
+        assert len(data["focus_files"]) == 1
+        assert data["focus_files"][0]["unique_error_id"] == "err_1"
+        assert data["focus_files"][0]["scenario_ids"] == ["scenario_refund"]
+        assert data["focus_files"][0]["file_path"] == "focus/error_1.json"
+
+    def test_focus_files_defaults_to_empty(self) -> None:
+        from arksim.evaluator.entities import Evaluation
+
+        evaluation = Evaluation(
+            schema_version="v1",
+            generated_at="2026-04-01T00:00:00Z",
+            evaluator_version="v1",
+            evaluation_id="eval-1",
+            simulation_id="sim-1",
+            conversations=[],
+            unique_errors=[],
+        )
+
+        data = evaluation.model_dump()
+        assert data["focus_files"] == []

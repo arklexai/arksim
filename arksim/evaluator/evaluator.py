@@ -26,6 +26,7 @@ from .entities import (
     Evaluation,
     EvaluationInput,
     EvaluationParams,
+    FocusFileInfo,
     TurnEvaluation,
     TurnItem,
     UniqueError,
@@ -35,7 +36,7 @@ from .evaluate import (
     evaluate_goal_completion,
     evaluate_turn,
 )
-from .focus import FocusFileInfo, generate_focus_files
+from .focus import generate_focus_files
 from .trajectory_matching import match_trajectory
 from .utils.constants import (
     SCORE_NOT_COMPUTED,
@@ -806,7 +807,6 @@ def run_evaluation(
         scenarios=scenarios,
     )
     evaluator_output = evaluator.evaluate(simulation, on_progress=on_progress)
-    evaluator.save_results()
 
     # Build conversation -> scenario mapping once for focus files and display
     conv_to_scenario: dict[str, str] | None = None
@@ -830,6 +830,19 @@ def run_evaluation(
                 len(focus_infos),
                 os.path.join(settings.output_dir, "focus/"),
             )
+            evaluator.evaluation_results.focus_files = [
+                FocusFileInfo(
+                    error_index=fi.error_index,
+                    unique_error_id=fi.unique_error_id,
+                    error_description=fi.error_description,
+                    severity=fi.severity,
+                    scenario_ids=fi.scenario_ids,
+                    file_path=os.path.relpath(fi.file_path, settings.output_dir),
+                )
+                for fi in focus_infos
+            ]
+
+    evaluator.save_results()
 
     evaluator.display_evaluation_summary(
         conv_to_scenario=conv_to_scenario,

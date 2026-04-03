@@ -11,25 +11,12 @@ from __future__ import annotations
 import logging
 import os
 
-from pydantic import BaseModel
-
-from arksim.evaluator.entities import UniqueError
+from arksim.evaluator.entities import FocusFileInfo, UniqueError
 from arksim.evaluator.utils.constants import SEVERITY_RANK
 from arksim.scenario.entities import Scenario, Scenarios
 from arksim.utils.output import save_json_file
 
 logger = logging.getLogger(__name__)
-
-
-class FocusFileInfo(BaseModel):
-    """Metadata about a generated focus file."""
-
-    error_index: int
-    unique_error_id: str
-    error_description: str
-    severity: str
-    scenario_ids: list[str]
-    file_path: str
 
 
 def _build_error_scenario_map(
