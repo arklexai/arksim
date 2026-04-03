@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 from arksim.tracing.config import TraceReceiverConfig
+from arksim.tracing.propagation import create_traced_client, inject_trace_context
 from arksim.tracing.receiver import TraceReceiver
 from arksim.tracing.span_converter import spans_to_tool_calls
 
@@ -11,9 +12,8 @@ __all__ = [
     "ArksimTracingProcessor",
     "TraceReceiver",
     "TraceReceiverConfig",
-    # Public utility: converts raw OTLP span dicts to ToolCall objects.
-    # Useful for custom receivers, testing, and processing spans outside
-    # the built-in TraceReceiver pipeline.
+    "create_traced_client",
+    "inject_trace_context",
     "spans_to_tool_calls",
 ]
 
