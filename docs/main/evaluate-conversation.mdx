@@ -332,7 +332,7 @@ for convo in evaluator_output.conversations:
 
 ## Reading the Output
 
-Results go to `evaluation.json`: **conversations** (one per run) and **unique_errors** (deduplicated failures).
+Results go to `evaluation.json`: **conversations** (one per run), **unique_errors** (deduplicated failures), and **error_scenario_groups** (which scenarios triggered each error).
 
 <Expandable title="By conversation">
   Each `conversations[]` entry has:
@@ -354,6 +354,16 @@ Results go to `evaluation.json`: **conversations** (one per run) and **unique_er
   - **`occurrences`**: `{ "conversation_id", "turn_id" }` list. Use to find the conversation and turn in logs or CSV.
 
   Use **`occurrences`** to go from an error to the exact turn; then check **`turn_scores`** and the transcript.
+</Expandable>
+
+<Expandable title="By error scenario group">
+  Each **`error_scenario_groups[]`** entry maps one unique error to the scenarios that triggered it:
+
+  - **`unique_error_id`**: Links to the matching entry in `unique_errors`.
+  - **`scenario_ids`**: Which scenarios triggered this error. Use these IDs with `--scenario_file_path` to rerun only the affected scenarios.
+  - **`severity`** and **`error_description`**: Same as the linked `unique_errors` entry, included for convenience.
+
+  This field is empty when no errors are detected or no scenario file was provided. See [Focus Files](#focus-files) for the file-based workflow.
 </Expandable>
 
 ---

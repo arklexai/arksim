@@ -134,8 +134,6 @@ class ErrorRow(BaseModel):
     severity: str
     occurrences: dict[str, list[str]]  # {conv_id: ["turn_0", "turn_1", ...]}
     scenario_ids: list[str] = Field(default_factory=list)
-    suggested_fix: str = ""
-    best_module_fix_reasoning: str = ""
     occurrence_snippets: list[OccurrenceSnippet] = Field(default_factory=list)
 
 

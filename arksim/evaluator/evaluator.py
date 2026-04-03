@@ -23,7 +23,7 @@ from .base_metric import ChatMessage, QualitativeMetric, QualResult, Quantitativ
 from .entities import (
     ConversationEvaluation,
     ConvoItem,
-    ErrorScenarioGroup,  # noqa: F811
+    ErrorScenarioGroup,
     Evaluation,
     EvaluationInput,
     EvaluationParams,
@@ -813,15 +813,21 @@ def run_evaluation(
             c.conversation_id: c.scenario_id for c in simulation.conversations
         }
 
-    # Generate focus files for rerunning failed scenarios
+    # Generate focus files for rerunning failed scenarios (best-effort;
+    # a failure here must not prevent evaluation.json from being written).
     focus_infos: list[FocusFileInfo] = []
     if evaluator_output.unique_errors and scenarios and conv_to_scenario:
-        focus_infos = generate_focus_files(
-            unique_errors=evaluator_output.unique_errors,
-            conv_to_scenario=conv_to_scenario,
-            scenarios=scenarios,
-            output_dir=settings.output_dir,
-        )
+        try:
+            focus_infos = generate_focus_files(
+                unique_errors=evaluator_output.unique_errors,
+                conv_to_scenario=conv_to_scenario,
+                scenarios=scenarios,
+                output_dir=settings.output_dir,
+            )
+        except Exception:
+            logger.exception(
+                "Focus file generation failed; continuing without focus files"
+            )
         if focus_infos:
             logger.info(
                 "Generated %d focus file(s) in %s",

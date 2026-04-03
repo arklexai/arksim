@@ -178,6 +178,28 @@ Written by `arksim evaluate` or the evaluation step of `arksim simulate-evaluate
   </Expandable>
 </ResponseField>
 
+<ResponseField name="error_scenario_groups" type="list[ErrorScenarioGroup]">
+  Maps each unique error to the scenarios that triggered it. Empty when no errors are detected or no scenario file was provided. Added in schema version `v1.1`.
+
+  <Expandable title="ErrorScenarioGroup fields">
+    <ResponseField name="error_index" type="integer" required>
+      Position in the list, ordered by severity (1 = most severe) then by occurrence count.
+    </ResponseField>
+    <ResponseField name="unique_error_id" type="string" required>
+      Links to the matching entry in `unique_errors`.
+    </ResponseField>
+    <ResponseField name="error_description" type="string" required>
+      Human-readable description of the error.
+    </ResponseField>
+    <ResponseField name="severity" type="string" required>
+      `critical`, `high`, `medium`, or `low`.
+    </ResponseField>
+    <ResponseField name="scenario_ids" type="list[string]" required>
+      IDs of scenarios that triggered this error, sorted alphabetically.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
 ---
 
 ## Focus files (`focus/error_N.json`, `focus/all_failures.json`)

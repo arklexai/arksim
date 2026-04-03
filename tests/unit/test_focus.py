@@ -316,6 +316,32 @@ class TestGenerateFocusFiles:
         assert result == []
         assert not os.path.exists(os.path.join(str(tmp_path), "focus"))
 
+    def test_io_failure_propagates(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """I/O failure in save_json_file raises so callers can handle it."""
+        from unittest.mock import patch
+
+        scenarios = Scenarios(
+            schema_version="1.0", scenarios=[_make_scenario("scenario_a")]
+        )
+        errors = [_make_error("err_1", [("conv_1", 0)])]
+        conv_to_scenario = {"conv_1": "scenario_a"}
+
+        with (
+            patch(
+                "arksim.evaluator.focus.save_json_file",
+                side_effect=OSError("disk full"),
+            ),
+            pytest.raises(OSError, match="disk full"),
+        ):
+            generate_focus_files(
+                unique_errors=errors,
+                conv_to_scenario=conv_to_scenario,
+                scenarios=scenarios,
+                output_dir=str(tmp_path),
+            )
+
 
 class TestDisplayTopUniqueErrorsWithScenarios:
     def test_displays_scenario_ids_and_focus_path(
