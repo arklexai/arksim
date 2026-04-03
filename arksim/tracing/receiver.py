@@ -18,6 +18,7 @@ import json
 import logging
 import threading
 from collections import defaultdict
+from collections.abc import Callable
 from http import HTTPStatus
 from typing import Any
 
@@ -71,8 +72,28 @@ def _parse_protobuf_payload(body: bytes) -> dict[str, Any]:
         )
 
 
+def _normalize_trace_id(raw: str) -> str:
+    """Normalize a trace ID from OTLP payload to lowercase hex.
+
+    Protobuf MessageToDict base64-encodes bytes fields, while JSON
+    OTLP uses hex encoding. Accepts either format.
+    """
+    if not raw:
+        return ""
+    if len(raw) == 32 and all(c in "0123456789abcdefABCDEF" for c in raw):
+        return raw.lower()
+    try:
+        import base64
+
+        decoded = base64.b64decode(raw, validate=True)
+        return decoded.hex()
+    except Exception:
+        return raw.lower()
+
+
 def _extract_spans_with_routing(
     payload: dict[str, Any],
+    trace_id_resolver: Callable[[str], tuple[str, int] | None] | None = None,
 ) -> dict[tuple[str, int], list[dict[str, Any]]]:
     """Parse an OTLP payload dict and group spans by (conversation_id, turn_id).
 
@@ -110,6 +131,14 @@ def _extract_spans_with_routing(
                 )
 
                 if conv_id is None or raw_turn is None:
+                    # Fallback: resolve via trace_id mapping (cross-process agents)
+                    if trace_id_resolver is not None:
+                        raw_trace_id = span.get("traceId", span.get("trace_id", ""))
+                        if raw_trace_id:
+                            resolved = trace_id_resolver(raw_trace_id)
+                            if resolved is not None:
+                                grouped[resolved].append(span)
+                                continue
                     logger.debug(
                         "Span %s missing arksim routing attributes, skipping",
                         span.get("spanId", span.get("span_id", "?")),
@@ -161,6 +190,7 @@ class TraceReceiver:
         self._lock = asyncio.Lock()
         self._submit_lock = threading.Lock()
         self._loop: asyncio.AbstractEventLoop | None = None
+        self._trace_id_map: dict[str, tuple[str, int]] = {}
 
     async def __aenter__(self) -> TraceReceiver:
         await self.start()
@@ -204,6 +234,7 @@ class TraceReceiver:
         self._direct_tool_calls.clear()
         self._events.clear()
         self._direct_events.clear()
+        self._trace_id_map.clear()
 
     def submit_tool_calls(
         self, conversation_id: str, turn_id: int, tool_calls: list[ToolCall]
@@ -247,6 +278,23 @@ class TraceReceiver:
         with self._submit_lock:
             evt = self._direct_events.setdefault(key, threading.Event())
             evt.set()
+
+    def register_trace_id(
+        self, trace_id: str, conversation_id: str, turn_id: int
+    ) -> None:
+        """Register a trace_id to conversation/turn mapping for span routing.
+
+        Thread-safe via _submit_lock. Called from synchronous context
+        (simulator before await agent.execute()).
+        """
+        with self._submit_lock:
+            self._trace_id_map[trace_id.lower()] = (conversation_id, turn_id)
+
+    def _resolve_trace_id(self, trace_id_hex: str) -> tuple[str, int] | None:
+        """Look up routing for a trace ID. Returns None if unknown."""
+        normalized = _normalize_trace_id(trace_id_hex)
+        with self._submit_lock:
+            return self._trace_id_map.get(normalized)
 
     async def wait_for_traces(
         self, conversation_id: str, turn_id: int
@@ -319,6 +367,15 @@ class TraceReceiver:
             for k in direct_stale:
                 self._direct_tool_calls.pop(k, None)
                 self._direct_events.pop(k, None)
+
+            # Prune trace_id_map entries for drained and stale turns
+            stale_trace_ids = [
+                tid
+                for tid, (cid, tid_val) in self._trace_id_map.items()
+                if cid == conversation_id and tid_val <= turn_id
+            ]
+            for tid in stale_trace_ids:
+                del self._trace_id_map[tid]
 
         # Merge: HTTP-received spans (converted) + directly submitted ToolCalls
         tool_calls = spans_to_tool_calls(spans) + direct
@@ -477,7 +534,9 @@ class TraceReceiver:
                 logger.warning("Invalid JSON in trace payload")
                 return False
 
-        grouped = _extract_spans_with_routing(payload)
+        grouped = _extract_spans_with_routing(
+            payload, trace_id_resolver=self._resolve_trace_id
+        )
         if not grouped:
             logger.debug("No routable spans in trace payload")
             return True

@@ -8,6 +8,7 @@ import json
 
 import pytest
 
+from arksim.simulation_engine.tool_types import ToolCall
 from arksim.tracing.receiver import TraceReceiver, _extract_spans_with_routing
 
 
@@ -519,7 +520,6 @@ async def test_receiver_415_when_protobuf_unavailable(_unused_port: int) -> None
 @pytest.mark.asyncio
 async def test_submit_tool_calls_direct_injection(_unused_port: int) -> None:
     """submit_tool_calls injects ToolCalls directly, bypassing HTTP."""
-    from arksim.simulation_engine.tool_types import ToolCall
 
     port = _unused_port
     async with TraceReceiver(port=port, wait_timeout=2.0) as receiver:
@@ -536,7 +536,6 @@ async def test_submit_tool_calls_direct_injection(_unused_port: int) -> None:
 @pytest.mark.asyncio
 async def test_submit_tool_calls_multiple_turns(_unused_port: int) -> None:
     """Direct injection routes to the correct turn."""
-    from arksim.simulation_engine.tool_types import ToolCall
 
     port = _unused_port
     async with TraceReceiver(port=port, wait_timeout=2.0) as receiver:
@@ -558,7 +557,6 @@ async def test_submit_tool_calls_multiple_turns(_unused_port: int) -> None:
 @pytest.mark.asyncio
 async def test_submit_tool_calls_mixed_with_http(_unused_port: int) -> None:
     """Direct injection and HTTP spans are merged for the same turn."""
-    from arksim.simulation_engine.tool_types import ToolCall
 
     port = _unused_port
     async with TraceReceiver(port=port, wait_timeout=2.0) as receiver:
@@ -598,7 +596,6 @@ async def test_submit_tool_calls_after_stop_warns(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
     """submit_tool_calls after stop() should warn, not silently buffer."""
-    from arksim.simulation_engine.tool_types import ToolCall
 
     receiver = TraceReceiver(host="127.0.0.1", port=0, wait_timeout=1.0)
     await receiver.start()
@@ -651,7 +648,6 @@ async def test_signal_turn_complete_unblocks_wait(_unused_port: int) -> None:
 @pytest.mark.asyncio
 async def test_start_without_http(_unused_port: int) -> None:
     """start(start_http=False) skips the TCP listener but direct injection works."""
-    from arksim.simulation_engine.tool_types import ToolCall
 
     receiver = TraceReceiver(port=_unused_port, wait_timeout=2.0)
     await receiver.start(start_http=False)
@@ -680,3 +676,69 @@ async def test_start_without_http(_unused_port: int) -> None:
             pass  # expected: no server listening
     finally:
         await receiver.stop()
+
+
+# ── Trace ID mapping tests ─────────────────────────────────────────
+
+
+class TestTraceIdMapping:
+    """Tests for W3C Trace Context trace_id-based routing."""
+
+    def test_register_and_resolve(self) -> None:
+        receiver = TraceReceiver(port=0, wait_timeout=0.1)
+        receiver.register_trace_id("abcd1234" * 4, "conv-1", 0)
+        result = receiver._resolve_trace_id("abcd1234" * 4)
+        assert result == ("conv-1", 0)
+
+    def test_resolve_unknown_returns_none(self) -> None:
+        receiver = TraceReceiver(port=0, wait_timeout=0.1)
+        assert receiver._resolve_trace_id("unknown") is None
+
+    def test_normalize_hex_passthrough(self) -> None:
+        from arksim.tracing.receiver import _normalize_trace_id
+
+        hex_id = "abcdef1234567890abcdef1234567890"
+        assert _normalize_trace_id(hex_id) == hex_id
+
+    def test_normalize_base64(self) -> None:
+        import base64
+
+        from arksim.tracing.receiver import _normalize_trace_id
+
+        raw = bytes.fromhex("abcdef1234567890abcdef1234567890")
+        b64 = base64.b64encode(raw).decode()
+        assert _normalize_trace_id(b64) == "abcdef1234567890abcdef1234567890"
+
+    def test_normalize_invalid_returns_lowered(self) -> None:
+        from arksim.tracing.receiver import _normalize_trace_id
+
+        assert _normalize_trace_id("NOT-VALID") == "not-valid"
+
+
+@pytest.mark.asyncio
+async def test_trace_id_map_cleanup_on_drain(_unused_port: int) -> None:
+    """Trace ID map entries are pruned when wait_for_traces drains stale turns."""
+    port = _unused_port
+    async with TraceReceiver(port=port, wait_timeout=0.1) as receiver:
+        receiver.register_trace_id("aaaa" * 8, "conv-1", 0)
+        receiver.register_trace_id("bbbb" * 8, "conv-1", 1)
+
+        # Drain turn 1 (should prune turn 0 and turn 1 mappings)
+        receiver.submit_tool_calls(
+            "conv-1", 1, [ToolCall(id="t1", name="tool", source="otel_trace")]
+        )
+        await receiver.wait_for_traces("conv-1", 1)
+
+        assert receiver._resolve_trace_id("aaaa" * 8) is None
+        assert receiver._resolve_trace_id("bbbb" * 8) is None
+
+
+@pytest.mark.asyncio
+async def test_trace_id_map_cleared_on_stop() -> None:
+    """All trace ID mappings are cleared on stop."""
+    receiver = TraceReceiver(port=0, wait_timeout=0.1)
+    await receiver.start(start_http=False)
+    receiver.register_trace_id("cccc" * 8, "conv-1", 0)
+    assert receiver._resolve_trace_id("cccc" * 8) is not None
+    await receiver.stop()
+    assert receiver._resolve_trace_id("cccc" * 8) is None
