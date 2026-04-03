@@ -44,7 +44,7 @@ ArkSim simulates realistic multi-turn conversations between LLM-powered users an
 - **Custom metrics**: Define your own quantitative and qualitative metrics with full access to conversation context
 - **Error detection**: Automatically categorize agent failures (false information, disobeying requests, repetition) with severity levels
 - **Protocol-agnostic**: Works with Chat Completions API, A2A protocol, or any Python agent class directly
-- **Multi-provider**: Use OpenAI, Anthropic, or Google as the evaluation LLM
+- **Multi-provider**: Use OpenAI, Anthropic, Google, or MiniMax as the evaluation LLM
 - **Parallel execution**: Configurable concurrency for both simulation and evaluation
 - **Visual reports**: Interactive HTML reports with score breakdowns, error analysis, and full conversation viewer
 
@@ -62,12 +62,16 @@ For additional LLM providers:
 pip install "arksim[all]"        # All providers
 pip install "arksim[anthropic]"  # Anthropic only
 pip install "arksim[google]"     # Google only
+# MiniMax requires no extra dependencies (uses the bundled OpenAI SDK)
 ```
 
 ### Set up credentials
 
 ```bash
 export OPENAI_API_KEY="your-key"
+
+# For MiniMax provider:
+# export MINIMAX_API_KEY="your-key"
 ```
 
 ### Download examples
@@ -254,7 +258,7 @@ All settings can be specified in YAML and overridden via CLI flags (`--key value
 | `agent_config` | object | required | Inline agent config (`agent_type`, `agent_name`, `api_config` or `custom_config`) |
 | `scenario_file_path` | string | required | Path to scenarios JSON |
 | `model` | string | `gpt-5.1` | LLM model for simulated users |
-| `provider` | string | `openai` | LLM provider: `openai`, `anthropic`, `google` |
+| `provider` | string | `openai` | LLM provider: `openai`, `anthropic`, `google`, `minimax` |
 | `num_conversations_per_scenario` | int | `5` | Conversations to generate per scenario |
 | `max_turns` | int | `5` | Maximum turns per conversation |
 | `num_workers` | int/string | `50` | Parallel workers |

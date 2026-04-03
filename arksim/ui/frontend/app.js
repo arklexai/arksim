@@ -91,8 +91,9 @@ function arksim() {
       azure:   ['gpt-5.1', 'gpt-4.1', 'gpt-4.1-mini'],
       anthropic:  ['claude-sonnet-4-20250514', 'claude-haiku-4-5-20251001'],
       google:  ['gemini-2.5-flash', 'gemini-2.5-pro'],
+      minimax: ['MiniMax-M2.7', 'MiniMax-M2.7-highspeed', 'MiniMax-M2.5', 'MiniMax-M2.5-highspeed'],
     },
-    providers: ['openai', 'azure', 'anthropic', 'google'],
+    providers: ['openai', 'azure', 'anthropic', 'google', 'minimax'],
 
     modelsForProvider(provider) {
       return this.providerModels[provider] || [];
@@ -117,6 +118,7 @@ function arksim() {
       azure:   'AZURE_CLIENT_ID, AZURE_OPENAI_ENDPOINT, AZURE_OPENAI_API_VERSION',
       anthropic:  'ANTHROPIC_API_KEY',
       google:  'GEMINI_API_KEY (Google Gemini API key)',
+      minimax: 'MINIMAX_API_KEY',
     },
 
     envHint(provider) {
