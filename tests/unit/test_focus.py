@@ -51,6 +51,26 @@ def _make_scenario(scenario_id: str) -> Scenario:
     )
 
 
+class TestSortKey:
+    def test_unknown_severity_sorts_after_low(self) -> None:
+        from arksim.evaluator.focus import _sort_key
+
+        err_low = _make_error("err_low", [("c1", 0)], severity="low")
+        err_unknown = _make_error("err_unknown", [("c1", 0)], severity="catastrophic")
+
+        assert _sort_key(err_low) < _sort_key(err_unknown)
+
+    def test_same_severity_sorts_by_descending_occurrence_count(self) -> None:
+        from arksim.evaluator.focus import _sort_key
+
+        err_few = _make_error("err_few", [("c1", 0)], severity="high")
+        err_many = _make_error(
+            "err_many", [("c1", 0), ("c2", 1), ("c3", 2)], severity="high"
+        )
+
+        assert _sort_key(err_many) < _sort_key(err_few)
+
+
 class TestBuildErrorScenarioMap:
     def test_maps_errors_to_scenarios(self) -> None:
         conv_to_scenario = {
@@ -84,6 +104,21 @@ class TestBuildErrorScenarioMap:
             result = _build_error_scenario_map(errors, {})
         assert "err_1" not in result
         assert any("err_1" in record.message for record in caplog.records)
+
+    def test_error_with_empty_occurrences_dropped(
+        self, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        error = UniqueError(
+            unique_error_id="err_empty",
+            behavior_failure_category="false information",
+            unique_error_description="Error with no occurrences",
+            severity="high",
+            occurrences=[],
+        )
+        with caplog.at_level("WARNING", logger="arksim.evaluator.focus"):
+            result = _build_error_scenario_map([error], {"conv_1": "scenario_a"})
+        assert "err_empty" not in result
+        assert any("err_empty" in record.message for record in caplog.records)
 
 
 class TestGenerateFocusFiles:
@@ -232,6 +267,55 @@ class TestGenerateFocusFiles:
         all_ids = [s["scenario_id"] for s in all_data["scenarios"]]
         assert all_ids == ["scenario_a", "scenario_b", "scenario_c"]
 
+    def test_single_error_single_scenario(self, tmp_path: Path) -> None:
+        scenarios = Scenarios(
+            schema_version="1.0", scenarios=[_make_scenario("scenario_a")]
+        )
+        errors = [_make_error("err_1", [("conv_1", 0)], severity="critical")]
+        conv_to_scenario = {"conv_1": "scenario_a"}
+
+        result = generate_focus_files(
+            unique_errors=errors,
+            conv_to_scenario=conv_to_scenario,
+            scenarios=scenarios,
+            output_dir=str(tmp_path),
+        )
+
+        assert len(result) == 1
+        assert result[0].error_index == 1
+        assert result[0].scenario_ids == ["scenario_a"]
+
+        # all_failures.json has same single scenario
+        all_path = os.path.join(str(tmp_path), "focus", "all_failures.json")
+        with open(all_path) as f:
+            all_data = json.load(f)
+        assert len(all_data["scenarios"]) == 1
+        assert all_data["scenarios"][0]["scenario_id"] == "scenario_a"
+
+    def test_all_errors_unmapped_returns_empty(
+        self, tmp_path: Path, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        """All errors map to scenario IDs that don't exist in the Scenarios object."""
+        scenarios = Scenarios(
+            schema_version="1.0", scenarios=[_make_scenario("scenario_real")]
+        )
+        errors = [
+            _make_error("err_1", [("conv_1", 0)], severity="high"),
+            _make_error("err_2", [("conv_2", 0)], severity="medium"),
+        ]
+        conv_to_scenario = {"conv_1": "scenario_ghost_a", "conv_2": "scenario_ghost_b"}
+
+        with caplog.at_level("DEBUG", logger="arksim.evaluator.focus"):
+            result = generate_focus_files(
+                unique_errors=errors,
+                conv_to_scenario=conv_to_scenario,
+                scenarios=scenarios,
+                output_dir=str(tmp_path),
+            )
+
+        assert result == []
+        assert not os.path.exists(os.path.join(str(tmp_path), "focus"))
+
 
 class TestDisplayTopUniqueErrorsWithScenarios:
     def test_displays_scenario_ids_and_focus_path(
@@ -273,6 +357,107 @@ class TestDisplayTopUniqueErrorsWithScenarios:
         assert "scenario_refund" in log_text
         assert "scenario_clarify" in log_text
         assert "focus/error_1.json" in log_text
+
+    def test_no_focus_info_for_displayed_error(
+        self, caplog: pytest.LogCaptureFixture, tmp_path: Path
+    ) -> None:
+        """Error is displayed but has no matching FocusFileInfo (e.g. all convs unknown)."""
+        params = EvaluationParams(output_dir=str(tmp_path))
+        evaluator = Evaluator(params=params)
+        evaluator.chat_id_to_label = {"conv_1": "Conversation 1"}
+
+        errors = [
+            _make_error("err_1", [("conv_1", 0)]),
+            _make_error("err_2", [("conv_1", 1)]),
+        ]
+        # Only err_1 has a focus file; err_2 was dropped during generation
+        focus_infos = [
+            FocusFileInfo(
+                error_index=1,
+                unique_error_id="err_1",
+                error_description="Error err_1",
+                severity="high",
+                scenario_ids=["scenario_a"],
+                file_path="/eval/focus/error_1.json",
+            ),
+        ]
+
+        with caplog.at_level(logging.INFO):
+            evaluator._display_top_unique_errors(
+                errors,
+                conv_to_scenario={"conv_1": "scenario_a"},
+                focus_infos=focus_infos,
+            )
+
+        log_text = caplog.text
+        # err_1 gets a focus file line, err_2 does not
+        assert "error_1.json" in log_text
+        assert "error_2.json" not in log_text
+
+    def test_display_summary_shows_rerun_hint(
+        self, caplog: pytest.LogCaptureFixture, tmp_path: Path
+    ) -> None:
+        from arksim.evaluator.entities import (
+            ConversationEvaluation,
+            Evaluation,
+            TurnEvaluation,
+        )
+
+        params = EvaluationParams(output_dir=str(tmp_path))
+        evaluator = Evaluator(params=params)
+        evaluator.chat_id_to_label = {"conv_1": "Conversation 1"}
+
+        evaluator.evaluation_results = Evaluation(
+            schema_version="v1.1",
+            generated_at="2026-04-01T00:00:00Z",
+            evaluator_version="v1",
+            evaluation_id="eval-1",
+            simulation_id="sim-1",
+            conversations=[
+                ConversationEvaluation(
+                    conversation_id="conv_1",
+                    goal_completion_score=0.5,
+                    goal_completion_reason="Partial",
+                    turn_success_ratio=0.5,
+                    overall_agent_score=0.5,
+                    evaluation_status="completed",
+                    turn_scores=[
+                        TurnEvaluation(
+                            turn_id=0,
+                            scores=[],
+                            turn_score=3.0,
+                            turn_behavior_failure="false_information",
+                            turn_behavior_failure_reason="Wrong info",
+                            unique_error_ids=["err_1"],
+                        ),
+                    ],
+                ),
+            ],
+            unique_errors=[_make_error("err_1", [("conv_1", 0)])],
+        )
+        evaluator.total_conversations = 1
+        evaluator.total_turns = 1
+
+        focus_infos = [
+            FocusFileInfo(
+                error_index=1,
+                unique_error_id="err_1",
+                error_description="Error err_1",
+                severity="high",
+                scenario_ids=["scenario_a"],
+                file_path=os.path.join(str(tmp_path), "focus", "error_1.json"),
+            ),
+        ]
+
+        with caplog.at_level(logging.INFO):
+            evaluator.display_evaluation_summary(
+                conv_to_scenario={"conv_1": "scenario_a"},
+                focus_infos=focus_infos,
+            )
+
+        log_text = caplog.text
+        assert "FOCUS FILES FOR TARGETED RERUNS" in log_text
+        assert "all_failures.json" in log_text
 
 
 class TestErrorScenarioGroupsSerialization:

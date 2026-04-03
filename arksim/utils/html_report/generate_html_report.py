@@ -453,10 +453,6 @@ def _build_error_rows(
                 severity=error.severity,
                 occurrences=occurrences_dict,
                 scenario_ids=scenario_ids,
-                suggested_fix=getattr(error, "suggested_fix", ""),
-                best_module_fix_reasoning=getattr(
-                    error, "best_module_fix_reasoning", ""
-                ),
                 occurrence_snippets=snippets,
             )
         )
