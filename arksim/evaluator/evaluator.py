@@ -694,6 +694,7 @@ class Evaluator:
                 "  Or target a specific error: --scenario_file_path %s",
                 os.path.join(self.params.output_dir, "focus", "error_N.json"),
             )
+            logger.info("  Tip: pass --output_dir to avoid overwriting these results.")
 
         logger.info(f"\n{'=' * 60}")
 

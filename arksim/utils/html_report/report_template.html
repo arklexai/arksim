@@ -1813,11 +1813,11 @@
                     <div class="error-header">
                         <span class="severity-badge ${sevClass}">${sev}</span>
                         <span class="occurrence-badge">${occurrenceText}</span>
-                        <span class="category-badge">${error.agent_behavior_failure_category || 'General'}</span>
+                        <span class="category-badge">${escapeHtml(error.agent_behavior_failure_category || 'General')}</span>
                     </div>
                     <div class="bug-badge">Bug</div>
                     <div class="error-description">
-                        ${error.unique_error}
+                        ${escapeHtml(error.unique_error)}
                     </div>
                     ${conversationsHtml}
                     ${scenarioIdsHtml}
