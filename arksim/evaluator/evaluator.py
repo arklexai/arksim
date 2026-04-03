@@ -691,7 +691,8 @@ class Evaluator:
                 os.path.join(self.params.output_dir, "focus", "all_failures.json"),
             )
             logger.info(
-                "  Or target a specific error: --scenario_file_path <focus_file>"
+                "  Or target a specific error: --scenario_file_path %s",
+                os.path.join(self.params.output_dir, "focus", "error_N.json"),
             )
 
         logger.info(f"\n{'=' * 60}")
