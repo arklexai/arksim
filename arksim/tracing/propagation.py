@@ -39,8 +39,10 @@ def generate_traceparent(
     return f"00-{trace_id}-{parent_id}-01"
 
 
-def inject_trace_context(request: httpx.Request) -> None:
+async def inject_trace_context(request: httpx.Request) -> None:
     """httpx event hook: injects traceparent from contextvar.
+
+    Async because httpx 0.28+ awaits event hooks on AsyncClient.
 
     No-ops when contextvar is None (e.g. during A2A client init,
     agent card resolution, or other non-execute HTTP calls).

@@ -244,3 +244,114 @@ async def test_end_to_end_traceparent_routing(_unused_port: int) -> None:
     assert len(tool_calls) == 1
     assert tool_calls[0].name == "search"
     assert tool_calls[0].arguments == {"q": "laptop"}
+
+
+@pytest.mark.integration
+@pytest.mark.asyncio
+async def test_a2a_style_traceparent_propagation_and_correlation(
+    _unused_port: int,
+) -> None:
+    """Full A2A-style chain: inject traceparent via httpx hook, export OTel spans, correlate.
+
+    Proves the complete flow:
+      simulator sets contextvar -> httpx hook injects header ->
+      agent endpoint receives traceparent -> agent exports OTel spans
+      with same trace_id -> receiver correlates to conversation/turn.
+    """
+    import os
+
+    import httpx
+    from opentelemetry import context as otel_context
+    from opentelemetry.trace import (
+        NonRecordingSpan,
+        SpanContext,
+        TraceFlags,
+        set_span_in_context,
+    )
+
+    from arksim.tracing.context import trace_traceparent
+    from arksim.tracing.propagation import generate_traceparent, inject_trace_context
+
+    receiver_port = _unused_port
+
+    # ---- mock transport that captures request headers ----
+    captured_headers: dict[str, str] = {}
+
+    def _mock_handler(request: httpx.Request) -> httpx.Response:
+        for key, value in request.headers.items():
+            captured_headers[key.lower()] = value
+        return httpx.Response(200)
+
+    async with TraceReceiver(port=receiver_port, wait_timeout=2.0) as receiver:
+        # Step 1: Simulator generates traceparent and registers mapping.
+        traceparent = generate_traceparent(receiver, "a2a-conv", 0)
+        trace_id = traceparent.split("-")[1]
+
+        # Step 2: Simulator sets the contextvar (as it does before agent.execute).
+        token_cv = trace_traceparent.set(traceparent)
+
+        try:
+            # Step 3: httpx request with inject hook + mock transport.
+            transport = httpx.MockTransport(_mock_handler)
+            async with httpx.AsyncClient(
+                transport=transport,
+                event_hooks={"request": [inject_trace_context]},
+            ) as client:
+                resp = await client.post(
+                    "http://mock-a2a-agent/send",
+                    content=b'{"message": "hello"}',
+                )
+                assert resp.status_code == 200
+        finally:
+            trace_traceparent.reset(token_cv)
+
+        # Step 4: Verify the mock agent received the traceparent header.
+        assert "traceparent" in captured_headers
+        assert captured_headers["traceparent"] == traceparent
+
+        # Step 5: Agent-side OTel export. The agent would parse the received
+        # traceparent and create spans under that trace_id.
+        resource = Resource.create({"service.name": "a2a-remote-agent"})
+        provider = TracerProvider(resource=resource)
+        exporter = OTLPSpanExporter(
+            endpoint=f"http://127.0.0.1:{receiver_port}/v1/traces",
+        )
+        provider.add_span_processor(SimpleSpanProcessor(exporter))
+
+        parent_ctx = SpanContext(
+            trace_id=int(trace_id, 16),
+            span_id=int(os.urandom(8).hex(), 16),
+            is_remote=True,
+            trace_flags=TraceFlags(0x01),
+        )
+        ctx = set_span_in_context(NonRecordingSpan(parent_ctx))
+        otel_token = otel_context.attach(ctx)
+
+        try:
+            tracer = provider.get_tracer("a2a-remote-agent")
+            with tracer.start_as_current_span("execute_tool resolve_booking") as span:
+                span.set_attribute("gen_ai.tool.name", "resolve_booking")
+                span.set_attribute(
+                    "gen_ai.tool.call.arguments",
+                    '{"booking_id": "BK-42"}',
+                )
+                span.set_attribute(
+                    "gen_ai.tool.call.result",
+                    '{"status": "confirmed"}',
+                )
+        finally:
+            otel_context.detach(otel_token)
+
+        provider.force_flush()
+        provider.shutdown()
+
+        # Step 6: Receiver correlates spans by trace_id to the conversation.
+        tool_calls = await receiver.wait_for_traces("a2a-conv", 0)
+
+    # Assertions on the correlated tool calls.
+    assert len(tool_calls) == 1
+    tc = tool_calls[0]
+    assert tc.name == "resolve_booking"
+    assert tc.arguments == {"booking_id": "BK-42"}
+    assert tc.result == '{"status": "confirmed"}'
+    assert tc.error is None

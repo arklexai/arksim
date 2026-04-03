@@ -7,6 +7,7 @@ import re
 from unittest.mock import MagicMock
 
 import httpx
+import pytest
 
 from arksim.tracing.context import trace_traceparent
 from arksim.tracing.propagation import (
@@ -38,20 +39,22 @@ class TestGenerateTraceparent:
 
 
 class TestInjectTraceContext:
-    def test_injects_header_when_set(self) -> None:
+    @pytest.mark.asyncio
+    async def test_injects_header_when_set(self) -> None:
         token = trace_traceparent.set("00-abc-def-01")
         try:
             request = httpx.Request("POST", "http://example.com")
-            inject_trace_context(request)
+            await inject_trace_context(request)
             assert request.headers["traceparent"] == "00-abc-def-01"
         finally:
             trace_traceparent.reset(token)
 
-    def test_noop_when_none(self) -> None:
+    @pytest.mark.asyncio
+    async def test_noop_when_none(self) -> None:
         token = trace_traceparent.set(None)
         try:
             request = httpx.Request("POST", "http://example.com")
-            inject_trace_context(request)
+            await inject_trace_context(request)
             assert "traceparent" not in request.headers
         finally:
             trace_traceparent.reset(token)
