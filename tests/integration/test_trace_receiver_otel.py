@@ -185,3 +185,62 @@ async def test_real_otel_tool_call_id_attribute(_unused_port: int) -> None:
 
     assert len(tool_calls) == 1
     assert tool_calls[0].id == "call_abc123"
+
+
+@pytest.mark.integration
+@pytest.mark.asyncio
+async def test_end_to_end_traceparent_routing(_unused_port: int) -> None:
+    """W3C traceparent routing: spans route by trace_id when arksim attributes are absent."""
+    import os
+
+    from opentelemetry import context as otel_context
+    from opentelemetry.trace import (
+        NonRecordingSpan,
+        SpanContext,
+        TraceFlags,
+        set_span_in_context,
+    )
+
+    from arksim.tracing.propagation import generate_traceparent
+
+    port = _unused_port
+    async with TraceReceiver(port=port, wait_timeout=2.0) as receiver:
+        # Simulator generates traceparent and registers the trace_id mapping.
+        traceparent = generate_traceparent(receiver, "e2e-conv", 0)
+        trace_id = traceparent.split("-")[1]
+
+        # Create a provider with no arksim resource attributes.
+        resource = Resource.create({"service.name": "external-agent"})
+        provider = TracerProvider(resource=resource)
+        exporter = OTLPSpanExporter(
+            endpoint=f"http://127.0.0.1:{port}/v1/traces",
+        )
+        provider.add_span_processor(SimpleSpanProcessor(exporter))
+
+        # Override the OTel context so spans inherit arksim's trace_id.
+        parent_ctx = SpanContext(
+            trace_id=int(trace_id, 16),
+            span_id=int(os.urandom(8).hex(), 16),
+            is_remote=True,
+            trace_flags=TraceFlags(0x01),
+        )
+        ctx = set_span_in_context(NonRecordingSpan(parent_ctx))
+        token = otel_context.attach(ctx)
+
+        try:
+            tracer = provider.get_tracer("external-agent")
+            with tracer.start_as_current_span("execute_tool search") as span:
+                span.set_attribute("gen_ai.tool.name", "search")
+                span.set_attribute("gen_ai.tool.call.arguments", '{"q": "laptop"}')
+        finally:
+            otel_context.detach(token)
+
+        provider.force_flush()
+        provider.shutdown()
+
+        # Receiver routes by trace_id because no arksim.* attributes are present.
+        tool_calls = await receiver.wait_for_traces("e2e-conv", 0)
+
+    assert len(tool_calls) == 1
+    assert tool_calls[0].name == "search"
+    assert tool_calls[0].arguments == {"q": "laptop"}
