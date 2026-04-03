@@ -109,7 +109,7 @@ def generate_focus_files(
             continue
 
         matched: list[Scenario] = []
-        for sid in mapped_ids:
+        for sid in sorted(mapped_ids):
             scenario = scenario_lookup.get(sid)
             if scenario is None:
                 logger.debug(

@@ -4,8 +4,12 @@ from __future__ import annotations
 import json
 import logging
 import os
+from typing import TYPE_CHECKING
 
 import pytest
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 from arksim.evaluator.entities import (
     EvaluationParams,
@@ -83,9 +87,7 @@ class TestBuildErrorScenarioMap:
 
 
 class TestGenerateFocusFiles:
-    def test_writes_per_error_and_all_files(
-        self, tmp_path: pytest.TempPathFactory
-    ) -> None:
+    def test_writes_per_error_and_all_files(self, tmp_path: Path) -> None:
         scenario_a = _make_scenario("scenario_a")
         scenario_b = _make_scenario("scenario_b")
         scenarios = Scenarios(schema_version="1.0", scenarios=[scenario_a, scenario_b])
@@ -152,7 +154,7 @@ class TestGenerateFocusFiles:
         all_ids = {s["scenario_id"] for s in all_data["scenarios"]}
         assert all_ids == {"scenario_a", "scenario_b"}
 
-    def test_no_errors_returns_empty(self, tmp_path: pytest.TempPathFactory) -> None:
+    def test_no_errors_returns_empty(self, tmp_path: Path) -> None:
         scenarios = Scenarios(
             schema_version="1.0", scenarios=[_make_scenario("scenario_a")]
         )
@@ -168,7 +170,7 @@ class TestGenerateFocusFiles:
         assert not os.path.exists(focus_dir)
 
     def test_missing_scenario_gracefully_skipped(
-        self, tmp_path: pytest.TempPathFactory, caplog: pytest.LogCaptureFixture
+        self, tmp_path: Path, caplog: pytest.LogCaptureFixture
     ) -> None:
         # scenario_ghost does not exist in the Scenarios object
         scenarios = Scenarios(
@@ -191,10 +193,49 @@ class TestGenerateFocusFiles:
         focus_dir = os.path.join(str(tmp_path), "focus")
         assert not os.path.exists(focus_dir)
 
+    def test_overlapping_scenarios_deduplicated_in_all_failures(
+        self, tmp_path: Path
+    ) -> None:
+        scenario_a = _make_scenario("scenario_a")
+        scenario_b = _make_scenario("scenario_b")
+        scenario_c = _make_scenario("scenario_c")
+        scenarios = Scenarios(
+            schema_version="1.0",
+            scenarios=[scenario_a, scenario_b, scenario_c],
+        )
+
+        # err_1 maps to scenario_a and scenario_b
+        # err_2 maps to scenario_b and scenario_c (scenario_b overlaps)
+        errors = [
+            _make_error("err_1", [("conv_1", 0), ("conv_2", 0)], severity="high"),
+            _make_error("err_2", [("conv_2", 0), ("conv_3", 0)], severity="high"),
+        ]
+        conv_to_scenario = {
+            "conv_1": "scenario_a",
+            "conv_2": "scenario_b",
+            "conv_3": "scenario_c",
+        }
+
+        result = generate_focus_files(
+            unique_errors=errors,
+            conv_to_scenario=conv_to_scenario,
+            scenarios=scenarios,
+            output_dir=str(tmp_path),
+        )
+
+        assert len(result) == 2
+
+        # all_failures.json should contain exactly 3 unique scenarios, no duplicates
+        all_path = os.path.join(str(tmp_path), "focus", "all_failures.json")
+        with open(all_path) as f:
+            all_data = json.load(f)
+        all_ids = [s["scenario_id"] for s in all_data["scenarios"]]
+        assert all_ids == ["scenario_a", "scenario_b", "scenario_c"]
+
 
 class TestDisplayTopUniqueErrorsWithScenarios:
     def test_displays_scenario_ids_and_focus_path(
-        self, caplog: pytest.LogCaptureFixture, tmp_path: str
+        self, caplog: pytest.LogCaptureFixture, tmp_path: Path
     ) -> None:
         params = EvaluationParams(output_dir=str(tmp_path))
         evaluator = Evaluator(params=params)

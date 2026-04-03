@@ -692,9 +692,7 @@ class Evaluator:
             logger.info(
                 "  Rerun all failures: arksim simulate-evaluate <config> "
                 "--scenario_file_path %s",
-                os.path.join(
-                    os.path.dirname(focus_infos[0].file_path), "all_failures.json"
-                ),
+                os.path.join(self.params.output_dir, "focus", "all_failures.json"),
             )
             logger.info(
                 "  Or target a specific error: --scenario_file_path <focus_file>"
@@ -831,13 +829,10 @@ def run_evaluation(
                 os.path.join(settings.output_dir, "focus/"),
             )
             evaluator.evaluation_results.focus_files = [
-                FocusFileInfo(
-                    error_index=fi.error_index,
-                    unique_error_id=fi.unique_error_id,
-                    error_description=fi.error_description,
-                    severity=fi.severity,
-                    scenario_ids=fi.scenario_ids,
-                    file_path=os.path.relpath(fi.file_path, settings.output_dir),
+                fi.model_copy(
+                    update={
+                        "file_path": os.path.relpath(fi.file_path, settings.output_dir)
+                    }
                 )
                 for fi in focus_infos
             ]
