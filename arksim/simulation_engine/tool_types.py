@@ -14,6 +14,7 @@ class ToolCall(BaseModel):
     arguments: dict[str, Any] = {}
     result: str | None = None
     error: str | None = None
+    source: str | None = None
 
 
 class AgentResponse(BaseModel):
