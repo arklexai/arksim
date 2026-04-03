@@ -557,10 +557,6 @@ class Evaluator:
                 if fi:
                     logger.info(f"Focus file: {fi.file_path}")
 
-        logger.info(
-            "Note: Suggested fixes are module-level heuristics and may not apply to your architecture."
-        )
-
     def _format_metric_score(self, value: float, use_label: bool = True) -> str:
         """Format a metric score, handling not-computed sentinel."""
         if value == SCORE_NOT_COMPUTED:
