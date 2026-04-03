@@ -17,6 +17,7 @@ from arksim.simulation_engine.agent.base import BaseAgent
 from arksim.simulation_engine.agent.response_parsers import parse_response
 from arksim.simulation_engine.agent.utils import rate_limit_handler
 from arksim.simulation_engine.tool_types import AgentResponse
+from arksim.tracing.propagation import inject_trace_context
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +36,10 @@ class ChatCompletionsAgent(BaseAgent):
             self.chat_headers = self.config.get_headers()
             self.chat_id = str(uuid.uuid4())
             self.conversation_history: list[dict[str, Any]] = []
-            self._client = httpx.AsyncClient(timeout=120)
+            self._client = httpx.AsyncClient(
+                timeout=120,
+                event_hooks={"request": [inject_trace_context]},
+            )
 
         except Exception as e:
             logger.error(f"Error: Could not initialize chat completion agent: {e}")
