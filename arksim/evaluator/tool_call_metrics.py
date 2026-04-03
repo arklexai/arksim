@@ -49,8 +49,7 @@ class ToolCallBehaviorFailureMetric(AgentBehaviorFailureMetric):
         self.description = self.DESCRIPTION
 
     def evaluate(self, score_input: ScoreInput) -> QualResult:
-        tool_calls = getattr(score_input, "tool_calls", None)
-        if not tool_calls:
+        if not score_input.tool_calls:
             return QualResult(
                 name=self.name,
                 value=AgentBehaviorFailureType.NO_FAILURE.value,
@@ -67,7 +66,9 @@ class ToolCallBehaviorFailureMetric(AgentBehaviorFailureMetric):
                 return tc.get("source")
             return getattr(tc, "source", None)
 
-        has_request_only = all(_get_source(tc) == "response_parse" for tc in tool_calls)
+        has_request_only = all(
+            _get_source(tc) == "response_parse" for tc in score_input.tool_calls
+        )
         system_prompt = (
             tool_call_behavior_failure_request_only_system_prompt
             if has_request_only
@@ -89,7 +90,7 @@ class ToolCallBehaviorFailureMetric(AgentBehaviorFailureMetric):
                         tool_calls=json.dumps(
                             [
                                 tc.model_dump() if hasattr(tc, "model_dump") else tc
-                                for tc in tool_calls
+                                for tc in score_input.tool_calls
                             ],
                             indent=2,
                         ),
