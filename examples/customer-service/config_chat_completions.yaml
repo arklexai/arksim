@@ -1,0 +1,97 @@
+# Chat Completions agent with tool call capture from the API response.
+#
+# Points directly at the OpenAI API with tools defined in the request body.
+# arksim auto-detects tool_calls in the response and captures them as ToolCall
+# objects for evaluation. No trace_receiver or TracingProcessor needed.
+#
+# Known limitation: arksim does not execute tools or re-call the model.
+# This config captures the model's tool call requests (what the model asked
+# to call) but not tool execution results. For full execution capture,
+# use the custom connector with ArksimTracingProcessor.
+#
+# Usage:
+#   cd examples/customer-service
+#   arksim simulate-evaluate config_chat_completions.yaml
+
+agent_config:
+  agent_type: chat_completions
+  agent_name: customer-service-chat-completions
+  api_config:
+    endpoint: https://api.openai.com/v1/chat/completions
+    headers:
+      Content-Type: application/json
+      Authorization: "Bearer ${OPENAI_API_KEY}"
+    body:
+      model: gpt-4.1-mini
+      messages:
+        - role: system
+          content: >
+            You are a customer service assistant for an online store.
+            You have access to tools to look up customers, check orders,
+            search products, and cancel orders. Use them to help the user.
+            Always confirm destructive actions like cancellations before
+            proceeding.
+      tools:
+        - type: function
+          function:
+            name: lookup_customer
+            description: "Look up a customer by email address."
+            parameters:
+              type: object
+              properties:
+                email:
+                  type: string
+                  description: "Customer email address"
+              required: [email]
+        - type: function
+          function:
+            name: get_order
+            description: "Get order details by order ID."
+            parameters:
+              type: object
+              properties:
+                order_id:
+                  type: string
+                  description: "Order ID"
+              required: [order_id]
+        - type: function
+          function:
+            name: search_products
+            description: "Search product catalog by keyword."
+            parameters:
+              type: object
+              properties:
+                query:
+                  type: string
+                  description: "Search query"
+                max_price:
+                  type: number
+                  description: "Maximum price filter"
+              required: [query]
+        - type: function
+          function:
+            name: cancel_order
+            description: "Cancel an order. Only processing orders can be cancelled."
+            parameters:
+              type: object
+              properties:
+                order_id:
+                  type: string
+                  description: "Order ID to cancel"
+              required: [order_id]
+
+scenario_file_path: ./scenarios.json
+num_conversations_per_scenario: 1
+max_turns: 3
+output_file_path: ./results/simulation/simulation_chat_completions.json
+simulated_user_prompt_template: null
+
+num_workers: 5
+
+metrics_to_run:
+  - helpfulness
+  - agent_behavior_failure
+  - tool_call_behavior_failure
+
+model: gpt-4.1-mini
+provider: openai
