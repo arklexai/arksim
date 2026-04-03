@@ -3,8 +3,7 @@ name: Integration tests
 on:
   push:
     branches: [main]
-  schedule:
-    - cron: "0 6 * * *" # daily at 06:00 UTC
+  merge_group:
   pull_request:
     types: [opened, synchronize, labeled]
   workflow_dispatch:
@@ -29,9 +28,10 @@ jobs:
     name: Integration tests
     runs-on: ubuntu-latest
     if: >-
-      github.event_name == 'schedule' ||
+      github.event_name == 'push' ||
+      github.event_name == 'merge_group' ||
       github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'pull_request' && github.event.label.name == 'run_integration_tests')
+      (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'run_integration_tests'))
     steps:
       - uses: actions/checkout@v6
         with:
@@ -55,9 +55,10 @@ jobs:
     name: Shell tests
     runs-on: ubuntu-latest
     if: >-
-      github.event_name == 'schedule' ||
+      github.event_name == 'push' ||
+      github.event_name == 'merge_group' ||
       github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'pull_request' && github.event.label.name == 'run_integration_tests')
+      (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'run_integration_tests'))
     steps:
       - uses: actions/checkout@v6
         with:
