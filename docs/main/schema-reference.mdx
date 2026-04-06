@@ -178,10 +178,10 @@ Written by `arksim evaluate` or the evaluation step of `arksim simulate-evaluate
   </Expandable>
 </ResponseField>
 
-<ResponseField name="error_scenario_groups" type="list[ErrorScenarioGroup]">
+<ResponseField name="error_scenario_mappings" type="list[ErrorScenarioMapping]">
   Maps each unique error to the scenarios that triggered it. Empty when no errors are detected or no scenario file was provided. Added in schema version `v1.1`.
 
-  <Expandable title="ErrorScenarioGroup fields">
+  <Expandable title="ErrorScenarioMapping fields">
     <ResponseField name="error_index" type="integer" required>
       Position in the list, ordered by severity (1 = most severe) then by occurrence count.
     </ResponseField>

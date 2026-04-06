@@ -12,16 +12,17 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 from arksim.evaluator.entities import (
+    ErrorScenarioMapping,
     EvaluationParams,
     Occurrence,
     UniqueError,
 )
-from arksim.evaluator.evaluator import Evaluator
-from arksim.evaluator.focus import (
-    FocusFileInfo,
+from arksim.evaluator.error_scenarios import (
     _build_error_scenario_map,
-    generate_focus_files,
+    _sort_key,
+    build_error_scenario_data,
 )
+from arksim.evaluator.evaluator import Evaluator
 from arksim.scenario.entities import Scenario, Scenarios
 
 
@@ -53,16 +54,12 @@ def _make_scenario(scenario_id: str) -> Scenario:
 
 class TestSortKey:
     def test_unknown_severity_sorts_after_low(self) -> None:
-        from arksim.evaluator.focus import _sort_key
-
         err_low = _make_error("err_low", [("c1", 0)], severity="low")
         err_unknown = _make_error("err_unknown", [("c1", 0)], severity="catastrophic")
 
         assert _sort_key(err_low) < _sort_key(err_unknown)
 
     def test_same_severity_sorts_by_descending_occurrence_count(self) -> None:
-        from arksim.evaluator.focus import _sort_key
-
         err_few = _make_error("err_few", [("c1", 0)], severity="high")
         err_many = _make_error(
             "err_many", [("c1", 0), ("c2", 1), ("c3", 2)], severity="high"
@@ -100,7 +97,7 @@ class TestBuildErrorScenarioMap:
         self, caplog: pytest.LogCaptureFixture
     ) -> None:
         errors = [_make_error("err_1", [("conv_unknown", 0)])]
-        with caplog.at_level("WARNING", logger="arksim.evaluator.focus"):
+        with caplog.at_level("WARNING", logger="arksim.evaluator.error_scenarios"):
             result = _build_error_scenario_map(errors, {})
         assert "err_1" not in result
         assert any("err_1" in record.message for record in caplog.records)
@@ -115,21 +112,18 @@ class TestBuildErrorScenarioMap:
             severity="high",
             occurrences=[],
         )
-        with caplog.at_level("WARNING", logger="arksim.evaluator.focus"):
+        with caplog.at_level("WARNING", logger="arksim.evaluator.error_scenarios"):
             result = _build_error_scenario_map([error], {"conv_1": "scenario_a"})
         assert "err_empty" not in result
         assert any("err_empty" in record.message for record in caplog.records)
 
 
-class TestGenerateFocusFiles:
-    def test_writes_per_error_and_all_files(self, tmp_path: Path) -> None:
-        scenario_a = _make_scenario("scenario_a")
-        scenario_b = _make_scenario("scenario_b")
-        scenarios = Scenarios(schema_version="1.0", scenarios=[scenario_a, scenario_b])
-
-        # err_critical has 2 occurrences (higher count), severity=critical
-        # err_medium has 1 occurrence, severity=medium
-        # Sorting: critical first, then medium; within same severity, desc by count
+class TestBuildErrorScenarioData:
+    def test_computes_mappings_sorted_by_severity(self) -> None:
+        scenarios = Scenarios(
+            schema_version="1.0",
+            scenarios=[_make_scenario("scenario_a"), _make_scenario("scenario_b")],
+        )
         errors = [
             _make_error("err_medium", [("conv_2", 0)], severity="medium"),
             _make_error(
@@ -142,105 +136,68 @@ class TestGenerateFocusFiles:
             "conv_3": "scenario_a",
         }
 
-        result = generate_focus_files(
+        mappings, all_scenarios = build_error_scenario_data(
             unique_errors=errors,
             conv_to_scenario=conv_to_scenario,
             scenarios=scenarios,
-            output_dir=str(tmp_path),
         )
 
-        assert len(result) == 2
+        assert len(mappings) == 2
+        assert mappings[0].error_index == 1
+        assert mappings[0].unique_error_id == "err_critical"
+        assert mappings[0].severity == "critical"
+        assert mappings[0].scenario_ids == ["scenario_a"]
 
-        # Verify sorted order: critical first (error_1), medium second (error_2)
-        assert result[0].error_index == 1
-        assert result[0].unique_error_id == "err_critical"
-        assert result[0].severity == "critical"
-        assert set(result[0].scenario_ids) == {"scenario_a"}
+        assert mappings[1].error_index == 2
+        assert mappings[1].unique_error_id == "err_medium"
+        assert mappings[1].severity == "medium"
+        assert mappings[1].scenario_ids == ["scenario_b"]
 
-        assert result[1].error_index == 2
-        assert result[1].unique_error_id == "err_medium"
-        assert result[1].severity == "medium"
-        assert set(result[1].scenario_ids) == {"scenario_b"}
+        # All scenarios union
+        all_ids = [s.scenario_id for s in all_scenarios]
+        assert all_ids == ["scenario_a", "scenario_b"]
 
-        # Verify file paths in FocusFileInfo
-        focus_dir = os.path.join(str(tmp_path), "focus")
-        assert result[0].file_path == os.path.join(focus_dir, "error_1.json")
-        assert result[1].file_path == os.path.join(focus_dir, "error_2.json")
-
-        # Verify error_1.json content (critical error -> scenario_a)
-        with open(result[0].file_path) as f:
-            data_1 = json.load(f)
-        assert data_1["schema_version"] == "1.0"
-        assert len(data_1["scenarios"]) == 1
-        assert data_1["scenarios"][0]["scenario_id"] == "scenario_a"
-
-        # Verify error_2.json content (medium error -> scenario_b)
-        with open(result[1].file_path) as f:
-            data_2 = json.load(f)
-        assert data_2["schema_version"] == "1.0"
-        assert len(data_2["scenarios"]) == 1
-        assert data_2["scenarios"][0]["scenario_id"] == "scenario_b"
-
-        # Verify all_failures.json contains the union of all scenarios
-        all_path = os.path.join(focus_dir, "all_failures.json")
-        assert os.path.exists(all_path)
-        with open(all_path) as f:
-            all_data = json.load(f)
-        all_ids = {s["scenario_id"] for s in all_data["scenarios"]}
-        assert all_ids == {"scenario_a", "scenario_b"}
-
-    def test_no_errors_returns_empty(self, tmp_path: Path) -> None:
+    def test_no_errors_returns_empty(self) -> None:
         scenarios = Scenarios(
             schema_version="1.0", scenarios=[_make_scenario("scenario_a")]
         )
-        result = generate_focus_files(
+        mappings, all_scenarios = build_error_scenario_data(
             unique_errors=[],
             conv_to_scenario={},
             scenarios=scenarios,
-            output_dir=str(tmp_path),
         )
 
-        assert result == []
-        focus_dir = os.path.join(str(tmp_path), "focus")
-        assert not os.path.exists(focus_dir)
+        assert mappings == []
+        assert all_scenarios == []
 
     def test_missing_scenario_gracefully_skipped(
-        self, tmp_path: Path, caplog: pytest.LogCaptureFixture
+        self, caplog: pytest.LogCaptureFixture
     ) -> None:
-        # scenario_ghost does not exist in the Scenarios object
         scenarios = Scenarios(
             schema_version="1.0", scenarios=[_make_scenario("scenario_real")]
         )
-        errors = [
-            _make_error("err_ghost", [("conv_ghost", 0)], severity="high"),
-        ]
+        errors = [_make_error("err_ghost", [("conv_ghost", 0)], severity="high")]
         conv_to_scenario = {"conv_ghost": "scenario_ghost"}
 
-        with caplog.at_level("DEBUG", logger="arksim.evaluator.focus"):
-            result = generate_focus_files(
+        with caplog.at_level("DEBUG", logger="arksim.evaluator.error_scenarios"):
+            mappings, all_scenarios = build_error_scenario_data(
                 unique_errors=errors,
                 conv_to_scenario=conv_to_scenario,
                 scenarios=scenarios,
-                output_dir=str(tmp_path),
             )
 
-        assert result == []
-        focus_dir = os.path.join(str(tmp_path), "focus")
-        assert not os.path.exists(focus_dir)
+        assert mappings == []
+        assert all_scenarios == []
 
-    def test_overlapping_scenarios_deduplicated_in_all_failures(
-        self, tmp_path: Path
-    ) -> None:
-        scenario_a = _make_scenario("scenario_a")
-        scenario_b = _make_scenario("scenario_b")
-        scenario_c = _make_scenario("scenario_c")
+    def test_overlapping_scenarios_deduplicated(self) -> None:
         scenarios = Scenarios(
             schema_version="1.0",
-            scenarios=[scenario_a, scenario_b, scenario_c],
+            scenarios=[
+                _make_scenario("scenario_a"),
+                _make_scenario("scenario_b"),
+                _make_scenario("scenario_c"),
+            ],
         )
-
-        # err_1 maps to scenario_a and scenario_b
-        # err_2 maps to scenario_b and scenario_c (scenario_b overlaps)
         errors = [
             _make_error("err_1", [("conv_1", 0), ("conv_2", 0)], severity="high"),
             _make_error("err_2", [("conv_2", 0), ("conv_3", 0)], severity="high"),
@@ -251,49 +208,36 @@ class TestGenerateFocusFiles:
             "conv_3": "scenario_c",
         }
 
-        result = generate_focus_files(
+        mappings, all_scenarios = build_error_scenario_data(
             unique_errors=errors,
             conv_to_scenario=conv_to_scenario,
             scenarios=scenarios,
-            output_dir=str(tmp_path),
         )
 
-        assert len(result) == 2
-
-        # all_failures.json should contain exactly 3 unique scenarios, no duplicates
-        all_path = os.path.join(str(tmp_path), "focus", "all_failures.json")
-        with open(all_path) as f:
-            all_data = json.load(f)
-        all_ids = [s["scenario_id"] for s in all_data["scenarios"]]
+        assert len(mappings) == 2
+        all_ids = [s.scenario_id for s in all_scenarios]
         assert all_ids == ["scenario_a", "scenario_b", "scenario_c"]
 
-    def test_single_error_single_scenario(self, tmp_path: Path) -> None:
+    def test_single_error_single_scenario(self) -> None:
         scenarios = Scenarios(
             schema_version="1.0", scenarios=[_make_scenario("scenario_a")]
         )
         errors = [_make_error("err_1", [("conv_1", 0)], severity="critical")]
         conv_to_scenario = {"conv_1": "scenario_a"}
 
-        result = generate_focus_files(
+        mappings, all_scenarios = build_error_scenario_data(
             unique_errors=errors,
             conv_to_scenario=conv_to_scenario,
             scenarios=scenarios,
-            output_dir=str(tmp_path),
         )
 
-        assert len(result) == 1
-        assert result[0].error_index == 1
-        assert result[0].scenario_ids == ["scenario_a"]
-
-        # all_failures.json has same single scenario
-        all_path = os.path.join(str(tmp_path), "focus", "all_failures.json")
-        with open(all_path) as f:
-            all_data = json.load(f)
-        assert len(all_data["scenarios"]) == 1
-        assert all_data["scenarios"][0]["scenario_id"] == "scenario_a"
+        assert len(mappings) == 1
+        assert mappings[0].error_index == 1
+        assert mappings[0].scenario_ids == ["scenario_a"]
+        assert len(all_scenarios) == 1
 
     def test_all_errors_unmapped_returns_empty(
-        self, tmp_path: Path, caplog: pytest.LogCaptureFixture
+        self, caplog: pytest.LogCaptureFixture
     ) -> None:
         """All errors map to scenario IDs that don't exist in the Scenarios object."""
         scenarios = Scenarios(
@@ -305,48 +249,158 @@ class TestGenerateFocusFiles:
         ]
         conv_to_scenario = {"conv_1": "scenario_ghost_a", "conv_2": "scenario_ghost_b"}
 
-        with caplog.at_level("DEBUG", logger="arksim.evaluator.focus"):
-            result = generate_focus_files(
+        with caplog.at_level("DEBUG", logger="arksim.evaluator.error_scenarios"):
+            mappings, all_scenarios = build_error_scenario_data(
                 unique_errors=errors,
                 conv_to_scenario=conv_to_scenario,
                 scenarios=scenarios,
-                output_dir=str(tmp_path),
             )
 
-        assert result == []
+        assert mappings == []
+        assert all_scenarios == []
+
+
+class TestWriteFocusFiles:
+    """Test that Evaluator.save_results writes focus files from error_scenario_mappings."""
+
+    def test_save_results_writes_focus_files(self, tmp_path: Path) -> None:
+        from arksim.evaluator.entities import (
+            Evaluation,
+        )
+
+        params = EvaluationParams(output_dir=str(tmp_path))
+        scenarios = Scenarios(
+            schema_version="1.0",
+            scenarios=[_make_scenario("scenario_a"), _make_scenario("scenario_b")],
+        )
+        evaluator = Evaluator(params=params, scenarios=scenarios)
+
+        evaluator.evaluation_results = Evaluation(
+            schema_version="v1.1",
+            generated_at="2026-04-01T00:00:00Z",
+            evaluator_version="v1",
+            evaluation_id="eval-1",
+            simulation_id="sim-1",
+            conversations=[],
+            unique_errors=[],
+            error_scenario_mappings=[
+                ErrorScenarioMapping(
+                    error_index=1,
+                    unique_error_id="err_1",
+                    error_description="Wrong refund window",
+                    severity="critical",
+                    scenario_ids=["scenario_a"],
+                ),
+                ErrorScenarioMapping(
+                    error_index=2,
+                    unique_error_id="err_2",
+                    error_description="Missed escalation",
+                    severity="high",
+                    scenario_ids=["scenario_b"],
+                ),
+            ],
+        )
+
+        evaluator.save_results()
+
+        # evaluation.json written
+        eval_path = os.path.join(str(tmp_path), "evaluation.json")
+        assert os.path.exists(eval_path)
+
+        # Focus files written
+        focus_dir = os.path.join(str(tmp_path), "focus")
+        assert os.path.exists(os.path.join(focus_dir, "error_1.json"))
+        assert os.path.exists(os.path.join(focus_dir, "error_2.json"))
+        assert os.path.exists(os.path.join(focus_dir, "all_failures.json"))
+
+        # Verify error_1.json content
+        with open(os.path.join(focus_dir, "error_1.json")) as f:
+            data = json.load(f)
+        assert data["schema_version"] == "1.0"
+        assert len(data["scenarios"]) == 1
+        assert data["scenarios"][0]["scenario_id"] == "scenario_a"
+
+        # Verify all_failures.json has union
+        with open(os.path.join(focus_dir, "all_failures.json")) as f:
+            all_data = json.load(f)
+        all_ids = {s["scenario_id"] for s in all_data["scenarios"]}
+        assert all_ids == {"scenario_a", "scenario_b"}
+
+    def test_save_results_no_focus_files_when_no_mappings(self, tmp_path: Path) -> None:
+        from arksim.evaluator.entities import Evaluation
+
+        params = EvaluationParams(output_dir=str(tmp_path))
+        evaluator = Evaluator(params=params)
+
+        evaluator.evaluation_results = Evaluation(
+            schema_version="v1.1",
+            generated_at="2026-04-01T00:00:00Z",
+            evaluator_version="v1",
+            evaluation_id="eval-1",
+            simulation_id="sim-1",
+            conversations=[],
+            unique_errors=[],
+        )
+
+        evaluator.save_results()
+
+        assert os.path.exists(os.path.join(str(tmp_path), "evaluation.json"))
         assert not os.path.exists(os.path.join(str(tmp_path), "focus"))
 
-    def test_io_failure_propagates(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    def test_focus_file_io_failure_does_not_crash_save(
+        self, tmp_path: Path, caplog: pytest.LogCaptureFixture
     ) -> None:
-        """I/O failure in save_json_file raises so callers can handle it."""
         from unittest.mock import patch
 
+        from arksim.evaluator.entities import Evaluation
+
+        params = EvaluationParams(output_dir=str(tmp_path))
         scenarios = Scenarios(
             schema_version="1.0", scenarios=[_make_scenario("scenario_a")]
         )
-        errors = [_make_error("err_1", [("conv_1", 0)])]
-        conv_to_scenario = {"conv_1": "scenario_a"}
+        evaluator = Evaluator(params=params, scenarios=scenarios)
 
+        evaluator.evaluation_results = Evaluation(
+            schema_version="v1.1",
+            generated_at="2026-04-01T00:00:00Z",
+            evaluator_version="v1",
+            evaluation_id="eval-1",
+            simulation_id="sim-1",
+            conversations=[],
+            unique_errors=[],
+            error_scenario_mappings=[
+                ErrorScenarioMapping(
+                    error_index=1,
+                    unique_error_id="err_1",
+                    error_description="Error",
+                    severity="high",
+                    scenario_ids=["scenario_a"],
+                ),
+            ],
+        )
+
+        # Patch _write_focus_files to raise after evaluation.json is saved
         with (
-            patch(
-                "arksim.evaluator.focus.save_json_file",
-                side_effect=OSError("disk full"),
+            patch.object(
+                Evaluator, "_write_focus_files", side_effect=OSError("disk full")
             ),
-            pytest.raises(OSError, match="disk full"),
+            caplog.at_level(logging.ERROR),
         ):
-            generate_focus_files(
-                unique_errors=errors,
-                conv_to_scenario=conv_to_scenario,
-                scenarios=scenarios,
-                output_dir=str(tmp_path),
-            )
+            evaluator.save_results()
+
+        # evaluation.json was still saved
+        assert os.path.exists(os.path.join(str(tmp_path), "evaluation.json"))
+        assert any(
+            "Focus file writing failed" in record.message for record in caplog.records
+        )
 
 
-class TestDisplayTopUniqueErrorsWithScenarios:
+class TestDisplayTopUniqueErrorsWithMappings:
     def test_displays_scenario_ids_and_focus_path(
         self, caplog: pytest.LogCaptureFixture, tmp_path: Path
     ) -> None:
+        from arksim.evaluator.entities import Evaluation
+
         params = EvaluationParams(output_dir=str(tmp_path))
         evaluator = Evaluator(params=params)
         evaluator.chat_id_to_label = {
@@ -354,40 +408,46 @@ class TestDisplayTopUniqueErrorsWithScenarios:
             "conv_2": "Conversation 2",
         }
 
-        errors = [
-            _make_error("err_1", [("conv_1", 0), ("conv_2", 1)]),
-        ]
-        focus_infos = [
-            FocusFileInfo(
-                error_index=1,
-                unique_error_id="err_1",
-                error_description="Error err_1",
-                severity="high",
-                scenario_ids=["scenario_refund", "scenario_clarify"],
-                file_path="/eval/focus/error_1.json",
-            ),
-        ]
-        conv_to_scenario = {
-            "conv_1": "scenario_refund",
-            "conv_2": "scenario_clarify",
-        }
+        errors = [_make_error("err_1", [("conv_1", 0), ("conv_2", 1)])]
+        evaluator.evaluation_results = Evaluation(
+            schema_version="v1.1",
+            generated_at="2026-04-01T00:00:00Z",
+            evaluator_version="v1",
+            evaluation_id="eval-1",
+            simulation_id="sim-1",
+            conversations=[],
+            unique_errors=errors,
+            error_scenario_mappings=[
+                ErrorScenarioMapping(
+                    error_index=1,
+                    unique_error_id="err_1",
+                    error_description="Error err_1",
+                    severity="high",
+                    scenario_ids=["scenario_clarify", "scenario_refund"],
+                ),
+            ],
+        )
 
         with caplog.at_level(logging.INFO):
             evaluator._display_top_unique_errors(
                 errors,
-                conv_to_scenario=conv_to_scenario,
-                focus_infos=focus_infos,
+                conv_to_scenario={
+                    "conv_1": "scenario_refund",
+                    "conv_2": "scenario_clarify",
+                },
             )
 
         log_text = caplog.text
-        assert "scenario_refund" in log_text
         assert "scenario_clarify" in log_text
+        assert "scenario_refund" in log_text
         assert "focus/error_1.json" in log_text
 
-    def test_no_focus_info_for_displayed_error(
+    def test_no_mapping_for_displayed_error(
         self, caplog: pytest.LogCaptureFixture, tmp_path: Path
     ) -> None:
-        """Error is displayed but has no matching FocusFileInfo (e.g. all convs unknown)."""
+        """Error is displayed but has no matching mapping (e.g. all convs unknown)."""
+        from arksim.evaluator.entities import Evaluation
+
         params = EvaluationParams(output_dir=str(tmp_path))
         evaluator = Evaluator(params=params)
         evaluator.chat_id_to_label = {"conv_1": "Conversation 1"}
@@ -396,27 +456,33 @@ class TestDisplayTopUniqueErrorsWithScenarios:
             _make_error("err_1", [("conv_1", 0)]),
             _make_error("err_2", [("conv_1", 1)]),
         ]
-        # Only err_1 has a focus file; err_2 was dropped during generation
-        focus_infos = [
-            FocusFileInfo(
-                error_index=1,
-                unique_error_id="err_1",
-                error_description="Error err_1",
-                severity="high",
-                scenario_ids=["scenario_a"],
-                file_path="/eval/focus/error_1.json",
-            ),
-        ]
+        # Only err_1 has a mapping; err_2 was dropped during compute
+        evaluator.evaluation_results = Evaluation(
+            schema_version="v1.1",
+            generated_at="2026-04-01T00:00:00Z",
+            evaluator_version="v1",
+            evaluation_id="eval-1",
+            simulation_id="sim-1",
+            conversations=[],
+            unique_errors=errors,
+            error_scenario_mappings=[
+                ErrorScenarioMapping(
+                    error_index=1,
+                    unique_error_id="err_1",
+                    error_description="Error err_1",
+                    severity="high",
+                    scenario_ids=["scenario_a"],
+                ),
+            ],
+        )
 
         with caplog.at_level(logging.INFO):
             evaluator._display_top_unique_errors(
                 errors,
                 conv_to_scenario={"conv_1": "scenario_a"},
-                focus_infos=focus_infos,
             )
 
         log_text = caplog.text
-        # err_1 gets a focus file line, err_2 does not
         assert "error_1.json" in log_text
         assert "error_2.json" not in log_text
 
@@ -460,25 +526,22 @@ class TestDisplayTopUniqueErrorsWithScenarios:
                 ),
             ],
             unique_errors=[_make_error("err_1", [("conv_1", 0)])],
+            error_scenario_mappings=[
+                ErrorScenarioMapping(
+                    error_index=1,
+                    unique_error_id="err_1",
+                    error_description="Error err_1",
+                    severity="high",
+                    scenario_ids=["scenario_a"],
+                ),
+            ],
         )
         evaluator.total_conversations = 1
         evaluator.total_turns = 1
 
-        focus_infos = [
-            FocusFileInfo(
-                error_index=1,
-                unique_error_id="err_1",
-                error_description="Error err_1",
-                severity="high",
-                scenario_ids=["scenario_a"],
-                file_path=os.path.join(str(tmp_path), "focus", "error_1.json"),
-            ),
-        ]
-
         with caplog.at_level(logging.INFO):
             evaluator.display_evaluation_summary(
                 conv_to_scenario={"conv_1": "scenario_a"},
-                focus_infos=focus_infos,
             )
 
         log_text = caplog.text
@@ -486,9 +549,9 @@ class TestDisplayTopUniqueErrorsWithScenarios:
         assert "all_failures.json" in log_text
 
 
-class TestErrorScenarioGroupsSerialization:
-    def test_error_scenario_groups_included_in_model_dump(self) -> None:
-        from arksim.evaluator.entities import ErrorScenarioGroup, Evaluation
+class TestErrorScenarioMappingSerialization:
+    def test_error_scenario_mappings_included_in_model_dump(self) -> None:
+        from arksim.evaluator.entities import Evaluation
 
         evaluation = Evaluation(
             schema_version="v1.1",
@@ -498,8 +561,8 @@ class TestErrorScenarioGroupsSerialization:
             simulation_id="sim-1",
             conversations=[],
             unique_errors=[],
-            error_scenario_groups=[
-                ErrorScenarioGroup(
+            error_scenario_mappings=[
+                ErrorScenarioMapping(
                     error_index=1,
                     unique_error_id="err_1",
                     error_description="Agent gave wrong refund amount",
@@ -510,13 +573,13 @@ class TestErrorScenarioGroupsSerialization:
         )
 
         data = evaluation.model_dump()
-        assert len(data["error_scenario_groups"]) == 1
-        group = data["error_scenario_groups"][0]
-        assert group["unique_error_id"] == "err_1"
-        assert group["scenario_ids"] == ["scenario_refund"]
-        assert "file_path" not in group
+        assert len(data["error_scenario_mappings"]) == 1
+        mapping = data["error_scenario_mappings"][0]
+        assert mapping["unique_error_id"] == "err_1"
+        assert mapping["scenario_ids"] == ["scenario_refund"]
+        assert "file_path" not in mapping
 
-    def test_error_scenario_groups_defaults_to_empty(self) -> None:
+    def test_error_scenario_mappings_defaults_to_empty(self) -> None:
         from arksim.evaluator.entities import Evaluation
 
         evaluation = Evaluation(
@@ -530,4 +593,4 @@ class TestErrorScenarioGroupsSerialization:
         )
 
         data = evaluation.model_dump()
-        assert data["error_scenario_groups"] == []
+        assert data["error_scenario_mappings"] == []

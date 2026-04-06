@@ -228,7 +228,7 @@ class ConversationEvaluation(BaseModel):
     turn_scores: list[TurnEvaluation]
 
 
-class ErrorScenarioGroup(BaseModel):
+class ErrorScenarioMapping(BaseModel):
     """Maps a unique error to the scenarios that triggered it."""
 
     error_index: int
@@ -248,4 +248,4 @@ class Evaluation(BaseModel):
     simulation_id: str
     conversations: list[ConversationEvaluation]
     unique_errors: list[UniqueError]
-    error_scenario_groups: list[ErrorScenarioGroup] = Field(default_factory=list)
+    error_scenario_mappings: list[ErrorScenarioMapping] = Field(default_factory=list)

@@ -9,12 +9,18 @@ from collections import Counter, defaultdict
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
+from typing import TYPE_CHECKING
 
 from tqdm import tqdm
 
 from arksim.llms.chat import LLM
 from arksim.scenario import Scenarios
 from arksim.scenario.entities import AssertionType, ExpectedToolCall
+
+if TYPE_CHECKING:
+    from arksim.scenario.entities import Scenario
+
+    from .entities import ErrorScenarioMapping
 from arksim.simulation_engine import Conversation, Simulation
 from arksim.utils.module_loader import load_module_from_file
 from arksim.utils.output import load_json_file, save_json_file
@@ -23,7 +29,6 @@ from .base_metric import ChatMessage, QualitativeMetric, QualResult, Quantitativ
 from .entities import (
     ConversationEvaluation,
     ConvoItem,
-    ErrorScenarioGroup,
     Evaluation,
     EvaluationInput,
     EvaluationParams,
@@ -36,7 +41,6 @@ from .evaluate import (
     evaluate_goal_completion,
     evaluate_turn,
 )
-from .focus import FocusFileInfo, generate_focus_files
 from .trajectory_matching import match_trajectory
 from .utils.constants import (
     SCORE_NOT_COMPUTED,
@@ -389,7 +393,11 @@ class Evaluator:
         return self.evaluation_results
 
     def save_results(self) -> None:
-        """Save evaluation results to evaluation.json.
+        """Save evaluation results and focus files to disk.
+
+        Writes ``evaluation.json`` (always) and per-error focus files
+        under ``focus/`` (when ``error_scenario_mappings`` is populated
+        and the original scenario set is available).
 
         Raises:
             ValueError: If evaluate() has not been called yet.
@@ -400,17 +408,74 @@ class Evaluator:
             )
             raise ValueError("No evaluation results to save. Call evaluate() first.")
 
-        save_dir = os.path.join(self.params.output_dir, "evaluation.json")
-        if os.path.exists(save_dir):
-            logger.warning(f"Overwriting existing file: {save_dir}")
-        logger.info(f"Saving evaluation results to {save_dir}")
+        eval_path = os.path.join(self.params.output_dir, "evaluation.json")
+        if os.path.exists(eval_path):
+            logger.warning(f"Overwriting existing file: {eval_path}")
+        logger.info(f"Saving evaluation results to {eval_path}")
 
         save_json_file(
             self.evaluation_results.model_dump(),
-            save_dir,
+            eval_path,
             overwrite=True,
         )
         logger.info("Evaluation results saved successfully")
+
+        # Write focus files (best-effort; failures must not crash the save)
+        mappings = self.evaluation_results.error_scenario_mappings
+        if mappings and self.scenarios:
+            try:
+                self._write_focus_files(mappings)
+            except Exception:
+                logger.exception(
+                    "Focus file writing failed; evaluation.json was saved successfully"
+                )
+
+    def _write_focus_files(
+        self,
+        mappings: list[ErrorScenarioMapping],
+    ) -> None:
+        """Write per-error and combined focus files to disk."""
+        scenario_lookup: dict[str, Scenario] = {
+            s.scenario_id: s for s in self.scenarios.scenarios
+        }
+        focus_dir = os.path.join(self.params.output_dir, "focus")
+        all_scenario_ids: set[str] = set()
+
+        for mapping in mappings:
+            matched = [
+                scenario_lookup[sid]
+                for sid in mapping.scenario_ids
+                if sid in scenario_lookup
+            ]
+            if not matched:
+                continue
+
+            file_path = os.path.join(focus_dir, f"error_{mapping.error_index}.json")
+            filtered = Scenarios(
+                schema_version=self.scenarios.schema_version,
+                scenarios=matched,
+            )
+            save_json_file(filtered.model_dump(), file_path, overwrite=True)
+            all_scenario_ids.update(mapping.scenario_ids)
+
+        if all_scenario_ids:
+            all_scenarios = [
+                scenario_lookup[sid]
+                for sid in sorted(all_scenario_ids)
+                if sid in scenario_lookup
+            ]
+            all_path = os.path.join(focus_dir, "all_failures.json")
+            all_bundle = Scenarios(
+                schema_version=self.scenarios.schema_version,
+                scenarios=all_scenarios,
+            )
+            save_json_file(all_bundle.model_dump(), all_path, overwrite=True)
+
+        logger.info(
+            "Generated %d focus file(s) in %s",
+            len(mappings),
+            os.path.join(self.params.output_dir, "focus/"),
+        )
 
     @staticmethod
     def _truncate_reason(reason: str | None, max_words: int = 10) -> str:
@@ -494,7 +559,6 @@ class Evaluator:
         self,
         unique_errors: list[UniqueError],
         conv_to_scenario: dict[str, str] | None = None,
-        focus_infos: list[FocusFileInfo] | None = None,
     ) -> None:
         """Display top unique errors sorted by severity then occurrence count."""
         if not unique_errors:
@@ -517,6 +581,14 @@ class Evaluator:
         )
         logger.info(f"\n{title}\n" + "-" * len(title))
 
+        # Build lookup from error ID to mapping for focus file paths
+        mappings = (
+            self.evaluation_results.error_scenario_mappings
+            if self.evaluation_results
+            else []
+        )
+        mapping_by_id = {m.unique_error_id: m for m in (mappings or [])}
+
         for i, err in enumerate(top_errors, 1):
             desc = err.unique_error_description or "N/A"
             category = (
@@ -536,26 +608,24 @@ class Evaluator:
             logger.info(f"Unique Error: {desc}")
             logger.info(f"Agent Behavior Failure Category: {category}")
 
-            # Show scenario IDs if mapping is available
-            if conv_to_scenario:
+            # Show scenario IDs and focus file path from error_scenario_mappings
+            mapping = mapping_by_id.get(err.unique_error_id)
+            if mapping:
+                logger.info(f"Scenarios: {', '.join(mapping.scenario_ids)}")
+                logger.info(
+                    "Focus file: %s",
+                    os.path.join(
+                        self.params.output_dir,
+                        "focus",
+                        f"error_{mapping.error_index}.json",
+                    ),
+                )
+            elif conv_to_scenario:
                 scenario_ids = sorted(
                     {conv_to_scenario[c] for c in occ_convs if c in conv_to_scenario}
                 )
                 if scenario_ids:
                     logger.info(f"Scenarios: {', '.join(scenario_ids)}")
-
-            # Show focus file path if available
-            if focus_infos:
-                fi = next(
-                    (
-                        f
-                        for f in focus_infos
-                        if f.unique_error_id == err.unique_error_id
-                    ),
-                    None,
-                )
-                if fi:
-                    logger.info(f"Focus file: {fi.file_path}")
 
     def _format_metric_score(self, value: float, use_label: bool = True) -> str:
         """Format a metric score, handling not-computed sentinel."""
@@ -589,7 +659,6 @@ class Evaluator:
     def display_evaluation_summary(
         self,
         conv_to_scenario: dict[str, str] | None = None,
-        focus_infos: list[FocusFileInfo] | None = None,
     ) -> None:
         """Display evaluation summary with agent-specific metrics."""
         logger.info("Displaying evaluation summary")
@@ -680,10 +749,9 @@ class Evaluator:
             self._display_top_unique_errors(
                 results.unique_errors,
                 conv_to_scenario=conv_to_scenario,
-                focus_infos=focus_infos,
             )
 
-        if focus_infos:
+        if results.error_scenario_mappings:
             logger.info("\nFOCUS FILES FOR TARGETED RERUNS:")
             logger.info(
                 "  Rerun all failures: arksim simulate-evaluate <config> "
@@ -804,50 +872,29 @@ def run_evaluation(
     )
     evaluator_output = evaluator.evaluate(simulation, on_progress=on_progress)
 
-    # Build conversation -> scenario mapping once for focus files and display
+    # Build conversation -> scenario mapping for error grouping and display
     conv_to_scenario: dict[str, str] | None = None
     if scenarios:
         conv_to_scenario = {
             c.conversation_id: c.scenario_id for c in simulation.conversations
         }
 
-    # Generate focus files for rerunning failed scenarios (best-effort;
-    # a failure here must not prevent evaluation.json from being written).
-    focus_infos: list[FocusFileInfo] = []
+    # Compute error-to-scenario mappings (pure, no I/O)
     if evaluator_output.unique_errors and scenarios and conv_to_scenario:
-        try:
-            focus_infos = generate_focus_files(
-                unique_errors=evaluator_output.unique_errors,
-                conv_to_scenario=conv_to_scenario,
-                scenarios=scenarios,
-                output_dir=settings.output_dir,
-            )
-        except Exception:
-            logger.exception(
-                "Focus file generation failed; continuing without focus files"
-            )
-        if focus_infos:
-            logger.info(
-                "Generated %d focus file(s) in %s",
-                len(focus_infos),
-                os.path.join(settings.output_dir, "focus/"),
-            )
-            evaluator.evaluation_results.error_scenario_groups = [
-                ErrorScenarioGroup(
-                    error_index=fi.error_index,
-                    unique_error_id=fi.unique_error_id,
-                    error_description=fi.error_description,
-                    severity=fi.severity,
-                    scenario_ids=fi.scenario_ids,
-                )
-                for fi in focus_infos
-            ]
+        from .error_scenarios import build_error_scenario_data
 
+        mappings, _ = build_error_scenario_data(
+            unique_errors=evaluator_output.unique_errors,
+            conv_to_scenario=conv_to_scenario,
+            scenarios=scenarios,
+        )
+        evaluator.evaluation_results.error_scenario_mappings = mappings
+
+    # save_results writes evaluation.json + focus files (best-effort)
     evaluator.save_results()
 
     evaluator.display_evaluation_summary(
         conv_to_scenario=conv_to_scenario,
-        focus_infos=focus_infos if focus_infos else None,
     )
 
     if settings.generate_html_report:

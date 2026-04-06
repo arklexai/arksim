@@ -22,7 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 * **simulation:** bump output schema version to v1.1 (additive `tool_calls` field on Message)
-* **evaluator:** bump evaluation output schema version to v1.1 (additive `error_scenario_groups` field)
+* **evaluator:** bump evaluation output schema version to v1.1 (additive `error_scenario_mappings` field)
 
 ## [0.3.3](https://github.com/arklexai/arksim/compare/v0.3.2...v0.3.3) (2026-03-27)
 
