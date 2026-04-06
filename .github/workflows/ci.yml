@@ -55,7 +55,7 @@ jobs:
         run: pytest tests/unit/ -v --tb=short --cov=arksim --cov-report=xml --cov-report=term-missing --cov-fail-under=60
       - name: Upload coverage
         if: matrix.python-version == '3.13'
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v6
         with:
           files: coverage.xml
           token: ${{ secrets.CODECOV_TOKEN }}
