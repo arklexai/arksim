@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 """W3C Trace Context propagation for cross-process trace correlation.
 
-Generates traceparent headers, provides an httpx event hook for
-automatic injection, and a convenience factory for traced HTTP clients.
+Generates traceparent headers and provides an httpx event hook for
+automatic injection into outgoing requests.
 
 The hook reads from the ``trace_traceparent`` contextvar, which the
 simulator sets before each ``agent.execute()`` call for cross-process
