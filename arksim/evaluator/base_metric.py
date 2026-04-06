@@ -108,7 +108,7 @@ class QuantitativeMetric(abc.ABC):
         score_range: tuple[float, float] = (1, 5),
         additional_input: dict[str, Any] | None = None,
         description: str = "",
-        llm: Any | None = None,
+        llm: object | None = None,
     ) -> None:
         self.name = name if name is not None else self.__class__.__name__
         self.score_range = score_range
@@ -117,7 +117,7 @@ class QuantitativeMetric(abc.ABC):
         self._llm = llm
 
     @property
-    def llm(self) -> Any:
+    def llm(self) -> object:
         if self._llm is None:
             raise RuntimeError(
                 f"{self.__class__.__name__}.llm is not set. "
@@ -128,7 +128,7 @@ class QuantitativeMetric(abc.ABC):
         return self._llm
 
     @llm.setter
-    def llm(self, value: Any) -> None:
+    def llm(self, value: object) -> None:
         self._llm = value
 
     @abc.abstractmethod
@@ -179,7 +179,7 @@ class QualitativeMetric(abc.ABC):
         name: str | None = None,
         description: str = "",
         label_colors: dict[str, str] | None = None,
-        llm: Any | None = None,
+        llm: object | None = None,
     ) -> None:
         self.name = name if name is not None else self.__class__.__name__
         self.description = description
@@ -187,7 +187,7 @@ class QualitativeMetric(abc.ABC):
         self._llm = llm
 
     @property
-    def llm(self) -> Any:
+    def llm(self) -> object:
         if self._llm is None:
             raise RuntimeError(
                 f"{self.__class__.__name__}.llm is not set. "
@@ -198,7 +198,7 @@ class QualitativeMetric(abc.ABC):
         return self._llm
 
     @llm.setter
-    def llm(self, value: Any) -> None:
+    def llm(self, value: object) -> None:
         self._llm = value
 
     @abc.abstractmethod
