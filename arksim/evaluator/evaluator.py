@@ -806,6 +806,11 @@ def _load_custom_metrics(
         for _, obj in inspect.getmembers(module, inspect.isclass):
             if issubclass(obj, QuantitativeMetric) and obj is not QuantitativeMetric:
                 try:
+                    # Inspect obj.__init__ directly (not the resolved MRO) so that
+                    # legacy metrics overriding __init__ without an llm param are
+                    # instantiated without injection. Metrics that do not override
+                    # __init__ inherit the base class signature (which includes llm)
+                    # and will receive the injected LLM automatically.
                     sig = inspect.signature(obj.__init__)
                     if "llm" in sig.parameters:
                         metrics.append(obj(llm=llm))
@@ -822,6 +827,7 @@ def _load_custom_metrics(
                     ) from e
             elif issubclass(obj, QualitativeMetric) and obj is not QualitativeMetric:
                 try:
+                    # Same logic as above for qualitative metrics.
                     sig = inspect.signature(obj.__init__)
                     if "llm" in sig.parameters:
                         qual_metrics.append(obj(llm=llm))
