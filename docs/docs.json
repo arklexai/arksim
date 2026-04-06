@@ -202,7 +202,11 @@
   },
   "seo": {
     "metatags": {
-      "canonical": "https://docs.arklex.ai/"
+      "canonical": "https://docs.arklex.ai/",
+      "og:site_name": "ArkSim Docs",
+      "og:type": "website",
+      "og:description": "ArkSim is an open-source agent testing framework. Simulate realistic multi-turn conversations with your AI agent and evaluate performance before production.",
+      "twitter:card": "summary_large_image"
     }
   }
 }
