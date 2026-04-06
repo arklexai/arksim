@@ -385,7 +385,6 @@ def _build_error_rows(
     evaluation: Evaluation,
     simulation: Simulation,
     chat_id_to_label: dict[str, str],
-    conv_to_scenario: dict[str, str] | None = None,
 ) -> list[ErrorRow]:
     """Build per-unique-error rows, joining with simulation for occurrence snippets.
 
@@ -393,12 +392,16 @@ def _build_error_rows(
         evaluation: Evaluation result object.
         simulation: Simulation output (used to extract turn message snippets).
         chat_id_to_label: Mapping of conversation IDs to human-readable labels.
-        conv_to_scenario: Optional mapping of conversation IDs to scenario IDs.
 
     Returns:
         List of ErrorRow, one per unique error.
     """
     sim_lookup = {c.conversation_id: c for c in simulation.conversations}
+
+    # Use error_scenario_mappings as single source for scenario IDs
+    mapping_by_error = {
+        m.unique_error_id: m.scenario_ids for m in evaluation.error_scenario_mappings
+    }
 
     rows = []
     for error in evaluation.unique_errors:
@@ -408,12 +411,7 @@ def _build_error_rows(
                 occurrences_dict[occ.conversation_id] = []
             occurrences_dict[occ.conversation_id].append(f"turn_{occ.turn_id}")
 
-        # Resolve scenario IDs for this error's conversations
-        scenario_ids: list[str] = []
-        if conv_to_scenario:
-            scenario_ids = sorted(
-                {conv_to_scenario[c] for c in occurrences_dict if c in conv_to_scenario}
-            )
+        scenario_ids = mapping_by_error.get(error.unique_error_id, [])
 
         snippets: list[OccurrenceSnippet] = []
         for occ in error.occurrences:
@@ -512,14 +510,10 @@ def generate_html_report(params: HtmlReportParams) -> Path:
         raise ValueError("conversations is required (should be in evaluation)")
 
     turn_rows = _build_turn_rows(params.evaluation)
-    conv_to_scenario = {
-        c.conversation_id: c.scenario_id for c in params.simulation.conversations
-    }
     error_rows = _build_error_rows(
         params.evaluation,
         params.simulation,
         params.chat_id_to_label,
-        conv_to_scenario=conv_to_scenario,
     )
     simulate_data_dicts = [
         conv.model_dump() for conv in params.simulation.conversations
