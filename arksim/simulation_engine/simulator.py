@@ -222,24 +222,19 @@ class Simulator:
                     )
                     if traced:
                         existing_ids = {tc.id for tc in turn_tool_calls}
-                        existing_sigs = {
-                            (tc.name, json.dumps(tc.arguments, sort_keys=True))
-                            for tc in turn_tool_calls
-                        }
+                        sig_to_idx: dict[tuple[str, str], int] = {}
+                        for i, tc in enumerate(turn_tool_calls):
+                            sig = (tc.name, json.dumps(tc.arguments, sort_keys=True))
+                            sig_to_idx[sig] = i
+
                         for tc in traced:
                             sig = (tc.name, json.dumps(tc.arguments, sort_keys=True))
-                            if tc.id not in existing_ids and sig not in existing_sigs:
+                            if tc.id not in existing_ids and sig not in sig_to_idx:
                                 turn_tool_calls.append(tc)
-                            elif sig in existing_sigs and tc.result is not None:
-                                # Prefer traced version with richer data (has result)
-                                for i, existing in enumerate(turn_tool_calls):
-                                    existing_sig = (
-                                        existing.name,
-                                        json.dumps(existing.arguments, sort_keys=True),
-                                    )
-                                    if existing_sig == sig and existing.result is None:
-                                        turn_tool_calls[i] = tc
-                                        break
+                            elif sig in sig_to_idx and tc.result is not None:
+                                idx = sig_to_idx[sig]
+                                if turn_tool_calls[idx].result is None:
+                                    turn_tool_calls[idx] = tc
 
                 history.append(
                     {

@@ -53,18 +53,6 @@ arksim simulate-evaluate config_custom.yaml
 python run_pipeline.py
 ```
 
-### Chat Completions with tool call capture
-
-Point arksim at any OpenAI-compatible endpoint with tools defined in the request body. Tool calls in the response are captured automatically (zero config):
-
-```bash
-arksim simulate-evaluate config_chat_completions.yaml
-```
-
-This config defines tools (lookup_customer, get_order, etc.) in the `body.tools` field. When the model returns `tool_calls` in its response, arksim parses them into `ToolCall` objects for evaluation. No `trace_receiver` or `TracingProcessor` needed.
-
-Note: arksim does not execute the tools or re-call the model. This captures tool call requests (what the model asked to call), not execution results. For full execution capture, use the custom connector path.
-
 ### Traced agent (automatic tool call capture)
 
 The example includes a traced agent variant (`traced_agent.py`) that captures tool calls automatically instead of returning them in `AgentResponse`. The agent registers `ArksimTracingProcessor` once at module load. The simulator passes routing context automatically.

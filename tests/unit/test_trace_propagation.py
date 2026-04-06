@@ -11,7 +11,6 @@ import pytest
 
 from arksim.tracing.context import trace_traceparent
 from arksim.tracing.propagation import (
-    create_traced_client,
     generate_traceparent,
     inject_trace_context,
 )
@@ -58,22 +57,3 @@ class TestInjectTraceContext:
             assert "traceparent" not in request.headers
         finally:
             trace_traceparent.reset(token)
-
-
-class TestCreateTracedClient:
-    def test_has_hook(self) -> None:
-        client = create_traced_client(timeout=10)
-        hooks = client.event_hooks.get("request", [])
-        assert inject_trace_context in hooks
-
-    def test_preserves_existing_hooks(self) -> None:
-        def my_hook(request: httpx.Request) -> None:
-            pass
-
-        client = create_traced_client(
-            timeout=10,
-            event_hooks={"request": [my_hook]},
-        )
-        hooks = client.event_hooks.get("request", [])
-        assert my_hook in hooks
-        assert inject_trace_context in hooks

@@ -12,7 +12,7 @@ agents.
 from __future__ import annotations
 
 import os
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import httpx
 
@@ -50,16 +50,3 @@ async def inject_trace_context(request: httpx.Request) -> None:
     tp = trace_traceparent.get()
     if tp is not None:
         request.headers["traceparent"] = tp
-
-
-def create_traced_client(**kwargs: Any) -> httpx.AsyncClient:  # noqa: ANN401
-    """Create an httpx client with automatic trace context injection.
-
-    Appends ``inject_trace_context`` to existing event_hooks if
-    provided in kwargs (does not replace).
-    """
-    event_hooks = kwargs.pop("event_hooks", {})
-    request_hooks = list(event_hooks.get("request", []))
-    request_hooks.append(inject_trace_context)
-    event_hooks["request"] = request_hooks
-    return httpx.AsyncClient(event_hooks=event_hooks, **kwargs)
