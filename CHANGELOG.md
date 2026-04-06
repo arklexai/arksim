@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * **tracing:** add `ArksimTracingProcessor` for OpenAI Agents SDK (register once, zero per-turn wrapping)
 * **tracing:** add OTLP/HTTP trace receiver with protobuf and JSON support (`arksim[otel]`)
 * **tracing:** add dual attribute convention support (OTel GenAI semconv and OpenInference)
+* **examples:** add Dify chatbot integration example
 
 ### Changed
 

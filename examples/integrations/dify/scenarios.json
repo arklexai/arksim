@@ -1,0 +1,33 @@
+{
+    "schema_version": "v1",
+    "scenarios": [
+        {
+            "scenario_id": "return_policy_inquiry",
+            "user_id": "user_0001",
+            "goal": "You recently bought a cordless drill online but it stopped working after two weeks. You want to understand the return and warranty policy. Ask about the return window, whether you need the original packaging, and what the warranty covers. If the agent gives vague answers, push for specifics.",
+            "agent_context": "You are a customer service assistant for a home improvement store. You help customers with product questions, return policies, and warranty claims using your knowledge base.",
+            "user_profile": "You are Maria, a 42-year-old homeowner who recently started doing DIY projects around the house. You are practical and straightforward. You get frustrated when answers are vague or overly generic and prefer clear, actionable steps."
+        },
+        {
+            "scenario_id": "product_comparison",
+            "user_id": "user_0002",
+            "goal": "You are refinishing your backyard deck and need help choosing between oil-based and water-based deck stain. Ask about durability, drying time, ease of application, and which works better in humid climates. You have a slight preference for low maintenance but are open to being convinced.",
+            "agent_context": "You are a customer service assistant for a home improvement store. You help customers with product recommendations, comparisons, and project guidance using your knowledge base.",
+            "user_profile": "You are James, a 55-year-old retired contractor who knows construction but is less familiar with newer product formulations. You ask pointed technical questions and expect knowledgeable answers. You respect expertise and will push back on generic marketing language."
+        },
+        {
+            "scenario_id": "out_of_scope_question",
+            "user_id": "user_0003",
+            "goal": "Ask the agent about something completely outside the store's domain, like investment advice or medical questions. Observe whether the agent admits it cannot help or fabricates an answer. Then pivot to a legitimate product question to test recovery.",
+            "agent_context": "You are a customer service assistant for a home improvement store. You help customers with product questions, return policies, and warranty claims using your knowledge base.",
+            "user_profile": "You are David, a 38-year-old engineer who likes to test system boundaries. You are polite but deliberate in asking off-topic questions to see how the system responds."
+        },
+        {
+            "scenario_id": "multi_turn_reference",
+            "user_id": "user_0004",
+            "goal": "Ask about exterior paint options for a wooden fence. After getting recommendations, ask follow-up questions that reference earlier answers: 'How long does the one you recommended take to dry?' and 'Is it safe for the pets I mentioned?' Test whether the agent maintains conversational context across turns.",
+            "agent_context": "You are a customer service assistant for a home improvement store. You help customers with product recommendations and project guidance using your knowledge base.",
+            "user_profile": "You are Priya, a 29-year-old first-time homeowner with two dogs. You ask questions conversationally and expect the agent to remember details you shared earlier without repeating yourself."
+        }
+    ]
+}

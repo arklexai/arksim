@@ -350,6 +350,7 @@ Opens a local web app at `http://localhost:8080` where you can browse config fil
 | [langchain](examples/integrations/langchain/) | Integration with LangChain |
 | [langgraph](examples/integrations/langgraph/) | Integration with LangGraph |
 | [crewai](examples/integrations/crewai/) | Integration with CrewAI |
+| [dify](examples/integrations/dify/) | Integration with Dify |
 | [autogen](examples/integrations/autogen/) | Integration with Microsoft AutoGen |
 | [llamaindex](examples/integrations/llamaindex/) | Integration with LlamaIndex |
 | [pydantic-ai](examples/integrations/pydantic-ai/) | Integration with Pydantic AI |
