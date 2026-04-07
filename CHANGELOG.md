@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * **evaluator:** focus file generation after evaluation for targeted reruns of failing scenarios
 * **evaluator:** scenario IDs shown in CLI error output alongside focus file paths
 * **report:** scenario IDs displayed in HTML report error cards
-* **evaluator:** error-to-scenario group mappings included in `evaluation.json` output
+* **evaluator:** error-to-scenario mappings included in `evaluation.json` output
 
 ### Changed
 

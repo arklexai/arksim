@@ -119,7 +119,7 @@ def test_run_evaluation_uses_in_memory_simulation(
             assert simulation_obj is simulation
             return evaluation_output
 
-        def display_evaluation_summary(self, **kwargs: object) -> None:
+        def display_evaluation_summary(self) -> None:
             return None
 
         def save_results(self) -> None:
@@ -176,7 +176,7 @@ def test_run_evaluation_passes_in_memory_scenarios_to_html_report(
             assert simulation_obj is simulation
             return evaluation_output
 
-        def display_evaluation_summary(self, **kwargs: object) -> None:
+        def display_evaluation_summary(self) -> None:
             return None
 
         def save_results(self) -> None:
