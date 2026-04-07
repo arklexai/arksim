@@ -16,7 +16,6 @@ from a2a.utils.message import get_message_text
 
 from arksim.config import A2AConfig, AgentConfig, AgentType
 from arksim.simulation_engine.agent.base import BaseAgent
-from arksim.tracing.propagation import inject_trace_context
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +52,6 @@ class A2AAgent(BaseAgent):
             self._httpx_client = httpx.AsyncClient(
                 timeout=httpx.Timeout(60.0),
                 headers=headers if headers else None,
-                event_hooks={"request": [inject_trace_context]},
             )
 
             # Initialize A2ACardResolver
