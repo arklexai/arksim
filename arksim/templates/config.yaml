@@ -1,0 +1,28 @@
+# ArkSim configuration
+# Edit the endpoint below to point at your agent, then run:
+#   arksim simulate-evaluate config.yaml
+
+# --- Agent connection ---
+agent_config:
+  agent_type: chat_completions
+  agent_name: my-agent
+  api_config:
+    # Replace with your agent's Chat Completions endpoint
+    endpoint: http://localhost:8000/v1/chat/completions
+    headers:
+      Content-Type: application/json
+    body:
+      messages:
+        - role: system
+          content: "You are a helpful assistant."
+
+# --- Scenarios ---
+scenario_file_path: ./scenarios.json
+
+# --- Simulation ---
+num_conversations_per_scenario: 3
+max_turns: 5
+
+# --- Evaluation ---
+output_dir: ./results
+generate_html_report: true
