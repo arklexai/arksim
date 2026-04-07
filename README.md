@@ -17,7 +17,7 @@
     <a href="https://arxiv.org/abs/2510.11997"><img alt="2510.11997" src="https://img.shields.io/badge/arXiv-2510.11997-b31b1b.svg"></a>
   </p>
   <p align="center">
-    <a href="https://docs.arklex.ai/main/overview">Documentation</a> · <a href="examples/">Examples</a> · <a href="https://github.com/arklexai/arksim/issues">Report a Bug</a>
+    <a href="https://docs.arklex.ai/main/overview">Documentation</a> · <a href="examples/">Examples</a> · <a href="https://discord.gg/YNkdqAQjzA">Discord</a> · <a href="https://github.com/arklexai/arksim/issues">Report a Bug</a>
   </p>
 </p>
 
@@ -53,7 +53,10 @@ arksim init
 arksim simulate-evaluate config.yaml
 ```
 
-This generates `config.yaml`, `scenarios.json`, and a starter `my_agent.py`. No server needed. For HTTP or A2A agents, use `arksim init --agent-type chat_completions` or `arksim init --agent-type a2a`. For Anthropic or Google as the evaluation LLM: `pip install "arksim[anthropic]"` or `pip install "arksim[google]"`.
+This generates `config.yaml`, `scenarios.json`, and a starter `my_agent.py`. No server needed.
+
+For HTTP or A2A agents: `arksim init --agent-type chat_completions` or `arksim init --agent-type a2a`.
+For Anthropic or Google as the evaluation LLM: `pip install "arksim[anthropic]"` or `pip install "arksim[google]"`.
 
 ### Just exploring? Try an example:
 
@@ -135,8 +138,8 @@ Write scenarios that match your agent's domain. See the [Scenarios documentation
 
 ## Integrations
 
-| Example | Description |
-|---------|-------------|
+| Integration | Description |
+|-------------|-------------|
 | [bank-insurance](examples/bank-insurance/) | Financial services agent with custom compliance metrics, adversarial scenarios, and a Chat Completions server |
 | [e-commerce](examples/e-commerce/) | E-commerce product recommendation agent with custom metrics |
 | [openclaw](examples/openclaw/) | Integration with the OpenClaw agent framework |
@@ -157,13 +160,13 @@ Write scenarios that match your agent's domain. See the [Scenarios documentation
 
 ## Learn More
 
-| Topic | Link |
-|-------|------|
-| Evaluation metrics (built-in and custom) | [Documentation](https://docs.arklex.ai/main/evaluate-conversation) |
-| CI integration (pytest and GitHub Actions) | [Documentation](https://docs.arklex.ai/main/ci-integration) |
-| Configuration reference | [Documentation](https://docs.arklex.ai/main/schema-reference) |
-| CLI commands | [Documentation](https://docs.arklex.ai/main/simulate-conversation) |
-| Web UI | [Documentation](https://docs.arklex.ai/main/overview) |
+| Topic | |
+|-------|---|
+| Evaluation metrics (built-in and custom) | [Metrics guide](https://docs.arklex.ai/main/evaluate-conversation) |
+| CI integration (pytest and GitHub Actions) | [CI setup guide](https://docs.arklex.ai/main/ci-integration) |
+| Configuration reference (all YAML settings) | [Schema reference](https://docs.arklex.ai/main/schema-reference) |
+| CLI commands and flags | [CLI guide](https://docs.arklex.ai/main/simulate-conversation) |
+| Web UI for browsing results | [Overview](https://docs.arklex.ai/main/overview) |
 
 ## Development
 
