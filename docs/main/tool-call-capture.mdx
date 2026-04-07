@@ -21,11 +21,11 @@ If both are active, arksim deduplicates automatically (see [Deduplication](#dedu
 | Connector | Explicit (`AgentResponse`) | Automatic Capture |
 |-----------|--------------------------|-------------------|
 | Python connector | Supported | Supported via `ArksimTracingProcessor` |
-| Chat Completions | Planned | Supported via W3C Trace Context |
-| A2A | Planned | Supported via W3C Trace Context |
+| Chat Completions | Planned | Planned (W3C Trace Context infrastructure ready) |
+| A2A | Planned | Planned (W3C Trace Context infrastructure ready) |
 
 <Info>
-For same-process agents (Python connector), tool calls are captured via `ArksimTracingProcessor`. For cross-process agents (Chat Completions, A2A), W3C Trace Context propagation enables OTel-based capture when the remote agent is instrumented. Cloud model APIs (OpenAI, Anthropic, Gemini) do not export OTel spans; use the Python connector with `AgentResponse` for those.
+Tool call capture currently works with the Python connector only. W3C Trace Context infrastructure is in place for Chat Completions and A2A but requires end-to-end validation with OTel-instrumented wrapper servers (follow-up PR).
 </Info>
 
 ---
