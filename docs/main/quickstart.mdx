@@ -26,11 +26,16 @@ If you already have an agent running, use `arksim init` to scaffold a starter co
     arksim init
     ```
 
-    This creates two files in the current directory:
-    - **config.yaml** with a Chat Completions endpoint placeholder and sensible defaults
+    This creates three files in the current directory:
+    - **config.yaml** pointing at `./my_agent.py` with sensible defaults
     - **scenarios.json** with four domain-agnostic starter scenarios (happy path, out of scope, ambiguous intent, multi-step)
+    - **my_agent.py** with a `BaseAgent` subclass ready to fill in (no server needed)
 
-    Open `config.yaml` and replace the endpoint with your agent's URL. The file includes inline comments explaining each field.
+    Open `my_agent.py` and replace the `execute()` body with your agent logic. All files include inline comments explaining each field.
+
+    <Tip>
+    For HTTP or A2A agents, use `arksim init --agent-type chat_completions` or `arksim init --agent-type a2a` instead. Use `--force` to re-scaffold if files already exist.
+    </Tip>
   </Step>
   <Step title="Run simulation and evaluation">
     ```bash
