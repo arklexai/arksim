@@ -17,10 +17,12 @@ from .base_metric import (
     format_chat_history,
 )
 from .entities import (
+    ErrorScenarioMapping,
     Evaluation,
     EvaluationInput,
     EvaluationParams,
 )
+from .error_scenarios import build_error_scenario_data
 from .evaluator import Evaluator, run_evaluation
 from .thresholds import (
     check_numeric_thresholds,
@@ -37,8 +39,10 @@ __all__ = [
     "QualResult",
     "Evaluator",
     "EvaluationParams",
+    "ErrorScenarioMapping",
     "ScoreInput",
     "QuantResult",
+    "build_error_scenario_data",
     "check_numeric_thresholds",
     "check_qualitative_failure_labels",
     "format_chat_history",

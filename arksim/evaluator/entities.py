@@ -228,6 +228,16 @@ class ConversationEvaluation(BaseModel):
     turn_scores: list[TurnEvaluation]
 
 
+class ErrorScenarioMapping(BaseModel):
+    """Maps a unique error to the scenarios that triggered it."""
+
+    error_index: int
+    unique_error_id: str
+    error_description: str
+    severity: str
+    scenario_ids: list[str]
+
+
 class Evaluation(BaseModel):
     """Top-level evaluation output file."""
 
@@ -238,3 +248,4 @@ class Evaluation(BaseModel):
     simulation_id: str
     conversations: list[ConversationEvaluation]
     unique_errors: list[UniqueError]
+    error_scenario_mappings: list[ErrorScenarioMapping] = Field(default_factory=list)

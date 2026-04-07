@@ -1124,19 +1124,6 @@
             line-height: 1.5;
         }
 
-        .suggested-fix-label {
-            font-weight: 600;
-            font-size: 16px;
-            color: #1a1a1a;
-            margin-bottom: 10px;
-        }
-
-        .suggested-fix-text {
-            color: #4a4a4a;
-            margin-bottom: 16px;
-            line-height: 1.5;
-        }
-
         .error-header {
             display: flex;
             gap: 12px;
@@ -1175,15 +1162,6 @@
         .severity-medium { background-color: #d97706; color: white; }
         .severity-low { background-color: #6b7280; color: white; }
 
-        .fix-disclaimer {
-            margin-top: 16px;
-            padding: 10px 14px;
-            background-color: #f8fafc;
-            border-left: 3px solid #94a3b8;
-            color: #64748b;
-            font-size: 13px;
-            font-style: italic;
-        }
 
         .divider {
             border-top: 1px solid #e5e7eb;
@@ -1225,6 +1203,18 @@
             background-color: #dbeafe;
             color: #1e3a8a;
             box-shadow: 0 1px 3px rgba(37, 99, 235, 0.3);
+        }
+
+        .scenario-id-chip {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 999px;
+            background-color: #f0fdf4;
+            color: #15803d;
+            font-size: 12px;
+            font-weight: 500;
+            border: 1px solid #bbf7d0;
         }
 
         /* Snippet expand/collapse styles */
@@ -1731,7 +1721,6 @@
                 return countOccurrences(b.occurrences) - countOccurrences(a.occurrences);
             });
 
-            let hasSuggestedFixes = false;
             sorted.forEach(error => {
                 // Calculate occurrences count from native object {conv_id: [turn_ids]}
                 let count = 0;
@@ -1795,16 +1784,21 @@
                     `;
                 }
 
-                // Build suggested fix markup only when data exists
-                let suggestedFixHtml = '';
-                if (error.suggested_fix || error.best_module_fix_reasoning) {
-                    hasSuggestedFixes = true;
-                    suggestedFixHtml = `
+                // Build scenario IDs markup
+                let scenarioIdsHtml = '';
+                if (Array.isArray(error.scenario_ids) && error.scenario_ids.length > 0) {
+                    const chips = error.scenario_ids
+                        .map(id => `<span class="scenario-id-chip">${escapeHtml(id)}</span>`)
+                        .join(' ');
+                    scenarioIdsHtml = `
                     <div class="divider"></div>
-                    <div class="suggested-fix-label">Suggested Fix:</div>
-                    <div class="suggested-fix-text">
-                        ${error.suggested_fix || error.best_module_fix_reasoning}
-                    </div>`;
+                    <div class="error-conversations">
+                        <div class="error-conversations-label">Scenarios</div>
+                        <div class="error-conversations-list">
+                            ${chips}
+                        </div>
+                    </div>
+                    `;
                 }
 
                 const card = document.createElement('div');
@@ -1819,27 +1813,20 @@
                     <div class="error-header">
                         <span class="severity-badge ${sevClass}">${sev}</span>
                         <span class="occurrence-badge">${occurrenceText}</span>
-                        <span class="category-badge">${error.agent_behavior_failure_category || 'General'}</span>
+                        <span class="category-badge">${escapeHtml(error.agent_behavior_failure_category || 'General')}</span>
                     </div>
                     <div class="bug-badge">Bug</div>
                     <div class="error-description">
-                        ${error.unique_error}
+                        ${escapeHtml(error.unique_error)}
                     </div>
-                    ${suggestedFixHtml}
                     ${conversationsHtml}
+                    ${scenarioIdsHtml}
                     ${snippetsHtml}
                 `;
 
                 container.appendChild(card);
             });
 
-            // Add disclaimer after all error cards, only if fixes were shown
-            if (hasSuggestedFixes) {
-                const disclaimer = document.createElement('div');
-                disclaimer.className = 'fix-disclaimer';
-                disclaimer.textContent = 'Note: Suggested fixes are module-level heuristics and may not apply to your architecture.';
-                container.appendChild(disclaimer);
-            }
         }
 
         // Toggle Scoring Methodology Section

@@ -133,8 +133,7 @@ class ErrorRow(BaseModel):
     agent_behavior_failure_category: str
     severity: str
     occurrences: dict[str, list[str]]  # {conv_id: ["turn_0", "turn_1", ...]}
-    suggested_fix: str = ""
-    best_module_fix_reasoning: str = ""
+    scenario_ids: list[str] = Field(default_factory=list)
     occurrence_snippets: list[OccurrenceSnippet] = Field(default_factory=list)
 
 
@@ -399,6 +398,11 @@ def _build_error_rows(
     """
     sim_lookup = {c.conversation_id: c for c in simulation.conversations}
 
+    # Use error_scenario_mappings as single source for scenario IDs
+    mapping_by_error = {
+        m.unique_error_id: m.scenario_ids for m in evaluation.error_scenario_mappings
+    }
+
     rows = []
     for error in evaluation.unique_errors:
         occurrences_dict: dict[str, list[str]] = {}
@@ -406,6 +410,8 @@ def _build_error_rows(
             if occ.conversation_id not in occurrences_dict:
                 occurrences_dict[occ.conversation_id] = []
             occurrences_dict[occ.conversation_id].append(f"turn_{occ.turn_id}")
+
+        scenario_ids = mapping_by_error.get(error.unique_error_id, [])
 
         snippets: list[OccurrenceSnippet] = []
         for occ in error.occurrences:
@@ -442,10 +448,7 @@ def _build_error_rows(
                 agent_behavior_failure_category=error.behavior_failure_category,
                 severity=error.severity,
                 occurrences=occurrences_dict,
-                suggested_fix=getattr(error, "suggested_fix", ""),
-                best_module_fix_reasoning=getattr(
-                    error, "best_module_fix_reasoning", ""
-                ),
+                scenario_ids=scenario_ids,
                 occurrence_snippets=snippets,
             )
         )
@@ -508,7 +511,9 @@ def generate_html_report(params: HtmlReportParams) -> Path:
 
     turn_rows = _build_turn_rows(params.evaluation)
     error_rows = _build_error_rows(
-        params.evaluation, params.simulation, params.chat_id_to_label
+        params.evaluation,
+        params.simulation,
+        params.chat_id_to_label,
     )
     simulate_data_dicts = [
         conv.model_dump() for conv in params.simulation.conversations
