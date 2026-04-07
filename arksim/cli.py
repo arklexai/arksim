@@ -5,9 +5,11 @@ import argparse
 import asyncio
 import logging
 import os
+import shutil
 import sys
 import textwrap
 import time
+from importlib import resources
 
 import yaml
 from pydantic import ValidationError
@@ -265,6 +267,42 @@ def _run_examples(
     logger.info(f"Downloaded to {os.path.abspath(dest_path)}")
 
 
+def _run_init() -> None:
+    """Scaffold a starter config.yaml and scenarios.json in the current directory."""
+    config_dest = os.path.join(os.getcwd(), "config.yaml")
+    scenarios_dest = os.path.join(os.getcwd(), "scenarios.json")
+
+    existing = []
+    if os.path.exists(config_dest):
+        existing.append("config.yaml")
+    if os.path.exists(scenarios_dest):
+        existing.append("scenarios.json")
+
+    if existing:
+        logger.error(
+            f"{', '.join(existing)} already exist in the current directory. "
+            "Remove them first or run from a different directory."
+        )
+        sys.exit(EXIT_CONFIG_ERROR)
+
+    templates = resources.files("arksim.templates")
+    config_src = templates.joinpath("config.yaml")
+    scenarios_src = templates.joinpath("scenarios.json")
+
+    with resources.as_file(config_src) as src:
+        shutil.copy2(src, config_dest)
+    with resources.as_file(scenarios_src) as src:
+        shutil.copy2(src, scenarios_dest)
+
+    logger.info(f"Created {config_dest}")
+    logger.info(f"Created {scenarios_dest}")
+    logger.info(
+        "\nNext steps:\n"
+        "  1. Edit config.yaml with your agent's endpoint\n"
+        "  2. Run: arksim simulate-evaluate config.yaml"
+    )
+
+
 def _add_config_subparser(
     subparsers: argparse._SubParsersAction,
     name: str,
@@ -366,6 +404,12 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         dest="list_only",
         help="List available examples",
+    )
+
+    # init
+    sub.add_parser(
+        "init",
+        help="Scaffold a starter config.yaml and scenarios.json",
     )
 
     # ui
@@ -510,6 +554,10 @@ def main() -> None:
 
     if args.command == "examples":
         _run_examples(name=args.name, list_only=args.list_only)
+        return
+
+    if args.command == "init":
+        _run_init()
         return
 
     if args.command == "ui":
