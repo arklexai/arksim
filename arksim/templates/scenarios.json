@@ -5,7 +5,7 @@
             "scenario_id": "happy_path",
             "user_id": "user_patient",
             "goal": "You have a straightforward question that the agent should be able to answer. Ask clearly, provide any details the agent requests, and evaluate whether the response is helpful and accurate.",
-            "agent_context": "Paste your agent's system prompt or policy docs here so the evaluator can check faithfulness. Leave empty if not applicable.",
+            "agent_context": "Describe what your agent does and what it knows. This context is given to the simulated user so it knows what to expect from the agent. Leave empty if not applicable.",
             "user_profile": "You are Alex, a 35-year-old software engineer. You are patient, detail-oriented, and technically literate. You communicate clearly and concisely. When you ask a question, you provide relevant context up front.",
             "knowledge": []
         },
