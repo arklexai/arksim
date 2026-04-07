@@ -724,9 +724,7 @@ async def test_trace_id_map_cleanup_on_drain(_unused_port: int) -> None:
         receiver.register_trace_id("bbbb" * 8, "conv-1", 1)
 
         # Drain turn 1 (should prune turn 0 and turn 1 mappings)
-        receiver.submit_tool_calls(
-            "conv-1", 1, [ToolCall(id="t1", name="tool", source="otel_trace")]
-        )
+        receiver.submit_tool_calls("conv-1", 1, [ToolCall(id="t1", name="tool")])
         await receiver.wait_for_traces("conv-1", 1)
 
         assert receiver._resolve_trace_id("aaaa" * 8) is None

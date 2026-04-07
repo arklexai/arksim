@@ -13,7 +13,6 @@ from .base_metric import (
 from .builtin_metrics import AgentBehaviorFailureMetric
 from .utils.enums import AgentBehaviorFailureType, AgentMetrics
 from .utils.prompts import (
-    tool_call_behavior_failure_request_only_system_prompt,
     tool_call_behavior_failure_system_prompt,
     tool_call_behavior_failure_user_prompt,
 )
@@ -29,10 +28,6 @@ class ToolCallBehaviorFailureMetric(AgentBehaviorFailureMetric):
 
     Evaluates: tool selection, parameter correctness, call necessity,
     result usage, action safety, and response integrity.
-
-    When all tool calls originate from response parsing (source="response_parse"),
-    execution results are unavailable. In that case the evaluator uses a
-    reduced prompt that skips Result Usage and Response Integrity dimensions.
     """
 
     DESCRIPTION = (
@@ -56,30 +51,11 @@ class ToolCallBehaviorFailureMetric(AgentBehaviorFailureMetric):
                 reason="No tool calls in this turn",
             )
 
-        # Select prompt based on tool call source.
-        # When ALL calls are from response parsing, results are unavailable so
-        # we use a reduced prompt that skips Result Usage and Response Integrity.
-        # Uses all() so mixed-source turns (some OTel with results, some parsed
-        # without) still get the full 6-dimension evaluation.
-        def _get_source(tc: object) -> str | None:
-            if isinstance(tc, dict):
-                return tc.get("source")
-            return getattr(tc, "source", None)
-
-        has_request_only = all(
-            _get_source(tc) == "response_parse" for tc in score_input.tool_calls
-        )
-        system_prompt = (
-            tool_call_behavior_failure_request_only_system_prompt
-            if has_request_only
-            else tool_call_behavior_failure_system_prompt
-        )
-
         response = self._llm.call(
             [
                 {
                     "role": "system",
-                    "content": system_prompt,
+                    "content": tool_call_behavior_failure_system_prompt,
                 },
                 {
                     "role": "user",

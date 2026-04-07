@@ -1,8 +1,9 @@
 # SPDX-License-Identifier: Apache-2.0
-"""Integration tests for Chat Completions tool call capture.
+"""Integration tests for Chat Completions response parsing.
 
-Verifies that tool_calls returned by real LLM APIs are parsed into
-ToolCall objects with source="response_parse". Requires API keys.
+Verifies that real LLM API responses are parsed into AgentResponse
+objects. Tool calls are captured via OTel tracing, not response parsing.
+Requires API keys.
 """
 
 from __future__ import annotations
@@ -36,9 +37,12 @@ TOOLS = [
 
 @requires_openai
 @pytest.mark.asyncio
-async def test_openai_tool_calls_captured() -> None:
-    """A real OpenAI API call with tools returns tool_calls that arksim captures."""
+async def test_openai_tool_response_parsed() -> None:
+    """A real OpenAI API call with tools returns a valid AgentResponse.
 
+    Response parsers no longer extract tool calls (that is handled by OTel
+    tracing). This test verifies the response is parsed without errors.
+    """
     response = await _call_openai(
         messages=[
             {"role": "system", "content": "You are a helpful assistant."},
@@ -50,16 +54,7 @@ async def test_openai_tool_calls_captured() -> None:
     result = parse_response(response)
 
     assert isinstance(result, AgentResponse)
-    assert len(result.tool_calls) >= 1, (
-        f"Expected at least 1 tool call, got {len(result.tool_calls)}. "
-        f"Response content: {result.content!r}"
-    )
-
-    tc = result.tool_calls[0]
-    assert tc.name == "get_weather"
-    assert "city" in tc.arguments
-    assert tc.source == "response_parse"
-    assert tc.result is None  # Response parsing captures requests only
+    assert result.tool_calls == []
 
 
 @requires_openai
@@ -84,7 +79,7 @@ async def test_openai_text_response_has_no_tool_calls() -> None:
 @requires_openai
 @pytest.mark.asyncio
 async def test_chat_completions_agent_returns_agent_response() -> None:
-    """ChatCompletionsAgent.execute() returns AgentResponse with tool_calls."""
+    """ChatCompletionsAgent.execute() returns AgentResponse."""
     from arksim.config import AgentConfig
     from arksim.simulation_engine.agent.clients.chat_completions import (
         ChatCompletionsAgent,
@@ -117,9 +112,8 @@ async def test_chat_completions_agent_returns_agent_response() -> None:
         result = await agent.execute("What is the weather in Paris?")
 
         assert isinstance(result, AgentResponse)
-        assert len(result.tool_calls) >= 1
-        assert result.tool_calls[0].name == "get_weather"
-        assert result.tool_calls[0].source == "response_parse"
+        # Tool calls are no longer extracted from responses
+        assert result.tool_calls == []
     finally:
         await agent.close()
 

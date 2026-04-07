@@ -231,10 +231,6 @@ class Simulator:
                             sig = (tc.name, json.dumps(tc.arguments, sort_keys=True))
                             if tc.id not in existing_ids and sig not in sig_to_idx:
                                 turn_tool_calls.append(tc)
-                            elif sig in sig_to_idx and tc.result is not None:
-                                idx = sig_to_idx[sig]
-                                if turn_tool_calls[idx].result is None:
-                                    turn_tool_calls[idx] = tc
 
                 history.append(
                     {

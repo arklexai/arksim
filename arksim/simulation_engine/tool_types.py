@@ -1,11 +1,9 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-from typing import Any, Literal
+from typing import Any
 
 from pydantic import BaseModel
-
-ToolCallSource = Literal["response_parse", "otel_trace", "explicit"]
 
 
 class ToolCall(BaseModel):
@@ -16,7 +14,6 @@ class ToolCall(BaseModel):
     arguments: dict[str, Any] = {}
     result: str | None = None
     error: str | None = None
-    source: ToolCallSource | None = None
 
 
 class AgentResponse(BaseModel):

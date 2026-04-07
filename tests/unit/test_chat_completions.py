@@ -37,7 +37,8 @@ class TestParseResponseOpenAI:
         assert response.content == ""
         assert response.tool_calls == []
 
-    def test_tool_calls_parsed(self) -> None:
+    def test_tool_calls_not_extracted(self) -> None:
+        """Response parsers no longer extract tool calls from responses."""
         result = {
             "choices": [
                 {
@@ -59,11 +60,7 @@ class TestParseResponseOpenAI:
         }
         response = parse_response(result)
         assert response.content == ""
-        assert len(response.tool_calls) == 1
-        tc = response.tool_calls[0]
-        assert tc.id == "call_abc"
-        assert tc.name == "search"
-        assert tc.arguments == {"query": "arksim"}
+        assert response.tool_calls == []
 
 
 class TestParseResponseAnthropic:
@@ -95,7 +92,8 @@ class TestParseResponseAnthropic:
         response = parse_response(result)
         assert response.content == "Only this."
 
-    def test_tool_use_block_parsed(self) -> None:
+    def test_tool_use_block_not_extracted(self) -> None:
+        """Response parsers no longer extract tool calls from responses."""
         result = {
             "content": [
                 {"type": "text", "text": "Using tool."},
@@ -109,11 +107,7 @@ class TestParseResponseAnthropic:
         }
         response = parse_response(result)
         assert response.content == "Using tool."
-        assert len(response.tool_calls) == 1
-        tc = response.tool_calls[0]
-        assert tc.id == "toolu_01"
-        assert tc.name == "calculator"
-        assert tc.arguments == {"expression": "2+2"}
+        assert response.tool_calls == []
 
 
 class TestParseResponseGoogle:
@@ -149,7 +143,8 @@ class TestParseResponseGoogle:
         with pytest.raises(ValueError, match="empty 'candidates'"):
             parse_response(result)
 
-    def test_function_call_part_parsed(self) -> None:
+    def test_function_call_part_not_extracted(self) -> None:
+        """Response parsers no longer extract tool calls from responses."""
         result = {
             "candidates": [
                 {
@@ -169,10 +164,7 @@ class TestParseResponseGoogle:
         }
         response = parse_response(result)
         assert response.content == "Calling tool."
-        assert len(response.tool_calls) == 1
-        tc = response.tool_calls[0]
-        assert tc.name == "weather"
-        assert tc.arguments == {"city": "NYC"}
+        assert response.tool_calls == []
 
 
 class TestParseResponseUnsupported:

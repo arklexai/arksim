@@ -21,7 +21,7 @@ class TestParseOpenAI:
         assert response.tool_calls == []
 
     def test_tool_calls_only(self) -> None:
-        """content=None with tool_calls: the crash that this PR fixes."""
+        """content=None with tool_calls: the crash fix (content=None -> "")."""
         result = {
             "choices": [
                 {
@@ -44,13 +44,10 @@ class TestParseOpenAI:
         }
         response = parse_openai(result)
         assert response.content == ""
-        assert len(response.tool_calls) == 1
-        tc = response.tool_calls[0]
-        assert tc.name == "get_weather"
-        assert tc.arguments == {"city": "NYC"}
-        assert tc.source == "response_parse"
+        assert response.tool_calls == []
 
     def test_text_and_tool_calls(self) -> None:
+        """Tool calls in response are ignored; only content is extracted."""
         result = {
             "choices": [
                 {
@@ -73,15 +70,14 @@ class TestParseOpenAI:
         }
         response = parse_openai(result)
         assert response.content == "Let me check."
-        assert len(response.tool_calls) == 1
-        assert response.tool_calls[0].name == "search"
+        assert response.tool_calls == []
 
     def test_empty_choices_raises(self) -> None:
         with pytest.raises(ValueError, match="empty 'choices'"):
             parse_openai({"choices": []})
 
-    def test_malformed_arguments_logs_and_skips(self) -> None:
-        """Invalid JSON in arguments logs a warning and leaves arguments empty."""
+    def test_malformed_arguments_ignored(self) -> None:
+        """Tool calls in response are not extracted, so malformed args are irrelevant."""
         result = {
             "choices": [
                 {
@@ -103,11 +99,11 @@ class TestParseOpenAI:
             ]
         }
         response = parse_openai(result)
-        assert len(response.tool_calls) == 1
-        assert response.tool_calls[0].arguments == {}
+        assert response.content == ""
+        assert response.tool_calls == []
 
-    def test_tool_call_id_generated_when_missing(self) -> None:
-        """Missing 'id' on a tool_call produces a UUID rather than raising."""
+    def test_tool_call_id_missing_ignored(self) -> None:
+        """Tool calls in response are not extracted regardless of missing fields."""
         result = {
             "choices": [
                 {
@@ -125,8 +121,8 @@ class TestParseOpenAI:
             ]
         }
         response = parse_openai(result)
-        assert len(response.tool_calls) == 1
-        assert response.tool_calls[0].id  # non-empty UUID string
+        assert response.content == ""
+        assert response.tool_calls == []
 
 
 class TestParseAnthropic:
@@ -137,6 +133,7 @@ class TestParseAnthropic:
         assert response.tool_calls == []
 
     def test_tool_use_blocks(self) -> None:
+        """Tool use blocks in response are not extracted; only text is."""
         result = {
             "content": [
                 {
@@ -149,13 +146,10 @@ class TestParseAnthropic:
         }
         response = parse_anthropic(result)
         assert response.content == ""
-        assert len(response.tool_calls) == 1
-        tc = response.tool_calls[0]
-        assert tc.name == "get_weather"
-        assert tc.arguments == {"city": "NYC"}
-        assert tc.source == "response_parse"
+        assert response.tool_calls == []
 
     def test_mixed_text_and_tool_use(self) -> None:
+        """Only text blocks are extracted; tool_use blocks are ignored."""
         result = {
             "content": [
                 {"type": "text", "text": "Let me check. "},
@@ -169,7 +163,7 @@ class TestParseAnthropic:
         }
         response = parse_anthropic(result)
         assert response.content == "Let me check. "
-        assert len(response.tool_calls) == 1
+        assert response.tool_calls == []
 
     def test_non_dict_blocks_ignored(self) -> None:
         """Malformed non-dict entries in content list are silently skipped."""
@@ -199,6 +193,7 @@ class TestParseGemini:
         assert response.tool_calls == []
 
     def test_function_call_parts(self) -> None:
+        """Function call parts in response are not extracted; only text is."""
         result = {
             "candidates": [
                 {
@@ -217,11 +212,7 @@ class TestParseGemini:
         }
         response = parse_gemini(result)
         assert response.content == ""
-        assert len(response.tool_calls) == 1
-        tc = response.tool_calls[0]
-        assert tc.name == "get_weather"
-        assert tc.arguments == {"city": "NYC"}
-        assert tc.source == "response_parse"
+        assert response.tool_calls == []
 
     def test_empty_candidates_raises(self) -> None:
         with pytest.raises(ValueError, match="empty 'candidates'"):
@@ -257,7 +248,8 @@ class TestParseResponseDispatch:
         with pytest.raises(ValueError, match="Unsupported response format"):
             parse_response({"data": "something"})
 
-    def test_source_field_set(self) -> None:
+    def test_tool_calls_not_extracted(self) -> None:
+        """Response parsers no longer extract tool calls from responses."""
         result = {
             "choices": [
                 {
@@ -275,7 +267,7 @@ class TestParseResponseDispatch:
             ]
         }
         response = parse_response(result)
-        assert response.tool_calls[0].source == "response_parse"
+        assert response.tool_calls == []
 
     def test_openai_takes_precedence_over_anthropic(self) -> None:
         """A response with both 'choices' and 'content' is parsed as OpenAI."""
