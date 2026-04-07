@@ -24,7 +24,6 @@ if TYPE_CHECKING:
     from arksim.tracing import TraceReceiver
 
 from arksim.tracing.context import _clear_trace_context, _set_trace_context
-from arksim.tracing.propagation import generate_traceparent
 
 from .agent.factory import create_agent
 from .core import TURN_KNOWLEDGE_FN
@@ -176,18 +175,8 @@ class Simulator:
 
                 # Set trace routing context so processors can read it
                 # without the agent passing it explicitly.
-                traceparent = None
                 if self.trace_receiver is not None:
-                    if self.agent_config.agent_type != AgentType.CUSTOM.value:
-                        traceparent = generate_traceparent(
-                            self.trace_receiver, conversation_id, turn
-                        )
-                    _set_trace_context(
-                        conversation_id,
-                        turn,
-                        self.trace_receiver,
-                        traceparent=traceparent,
-                    )
+                    _set_trace_context(conversation_id, turn, self.trace_receiver)
 
                 try:
                     result = await agent.execute(
@@ -196,12 +185,7 @@ class Simulator:
                     )
                 finally:
                     if self.trace_receiver is not None:
-                        # Only signal turn complete for same-process agents.
-                        # Cross-process agents rely on HTTP event + settle window.
-                        if self.agent_config.agent_type == AgentType.CUSTOM.value:
-                            self.trace_receiver.signal_turn_complete(
-                                conversation_id, turn
-                            )
+                        self.trace_receiver.signal_turn_complete(conversation_id, turn)
                         _clear_trace_context()
 
                 # Normalize response

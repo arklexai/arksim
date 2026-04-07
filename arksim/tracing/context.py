@@ -28,23 +28,17 @@ trace_turn_id: contextvars.ContextVar[int | None] = contextvars.ContextVar(
 trace_receiver_ref: contextvars.ContextVar[TraceReceiver | None] = (
     contextvars.ContextVar("trace_receiver_ref", default=None)
 )
-trace_traceparent: contextvars.ContextVar[str | None] = contextvars.ContextVar(
-    "trace_traceparent", default=None
-)
 
 
 def _set_trace_context(
     conversation_id: str,
     turn_id: int,
     receiver: TraceReceiver,
-    *,
-    traceparent: str | None = None,
 ) -> None:
     """Set routing context before agent.execute(). Called by the simulator."""
     trace_conversation_id.set(conversation_id)
     trace_turn_id.set(turn_id)
     trace_receiver_ref.set(receiver)
-    trace_traceparent.set(traceparent)
 
 
 def _clear_trace_context() -> None:
@@ -52,4 +46,3 @@ def _clear_trace_context() -> None:
     trace_conversation_id.set(None)
     trace_turn_id.set(None)
     trace_receiver_ref.set(None)
-    trace_traceparent.set(None)

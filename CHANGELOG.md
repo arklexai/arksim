@@ -18,8 +18,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * **evaluator:** scenario IDs shown in CLI error output alongside focus file paths
 * **report:** scenario IDs displayed in HTML report error cards
 * **evaluator:** error-to-scenario mappings included in `evaluation.json` output
-* **tracing:** add W3C Trace Context propagation for cross-process trace correlation (Chat Completions, A2A)
-
 ### Changed
 
 * **simulation:** bump output schema version to v1.1 (additive `tool_calls` field on Message)

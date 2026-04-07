@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 from arksim.tracing.config import TraceReceiverConfig
-from arksim.tracing.propagation import inject_trace_context
 from arksim.tracing.receiver import TraceReceiver
 from arksim.tracing.span_converter import spans_to_tool_calls
 
@@ -12,7 +11,6 @@ __all__ = [
     "ArksimTracingProcessor",
     "TraceReceiver",
     "TraceReceiverConfig",
-    "inject_trace_context",
     "spans_to_tool_calls",
 ]
 
