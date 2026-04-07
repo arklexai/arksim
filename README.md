@@ -33,7 +33,7 @@ https://github.com/user-attachments/assets/78706f27-cf49-41c1-8019-9dcbb8abc625
 
 Agents fail in ways that only show up mid-conversation. They misinterpret intent three turns in, call the wrong tool, or hallucinate a policy that does not exist. Single-turn testing misses all of this.
 
-ArkSim generates LLM-powered synthetic users that hold realistic multi-turn conversations with your agent. Each user has a distinct profile, goal, and knowledge level. They push back, ask follow-ups, and try to break things.
+ArkSim generates LLM-powered synthetic users that hold realistic multi-turn conversations with your agent. Each user has a distinct profile, goal, and knowledge level. They push back, ask follow-ups, and behave like real users would.
 
 You define scenarios, ArkSim simulates conversations, then evaluates every turn on helpfulness, coherence, relevance, faithfulness, and goal completion. The output is an interactive report showing exactly where your agent broke and why.
 
@@ -43,7 +43,7 @@ You define scenarios, ArkSim simulates conversations, then evaluates every turn 
 
 ## Quickstart
 
-### Have an agent running? Point ArkSim at it:
+### Have an agent? Test it in 3 commands:
 
 ```bash
 pip install arksim
@@ -74,7 +74,7 @@ arksim simulate-evaluate config.yaml
   <img src="https://raw.githubusercontent.com/arklexai/arksim/main/docs/assets/report-screenshot.png" alt="ArkSim evaluation report showing scores, failure categories, and conversation viewer" width="100%">
 </p>
 
-ArkSim generated synthetic users, each with a unique profile and goal. They held multi-turn conversations with the agent. Each conversation was evaluated on helpfulness, coherence, relevance, faithfulness, and goal completion. The report above shows where the agent succeeded and where it broke.
+ArkSim generated synthetic users, each with a unique profile and goal. They held multi-turn conversations with the agent. Each conversation was scored on helpfulness, coherence, relevance, faithfulness, and goal completion. The report shows per-metric scores, failure categories, and full conversation transcripts.
 
 ## Test Your Own Agent
 
@@ -165,7 +165,7 @@ Write scenarios that match your agent's domain. See the [Scenarios documentation
 | Evaluation metrics (built-in and custom) | [Metrics guide](https://docs.arklex.ai/main/evaluate-conversation) |
 | CI integration (pytest and GitHub Actions) | [CI setup guide](https://docs.arklex.ai/main/ci-integration) |
 | Configuration reference (all YAML settings) | [Schema reference](https://docs.arklex.ai/main/schema-reference) |
-| CLI commands and flags | [CLI guide](https://docs.arklex.ai/main/simulate-conversation) |
+| Simulation and CLI usage | [Simulation guide](https://docs.arklex.ai/main/simulate-conversation) |
 | Web UI for browsing results | [Overview](https://docs.arklex.ai/main/overview) |
 
 ## Development
