@@ -429,13 +429,7 @@ class TestDisplayTopUniqueErrorsWithMappings:
         )
 
         with caplog.at_level(logging.INFO):
-            evaluator._display_top_unique_errors(
-                errors,
-                conv_to_scenario={
-                    "conv_1": "scenario_refund",
-                    "conv_2": "scenario_clarify",
-                },
-            )
+            evaluator._display_top_unique_errors(errors)
 
         log_text = caplog.text
         assert "scenario_clarify" in log_text
@@ -477,10 +471,7 @@ class TestDisplayTopUniqueErrorsWithMappings:
         )
 
         with caplog.at_level(logging.INFO):
-            evaluator._display_top_unique_errors(
-                errors,
-                conv_to_scenario={"conv_1": "scenario_a"},
-            )
+            evaluator._display_top_unique_errors(errors)
 
         log_text = caplog.text
         assert "error_1.json" in log_text
@@ -540,9 +531,7 @@ class TestDisplayTopUniqueErrorsWithMappings:
         evaluator.total_turns = 1
 
         with caplog.at_level(logging.INFO):
-            evaluator.display_evaluation_summary(
-                conv_to_scenario={"conv_1": "scenario_a"},
-            )
+            evaluator.display_evaluation_summary()
 
         log_text = caplog.text
         assert "FOCUS FILES FOR TARGETED RERUNS" in log_text

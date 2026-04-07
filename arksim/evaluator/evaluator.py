@@ -76,6 +76,7 @@ class Evaluator:
         self.total_turns: int = 0
         self.total_conversations: int = 0
         self.chat_id_to_label: dict[str, str] = {}
+        self._conv_to_scenario: dict[str, str] = {}
         # Build scenario_id -> (expected_tool_calls, match_mode) mapping
         self._scenario_expected: dict[str, tuple[list[ExpectedToolCall], str]] = {}
         if scenarios:
@@ -386,6 +387,22 @@ class Evaluator:
         self.total_turns = sum(len(conv.turn_scores) for conv in convo_score_list)
         self.total_conversations = len(conversations)
 
+        # Build conv->scenario mapping and compute error-to-scenario mappings
+        self._conv_to_scenario = (
+            {c.conversation_id: c.scenario_id for c in conversations}
+            if self.scenarios
+            else {}
+        )
+        if unique_errors and self.scenarios and self._conv_to_scenario:
+            from .error_scenarios import build_error_scenario_data
+
+            mappings, _ = build_error_scenario_data(
+                unique_errors=unique_errors,
+                conv_to_scenario=self._conv_to_scenario,
+                scenarios=self.scenarios,
+            )
+            self.evaluation_results.error_scenario_mappings = mappings
+
         logger.info(
             f"Evaluation complete: {self.total_conversations} conversations, "
             f"{self.total_turns} turns, {len(unique_errors)} unique errors"
@@ -558,7 +575,6 @@ class Evaluator:
     def _display_top_unique_errors(
         self,
         unique_errors: list[UniqueError],
-        conv_to_scenario: dict[str, str] | None = None,
     ) -> None:
         """Display top unique errors sorted by severity then occurrence count."""
         if not unique_errors:
@@ -620,9 +636,13 @@ class Evaluator:
                         f"error_{mapping.error_index}.json",
                     ),
                 )
-            elif conv_to_scenario:
+            elif self._conv_to_scenario:
                 scenario_ids = sorted(
-                    {conv_to_scenario[c] for c in occ_convs if c in conv_to_scenario}
+                    {
+                        self._conv_to_scenario[c]
+                        for c in occ_convs
+                        if c in self._conv_to_scenario
+                    }
                 )
                 if scenario_ids:
                     logger.info(f"Scenarios: {', '.join(scenario_ids)}")
@@ -656,10 +676,7 @@ class Evaluator:
             logger.info(f"• {label}: {count} ({pct:.1f}%)")
         logger.info(f"Total evaluations: {total}")
 
-    def display_evaluation_summary(
-        self,
-        conv_to_scenario: dict[str, str] | None = None,
-    ) -> None:
+    def display_evaluation_summary(self) -> None:
         """Display evaluation summary with agent-specific metrics."""
         logger.info("Displaying evaluation summary")
         results = self.evaluation_results
@@ -746,10 +763,7 @@ class Evaluator:
             self._display_failure_breakdown(dict(failure_counts))
 
         if results.unique_errors:
-            self._display_top_unique_errors(
-                results.unique_errors,
-                conv_to_scenario=conv_to_scenario,
-            )
+            self._display_top_unique_errors(results.unique_errors)
 
         if results.error_scenario_mappings:
             logger.info("\nFOCUS FILES FOR TARGETED RERUNS:")
@@ -871,31 +885,8 @@ def run_evaluation(
         scenarios=scenarios,
     )
     evaluator_output = evaluator.evaluate(simulation, on_progress=on_progress)
-
-    # Build conversation -> scenario mapping for error grouping and display
-    conv_to_scenario: dict[str, str] | None = None
-    if scenarios:
-        conv_to_scenario = {
-            c.conversation_id: c.scenario_id for c in simulation.conversations
-        }
-
-    # Compute error-to-scenario mappings (pure, no I/O)
-    if evaluator_output.unique_errors and scenarios and conv_to_scenario:
-        from .error_scenarios import build_error_scenario_data
-
-        mappings, _ = build_error_scenario_data(
-            unique_errors=evaluator_output.unique_errors,
-            conv_to_scenario=conv_to_scenario,
-            scenarios=scenarios,
-        )
-        evaluator.evaluation_results.error_scenario_mappings = mappings
-
-    # save_results writes evaluation.json + focus files (best-effort)
     evaluator.save_results()
-
-    evaluator.display_evaluation_summary(
-        conv_to_scenario=conv_to_scenario,
-    )
+    evaluator.display_evaluation_summary()
 
     if settings.generate_html_report:
         from arksim.utils.html_report.generate_html_report import (
