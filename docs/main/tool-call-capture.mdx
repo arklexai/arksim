@@ -10,7 +10,7 @@ Some agents handle tool calling internally (e.g. OpenAI Agents SDK, LangChain) a
 There are two ways to provide tool calls to arksim:
 
 1. **Explicit**: Return `AgentResponse` with tool calls from `execute()` (Python connector and Chat Completions).
-2. **Automatic capture**: Enable `trace_receiver` in your config. arksim captures tool calls via the SDK's tracing interface or API response parsing. The agent just returns text.
+2. **Automatic capture**: Enable `trace_receiver` in your config. arksim captures tool calls via the SDK's tracing interface. The agent just returns text.
 
 If both are active, arksim deduplicates automatically (see [Deduplication](#deduplication) below).
 
@@ -21,11 +21,11 @@ If both are active, arksim deduplicates automatically (see [Deduplication](#dedu
 | Connector | Explicit (`AgentResponse`) | Automatic Capture |
 |-----------|--------------------------|-------------------|
 | Python connector | Supported | Supported via `ArksimTracingProcessor` |
-| Chat Completions | Supported (response parsing) | Supported via W3C Trace Context |
+| Chat Completions | Planned | Supported via W3C Trace Context |
 | A2A | Planned | Supported via W3C Trace Context |
 
 <Info>
-Chat Completions agents get automatic tool call capture from the API response body (zero setup). For self-hosted agents with OTel instrumentation, W3C Trace Context propagation enables cross-process capture. Cloud model APIs (OpenAI, Anthropic, Gemini) do not export OTel spans, so response parsing is the only capture path for those endpoints.
+For same-process agents (Python connector), tool calls are captured via `ArksimTracingProcessor`. For cross-process agents (Chat Completions, A2A), W3C Trace Context propagation enables OTel-based capture when the remote agent is instrumented. Cloud model APIs (OpenAI, Anthropic, Gemini) do not export OTel spans; use the Python connector with `AgentResponse` for those.
 </Info>
 
 ---
@@ -111,15 +111,11 @@ Requires `pip install openai-agents`.
 
 ---
 
-## Automatic Capture (Chat Completions)
+## Chat Completions Response Handling
 
-For agents using the Chat Completions connector, tool calls are parsed automatically from the API response body. No config changes are needed.
+arksim auto-detects and handles responses from OpenAI, Anthropic, and Gemini endpoints. When the response content is `None` (standard behavior when a model requests tool execution), arksim sets content to an empty string so the conversation continues gracefully.
 
-arksim auto-detects and handles the response format for OpenAI, Anthropic, and Gemini endpoints. When an assistant turn contains tool calls, arksim extracts them and attaches them to the turn record before evaluation.
-
-When the response content is `None` (a tool-calls-only response with no text), arksim sets content to an empty string so downstream evaluators always receive a valid string.
-
-**Known limitation**: for raw model endpoints without a tool execution loop, multi-step tool chains are not captured. arksim sees only the single-turn response. If your agent runs multiple tool-call rounds internally and you need the full chain, use the Python connector with `ArksimTracingProcessor` instead.
+To capture tool calls from Chat Completions agents, use the W3C Trace Context path below (requires the agent to be OTel-instrumented and export spans to arksim's receiver).
 
 ---
 
@@ -164,4 +160,4 @@ When multiple capture paths provide tool calls for the same turn, arksim merges 
 2. **By signature**: tool calls with matching `(name, arguments)` are deduplicated. AgentResponse wins.
 3. **Unique**: tool calls from either source that don't match anything are included
 
-This allows response parsing, OTel capture, and explicit AgentResponse to coexist safely.
+This allows OTel capture and explicit AgentResponse to coexist safely.
