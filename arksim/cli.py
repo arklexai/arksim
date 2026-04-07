@@ -267,40 +267,78 @@ def _run_examples(
     logger.info(f"Downloaded to {os.path.abspath(dest_path)}")
 
 
-def _run_init() -> None:
-    """Scaffold a starter config.yaml and scenarios.json in the current directory."""
-    config_dest = os.path.join(os.getcwd(), "config.yaml")
-    scenarios_dest = os.path.join(os.getcwd(), "scenarios.json")
+_INIT_AGENT_TYPES = ("custom", "chat_completions", "a2a")
 
-    existing = []
-    if os.path.exists(config_dest):
-        existing.append("config.yaml")
-    if os.path.exists(scenarios_dest):
-        existing.append("scenarios.json")
+_INIT_CONFIG_MAP = {
+    "custom": "config.yaml",
+    "chat_completions": "config_chat_completions.yaml",
+    "a2a": "config_a2a.yaml",
+}
 
-    if existing:
-        logger.error(
-            f"{', '.join(existing)} already exist in the current directory. "
-            "Remove them first or run from a different directory."
-        )
-        sys.exit(EXIT_CONFIG_ERROR)
+_INIT_NEXT_STEPS = {
+    "custom": (
+        "\nNext steps:\n"
+        "  1. Open my_agent.py and replace the execute() body with your agent logic\n"
+        "  2. Run: arksim simulate-evaluate config.yaml"
+    ),
+    "chat_completions": (
+        "\nNext steps:\n"
+        "  1. Edit config.yaml with your agent's Chat Completions endpoint\n"
+        "  2. Run: arksim simulate-evaluate config.yaml"
+    ),
+    "a2a": (
+        "\nNext steps:\n"
+        "  1. Edit config.yaml with your agent's A2A endpoint\n"
+        "  2. Run: arksim simulate-evaluate config.yaml"
+    ),
+}
+
+
+def _run_init(agent_type: str, force: bool = False) -> None:
+    """Scaffold starter files for agent testing in the current directory.
+
+    Generates a config.yaml, scenarios.json, and (for custom agent type)
+    a starter my_agent.py. Files are copied from package templates.
+    Existing files are not overwritten unless --force is passed.
+    """
+    cwd = os.getcwd()
+    config_dest = os.path.join(cwd, "config.yaml")
+    scenarios_dest = os.path.join(cwd, "scenarios.json")
+    agent_dest = os.path.join(cwd, "my_agent.py")
+
+    # Only check files that this agent type would write
+    targets = [("config.yaml", config_dest), ("scenarios.json", scenarios_dest)]
+    if agent_type == "custom":
+        targets.append(("my_agent.py", agent_dest))
+
+    if not force:
+        existing = [name for name, path in targets if os.path.exists(path)]
+        if existing:
+            logger.error(
+                f"{', '.join(existing)} already exist in the current directory. "
+                "Use --force to overwrite, or run from a different directory."
+            )
+            sys.exit(EXIT_CONFIG_ERROR)
 
     templates = resources.files("arksim.templates")
-    config_src = templates.joinpath("config.yaml")
-    scenarios_src = templates.joinpath("scenarios.json")
+    config_template = _INIT_CONFIG_MAP[agent_type]
 
-    with resources.as_file(config_src) as src:
+    with resources.as_file(templates.joinpath(config_template)) as src:
         shutil.copy2(src, config_dest)
-    with resources.as_file(scenarios_src) as src:
+    with resources.as_file(templates.joinpath("scenarios.json")) as src:
         shutil.copy2(src, scenarios_dest)
 
-    logger.info(f"Created {config_dest}")
-    logger.info(f"Created {scenarios_dest}")
-    logger.info(
-        "\nNext steps:\n"
-        "  1. Edit config.yaml with your agent's endpoint\n"
-        "  2. Run: arksim simulate-evaluate config.yaml"
-    )
+    created = [config_dest, scenarios_dest]
+
+    if agent_type == "custom":
+        with resources.as_file(templates.joinpath("my_agent.py")) as src:
+            shutil.copy2(src, agent_dest)
+        created.append(agent_dest)
+
+    for path in created:
+        logger.info(f"Created {path}")
+
+    logger.info(_INIT_NEXT_STEPS[agent_type])
 
 
 def _add_config_subparser(
@@ -407,9 +445,28 @@ def build_parser() -> argparse.ArgumentParser:
     )
 
     # init
-    sub.add_parser(
+    sp_init = sub.add_parser(
         "init",
-        help="Scaffold a starter config.yaml and scenarios.json",
+        help="Scaffold starter files for agent testing",
+    )
+    sp_init.add_argument(
+        "--agent-type",
+        type=str,
+        choices=_INIT_AGENT_TYPES,
+        default="custom",
+        dest="agent_type",
+        help=(
+            "Agent connection type (default: custom). "
+            "'custom' generates a Python agent file (no server needed). "
+            "'chat_completions' for HTTP endpoints. "
+            "'a2a' for Agent-to-Agent protocol."
+        ),
+    )
+    sp_init.add_argument(
+        "--force",
+        action="store_true",
+        default=False,
+        help="Overwrite existing files",
     )
 
     # ui
@@ -557,7 +614,7 @@ def main() -> None:
         return
 
     if args.command == "init":
-        _run_init()
+        _run_init(agent_type=args.agent_type, force=args.force)
         return
 
     if args.command == "ui":
