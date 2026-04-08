@@ -1,0 +1,32 @@
+{
+    "schema_version": "v1",
+    "scenarios": [
+        {
+            "scenario_id": "weather_query",
+            "user_id": "user_001",
+            "goal": "Ask about the weather in Tokyo.",
+            "agent_context": "You are a weather assistant with access to a get_weather tool.",
+            "user_profile": "You are a traveler planning a trip. You are friendly and direct.",
+            "knowledge": [
+                {"content": "The weather in Tokyo is 72F and sunny."}
+            ],
+            "assertions": [
+                {
+                    "type": "tool_calls",
+                    "expected": [{"name": "get_weather"}],
+                    "match_mode": "contains"
+                }
+            ]
+        },
+        {
+            "scenario_id": "no_tool_needed",
+            "user_id": "user_002",
+            "goal": "Say hello and ask how the assistant is doing.",
+            "agent_context": "You are a weather assistant with access to a get_weather tool.",
+            "user_profile": "You are a casual user making small talk.",
+            "knowledge": [
+                {"content": "The assistant is a weather service bot."}
+            ]
+        }
+    ]
+}
