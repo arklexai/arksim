@@ -11,9 +11,6 @@ __all__ = [
     "ArksimTracingProcessor",
     "TraceReceiver",
     "TraceReceiverConfig",
-    # Public utility: converts raw OTLP span dicts to ToolCall objects.
-    # Useful for custom receivers, testing, and processing spans outside
-    # the built-in TraceReceiver pipeline.
     "spans_to_tool_calls",
 ]
 

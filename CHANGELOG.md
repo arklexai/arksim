@@ -18,11 +18,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * **evaluator:** scenario IDs shown in CLI error output alongside focus file paths
 * **report:** scenario IDs displayed in HTML report error cards
 * **evaluator:** error-to-scenario mappings included in `evaluation.json` output
-
 ### Changed
 
 * **simulation:** bump output schema version to v1.1 (additive `tool_calls` field on Message)
 * **evaluator:** bump evaluation output schema version to v1.1 (additive `error_scenario_mappings` field)
+* **chat-completions:** refactor to persistent httpx client with `AgentResponse` return type
+
+### Fixed
+
+* **chat-completions:** fix crash when endpoint returns `tool_calls` with `content=None`
 
 ## [0.3.3](https://github.com/arklexai/arksim/compare/v0.3.2...v0.3.3) (2026-03-27)
 

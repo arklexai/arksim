@@ -1,93 +1,127 @@
 # SPDX-License-Identifier: Apache-2.0
-"""Tests for chat completions agent _extract_content."""
+"""Tests for chat completions response parsing via parse_response."""
+
+from __future__ import annotations
 
 import pytest
 
-from arksim.config import AgentConfig
-from arksim.simulation_engine.agent.clients.chat_completions import ChatCompletionsAgent
+from arksim.simulation_engine.agent.response_parsers import parse_response
+from arksim.simulation_engine.tool_types import AgentResponse
 
 
-@pytest.fixture
-def chat_completions_agent(
-    valid_agent_config_chat_completions_new: dict, mock_env_vars: dict
-) -> ChatCompletionsAgent:
-    """ChatCompletionsAgent instance for testing _extract_content."""
-    config = AgentConfig(**valid_agent_config_chat_completions_new)
-    return ChatCompletionsAgent(config)
-
-
-class TestExtractContentOpenAI:
+class TestParseResponseOpenAI:
     """Tests for OpenAI-style response format."""
 
-    def test_message_content(
-        self, chat_completions_agent: ChatCompletionsAgent
-    ) -> None:
+    def test_message_content(self) -> None:
         result = {
             "choices": [{"message": {"role": "assistant", "content": "Hello, world!"}}]
         }
-        assert chat_completions_agent._extract_content(result) == "Hello, world!"
+        response = parse_response(result)
+        assert isinstance(response, AgentResponse)
+        assert response.content == "Hello, world!"
 
-    def test_delta_content(self, chat_completions_agent: ChatCompletionsAgent) -> None:
+    def test_delta_content(self) -> None:
         result = {"choices": [{"delta": {"content": "Streamed "}}]}
-        assert chat_completions_agent._extract_content(result) == "Streamed "
+        response = parse_response(result)
+        assert response.content == "Streamed "
 
-    def test_empty_choices_raises(
-        self, chat_completions_agent: ChatCompletionsAgent
-    ) -> None:
+    def test_empty_choices_raises(self) -> None:
         result = {"choices": []}
         with pytest.raises(ValueError, match="empty 'choices'"):
-            chat_completions_agent._extract_content(result)
+            parse_response(result)
 
-    def test_choice_without_message_or_delta_raises(
-        self, chat_completions_agent: ChatCompletionsAgent
-    ) -> None:
+    def test_choice_without_message_or_delta_returns_empty(self) -> None:
+        # A choice with no message/delta key yields empty content (no tool calls).
         result = {"choices": [{"finish_reason": "stop"}]}
-        with pytest.raises(ValueError, match="no 'message' or 'delta'"):
-            chat_completions_agent._extract_content(result)
+        response = parse_response(result)
+        assert response.content == ""
+        assert response.tool_calls == []
+
+    def test_tool_calls_not_extracted(self) -> None:
+        """Response parsers no longer extract tool calls from responses."""
+        result = {
+            "choices": [
+                {
+                    "message": {
+                        "role": "assistant",
+                        "content": "",
+                        "tool_calls": [
+                            {
+                                "id": "call_abc",
+                                "function": {
+                                    "name": "search",
+                                    "arguments": '{"query": "arksim"}',
+                                },
+                            }
+                        ],
+                    }
+                }
+            ]
+        }
+        response = parse_response(result)
+        assert response.content == ""
+        assert response.tool_calls == []
 
 
-class TestExtractContentAnthropic:
+class TestParseResponseAnthropic:
     """Tests for Anthropic-style response format."""
 
-    def test_single_text_block(
-        self, chat_completions_agent: ChatCompletionsAgent
-    ) -> None:
+    def test_single_text_block(self) -> None:
         result = {"content": [{"type": "text", "text": "Anthropic reply."}]}
-        assert chat_completions_agent._extract_content(result) == "Anthropic reply."
+        response = parse_response(result)
+        assert isinstance(response, AgentResponse)
+        assert response.content == "Anthropic reply."
 
-    def test_multiple_text_blocks(
-        self, chat_completions_agent: ChatCompletionsAgent
-    ) -> None:
+    def test_multiple_text_blocks(self) -> None:
         result = {
             "content": [
                 {"type": "text", "text": "Part one. "},
                 {"type": "text", "text": "Part two."},
             ]
         }
-        assert chat_completions_agent._extract_content(result) == "Part one. Part two."
+        response = parse_response(result)
+        assert response.content == "Part one. Part two."
 
-    def test_ignores_non_text_blocks(
-        self, chat_completions_agent: ChatCompletionsAgent
-    ) -> None:
+    def test_ignores_non_text_blocks(self) -> None:
         result = {
             "content": [
                 {"type": "image", "source": {}},
                 {"type": "text", "text": "Only this."},
             ]
         }
-        assert chat_completions_agent._extract_content(result) == "Only this."
+        response = parse_response(result)
+        assert response.content == "Only this."
+
+    def test_tool_use_block_not_extracted(self) -> None:
+        """Response parsers no longer extract tool calls from responses."""
+        result = {
+            "content": [
+                {"type": "text", "text": "Using tool."},
+                {
+                    "type": "tool_use",
+                    "id": "toolu_01",
+                    "name": "calculator",
+                    "input": {"expression": "2+2"},
+                },
+            ]
+        }
+        response = parse_response(result)
+        assert response.content == "Using tool."
+        assert response.tool_calls == []
 
 
-class TestExtractContentGoogle:
-    """Tests for Google-style response format."""
+class TestParseResponseGoogle:
+    """Tests for Google Gemini-style response format."""
 
-    def test_single_part(self, chat_completions_agent: ChatCompletionsAgent) -> None:
+    def test_single_part(self) -> None:
         result = {
             "candidates": [{"content": {"parts": [{"text": "Google response."}]}}]
         }
-        assert chat_completions_agent._extract_content(result) == "Google response."
+        response = parse_response(result)
+        assert isinstance(response, AgentResponse)
+        assert response.content == "Google response."
 
-    def test_multiple_parts(self, chat_completions_agent: ChatCompletionsAgent) -> None:
+    def test_multiple_parts(self) -> None:
         result = {
             "candidates": [
                 {
@@ -101,29 +135,47 @@ class TestExtractContentGoogle:
                 }
             ]
         }
-        assert chat_completions_agent._extract_content(result) == "ABC"
+        response = parse_response(result)
+        assert response.content == "ABC"
 
-    def test_empty_candidates_raises(
-        self, chat_completions_agent: ChatCompletionsAgent
-    ) -> None:
+    def test_empty_candidates_raises(self) -> None:
         result = {"candidates": []}
         with pytest.raises(ValueError, match="empty 'candidates'"):
-            chat_completions_agent._extract_content(result)
+            parse_response(result)
+
+    def test_function_call_part_not_extracted(self) -> None:
+        """Response parsers no longer extract tool calls from responses."""
+        result = {
+            "candidates": [
+                {
+                    "content": {
+                        "parts": [
+                            {"text": "Calling tool."},
+                            {
+                                "functionCall": {
+                                    "name": "weather",
+                                    "args": {"city": "NYC"},
+                                }
+                            },
+                        ]
+                    }
+                }
+            ]
+        }
+        response = parse_response(result)
+        assert response.content == "Calling tool."
+        assert response.tool_calls == []
 
 
-class TestExtractContentUnsupported:
-    """Tests for unsupported or invalid response format."""
+class TestParseResponseUnsupported:
+    """Tests for unsupported or invalid response formats."""
 
-    def test_empty_dict_raises(
-        self, chat_completions_agent: ChatCompletionsAgent
-    ) -> None:
-        result = {}
+    def test_empty_dict_raises(self) -> None:
+        result: dict = {}
         with pytest.raises(ValueError, match="Unsupported response format"):
-            chat_completions_agent._extract_content(result)
+            parse_response(result)
 
-    def test_unknown_keys_in_error_message(
-        self, chat_completions_agent: ChatCompletionsAgent
-    ) -> None:
+    def test_unknown_keys_in_error_message(self) -> None:
         result = {"id": "xyz", "usage": {}}
         with pytest.raises(ValueError, match="Keys present"):
-            chat_completions_agent._extract_content(result)
+            parse_response(result)

@@ -31,7 +31,9 @@ trace_receiver_ref: contextvars.ContextVar[TraceReceiver | None] = (
 
 
 def _set_trace_context(
-    conversation_id: str, turn_id: int, receiver: TraceReceiver
+    conversation_id: str,
+    turn_id: int,
+    receiver: TraceReceiver,
 ) -> None:
     """Set routing context before agent.execute(). Called by the simulator."""
     trace_conversation_id.set(conversation_id)

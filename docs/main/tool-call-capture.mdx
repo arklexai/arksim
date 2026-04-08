@@ -7,9 +7,9 @@ description: "Capture and evaluate tool calls from agents that handle tools inte
 
 Some agents handle tool calling internally (e.g. OpenAI Agents SDK, LangChain) and only return text. arksim can capture these tool calls so the evaluator can score them.
 
-There are two ways to provide tool calls to arksim when using the Python connector:
+There are two ways to provide tool calls to arksim:
 
-1. **Explicit**: Return `AgentResponse` with tool calls from `execute()`.
+1. **Explicit**: Return `AgentResponse` with tool calls from `execute()` (Python connector).
 2. **Automatic capture**: Enable `trace_receiver` in your config. arksim captures tool calls via the SDK's tracing interface. The agent just returns text.
 
 If both are active, arksim deduplicates automatically (see [Deduplication](#deduplication) below).
@@ -21,11 +21,11 @@ If both are active, arksim deduplicates automatically (see [Deduplication](#dedu
 | Connector | Explicit (`AgentResponse`) | Automatic Capture |
 |-----------|--------------------------|-------------------|
 | Python connector | Supported | Supported via `ArksimTracingProcessor` |
-| A2A | Planned | Planned |
 | Chat Completions | Planned | Planned |
+| A2A | Planned | Planned |
 
 <Info>
-Both capture methods currently work with the Python connector only. A2A and Chat Completions support is planned.
+Tool call capture currently works with the Python connector only. Chat Completions and A2A support is planned.
 </Info>
 
 ---
@@ -109,25 +109,12 @@ See `examples/customer-service/traced_agent.py` for a complete working example.
 
 Requires `pip install openai-agents`.
 
-### Configuration reference
-
-| Field | Type | Default | Description |
-|-------|------|---------|-------------|
-| `enabled` | bool | `false` | Enable automatic tool call capture |
-| `wait_timeout` | float | `5.0` | Max seconds to wait for tool calls after each agent turn |
-| `host` | string | `127.0.0.1` | Bind address (for upcoming A2A/Chat Completions support) |
-| `port` | int | `4318` | Port number (for upcoming A2A/Chat Completions support) |
-
-For the Python connector, only `enabled` and `wait_timeout` are relevant.
-
 ---
 
 ## Deduplication
 
-When both `AgentResponse` and automatic capture provide tool calls for the same turn, arksim merges and deduplicates:
+When both `AgentResponse` and automatic capture (via `ArksimTracingProcessor`) provide tool calls for the same turn, arksim merges and deduplicates:
 
 1. **By ID**: tool calls with matching IDs are deduplicated (AgentResponse wins)
 2. **By signature**: tool calls with matching `(name, arguments)` are deduplicated (AgentResponse wins)
 3. **Unique**: tool calls from either source that don't match anything are included
-
-This allows both capture paths to coexist safely.

@@ -184,8 +184,6 @@ class Simulator:
                         metadata=metadata,
                     )
                 finally:
-                    # Clear context and signal turn complete even if
-                    # agent.execute() raises, to avoid stale contextvars.
                     if self.trace_receiver is not None:
                         self.trace_receiver.signal_turn_complete(conversation_id, turn)
                         _clear_trace_context()
@@ -208,13 +206,14 @@ class Simulator:
                     )
                     if traced:
                         existing_ids = {tc.id for tc in turn_tool_calls}
-                        existing_sigs = {
-                            (tc.name, json.dumps(tc.arguments, sort_keys=True))
-                            for tc in turn_tool_calls
-                        }
+                        sig_to_idx: dict[tuple[str, str], int] = {}
+                        for i, tc in enumerate(turn_tool_calls):
+                            sig = (tc.name, json.dumps(tc.arguments, sort_keys=True))
+                            sig_to_idx[sig] = i
+
                         for tc in traced:
                             sig = (tc.name, json.dumps(tc.arguments, sort_keys=True))
-                            if tc.id not in existing_ids and sig not in existing_sigs:
+                            if tc.id not in existing_ids and sig not in sig_to_idx:
                                 turn_tool_calls.append(tc)
 
                 history.append(

@@ -8,6 +8,7 @@ import json
 
 import pytest
 
+from arksim.simulation_engine.tool_types import ToolCall
 from arksim.tracing.receiver import TraceReceiver, _extract_spans_with_routing
 
 
@@ -519,7 +520,6 @@ async def test_receiver_415_when_protobuf_unavailable(_unused_port: int) -> None
 @pytest.mark.asyncio
 async def test_submit_tool_calls_direct_injection(_unused_port: int) -> None:
     """submit_tool_calls injects ToolCalls directly, bypassing HTTP."""
-    from arksim.simulation_engine.tool_types import ToolCall
 
     port = _unused_port
     async with TraceReceiver(port=port, wait_timeout=2.0) as receiver:
@@ -536,7 +536,6 @@ async def test_submit_tool_calls_direct_injection(_unused_port: int) -> None:
 @pytest.mark.asyncio
 async def test_submit_tool_calls_multiple_turns(_unused_port: int) -> None:
     """Direct injection routes to the correct turn."""
-    from arksim.simulation_engine.tool_types import ToolCall
 
     port = _unused_port
     async with TraceReceiver(port=port, wait_timeout=2.0) as receiver:
@@ -558,7 +557,6 @@ async def test_submit_tool_calls_multiple_turns(_unused_port: int) -> None:
 @pytest.mark.asyncio
 async def test_submit_tool_calls_mixed_with_http(_unused_port: int) -> None:
     """Direct injection and HTTP spans are merged for the same turn."""
-    from arksim.simulation_engine.tool_types import ToolCall
 
     port = _unused_port
     async with TraceReceiver(port=port, wait_timeout=2.0) as receiver:
@@ -598,7 +596,6 @@ async def test_submit_tool_calls_after_stop_warns(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
     """submit_tool_calls after stop() should warn, not silently buffer."""
-    from arksim.simulation_engine.tool_types import ToolCall
 
     receiver = TraceReceiver(host="127.0.0.1", port=0, wait_timeout=1.0)
     await receiver.start()
@@ -651,7 +648,6 @@ async def test_signal_turn_complete_unblocks_wait(_unused_port: int) -> None:
 @pytest.mark.asyncio
 async def test_start_without_http(_unused_port: int) -> None:
     """start(start_http=False) skips the TCP listener but direct injection works."""
-    from arksim.simulation_engine.tool_types import ToolCall
 
     receiver = TraceReceiver(port=_unused_port, wait_timeout=2.0)
     await receiver.start(start_http=False)

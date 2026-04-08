@@ -58,6 +58,10 @@ class ScoreInput(BaseModel):
     knowledge: str = ""
     user_goal: str = ""
     profile: str = ""
+    tool_calls: list = Field(
+        default_factory=list,
+        description="Tool calls observed during this turn (list of ToolCall or dict)",
+    )
 
 
 class QuantitativeMetric(abc.ABC):

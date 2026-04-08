@@ -50,7 +50,8 @@ class A2AAgent(BaseAgent):
 
             # Create httpx client with default timeout and custom headers
             self._httpx_client = httpx.AsyncClient(
-                timeout=httpx.Timeout(60.0), headers=headers if headers else None
+                timeout=httpx.Timeout(60.0),
+                headers=headers if headers else None,
             )
 
             # Initialize A2ACardResolver
