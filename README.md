@@ -74,7 +74,7 @@ arksim simulate-evaluate config.yaml
   <img src="https://raw.githubusercontent.com/arklexai/arksim/main/docs/assets/report-screenshot.png" alt="ArkSim evaluation report showing scores, failure categories, and conversation viewer" width="100%">
 </p>
 
-ArkSim generated synthetic users with different profiles and goals, ran multi-turn conversations with the agent, and scored every turn. The report breaks down what went well and what failed, with full conversation transcripts so you can see exactly what happened.
+The report tells you where your agent is strong and where it breaks. You get per-metric scores, categorized failures, and full conversation transcripts so you can read the exact turns where things went wrong.
 
 ## Test Your Own Agent
 
