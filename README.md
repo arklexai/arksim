@@ -53,7 +53,7 @@ arksim init
 arksim simulate-evaluate config.yaml
 ```
 
-This generates `config.yaml`, `scenarios.json`, and a starter `my_agent.py`. No server needed.
+This generates `config.yaml`, `scenarios.json`, and a starter `my_agent.py`.
 
 For HTTP or A2A agents: `arksim init --agent-type chat_completions` or `arksim init --agent-type a2a`.
 For Anthropic or Google as the evaluation LLM: `pip install "arksim[anthropic]"` or `pip install "arksim[google]"`.
