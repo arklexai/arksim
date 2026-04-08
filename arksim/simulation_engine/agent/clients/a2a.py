@@ -184,7 +184,9 @@ class A2AAgent(BaseAgent):
             )
             send_message_payload.context_id = self.chat_id
 
-            # Send message and collect the last response
+            # Send message and use the final response. Non-streaming A2A
+            # servers yield a single message; if multiple are yielded, the
+            # last one is the completed response (earlier ones are partials).
             response = AgentResponse(content="")
             async for event in self._client.send_message(send_message_payload):
                 message = self._message_from_event(event)

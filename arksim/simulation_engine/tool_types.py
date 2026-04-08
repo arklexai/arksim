@@ -27,7 +27,7 @@ class AgentResponse(BaseModel):
     """Structured return from agent execution, carrying both text and tool calls."""
 
     content: str
-    tool_calls: list[ToolCall] = []
+    tool_calls: list[ToolCall] = Field(default_factory=list)
 
 
-__all__ = ["ToolCall", "AgentResponse"]
+__all__ = ["AgentResponse", "ToolCall", "ToolCallSource"]

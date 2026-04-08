@@ -383,7 +383,7 @@ class TestA2AExecuteReturnsAgentResponse:
         assert result.content == "Weather is sunny."
         assert len(result.tool_calls) == 1
         assert result.tool_calls[0].name == "get_weather"
-        assert result.tool_calls[0].source == "a2a_protocol"
+        assert result.tool_calls[0].source == ToolCallSource.A2A_PROTOCOL
 
     @pytest.mark.asyncio()
     async def test_execute_text_only_returns_agent_response(

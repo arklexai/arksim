@@ -133,11 +133,13 @@ The remote agent must include a `DataPart` with the following JSON schema in its
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `id` | string | No (defaults to `""`) | Unique identifier for the tool call |
+| `id` | string | No | Unique identifier for the tool call. Defaults to `""` if omitted. |
 | `name` | string | **Yes** | Tool function name. Entries missing this field are skipped. |
-| `arguments` | object | No (defaults to `{}`) | Arguments passed to the tool |
+| `arguments` | object | No | Arguments passed to the tool. Defaults to `{}` if omitted. |
 | `result` | string | No | Tool execution result |
 | `error` | string | No | Error message if the tool call failed |
+
+arksim adds a `source` field (`"a2a_protocol"`) to each extracted tool call internally for provenance tracking. You do not need to include it in the DataPart.
 
 The `DataPart` is included alongside a `TextPart` containing the agent's text answer. arksim ignores `DataPart` entries that do not contain a `tool_calls` key.
 
