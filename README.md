@@ -1,7 +1,7 @@
 <p align="center">
   <h1 align="center">⛵️ ArkSim</h1>
   <p align="center">
-    Find your agent's errors before your real users do.
+    Simulate multi-turn conversations with your AI agent. Find failures before production.
   </p>
   <p align="center">
     <a href="https://github.com/arklexai/arksim/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/arklexai/arksim/actions/workflows/ci.yml/badge.svg"></a>
@@ -31,92 +31,81 @@ https://github.com/user-attachments/assets/78706f27-cf49-41c1-8019-9dcbb8abc625
 
 ## What is ArkSim?
 
-ArkSim simulates realistic multi-turn conversations between LLM-powered users and your agent, then evaluates performance across built-in and custom metrics. You define the scenarios (goals, profiles, knowledge) and ArkSim handles simulation and evaluation. Works with any agent that exposes a Chat Completions API or A2A protocol endpoint, or any Python agent loaded directly as a class.
+Agents fail in ways that only show up mid-conversation. They misinterpret intent three turns in, call the wrong tool, or hallucinate a policy that does not exist. Single-turn testing misses all of this.
+
+ArkSim generates LLM-powered synthetic users that hold realistic multi-turn conversations with your agent. Each user has a distinct profile, goal, and knowledge level. They push back, ask follow-ups, and behave like real users would.
+
+You define scenarios, ArkSim simulates conversations, then evaluates every turn across metrics like helpfulness, faithfulness, and goal completion. The output is an interactive report showing exactly where your agent broke and why.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/arklexai/arksim/main/docs/assets/arksim-flow.svg" alt="ArkSim flow: Scenarios → Simulation → Evaluation → Reports" width="100%">
 </p>
 
-### Why ArkSim?
-
-- **Realistic simulations**: LLM-powered users with distinct profiles, goals, and personality traits
-- **Comprehensive evaluation**: 7 built-in metrics covering helpfulness, coherence, faithfulness, goal completion, and more
-- **Custom metrics**: Define your own quantitative and qualitative metrics with full access to conversation context
-- **Error detection**: Automatically categorize agent failures (false information, disobeying requests, repetition) with severity levels
-- **Protocol-agnostic**: Works with Chat Completions API, A2A protocol, or any Python agent class directly
-- **Multi-provider**: Use OpenAI, Anthropic, or Google as the evaluation LLM
-- **Parallel execution**: Configurable concurrency for both simulation and evaluation
-- **Visual reports**: Interactive HTML reports with score breakdowns, error analysis, and full conversation viewer
-
 ## Quickstart
 
-### Install
+### Have an agent? Test it in 3 commands:
 
 ```bash
 pip install arksim
-```
-
-For additional LLM providers:
-
-```bash
-pip install "arksim[all]"        # All providers
-pip install "arksim[anthropic]"  # Anthropic only
-pip install "arksim[google]"     # Google only
-```
-
-### Set up credentials
-
-```bash
 export OPENAI_API_KEY="your-key"
+arksim init
+# Edit my_agent.py with your agent logic, then run:
+arksim simulate-evaluate config.yaml
 ```
 
-### Download examples
+This generates `config.yaml`, `scenarios.json`, and a starter `my_agent.py`.
+
+For HTTP or A2A agents: `arksim init --agent-type chat_completions` or `arksim init --agent-type a2a`.
+For Anthropic or Google as the evaluation LLM: `pip install "arksim[anthropic]"` or `pip install "arksim[google]"`.
+
+### Just exploring? Try an example:
 
 ```bash
+pip install arksim
+export OPENAI_API_KEY="your-key"
 arksim examples
-```
-
-This creates an `examples/` folder with ready-to-use projects (e-commerce, bank-insurance, openclaw), each containing a `config.yaml` and `scenarios.json`.
-
-To create your own scenarios, see the [Scenarios documentation](https://docs.arklex.ai/main/build-scenario).
-
-### Run
-
-```bash
 cd examples/e-commerce
 arksim simulate-evaluate config.yaml
 ```
 
-### View results
+### What you'll see
 
-Open the generated HTML report in `./results/evaluation/`, or launch the web UI:
+<p align="center">
+  <img src="https://raw.githubusercontent.com/arklexai/arksim/main/docs/assets/report-screenshot.png" alt="ArkSim evaluation report showing scores, failure categories, and conversation viewer" width="100%">
+</p>
 
-```bash
-arksim ui
+The report tells you where your agent is strong and where it breaks. You get per-metric scores, categorized failures, and full conversation transcripts so you can read the exact turns where things went wrong.
+
+## Test Your Own Agent
+
+### Python class (default, no server needed)
+
+`arksim init` generates a `my_agent.py` with a BaseAgent subclass. Replace the `execute()` body with your agent logic:
+
+```python
+from arksim.simulation_engine.agent.base import BaseAgent
+from arksim.simulation_engine.tool_types import AgentResponse
+
+class MyAgent(BaseAgent):
+    async def get_chat_id(self) -> str:
+        return "unique-id"
+
+    async def execute(self, user_query: str, **kwargs: object) -> str | AgentResponse:
+        # Replace with your agent logic
+        return "agent response"
 ```
 
-## Agent Configuration
-
-Agent configuration tells ArkSim how to connect to your agent. It is specified directly in your YAML config file. ArkSim supports three agent types:
-
-### Chat Completions API
+### Chat Completions endpoint
 
 ```yaml
 agent_config:
   agent_type: chat_completions
   agent_name: my-agent
   api_config:
-    endpoint: http://localhost:8888/chat/completions
-    headers:
-      Content-Type: application/json
-      Authorization: "Bearer ${AGENT_API_KEY}"
-    body:
-      messages:
-        - role: system
-          content: "You are a helpful assistant."
+    endpoint: http://localhost:8000/v1/chat/completions
 ```
 
-### A2A (Agent-to-Agent) Protocol
+### A2A protocol
 
 ```yaml
 agent_config:
@@ -126,221 +115,20 @@ agent_config:
     endpoint: http://localhost:9999/agent
 ```
 
-Environment variables in headers are resolved at runtime using `${VAR_NAME}` syntax.
+Write scenarios that match your agent's domain. See the [Scenarios documentation](https://docs.arklex.ai/main/build-scenario) for how to define goals, user profiles, and knowledge.
 
-### Custom Agent (Python)
+## Why ArkSim?
 
-Load your agent directly as a Python class - no HTTP server required.
+- **Simulation, not just evaluation.** Most tools score conversations you already have. ArkSim generates them with synthetic users who push back, ask follow-ups, and behave unpredictably.
+- **Multi-turn by default.** Every test is a full conversation, not a single prompt. Context loss, tool misuse, and contradictions only show up across turns.
+- **Any agent, any framework.** Works with [14+ frameworks](#integrations) through Chat Completions, A2A, or direct Python import.
+- **Runs in CI.** Add it as a quality gate on every PR. Exits non-zero when your agent drops below threshold.
+- **Fully open source.** Runs on your infrastructure. Your data never leaves.
 
-```yaml
-agent_config:
-  agent_type: custom
-  agent_name: my-agent
-  custom_config:
-    module_path: ./my_agent.py
-```
+## Integrations
 
-Your agent must subclass `BaseAgent` and implement `get_chat_id()` and `execute()`:
-
-```python
-from arksim.config import AgentConfig
-from arksim.simulation_engine.agent.base import BaseAgent
-
-class MyAgent(BaseAgent):
-    def __init__(self, agent_config: AgentConfig) -> None:
-        super().__init__(agent_config)
-        # Initialize your agent here
-
-    async def get_chat_id(self) -> str:
-        return "unique-conversation-id"
-
-    async def execute(self, user_query: str, **kwargs: object) -> str:
-        # Your agent logic here
-        return "agent response"
-```
-
-For code-based usage (no YAML needed), pass the class directly:
-
-```python
-from arksim.config import AgentConfig, CustomConfig
-
-agent_config = AgentConfig(
-    agent_type="custom",
-    agent_name=MyAgent.__name__,
-    custom_config=CustomConfig(agent_class=MyAgent),
-)
-```
-
-See the [bank-insurance](examples/bank-insurance/run_pipeline.py) and [e-commerce](examples/e-commerce/run_pipeline.py) examples for full end-to-end Python scripts.
-
-## Evaluation Metrics
-
-### Built-in metrics
-
-| Metric | Type | Scale | What it measures |
-|--------|------|-------|------------------|
-| Helpfulness | Quantitative | 1-5 | How effectively the agent addresses user needs |
-| Coherence | Quantitative | 1-5 | Logical flow and consistency of responses |
-| Relevance | Quantitative | 1-5 | How on-topic the agent's responses are |
-| Faithfulness | Quantitative | 1-5 | Accuracy against provided knowledge (penalizes contradictions only) |
-| Verbosity | Quantitative | 1-5 | Whether response length is appropriate |
-| Goal Completion | Quantitative | 0/1 | Whether the user's stated goal was achieved |
-| Agent Behavior Failure | Qualitative | Category | Classifies errors: false information, disobeying requests, repetition, lack of specificity, failure to clarify |
-
-### Custom metrics
-
-Define quantitative metrics (numeric scores) by subclassing `QuantitativeMetric`:
-
-```python
-from arksim.evaluator import QuantitativeMetric, QuantResult, ScoreInput
-
-class ToneMetric(QuantitativeMetric):
-    def __init__(self):
-        super().__init__(
-            name="tone_appropriateness",
-            score_range=(0, 5),
-            description="Evaluates whether the agent uses an appropriate tone",
-        )
-
-    def score(self, score_input: ScoreInput) -> QuantResult:
-        # Access: score_input.chat_history, score_input.knowledge,
-        #         score_input.user_goal, score_input.profile
-        return QuantResult(
-            name=self.name,
-            value=4.0,
-            reason="Agent maintained professional tone throughout",
-        )
-```
-
-Define qualitative metrics (categorical labels) by subclassing `QualitativeMetric`:
-
-```python
-from arksim.evaluator import QualitativeMetric, QualResult, ScoreInput
-
-class SafetyCheckMetric(QualitativeMetric):
-    def __init__(self):
-        super().__init__(
-            name="safety_check",
-            description="Flags whether the agent produced unsafe content",
-        )
-
-    def evaluate(self, score_input: ScoreInput) -> QualResult:
-        # Access: score_input.chat_history, score_input.knowledge,
-        #         score_input.user_goal, score_input.profile
-        return QualResult(
-            name=self.name,
-            value="safe",  # categorical label
-            reason="No unsafe content detected",
-        )
-```
-
-Add to your config:
-
-```yaml
-custom_metrics_file_paths:
-  - ./my_metrics.py
-```
-
-See the [bank-insurance example](examples/bank-insurance/custom_metrics.py) for a full implementation with LLM-as-judge custom metrics.
-
-## Configuration Reference
-
-All settings can be specified in YAML and overridden via CLI flags (`--key value`).
-
-### Simulation settings
-
-| Setting | Type | Default | Description |
-|---------|------|---------|-------------|
-| `agent_config` | object | required | Inline agent config (`agent_type`, `agent_name`, `api_config` or `custom_config`) |
-| `scenario_file_path` | string | required | Path to scenarios JSON |
-| `model` | string | `gpt-5.1` | LLM model for simulated users |
-| `provider` | string | `openai` | LLM provider: `openai`, `anthropic`, `google` |
-| `num_conversations_per_scenario` | int | `5` | Conversations to generate per scenario |
-| `max_turns` | int | `5` | Maximum turns per conversation |
-| `num_workers` | int/string | `50` | Parallel workers |
-| `output_file_path` | string | `./simulation.json` | Where to save simulation results |
-| `simulated_user_prompt_template` | string | null | Custom Jinja2 template for simulated user prompt |
-
-### Evaluation settings
-
-| Setting | Type | Default | Description |
-|---------|------|---------|-------------|
-| `simulation_file_path` | string | required | Path to simulation output |
-| `output_dir` | string | required | Directory for evaluation results |
-| `model` | string | `gpt-5.1` | LLM model for evaluation |
-| `provider` | string | `openai` | LLM provider |
-| `metrics_to_run` | list | all metrics | Which metrics to run |
-| `custom_metrics_file_paths` | list | `[]` | Paths to custom metric files |
-| `generate_html_report` | bool | `true` | Generate an HTML report |
-| `numeric_thresholds` | dict | null | Per-metric minimum scores on native scale. Built-in turn-level metrics use 1–5 (mean across turns per conversation); `goal_completion` and `overall_score` use 0–1. Unknown metric names are skipped with a warning. |
-| `qualitative_failure_labels` | dict | null | Failure labels per qualitative metric. Any evaluated turn whose label appears in the list fails the run; turns where the metric didn't run are skipped. |
-| `num_workers` | int/string | `50` | Parallel workers |
-
-### Thresholds & exit codes
-
-All threshold types are independent and optional (default `null`). Any failure exits with code `1`.
-
-| Threshold | Key | How it works |
-|-----------|-----|--------------|
-| Overall score | `numeric_thresholds.overall_score` | Fails if any conversation's `overall_agent_score` (0–1) is below the threshold |
-| Per-metric numeric | `numeric_thresholds` | Fails if any conversation's mean score for a listed metric falls below its threshold. Use native scale: 1–5 for built-in turn-level metrics, 0–1 for `goal_completion` and `overall_score` |
-| Qualitative | `qualitative_failure_labels` | Fails if any evaluated turn returns a label in the failure list |
-
-```yaml
-numeric_thresholds:
-  overall_score: 0.6
-  helpfulness: 3.5
-  goal_completion: 0.7
-
-qualitative_failure_labels:
-  agent_behavior_failure: ["false information", "disobey user request"]
-  prohibited_statements: ["violated"]
-```
-
-> **Deprecated:** `score_threshold` is deprecated. Use `numeric_thresholds: {overall_score: <value>}` instead. The old key still works but logs a warning.
-
-**Exit codes:**
-
-| Code | Meaning |
-|------|---------|
-| `0` | Success |
-| `1` | Evaluation failed - threshold not met |
-| `2` | Configuration error |
-| `3` | Internal error |
-
-## CLI Reference
-
-```
-arksim --version                        Show version and exit
-arksim simulate <config.yaml>           Run agent simulations
-arksim evaluate <config.yaml>           Evaluate simulation results
-arksim simulate-evaluate <config.yaml>  Simulate then evaluate
-arksim show-prompts [--category NAME]   Display evaluation prompts
-arksim examples                         Download examples folder
-arksim ui [--port PORT]                 Launch web UI (default: 8080)
-```
-
-Any config setting can be passed as a CLI flag:
-
-```bash
-arksim simulate config_simulate.yaml --max-turns 10 --num-workers 4 --verbose
-arksim evaluate config_evaluate.yaml --score-threshold 0.7
-```
-
-## Web UI
-
-```bash
-arksim ui
-```
-
-Opens a local web app at `http://localhost:8080` where you can browse config files, run simulations with live log streaming, launch evaluations, and view interactive HTML reports.
-
-> **Note:** Provider credentials (e.g. `OPENAI_API_KEY`) must be set as environment variables before launching.
-
-## Examples
-
-| Example | Description |
-|---------|-------------|
+| Integration | Description |
+|-------------|-------------|
 | [bank-insurance](examples/bank-insurance/) | Financial services agent with custom compliance metrics, adversarial scenarios, and a Chat Completions server |
 | [e-commerce](examples/e-commerce/) | E-commerce product recommendation agent with custom metrics |
 | [openclaw](examples/openclaw/) | Integration with the OpenClaw agent framework |
@@ -359,43 +147,15 @@ Opens a local web app at `http://localhost:8080` where you can browse config fil
 | [mastra](examples/integrations/mastra/) | Integration with Mastra (TypeScript) |
 | [vercel-ai-sdk](examples/integrations/vercel-ai-sdk/) | Integration with Vercel AI SDK (TypeScript) |
 
-## CI Integration
+## Learn More
 
-Run ArkSim as a quality gate on every pull request so regressions are caught before they ship.
-
-### pytest (custom agent)
-
-The simplest path if your agent is a Python class. CI runs `pytest` (no server needed).
-
-```bash
-# Copy templates into your repo
-arksim examples ci
-mkdir -p .github/workflows tests
-cp examples/ci/pytest/arksim-pytest.yml .github/workflows/arksim-pytest.yml
-cp examples/ci/pytest/test_agent_quality.py tests/test_agent_quality.py
-```
-
-Edit `tests/test_agent_quality.py` to import your agent class, set your thresholds, and add any custom metrics. The test simulates conversations, evaluates them, generates an HTML report, and asserts your quality gates, all in one `pytest` run.
-
-### HTTP server (any language or framework)
-
-If your agent runs as an HTTP server exposing a Chat Completions or A2A endpoint:
-
-```bash
-arksim examples ci
-mkdir -p .github/workflows
-cp examples/ci/github-actions/arksim.yml .github/workflows/arksim.yml
-```
-
-The workflow starts your server, waits for it to be healthy, runs `arksim simulate-evaluate`, and exits non-zero if any threshold is not met.
-
-Both approaches upload two artifacts after every run (pass or fail):
-- **`arksim-html-report`** - download, unzip, and open `final_report.html` in your browser
-- **`arksim-full-results`** - raw simulation and evaluation JSONs for programmatic analysis
-
-See [examples/ci/](examples/ci/) for full templates and [CI Integration docs](https://docs.arklex.ai/main/ci-integration) for a step-by-step setup guide.
-
----
+| Topic | |
+|-------|---|
+| Evaluation metrics (built-in and custom) | [Metrics guide](https://docs.arklex.ai/main/evaluate-conversation) |
+| CI integration (pytest and GitHub Actions) | [CI setup guide](https://docs.arklex.ai/main/ci-integration) |
+| Configuration reference (all YAML settings) | [Schema reference](https://docs.arklex.ai/main/schema-reference) |
+| Simulation and CLI usage | [Simulation guide](https://docs.arklex.ai/main/simulate-conversation) |
+| Web UI for browsing results | [Overview](https://docs.arklex.ai/main/overview) |
 
 ## Development
 

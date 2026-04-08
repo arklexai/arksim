@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* **cli:** add `arksim init` command to scaffold a starter `config.yaml` and `scenarios.json` for quick onboarding
 * **tracing:** add automatic tool call capture for agents that handle tools internally
 * **tracing:** add `ArksimTracingProcessor` for OpenAI Agents SDK (register once, zero per-turn wrapping)
 * **tracing:** add OTLP/HTTP trace receiver with protobuf and JSON support (`arksim[otel]`)
@@ -20,6 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * **evaluator:** error-to-scenario mappings included in `evaluation.json` output
 ### Changed
 
+* **docs:** rewrite README as a focused landing page (~180 lines) with two quickstart paths, report screenshot, and "Test Your Own Agent" guide
+* **docs:** move configuration reference, CLI reference, custom metrics examples, and Web UI docs from README to docs site
 * **simulation:** bump output schema version to v1.1 (additive `tool_calls` field on Message)
 * **evaluator:** bump evaluation output schema version to v1.1 (additive `error_scenario_mappings` field)
 * **chat-completions:** refactor to persistent httpx client with `AgentResponse` return type
