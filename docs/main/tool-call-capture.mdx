@@ -22,10 +22,10 @@ If both are active, arksim deduplicates automatically (see [Deduplication](#dedu
 |-----------|--------------------------|-------------------|
 | Python connector | Supported | Supported via `ArksimTracingProcessor` |
 | Chat Completions | Planned | Planned |
-| A2A | Planned | Supported via A2A protocol DataPart |
+| A2A | Supported via A2A protocol `DataPart` | Not applicable |
 
 <Info>
-Tool call capture works with the Python connector and A2A. The A2A server includes tool call data as a DataPart in the protocol response. Chat Completions support is planned.
+Tool call capture works with the Python connector and A2A. The A2A connector extracts tool calls from `DataPart` in the protocol response automatically. Chat Completions support is planned.
 </Info>
 
 ---
@@ -108,6 +108,40 @@ The module loader caches modules by file path, so `add_trace_processor` runs exa
 See `examples/customer-service/traced_agent.py` for a complete working example.
 
 Requires `pip install openai-agents`.
+
+---
+
+## A2A Protocol Capture
+
+For agents connected via the A2A protocol, the remote agent embeds tool call data in a `DataPart` alongside its text response. arksim's A2A client extracts these automatically.
+
+The remote agent must include a `DataPart` with the following JSON schema in its response message:
+
+```json
+{
+  "tool_calls": [
+    {
+      "id": "call_001",
+      "name": "get_weather",
+      "arguments": {"city": "Tokyo"},
+      "result": "72F, sunny",
+      "error": null
+    }
+  ]
+}
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `id` | string | No (defaults to `""`) | Unique identifier for the tool call |
+| `name` | string | **Yes** | Tool function name. Entries missing this field are skipped. |
+| `arguments` | object | No (defaults to `{}`) | Arguments passed to the tool |
+| `result` | string | No | Tool execution result |
+| `error` | string | No | Error message if the tool call failed |
+
+The `DataPart` is included alongside a `TextPart` containing the agent's text answer. arksim ignores `DataPart` entries that do not contain a `tool_calls` key.
+
+See `examples/tool-call-capture/a2a/` for a complete working example.
 
 ---
 

@@ -3,7 +3,13 @@ from __future__ import annotations
 
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+
+
+class ToolCallSource:
+    """Constants for tool call provenance tracking."""
+
+    A2A_PROTOCOL = "a2a_protocol"
 
 
 class ToolCall(BaseModel):
@@ -11,7 +17,7 @@ class ToolCall(BaseModel):
 
     id: str
     name: str
-    arguments: dict[str, Any] = {}
+    arguments: dict[str, Any] = Field(default_factory=dict)
     result: str | None = None
     error: str | None = None
     source: str | None = None

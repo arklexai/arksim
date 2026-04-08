@@ -11,7 +11,7 @@ import pytest
 from a2a.types import DataPart, Message, Part, Role, TextPart
 
 from arksim.simulation_engine.agent.clients.a2a import A2AAgent
-from arksim.simulation_engine.tool_types import AgentResponse
+from arksim.simulation_engine.tool_types import AgentResponse, ToolCallSource
 
 
 def _make_message(
@@ -112,7 +112,7 @@ class TestExtractToolCallsFromDataPart:
         response = A2AAgent._extract_response(msg)
 
         assert len(response.tool_calls) == 1
-        assert response.tool_calls[0].source == "a2a_protocol"
+        assert response.tool_calls[0].source == ToolCallSource.A2A_PROTOCOL
 
     def test_multiple_tool_calls_in_single_datapart(self) -> None:
         """Multiple tool calls in one DataPart are all extracted."""
@@ -262,6 +262,71 @@ class TestExtractToolCallsFromDataPart:
 
         assert len(response.tool_calls) == 1
         assert response.tool_calls[0].error == "ConnectionTimeout"
+
+    def test_tool_calls_not_a_list_is_ignored(self) -> None:
+        """DataPart with tool_calls as a string is safely ignored."""
+        msg = _make_message(
+            parts=[
+                _text_part("Text."),
+                _data_part({"tool_calls": "not_a_list"}),
+            ]
+        )
+        response = A2AAgent._extract_response(msg)
+
+        assert response.content == "Text."
+        assert response.tool_calls == []
+
+    def test_tool_call_entry_not_a_dict_is_skipped(self) -> None:
+        """Non-dict entries in tool_calls list are skipped."""
+        msg = _make_message(
+            parts=[
+                _text_part("Text."),
+                _data_part(
+                    {
+                        "tool_calls": [
+                            42,
+                            {
+                                "id": "call_ok",
+                                "name": "valid",
+                                "arguments": {},
+                            },
+                        ]
+                    }
+                ),
+            ]
+        )
+        response = A2AAgent._extract_response(msg)
+
+        assert len(response.tool_calls) == 1
+        assert response.tool_calls[0].name == "valid"
+
+    def test_arguments_not_a_dict_is_skipped(self) -> None:
+        """Tool call with non-dict arguments is skipped."""
+        msg = _make_message(
+            parts=[
+                _text_part("Text."),
+                _data_part(
+                    {
+                        "tool_calls": [
+                            {
+                                "id": "call_bad",
+                                "name": "bad_args",
+                                "arguments": "not_a_dict",
+                            },
+                            {
+                                "id": "call_ok",
+                                "name": "good_args",
+                                "arguments": {"key": "val"},
+                            },
+                        ]
+                    }
+                ),
+            ]
+        )
+        response = A2AAgent._extract_response(msg)
+
+        assert len(response.tool_calls) == 1
+        assert response.tool_calls[0].name == "good_args"
 
 
 class TestA2AExecuteReturnsAgentResponse:

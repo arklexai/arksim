@@ -15,7 +15,7 @@ from a2a.types import DataPart, Message, Task, TextPart, TransportProtocol
 
 from arksim.config import A2AConfig, AgentConfig, AgentType
 from arksim.simulation_engine.agent.base import BaseAgent
-from arksim.simulation_engine.tool_types import AgentResponse, ToolCall
+from arksim.simulation_engine.tool_types import AgentResponse, ToolCall, ToolCallSource
 
 logger = logging.getLogger(__name__)
 
@@ -109,9 +109,15 @@ class A2AAgent(BaseAgent):
                 text_parts.append(inner.text)
             elif isinstance(inner, DataPart):
                 raw_calls = inner.data.get("tool_calls")
-                if not raw_calls:
+                if not isinstance(raw_calls, list):
                     continue
                 for raw in raw_calls:
+                    if not isinstance(raw, dict):
+                        logger.warning(
+                            "Skipping malformed tool call in DataPart: "
+                            "entry is not a dict"
+                        )
+                        continue
                     name = raw.get("name")
                     if not name:
                         logger.warning(
@@ -119,14 +125,21 @@ class A2AAgent(BaseAgent):
                             "missing 'name' field"
                         )
                         continue
+                    arguments = raw.get("arguments", {})
+                    if not isinstance(arguments, dict):
+                        logger.warning(
+                            "Skipping malformed tool call in DataPart: "
+                            "'arguments' is not a dict"
+                        )
+                        continue
                     tool_calls.append(
                         ToolCall(
                             id=raw.get("id", ""),
                             name=name,
-                            arguments=raw.get("arguments", {}),
+                            arguments=arguments,
                             result=raw.get("result"),
                             error=raw.get("error"),
-                            source="a2a_protocol",
+                            source=ToolCallSource.A2A_PROTOCOL,
                         )
                     )
 
