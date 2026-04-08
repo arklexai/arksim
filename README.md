@@ -97,12 +97,6 @@ class MyAgent(BaseAgent):
 
 ### Chat Completions endpoint
 
-```bash
-arksim init --agent-type chat_completions
-```
-
-Edit `config.yaml` with your agent's Chat Completions endpoint:
-
 ```yaml
 agent_config:
   agent_type: chat_completions
@@ -112,12 +106,6 @@ agent_config:
 ```
 
 ### A2A protocol
-
-```bash
-arksim init --agent-type a2a
-```
-
-Edit `config.yaml` with your agent's A2A endpoint:
 
 ```yaml
 agent_config:
