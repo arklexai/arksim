@@ -22,10 +22,10 @@ If both are active, arksim deduplicates automatically (see [Deduplication](#dedu
 |-----------|--------------------------|-------------------|
 | Python connector | Supported | Supported via `ArksimTracingProcessor` |
 | Chat Completions | Planned | Planned |
-| A2A | Planned | Planned |
+| A2A | Planned | Supported via A2A protocol DataPart |
 
 <Info>
-Tool call capture currently works with the Python connector only. Chat Completions and A2A support is planned.
+Tool call capture works with the Python connector and A2A. The A2A server includes tool call data as a DataPart in the protocol response. Chat Completions support is planned.
 </Info>
 
 ---
