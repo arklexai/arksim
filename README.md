@@ -35,7 +35,7 @@ Agents fail in ways that only show up mid-conversation. They misinterpret intent
 
 ArkSim generates LLM-powered synthetic users that hold realistic multi-turn conversations with your agent. Each user has a distinct profile, goal, and knowledge level. They push back, ask follow-ups, and behave like real users would.
 
-You define scenarios, ArkSim simulates conversations, then evaluates every turn on helpfulness, coherence, relevance, faithfulness, and goal completion. The output is an interactive report showing exactly where your agent broke and why.
+You define scenarios, ArkSim simulates conversations, then evaluates every turn across metrics like helpfulness, faithfulness, and goal completion. The output is an interactive report showing exactly where your agent broke and why.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/arklexai/arksim/main/docs/assets/arksim-flow.svg" alt="ArkSim flow: Scenarios → Simulation → Evaluation → Reports" width="100%">
@@ -74,7 +74,7 @@ arksim simulate-evaluate config.yaml
   <img src="https://raw.githubusercontent.com/arklexai/arksim/main/docs/assets/report-screenshot.png" alt="ArkSim evaluation report showing scores, failure categories, and conversation viewer" width="100%">
 </p>
 
-ArkSim generated synthetic users, each with a unique profile and goal. They held multi-turn conversations with the agent. Each conversation was scored on helpfulness, coherence, relevance, faithfulness, and goal completion. The report shows per-metric scores, failure categories, and full conversation transcripts.
+ArkSim generated synthetic users with different profiles and goals, ran multi-turn conversations with the agent, and scored every turn. The report breaks down what went well and what failed, with full conversation transcripts so you can see exactly what happened.
 
 ## Test Your Own Agent
 
@@ -130,11 +130,11 @@ Write scenarios that match your agent's domain. See the [Scenarios documentation
 
 ## Why ArkSim?
 
-- **Multi-turn simulation** - LLM-powered synthetic users with distinct profiles, goals, and personality traits hold realistic conversations with your agent
-- **Failure detection** - Automatically categorizes agent failures (false information, disobeying requests, repetition, lack of specificity) with severity levels
-- **Framework-agnostic** - Works with [14+ agent frameworks](#integrations) via Chat Completions API, A2A protocol, or any Python agent class
-- **CI-native** - Runs on every PR like pytest with configurable quality gates that exit non-zero when thresholds are not met
-- **Open source** - Inspect the simulation engine, evaluation prompts, and scoring logic. Run on your infrastructure. Your data never leaves your environment
+- **Simulation, not just evaluation.** Most tools score conversations you already have. ArkSim generates them with synthetic users who push back, ask follow-ups, and behave unpredictably.
+- **Multi-turn by default.** Every test is a full conversation, not a single prompt. Context loss, tool misuse, and contradictions only show up across turns.
+- **Any agent, any framework.** Works with [14+ frameworks](#integrations) through Chat Completions, A2A, or direct Python import.
+- **Runs in CI.** Add it as a quality gate on every PR. Exits non-zero when your agent drops below threshold.
+- **Fully open source.** Runs on your infrastructure. Your data never leaves.
 
 ## Integrations
 
