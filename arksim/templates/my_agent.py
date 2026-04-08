@@ -7,6 +7,7 @@ import uuid
 
 from arksim.config import AgentConfig
 from arksim.simulation_engine.agent.base import BaseAgent
+from arksim.simulation_engine.tool_types import AgentResponse
 
 
 class MyAgent(BaseAgent):
@@ -22,7 +23,7 @@ class MyAgent(BaseAgent):
     async def get_chat_id(self) -> str:
         return str(uuid.uuid4())
 
-    async def execute(self, user_query: str, **kwargs: object) -> str:
+    async def execute(self, user_query: str, **kwargs: object) -> str | AgentResponse:
         # Replace this with your agent logic.
         # You have access to self.agent_config for any config you need.
         return f"You said: {user_query}"
