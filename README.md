@@ -17,7 +17,7 @@
     <a href="https://arxiv.org/abs/2510.11997"><img alt="2510.11997" src="https://img.shields.io/badge/arXiv-2510.11997-b31b1b.svg"></a>
   </p>
   <p align="center">
-    <a href="https://docs.arklex.ai/main/overview">Documentation</a> · <a href="examples/">Examples</a> · <a href="https://discord.gg/YNkdqAQjzA">Discord</a> · <a href="https://github.com/arklexai/arksim/issues">Report a Bug</a>
+    <a href="https://docs.arklex.ai/main/overview">Documentation</a> · <a href="examples/">Examples</a> · <a href="https://github.com/arklexai/arksim/issues">Report a Bug</a>
   </p>
 </p>
 
