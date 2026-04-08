@@ -71,7 +71,7 @@ arksim simulate-evaluate config.yaml
 ### What you'll see
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/arklexai/arksim/main/docs/assets/report-screenshot.png" alt="ArkSim evaluation report showing scores, failure categories, and conversation viewer" width="100%">
+  <img src="docs/assets/report-screenshot.png" alt="ArkSim evaluation report showing scores, failure categories, and conversation viewer" width="100%">
 </p>
 
 ArkSim generated synthetic users with different profiles and goals, ran multi-turn conversations with the agent, and scored every turn. The report breaks down what went well and what failed, with full conversation transcripts so you can see exactly what happened.
@@ -95,7 +95,7 @@ class MyAgent(BaseAgent):
         return "agent response"
 ```
 
-### HTTP endpoint
+### Chat Completions endpoint
 
 ```bash
 arksim init --agent-type chat_completions
