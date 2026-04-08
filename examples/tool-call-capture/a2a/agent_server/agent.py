@@ -60,16 +60,18 @@ def _extract_tool_calls(result: RunResult) -> list[dict[str, Any]]:
     outputs: dict[str, str] = {}
     for item in result.new_items:
         if isinstance(item, ToolCallOutputItem):
+            # raw_item is a dict in older SDK versions and a typed object
+            # in newer ones; handle both for forward compatibility.
             raw = item.raw_item
             call_id = (
                 raw.get("call_id", "")
                 if isinstance(raw, dict)
-                else getattr(raw, "call_id", "")
+                else getattr(raw, "call_id", "")  # noqa: B009
             )
             output = (
                 raw.get("output", "")
                 if isinstance(raw, dict)
-                else getattr(raw, "output", "")
+                else getattr(raw, "output", "")  # noqa: B009
             )
             if isinstance(output, list):
                 output = json.dumps(output)

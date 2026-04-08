@@ -110,6 +110,11 @@ class A2AAgent(BaseAgent):
             elif isinstance(inner, DataPart):
                 raw_calls = inner.data.get("tool_calls")
                 if not isinstance(raw_calls, list):
+                    if raw_calls is not None:
+                        logger.debug(
+                            "Ignoring DataPart with non-list tool_calls: %s",
+                            type(raw_calls).__name__,
+                        )
                     continue
                 for raw in raw_calls:
                     if not isinstance(raw, dict):
