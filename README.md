@@ -17,7 +17,7 @@
     <a href="https://arxiv.org/abs/2510.11997"><img alt="2510.11997" src="https://img.shields.io/badge/arXiv-2510.11997-b31b1b.svg"></a>
   </p>
   <p align="center">
-    <a href="https://docs.arklex.ai/main/overview">Documentation</a> · <a href="examples/">Examples</a> · <a href="https://github.com/arklexai/arksim/issues">Report a Bug</a>
+    <a href="https://docs.arklex.ai/main/overview">Documentation</a> · <a href="https://github.com/arklexai/arksim/tree/main/examples">Examples</a> · <a href="https://github.com/arklexai/arksim/issues">Report a Bug</a>
   </p>
 </p>
 
@@ -78,7 +78,7 @@ The report tells you where your agent is strong and where it breaks. You get per
 
 ## Test Your Own Agent
 
-### Python class (default, no server needed)
+### Python class (default)
 
 `arksim init` generates a `my_agent.py` with a BaseAgent subclass. Replace the `execute()` body with your agent logic:
 
@@ -127,25 +127,24 @@ Write scenarios that match your agent's domain. See the [Scenarios documentation
 
 ## Integrations
 
-| Integration | Description |
-|-------------|-------------|
-| [bank-insurance](examples/bank-insurance/) | Financial services agent with custom compliance metrics, adversarial scenarios, and a Chat Completions server |
-| [e-commerce](examples/e-commerce/) | E-commerce product recommendation agent with custom metrics |
-| [openclaw](examples/openclaw/) | Integration with the OpenClaw agent framework |
-| [claude-agent-sdk](examples/integrations/claude-agent-sdk/) | Integration with the Claude Agent SDK |
-| [google-adk](examples/integrations/google-adk/) | Integration with Google ADK |
-| [openai-agents-sdk](examples/integrations/openai-agents-sdk/) | Integration with the OpenAI Agents SDK |
-| [langchain](examples/integrations/langchain/) | Integration with LangChain |
-| [langgraph](examples/integrations/langgraph/) | Integration with LangGraph |
-| [crewai](examples/integrations/crewai/) | Integration with CrewAI |
-| [dify](examples/integrations/dify/) | Integration with Dify |
-| [autogen](examples/integrations/autogen/) | Integration with Microsoft AutoGen |
-| [llamaindex](examples/integrations/llamaindex/) | Integration with LlamaIndex |
-| [pydantic-ai](examples/integrations/pydantic-ai/) | Integration with Pydantic AI |
-| [rasa](examples/integrations/rasa/) | Integration with Rasa |
-| [smolagents](examples/integrations/smolagents/) | Integration with Hugging Face Smolagents |
-| [mastra](examples/integrations/mastra/) | Integration with Mastra (TypeScript) |
-| [vercel-ai-sdk](examples/integrations/vercel-ai-sdk/) | Integration with Vercel AI SDK (TypeScript) |
+| Framework | Provider |
+|-----------|----------|
+| [Claude Agent SDK](https://github.com/arklexai/arksim/tree/main/examples/integrations/claude-agent-sdk) | Anthropic |
+| [OpenAI Agents SDK](https://github.com/arklexai/arksim/tree/main/examples/integrations/openai-agents-sdk) | OpenAI |
+| [Google ADK](https://github.com/arklexai/arksim/tree/main/examples/integrations/google-adk) | Google |
+| [LangChain](https://github.com/arklexai/arksim/tree/main/examples/integrations/langchain) | LangChain |
+| [LangGraph](https://github.com/arklexai/arksim/tree/main/examples/integrations/langgraph) | LangChain |
+| [CrewAI](https://github.com/arklexai/arksim/tree/main/examples/integrations/crewai) | CrewAI |
+| [Dify](https://github.com/arklexai/arksim/tree/main/examples/integrations/dify) | Dify |
+| [AutoGen](https://github.com/arklexai/arksim/tree/main/examples/integrations/autogen) | Microsoft |
+| [LlamaIndex](https://github.com/arklexai/arksim/tree/main/examples/integrations/llamaindex) | LlamaIndex |
+| [Pydantic AI](https://github.com/arklexai/arksim/tree/main/examples/integrations/pydantic-ai) | Pydantic |
+| [Rasa](https://github.com/arklexai/arksim/tree/main/examples/integrations/rasa) | Rasa |
+| [Smolagents](https://github.com/arklexai/arksim/tree/main/examples/integrations/smolagents) | Hugging Face |
+| [Mastra](https://github.com/arklexai/arksim/tree/main/examples/integrations/mastra) | TypeScript |
+| [Vercel AI SDK](https://github.com/arklexai/arksim/tree/main/examples/integrations/vercel-ai-sdk) | TypeScript |
+
+See [examples](https://github.com/arklexai/arksim/tree/main/examples) for end-to-end projects with custom metrics and scenarios.
 
 ## Learn More
 
@@ -173,11 +172,11 @@ ruff check .
 ruff format .
 ```
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+See [CONTRIBUTING.md](https://github.com/arklexai/arksim/blob/main/CONTRIBUTING.md) for guidelines.
 
 ## License
 
-Apache-2.0. See [LICENSE](LICENSE).
+Apache-2.0. See [LICENSE](https://github.com/arklexai/arksim/blob/main/LICENSE).
 
 ## Citation
 ```bibtex
