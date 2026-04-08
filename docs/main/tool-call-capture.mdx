@@ -9,7 +9,7 @@ Some agents handle tool calling internally (e.g. OpenAI Agents SDK, LangChain) a
 
 There are two ways to provide tool calls to arksim:
 
-1. **Explicit**: Return `AgentResponse` with tool calls from `execute()` (Python connector and Chat Completions).
+1. **Explicit**: Return `AgentResponse` with tool calls from `execute()` (Python connector).
 2. **Automatic capture**: Enable `trace_receiver` in your config. arksim captures tool calls via the SDK's tracing interface. The agent just returns text.
 
 If both are active, arksim deduplicates automatically (see [Deduplication](#deduplication) below).
@@ -64,7 +64,7 @@ arksim passes a `metadata` dict to your agent's `execute()` via `kwargs["metadat
 | `chat_id` | `str` | Conversation ID assigned by `agent.get_chat_id()` |
 | `turn_id` | `int` | Zero-based turn index within the conversation |
 
-These keys are always present for Python connector agents regardless of which capture method you use. Chat Completions and A2A agents receive metadata through their respective protocols.
+These keys are always present for Python connector agents regardless of which capture method you use.
 
 ---
 
@@ -113,10 +113,8 @@ Requires `pip install openai-agents`.
 
 ## Deduplication
 
-When multiple capture paths provide tool calls for the same turn, arksim merges and deduplicates:
+When both `AgentResponse` and automatic capture (via `ArksimTracingProcessor`) provide tool calls for the same turn, arksim merges and deduplicates:
 
 1. **By ID**: tool calls with matching IDs are deduplicated (AgentResponse wins)
-2. **By signature**: tool calls with matching `(name, arguments)` are deduplicated. AgentResponse wins.
+2. **By signature**: tool calls with matching `(name, arguments)` are deduplicated (AgentResponse wins)
 3. **Unique**: tool calls from either source that don't match anything are included
-
-This allows OTel capture and explicit AgentResponse to coexist safely.
