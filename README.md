@@ -84,12 +84,13 @@ ArkSim generated synthetic users with different profiles and goals, ran multi-tu
 
 ```python
 from arksim.simulation_engine.agent.base import BaseAgent
+from arksim.simulation_engine.tool_types import AgentResponse
 
 class MyAgent(BaseAgent):
     async def get_chat_id(self) -> str:
         return "unique-id"
 
-    async def execute(self, user_query: str, **kwargs: object) -> str:
+    async def execute(self, user_query: str, **kwargs: object) -> str | AgentResponse:
         # Replace with your agent logic
         return "agent response"
 ```
