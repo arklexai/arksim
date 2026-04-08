@@ -20,12 +20,11 @@ import uuid
 from pathlib import Path
 
 from agents import Agent, Runner, RunResult, function_tool
-from agents.items import ToolCallItem, ToolCallOutputItem
-from openai.types.responses import ResponseFunctionToolCall
 
 from arksim.config import AgentConfig
 from arksim.simulation_engine.agent.base import BaseAgent
-from arksim.simulation_engine.tool_types import AgentResponse, ToolCall
+from arksim.simulation_engine.tool_types import AgentResponse
+from arksim.tracing.openai import extract_tool_calls
 
 # ── Database setup ──
 
@@ -260,48 +259,7 @@ class ToolCallExampleAgent(BaseAgent):
 
         self._last_result = await Runner.run(self._agent, input=input_list)
 
-        tool_calls = self._extract_tool_calls(self._last_result)
         return AgentResponse(
             content=self._last_result.final_output,
-            tool_calls=tool_calls,
+            tool_calls=extract_tool_calls(self._last_result),
         )
-
-    @staticmethod
-    def _extract_tool_calls(result: RunResult) -> list[ToolCall]:
-        """Pair ToolCallItems with their ToolCallOutputItems from RunResult."""
-        outputs: dict[str, str] = {}
-        for item in result.new_items:
-            if isinstance(item, ToolCallOutputItem):
-                raw = item.raw_item
-                call_id = (
-                    raw.get("call_id", "")
-                    if isinstance(raw, dict)
-                    else getattr(raw, "call_id", "")
-                )
-                output = (
-                    raw.get("output", "")
-                    if isinstance(raw, dict)
-                    else getattr(raw, "output", "")
-                )
-                if isinstance(output, list):
-                    output = json.dumps(output)
-                outputs[call_id] = str(output)
-
-        tool_calls: list[ToolCall] = []
-        for item in result.new_items:
-            if not isinstance(item, ToolCallItem):
-                continue
-            raw = item.raw_item
-            if not isinstance(raw, ResponseFunctionToolCall):
-                continue
-            call_id = raw.call_id
-            tool_calls.append(
-                ToolCall(
-                    id=call_id,
-                    name=raw.name,
-                    arguments=json.loads(raw.arguments) if raw.arguments else {},
-                    result=outputs.get(call_id),
-                )
-            )
-
-        return tool_calls
