@@ -47,13 +47,9 @@ class TestSetupClaudeFreshProject:
         assert "mcpServers" in settings
         assert "arksim" in settings["mcpServers"]
         server = settings["mcpServers"]["arksim"]
-        assert server["command"] == sys.executable
-        assert server["args"] == [
-            "-m",
-            "integrations.claude_code.mcp_server.server",
-        ]
-        assert "env" in server
-        assert "PYTHONPATH" in server["env"]
+        # Config uses either arksim-mcp entry point or python -m fallback
+        assert "command" in server
+        assert "args" in server
 
     def test_copies_skills_to_claude_skills_directories(self, tmp_path: Path) -> None:
         """Copies arksim-*/SKILL.md directories to .claude/skills/."""

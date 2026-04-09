@@ -349,11 +349,18 @@ def _run_init(agent_type: str, force: bool = False) -> None:
 
 
 def _build_mcp_server_config(integration_dir: Path) -> dict[str, object]:
-    """Build the MCP server config with the correct PYTHONPATH.
+    """Build the MCP server config.
 
-    The MCP server module lives inside the arksim package tree, so Claude Code
-    needs the arksim repo root on PYTHONPATH to import it.
+    Uses the ``arksim-mcp`` entry point installed by ``pip install arksim[claude]``.
+    This avoids PATH and PYTHONPATH issues since the entry point is a proper
+    console script installed alongside ``arksim`` itself.
     """
+    arksim_mcp = shutil.which("arksim-mcp")
+    if arksim_mcp:
+        return {"command": arksim_mcp, "args": []}
+
+    # Fallback: use python -m with PYTHONPATH (for dev installs where
+    # the entry point might not be on PATH yet)
     repo_root = str(integration_dir.parent.parent)
     return {
         "command": sys.executable,
