@@ -781,14 +781,49 @@ class Evaluator:
         logger.info(f"\n{'=' * 60}")
 
 
+def _instantiate_with_optional_llm(cls: type, llm: object | None) -> object:
+    """Instantiate a metric class, injecting ``llm`` if the signature accepts it.
+
+    Inspects ``cls.__init__`` directly (not the resolved MRO) so that legacy
+    metrics overriding ``__init__`` without an ``llm`` param are instantiated
+    without injection. Metrics that do not override ``__init__`` inherit the
+    base class signature (which includes ``llm``) and receive it automatically.
+
+    Emits a warning when ``**kwargs`` is present in the signature, because
+    ``llm`` would be swallowed by ``**kwargs`` without being forwarded to
+    ``super().__init__``, causing silent injection failure.
+    """
+    try:
+        sig = inspect.signature(cls.__init__)
+    except ValueError:
+        return cls()
+
+    params = sig.parameters
+    if any(p.kind == inspect.Parameter.VAR_KEYWORD for p in params.values()):
+        logger.warning(
+            "Metric '%s' uses **kwargs in __init__; LLM injection may silently "
+            "fail if 'llm' is not explicitly forwarded to super().__init__().",
+            cls.__name__,
+        )
+
+    if "llm" in params:
+        return cls(llm=llm)
+    return cls()
+
+
 def _load_custom_metrics(
     file_paths: list[str],
+    llm: object | None = None,
 ) -> tuple[list[QuantitativeMetric], list[QualitativeMetric]]:
     """Dynamically load QuantitativeMetric and QualitativeMetric subclasses from .py files.
 
     Args:
         file_paths: Paths to Python files containing
             QuantitativeMetric or QualitativeMetric subclass definitions.
+        llm: Optional LLM instance to inject into metrics that accept it.
+            Metrics whose ``__init__`` accepts a ``llm`` keyword argument receive
+            this instance on ``self.llm``.  Metrics that do not accept ``llm``
+            are instantiated without it for backward compatibility.
 
     Returns:
         Tuple of (quantitative metrics, qualitative metrics).
@@ -800,8 +835,13 @@ def _load_custom_metrics(
         module = load_module_from_file(abs_path)
         for _, obj in inspect.getmembers(module, inspect.isclass):
             if issubclass(obj, QuantitativeMetric) and obj is not QuantitativeMetric:
+                if inspect.isabstract(obj):
+                    logger.debug(
+                        "Skipping abstract class '%s' from %s", obj.__name__, abs_path
+                    )
+                    continue
                 try:
-                    metrics.append(obj())
+                    metrics.append(_instantiate_with_optional_llm(obj, llm))  # type: ignore[arg-type]
                     logger.info(
                         f"Loaded quantitative metric '{obj.__name__}' from {abs_path}"
                     )
@@ -809,11 +849,17 @@ def _load_custom_metrics(
                     raise RuntimeError(
                         f"Could not instantiate quantitative metric '{obj.__name__}' "
                         f"from {abs_path}: {e}. "
-                        f"Make sure the class can be instantiated with no arguments."
+                        "Make sure the class can be instantiated with at most an "
+                        "`llm=` keyword argument (all other parameters must have defaults)."
                     ) from e
             elif issubclass(obj, QualitativeMetric) and obj is not QualitativeMetric:
+                if inspect.isabstract(obj):
+                    logger.debug(
+                        "Skipping abstract class '%s' from %s", obj.__name__, abs_path
+                    )
+                    continue
                 try:
-                    qual_metrics.append(obj())
+                    qual_metrics.append(_instantiate_with_optional_llm(obj, llm))  # type: ignore[arg-type]
                     logger.info(
                         f"Loaded qualitative metric '{obj.__name__}' from {abs_path}"
                     )
@@ -821,7 +867,8 @@ def _load_custom_metrics(
                     raise RuntimeError(
                         f"Could not instantiate qualitative metric '{obj.__name__}' "
                         f"from {abs_path}: {e}. "
-                        f"Make sure the class can be instantiated with no arguments."
+                        "Make sure the class can be instantiated with at most an "
+                        "`llm=` keyword argument (all other parameters must have defaults)."
                     ) from e
     return metrics, qual_metrics
 
@@ -868,7 +915,7 @@ def run_evaluation(
         provider=settings.provider,
     )
     custom_metrics, custom_qualitative_metrics = _load_custom_metrics(
-        settings.custom_metrics_file_paths
+        settings.custom_metrics_file_paths, llm=llm
     )
 
     params = EvaluationParams(

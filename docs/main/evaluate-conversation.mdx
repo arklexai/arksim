@@ -142,10 +142,13 @@ In addition to the built-in metrics (helpfulness, coherence, relevance, verbosit
     )
 
     class ClarityScore(QuantitativeMetric):
+        def __init__(self, llm=None):
+            super().__init__(name="clarity", score_range=(0, 5), llm=llm)
+
         def score(self, score_input: ScoreInput) -> QuantResult:
-            # Use your own LLM or any logic; independent of evaluator model config.
+            # self.llm is the evaluator's configured LLM, injected automatically.
             # score_input.chat_history, .user_goal, .knowledge, etc.
-            value = ...  # your scoring logic or LLM call
+            value = ...  # your scoring logic using self.llm or any other logic
             return QuantResult(name="clarity", value=value, reason="...")
     ```
   </Tab>
@@ -166,8 +169,12 @@ In addition to the built-in metrics (helpfulness, coherence, relevance, verbosit
     )
 
     class NeedsAssessment(QualitativeMetric):
+        def __init__(self, llm=None):
+            super().__init__(name="needs_assessment", llm=llm)
+
         def evaluate(self, score_input: ScoreInput) -> QualResult:
-            # Use score_input.chat_history, .user_goal, .knowledge, etc.
+            # self.llm is the evaluator's configured LLM, injected automatically.
+            # score_input.chat_history, .user_goal, .knowledge, etc.
             label = ...  # "complete" | "partial" | "missing"
             return QualResult(name="needs_assessment", value=label, reason="...")
     ```
