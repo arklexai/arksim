@@ -186,3 +186,45 @@ class TestParseJsonFileInvalid:
         assert result["status"] == "error"
         assert "Invalid JSON" in result["error_message"]
         assert str(bad_file) in result["error_message"]
+
+
+class TestParseJsonFileOversized:
+    """parse_json_file rejects files exceeding the size limit."""
+
+    def test_returns_error_for_oversized_file(self, tmp_path: Path) -> None:
+        """A file larger than _MAX_JSON_SIZE is rejected before parsing."""
+        from integrations.claude_code.mcp_server.cli_wrapper import _MAX_JSON_SIZE
+
+        big_file = tmp_path / "huge.json"
+        big_file.write_text("{}")
+
+        # Mock stat to report a size over the limit without allocating real data.
+        fake_size = _MAX_JSON_SIZE + 1
+        original_stat = Path.stat
+
+        def oversized_stat(self: Path) -> object:
+            result = original_stat(self)
+            if self == big_file:
+                # Return a modified stat result with an inflated size.
+                return type(result)(
+                    (
+                        result.st_mode,
+                        result.st_ino,
+                        result.st_dev,
+                        result.st_nlink,
+                        result.st_uid,
+                        result.st_gid,
+                        fake_size,
+                        result.st_atime,
+                        result.st_mtime,
+                        result.st_ctime,
+                    )
+                )
+            return result
+
+        with patch.object(Path, "stat", oversized_stat):
+            result = parse_json_file(str(big_file))
+
+        assert result["status"] == "error"
+        assert "File too large" in result["error_message"]
+        assert str(big_file) in result["error_message"]

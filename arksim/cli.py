@@ -477,6 +477,10 @@ def _install_claude(
         if old_skill.is_dir():
             shutil.rmtree(old_skill)
 
+    if not skills_src.is_dir():
+        logger.error(f"Skills directory not found: {skills_src}")
+        sys.exit(EXIT_CONFIG_ERROR)
+
     copied = []
     for skill_dir in sorted(skills_src.iterdir()):
         if not skill_dir.is_dir() or not skill_dir.name.startswith("arksim-"):

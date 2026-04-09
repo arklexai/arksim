@@ -74,7 +74,7 @@ def _build_override_args(
             skipped.append(key)
             continue
         flag = f"--{key.replace('_', '-')}"
-        args.extend([flag, value])
+        args.append(f"{flag}={value}")
     return args, skipped
 
 
@@ -235,12 +235,23 @@ def _read_result(result_path: str) -> dict[str, Any]:
     }
 
 
+_VALID_AGENT_TYPES = frozenset({"custom", "a2a", "chat_completions"})
+
+
 def _init_project(
     agent_type: str = "custom",
     directory: str | None = None,
     force: bool = False,
 ) -> dict[str, Any]:
     """Scaffold a new arksim project."""
+    if agent_type not in _VALID_AGENT_TYPES:
+        return {
+            "status": "error",
+            "error_message": (
+                f"Invalid agent_type: {agent_type!r}. "
+                f"Must be one of: {', '.join(sorted(_VALID_AGENT_TYPES))}"
+            ),
+        }
     cmd = ["init", "--agent-type", agent_type]
     if force:
         cmd.append("--force")
@@ -265,6 +276,14 @@ def _launch_ui(port: int = 8080) -> dict[str, Any]:
     global _ui_process, _ui_port  # noqa: PLW0603
 
     if _ui_process is not None and _ui_process.poll() is None:
+        if port != _ui_port:
+            return {
+                "status": "error",
+                "error_message": (
+                    f"UI is already running on port {_ui_port}. "
+                    f"Stop the current UI before starting on port {port}."
+                ),
+            }
         return {
             "status": "success",
             "url": f"http://localhost:{_ui_port}",
@@ -279,7 +298,8 @@ def _launch_ui(port: int = 8080) -> dict[str, Any]:
         _ui_process = subprocess.Popen(
             ["arksim", "ui", "--port", str(port)],
             stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
+            stderr=subprocess.PIPE,
+            text=True,
         )
     except FileNotFoundError:
         return {
@@ -291,11 +311,18 @@ def _launch_ui(port: int = 8080) -> dict[str, Any]:
 
     time.sleep(_UI_STARTUP_PROBE_DELAY)
     if _ui_process.poll() is not None:
+        stderr_output = ""
+        if _ui_process.stderr is not None:
+            stderr_output = _ui_process.stderr.read()
+        detail = stderr_output.strip() if stderr_output else ""
+        message = "UI process exited immediately."
+        if detail:
+            message = f"{message} stderr: {detail}"
+        else:
+            message = f"{message} Check if the port is in use."
         return {
             "status": "error",
-            "error_message": (
-                "UI process exited immediately. Check if the port is in use."
-            ),
+            "error_message": message,
         }
 
     _ui_port = port
