@@ -26,11 +26,17 @@ Scan the project for agent files. Look for:
 
 If agent files are found, ask the user to confirm which file is the agent entry point.
 
-**If NO agent files are found**, propose scaffolding a starter project:
+**If NO agent files are found**, ask the user what kind of agent they want to test:
 
-> "I didn't find any agent code in this project. Want me to set up a starter agent you can customize? I'll create a config, sample scenarios, and a simple agent stub."
+> "I didn't find any agent code in this project. What type of agent do you want to test?"
+>
+> 1. **Custom Python agent** - You have (or will write) a Python class. I'll scaffold a starter agent you can customize.
+> 2. **HTTP endpoint** (Chat Completions API) - Your agent is running as a server with an OpenAI-compatible endpoint.
+> 3. **A2A agent** - Your agent uses Google's Agent-to-Agent protocol.
+>
+> If you're just exploring arksim, pick option 1 to get a working example.
 
-If the user agrees, proceed directly to step 3 (Initialize) with `agent_type="custom"`. This creates `my_agent.py` with a working echo agent that the user can replace with their own logic.
+Based on their choice, proceed to step 3 (Initialize) with the corresponding `agent_type`. Option 1 creates `my_agent.py` with a working echo agent. Options 2 and 3 create a config pointing to an endpoint the user fills in.
 
 ### 2. Determine agent type
 
