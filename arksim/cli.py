@@ -401,44 +401,46 @@ def _run_setup_claude(
     """Install or uninstall the Claude Code integration for a project.
 
     Install mode (default):
-      - Creates/merges .claude/settings.json with an mcpServers.arksim entry
+      - Creates/merges .mcp.json with an mcpServers.arksim entry
+        (Claude Code reads MCP servers from .mcp.json, not .claude/settings.json)
       - Copies skill directories from integrations/claude_code/skills/arksim-*/
         to .claude/skills/arksim-*/
 
     Uninstall mode:
-      - Removes arksim from mcpServers in settings.json
+      - Removes arksim from mcpServers in .mcp.json
       - Removes .claude/skills/arksim-*/ directories
     """
     root = Path(project_dir).resolve()
     claude_dir = root / ".claude"
-    settings_path = claude_dir / "settings.json"
+    mcp_config_path = root / ".mcp.json"
     skills_dir = claude_dir / "skills"
 
     if uninstall:
-        _uninstall_claude(settings_path, skills_dir)
+        _uninstall_claude(mcp_config_path, skills_dir)
         return
 
     integration_dir = _find_integration_dir()
-    _install_claude(integration_dir, claude_dir, settings_path, skills_dir, force)
+    _install_claude(integration_dir, claude_dir, mcp_config_path, skills_dir, force)
 
 
-def _uninstall_claude(settings_path: Path, skills_dir: Path) -> None:
+def _uninstall_claude(mcp_config_path: Path, skills_dir: Path) -> None:
     """Remove arksim MCP config and skills from a project."""
-    if settings_path.exists():
+    if mcp_config_path.exists():
         try:
-            settings = json.loads(settings_path.read_text())
+            mcp_config = json.loads(mcp_config_path.read_text())
         except json.JSONDecodeError:
             logger.error(
-                f"Invalid JSON in {settings_path}. Fix or delete the file and retry."
+                f"Invalid JSON in {mcp_config_path}. Fix or delete the file and retry."
             )
             sys.exit(EXIT_CONFIG_ERROR)
-        mcp_servers = settings.get("mcpServers", {})
+        mcp_servers = mcp_config.get("mcpServers", {})
         mcp_servers.pop("arksim", None)
-        if not mcp_servers:
-            settings.pop("mcpServers", None)
+        if mcp_servers:
+            mcp_config["mcpServers"] = mcp_servers
+            mcp_config_path.write_text(json.dumps(mcp_config, indent=2) + "\n")
         else:
-            settings["mcpServers"] = mcp_servers
-        settings_path.write_text(json.dumps(settings, indent=2) + "\n")
+            # Remove .mcp.json entirely if no servers remain
+            mcp_config_path.unlink()
 
     # Remove all arksim-* skill directories
     if skills_dir.is_dir():
@@ -452,7 +454,7 @@ def _uninstall_claude(settings_path: Path, skills_dir: Path) -> None:
 def _install_claude(
     integration_dir: Path,
     claude_dir: Path,
-    settings_path: Path,
+    mcp_config_path: Path,
     skills_dir: Path,
     force: bool,
 ) -> None:
@@ -466,21 +468,21 @@ def _install_claude(
         )
         sys.exit(EXIT_CONFIG_ERROR)
 
-    # Merge settings.json
+    # Write .mcp.json (Claude Code reads MCP servers from here)
     claude_dir.mkdir(parents=True, exist_ok=True)
-    settings: dict = {}
-    if settings_path.exists():
+    mcp_config: dict = {}
+    if mcp_config_path.exists():
         try:
-            settings = json.loads(settings_path.read_text())
+            mcp_config = json.loads(mcp_config_path.read_text())
         except json.JSONDecodeError:
             logger.error(
-                f"Invalid JSON in {settings_path}. Fix or delete the file and retry."
+                f"Invalid JSON in {mcp_config_path}. Fix or delete the file and retry."
             )
             sys.exit(EXIT_CONFIG_ERROR)
 
-    mcp_servers = settings.setdefault("mcpServers", {})
+    mcp_servers = mcp_config.setdefault("mcpServers", {})
     mcp_servers["arksim"] = _build_mcp_server_config(integration_dir)
-    settings_path.write_text(json.dumps(settings, indent=2) + "\n")
+    mcp_config_path.write_text(json.dumps(mcp_config, indent=2) + "\n")
 
     # Copy skills (each skill is a directory with SKILL.md)
     skills_src = integration_dir / "skills"
@@ -510,7 +512,7 @@ def _install_claude(
         sys.exit(EXIT_CONFIG_ERROR)
 
     logger.info("Installed arksim Claude Code integration:")
-    logger.info(f"  Settings: {settings_path}")
+    logger.info(f"  MCP config: {mcp_config_path}")
     for path in copied:
         logger.info(f"  Skill:    {path}")
     logger.info('\nStart Claude Code and type "/arksim:test" to begin.')
