@@ -86,10 +86,19 @@ def _build_override_args(
 def _simulate_evaluate(
     config_path: str,
     cli_overrides: dict[str, str] | None = None,
+    cwd: str | None = None,
 ) -> dict[str, Any]:
-    """Run simulation and evaluation in a single pass."""
+    """Run simulation and evaluation in a single pass.
+
+    Args:
+        config_path: Path to the arksim config YAML.
+        cli_overrides: Optional key-value overrides for CLI flags.
+        cwd: Working directory for the CLI process. If the config uses
+            relative paths that assume a specific working directory,
+            pass that directory here.
+    """
     override_args, skipped_keys = _build_override_args(cli_overrides)
-    result = run_cli(["simulate-evaluate", config_path, *override_args])
+    result = run_cli(["simulate-evaluate", config_path, *override_args], cwd=cwd)
     if result["status"] != "success":
         return {
             "status": "error",
@@ -112,13 +121,14 @@ def _evaluate(
     config_path: str,
     simulation_file_path: str | None = None,
     cli_overrides: dict[str, str] | None = None,
+    cwd: str | None = None,
 ) -> dict[str, Any]:
     """Run evaluation on an existing simulation output."""
     overrides = dict(cli_overrides or {})
     if simulation_file_path is not None:
         overrides["simulation_file_path"] = simulation_file_path
     override_args, skipped_keys = _build_override_args(overrides)
-    result = run_cli(["evaluate", config_path, *override_args])
+    result = run_cli(["evaluate", config_path, *override_args], cwd=cwd)
     if result["status"] != "success":
         return {
             "status": "error",
@@ -342,14 +352,16 @@ def _launch_ui(port: int = 8080) -> dict[str, Any]:
 def simulate_evaluate(
     config_path: str,
     cli_overrides: dict[str, str] | None = None,
+    cwd: str | None = None,
 ) -> dict[str, Any]:
     """Run agent simulation and evaluation in one step.
 
     Executes ``arksim simulate-evaluate`` against the given config file.
     Use ``cli_overrides`` to pass additional CLI flags, for example
-    ``{"model": "gpt-4o", "num_workers": "5"}``.
+    ``{"model": "gpt-4o", "num_workers": "5"}``.  Pass ``cwd`` if the
+    config's relative paths assume a specific working directory.
     """
-    return _simulate_evaluate(config_path, cli_overrides=cli_overrides)
+    return _simulate_evaluate(config_path, cli_overrides=cli_overrides, cwd=cwd)
 
 
 @mcp.tool()
@@ -357,16 +369,20 @@ def evaluate(
     config_path: str,
     simulation_file_path: str | None = None,
     cli_overrides: dict[str, str] | None = None,
+    cwd: str | None = None,
 ) -> dict[str, Any]:
     """Evaluate a previously completed simulation.
 
     Runs ``arksim evaluate`` against the config file.  Optionally pass
     ``simulation_file_path`` to point at an existing simulation output.
+    Pass ``cwd`` if the config's relative paths assume a specific
+    working directory.
     """
     return _evaluate(
         config_path,
         simulation_file_path=simulation_file_path,
         cli_overrides=cli_overrides,
+        cwd=cwd,
     )
 
 
