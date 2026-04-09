@@ -1,3 +1,7 @@
+---
+name: arksim:scenarios
+description: Generate or edit test scenarios for your agent
+---
 # /arksim scenarios
 
 Generate, edit, or extend scenarios for agent testing.

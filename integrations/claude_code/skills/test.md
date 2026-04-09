@@ -1,3 +1,7 @@
+---
+name: arksim:test
+description: Test your AI agent with simulated multi-turn conversations
+---
 # /arksim test
 
 Simulate conversations against an agent and evaluate the results.

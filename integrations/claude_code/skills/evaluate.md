@@ -1,3 +1,7 @@
+---
+name: arksim:evaluate
+description: Re-evaluate an existing simulation with different metrics or thresholds
+---
 # /arksim evaluate
 
 Re-evaluate simulation results with different settings without re-running the agent.
