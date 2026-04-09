@@ -75,7 +75,7 @@ When editing, validate that:
 | `strict` | Expected tools must match actual calls in exact order and exact set |
 | `unordered` | Same set of tools, any order |
 | `contains` | Expected tools are a subset of actual calls |
-| `within` | Actual calls are a subset of expected tools |
+| `within` | Actual calls are a subset of expected tools (expected is a superset) |
 
 ## Examples
 

@@ -348,7 +348,7 @@ def _run_init(agent_type: str, force: bool = False) -> None:
 # ============================================================================
 
 _MCP_SERVER_CONFIG = {
-    "command": "python",
+    "command": sys.executable,
     "args": ["-m", "integrations.claude_code.mcp_server.server"],
 }
 
@@ -409,7 +409,13 @@ def _run_setup_claude(
 def _uninstall_claude(settings_path: Path, skills_dest: Path) -> None:
     """Remove arksim MCP config and skills from a project."""
     if settings_path.exists():
-        settings = json.loads(settings_path.read_text())
+        try:
+            settings = json.loads(settings_path.read_text())
+        except json.JSONDecodeError:
+            logger.error(
+                f"Invalid JSON in {settings_path}. Fix or delete the file and retry."
+            )
+            sys.exit(EXIT_CONFIG_ERROR)
         mcp_servers = settings.get("mcpServers", {})
         mcp_servers.pop("arksim", None)
         if not mcp_servers:
@@ -443,7 +449,13 @@ def _install_claude(
     claude_dir.mkdir(parents=True, exist_ok=True)
     settings: dict = {}
     if settings_path.exists():
-        settings = json.loads(settings_path.read_text())
+        try:
+            settings = json.loads(settings_path.read_text())
+        except json.JSONDecodeError:
+            logger.error(
+                f"Invalid JSON in {settings_path}. Fix or delete the file and retry."
+            )
+            sys.exit(EXIT_CONFIG_ERROR)
 
     mcp_servers = settings.setdefault("mcpServers", {})
     mcp_servers["arksim"] = _MCP_SERVER_CONFIG
@@ -460,6 +472,12 @@ def _install_claude(
         dest_file = skills_dest / md_file.name
         shutil.copy2(md_file, dest_file)
         copied.append(dest_file)
+
+    if not copied:
+        logger.error(
+            f"No skill files found in {skills_src}. Installation may be incomplete."
+        )
+        sys.exit(EXIT_CONFIG_ERROR)
 
     logger.info("Installed arksim Claude Code integration:")
     logger.info(f"  Settings: {settings_path}")

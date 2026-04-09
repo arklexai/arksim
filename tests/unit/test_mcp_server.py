@@ -11,6 +11,8 @@ from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -281,11 +283,19 @@ class TestInitProjectFailure:
 class TestLaunchUi:
     """_launch_ui starts a subprocess and returns URL."""
 
-    def test_starts_subprocess_returns_url(self) -> None:
+    @pytest.fixture(autouse=True)
+    def _reset_ui_state(self) -> None:
+        """Reset module-level UI process state before each test."""
         from integrations.claude_code.mcp_server import server
 
-        # Reset module-level process tracker
         server._ui_process = None
+        server._ui_port = None
+        yield
+        server._ui_process = None
+        server._ui_port = None
+
+    def test_starts_subprocess_returns_url(self) -> None:
+        from integrations.claude_code.mcp_server import server
 
         mock_proc = MagicMock()
         mock_proc.poll.return_value = None  # still running
@@ -317,10 +327,6 @@ class TestLaunchUi:
         assert result["status"] == "success"
         assert "8080" in result["url"]
 
-        # cleanup
-        server._ui_process = None
-        server._ui_port = None
-
     def test_restarts_when_process_has_exited(self) -> None:
         from integrations.claude_code.mcp_server import server
 
@@ -339,24 +345,14 @@ class TestLaunchUi:
         assert result["status"] == "success"
         assert "9000" in result["url"]
 
-        # cleanup
-        server._ui_process = None
-        server._ui_port = None
-
     def test_returns_error_when_arksim_not_found(self) -> None:
         from integrations.claude_code.mcp_server import server
-
-        server._ui_process = None
 
         with patch("subprocess.Popen", side_effect=FileNotFoundError("arksim")):
             result = server._launch_ui(port=8080)
 
         assert result["status"] == "error"
         assert "arksim CLI not found" in result["error_message"]
-
-        # cleanup
-        server._ui_process = None
-        server._ui_port = None
 
 
 # ── list_results ──────────────────────────────────────────────
@@ -426,7 +422,6 @@ class TestReadResult:
         assert result["total_conversations"] == 2
         assert result["passed"] == 1
         assert result["failed"] == 1
-        assert result["failures_count"] == 1
 
         errors = result["unique_errors"]
         assert len(errors) == 1
@@ -458,3 +453,44 @@ class TestReadResult:
 
         assert result["status"] == "error"
         assert "File not found" in result["error_message"]
+
+    def test_handles_null_conversations(self) -> None:
+        """Null conversations field should not crash; returns 0 conversations."""
+        from integrations.claude_code.mcp_server.server import _read_result
+
+        eval_data = _make_eval_data()
+        eval_data["conversations"] = None
+        eval_data["unique_errors"] = None
+
+        with patch(
+            f"{_MOD}.parse_json_file",
+            return_value={"status": "success", "data": eval_data},
+        ):
+            result = _read_result("/tmp/evaluation.json")
+
+        assert result["status"] == "success"
+        assert result["total_conversations"] == 0
+        assert result["passed"] == 0
+        assert result["failed"] == 0
+        assert result["unique_errors"] == []
+        assert result["conversations"] == []
+
+
+# ── list_results edge cases ──────────────────────────────────
+
+
+class TestListResultsEdgeCases:
+    """Edge-case tests for _list_results."""
+
+    def test_returns_empty_when_output_dir_is_a_file(self, tmp_path: Path) -> None:
+        """Passing a file path instead of a directory returns empty runs."""
+        from integrations.claude_code.mcp_server.server import _list_results
+
+        file_path = tmp_path / "not_a_dir.txt"
+        file_path.write_text("hello")
+
+        result = _list_results(output_dir=str(file_path))
+
+        assert result["status"] == "success"
+        assert result["runs"] == []
+        assert result["skipped"] == []

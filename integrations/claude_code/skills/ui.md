@@ -27,4 +27,4 @@ arksim UI is running at http://localhost:8080
 - The UI runs locally. No data leaves the machine.
 - The default port is 8080. If that port is in use, pass a different port number.
 - The UI reads results from the same output directories configured in `config.yaml`.
-- To stop the UI, the user can press Ctrl+C in the terminal or close the process.
+- The UI runs as a background process. To stop it, run `pkill -f 'arksim ui'` in a terminal or restart Claude Code.

@@ -41,7 +41,7 @@ class TestSetupClaudeFreshProject:
         assert "mcpServers" in settings
         assert "arksim" in settings["mcpServers"]
         server = settings["mcpServers"]["arksim"]
-        assert server["command"] == "python"
+        assert server["command"] == sys.executable
         assert server["args"] == [
             "-m",
             "integrations.claude_code.mcp_server.server",
@@ -229,11 +229,23 @@ class TestSetupClaudeCLIIntegration:
     def test_setup_claude_uninstall_flag(
         self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
     ) -> None:
-        """arksim setup-claude --uninstall passes uninstall=True."""
+        """arksim setup-claude --uninstall removes arksim from settings."""
         project_dir = tmp_path / "project"
         claude_dir = project_dir / ".claude"
         claude_dir.mkdir(parents=True)
-        (claude_dir / "settings.json").write_text("{}")
+        skills_dir = claude_dir / "skills" / "arksim"
+        skills_dir.mkdir(parents=True)
+        (skills_dir / "test.md").write_text("# test")
+
+        settings = {
+            "mcpServers": {
+                "arksim": {
+                    "command": "python",
+                    "args": ["-m", "integrations.claude_code.mcp_server.server"],
+                }
+            }
+        }
+        (claude_dir / "settings.json").write_text(json.dumps(settings))
 
         monkeypatch.setattr(
             sys,
@@ -247,3 +259,65 @@ class TestSetupClaudeCLIIntegration:
             ],
         )
         main()
+
+        updated = json.loads((claude_dir / "settings.json").read_text())
+        assert "arksim" not in updated.get("mcpServers", {})
+        assert not skills_dir.exists()
+
+
+class TestSetupClaudeCorruptedSettings:
+    """setup-claude handles corrupted settings.json gracefully."""
+
+    def test_install_exits_on_invalid_json(self, tmp_path: Path) -> None:
+        """Invalid JSON in settings.json during install causes clean exit."""
+        integration_dir = _make_integration_dir(tmp_path)
+        project_dir = tmp_path / "project"
+        claude_dir = project_dir / ".claude"
+        claude_dir.mkdir(parents=True)
+        (claude_dir / "settings.json").write_text("{not valid json")
+
+        with (
+            patch(
+                "arksim.cli._find_integration_dir",
+                return_value=integration_dir,
+            ),
+            pytest.raises(SystemExit) as exc_info,
+        ):
+            _run_setup_claude(project_dir=str(project_dir))
+
+        assert exc_info.value.code == EXIT_CONFIG_ERROR
+
+    def test_uninstall_exits_on_invalid_json(self, tmp_path: Path) -> None:
+        """Invalid JSON in settings.json during uninstall causes clean exit."""
+        project_dir = tmp_path / "project"
+        claude_dir = project_dir / ".claude"
+        claude_dir.mkdir(parents=True)
+        (claude_dir / "settings.json").write_text("{not valid json")
+
+        with pytest.raises(SystemExit) as exc_info:
+            _run_setup_claude(project_dir=str(project_dir), uninstall=True)
+
+        assert exc_info.value.code == EXIT_CONFIG_ERROR
+
+
+class TestFindIntegrationDirFailure:
+    """_find_integration_dir exits cleanly when integration is not found."""
+
+    def test_exits_when_integration_not_found(self, tmp_path: Path) -> None:
+        """Missing integration dir causes SystemExit with EXIT_CONFIG_ERROR."""
+        from arksim.cli import _find_integration_dir
+
+        # Point __file__ at a directory where integrations/ does not exist
+        fake_cli = tmp_path / "arksim" / "cli.py"
+        fake_cli.parent.mkdir(parents=True)
+        fake_cli.touch()
+
+        with (
+            patch("arksim.cli.__file__", str(fake_cli)),
+            patch("arksim.cli.resources") as mock_resources,
+            pytest.raises(SystemExit) as exc_info,
+        ):
+            mock_resources.files.side_effect = ModuleNotFoundError("no module")
+            _find_integration_dir()
+
+        assert exc_info.value.code == EXIT_CONFIG_ERROR
