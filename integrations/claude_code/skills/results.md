@@ -1,3 +1,7 @@
+---
+name: arksim:results
+description: Explore evaluation results, debug failures, and compare runs
+---
 # /arksim results
 
 Inspect, analyze, and compare evaluation results.

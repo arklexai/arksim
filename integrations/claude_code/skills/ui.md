@@ -1,3 +1,7 @@
+---
+name: arksim:ui
+description: Launch the arksim web UI dashboard
+---
 # /arksim ui
 
 Launch the arksim web dashboard for visual exploration of results.
