@@ -348,25 +348,21 @@ def _run_init(agent_type: str, force: bool = False) -> None:
 # ============================================================================
 
 
-def _build_mcp_server_config(integration_dir: Path) -> dict[str, object]:
+def _build_mcp_server_config() -> dict[str, object]:
     """Build the MCP server config.
 
     Uses the ``arksim-mcp`` entry point installed by ``pip install arksim[claude]``.
     This avoids PATH and PYTHONPATH issues since the entry point is a proper
     console script installed alongside ``arksim`` itself.
+
+    Exits with ``EXIT_CONFIG_ERROR`` if ``arksim-mcp`` is not found on PATH.
     """
     arksim_mcp = shutil.which("arksim-mcp")
     if arksim_mcp:
         return {"command": arksim_mcp, "args": []}
 
-    # Fallback: use python -m with PYTHONPATH (for dev installs where
-    # the entry point might not be on PATH yet)
-    repo_root = str(integration_dir.parent.parent)
-    return {
-        "command": sys.executable,
-        "args": ["-m", "integrations.claude_code.mcp_server.server"],
-        "env": {"PYTHONPATH": repo_root},
-    }
+    logger.error("arksim-mcp not found. Run: pip install arksim[claude]")
+    sys.exit(EXIT_CONFIG_ERROR)
 
 
 def _find_integration_dir() -> Path:
@@ -468,23 +464,11 @@ def _install_claude(
         )
         sys.exit(EXIT_CONFIG_ERROR)
 
-    # Write .mcp.json (Claude Code reads MCP servers from here)
     claude_dir.mkdir(parents=True, exist_ok=True)
-    mcp_config: dict = {}
-    if mcp_config_path.exists():
-        try:
-            mcp_config = json.loads(mcp_config_path.read_text())
-        except json.JSONDecodeError:
-            logger.error(
-                f"Invalid JSON in {mcp_config_path}. Fix or delete the file and retry."
-            )
-            sys.exit(EXIT_CONFIG_ERROR)
 
-    mcp_servers = mcp_config.setdefault("mcpServers", {})
-    mcp_servers["arksim"] = _build_mcp_server_config(integration_dir)
-    mcp_config_path.write_text(json.dumps(mcp_config, indent=2) + "\n")
-
-    # Copy skills (each skill is a directory with SKILL.md)
+    # Copy skills first. If this fails, .mcp.json is not written,
+    # preventing a partial install where Claude Code sees the MCP
+    # server but skills are missing.
     skills_src = integration_dir / "skills"
     skills_dir.mkdir(parents=True, exist_ok=True)
 
@@ -510,6 +494,21 @@ def _install_claude(
             f"No skill directories found in {skills_src}. Installation may be incomplete."
         )
         sys.exit(EXIT_CONFIG_ERROR)
+
+    # Write .mcp.json after skills are successfully copied.
+    mcp_config: dict = {}
+    if mcp_config_path.exists():
+        try:
+            mcp_config = json.loads(mcp_config_path.read_text())
+        except json.JSONDecodeError:
+            logger.error(
+                f"Invalid JSON in {mcp_config_path}. Fix or delete the file and retry."
+            )
+            sys.exit(EXIT_CONFIG_ERROR)
+
+    mcp_servers = mcp_config.setdefault("mcpServers", {})
+    mcp_servers["arksim"] = _build_mcp_server_config()
+    mcp_config_path.write_text(json.dumps(mcp_config, indent=2) + "\n")
 
     logger.info("Installed arksim Claude Code integration:")
     logger.info(f"  MCP config: {mcp_config_path}")

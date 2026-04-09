@@ -160,4 +160,4 @@ Everything runs locally. No data is sent to external services beyond the LLM API
 - Python 3.10+
 - arksim with Claude extra (`pip install "arksim[claude]"`)
 - [Claude Code](https://docs.anthropic.com/en/docs/claude-code)
-- An LLM API key (OpenAI, Anthropic, or Google) for simulation and evaluation
+- An LLM API key set as `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, or `GOOGLE_API_KEY` environment variable (default provider is OpenAI)
