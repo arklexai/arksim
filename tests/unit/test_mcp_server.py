@@ -129,7 +129,7 @@ class TestBuildOverrideArgs:
         )
 
         args, skipped = _build_override_args({"num_workers": "5"})
-        assert args == ["--num-workers", "5"]
+        assert args == ["--num-workers=5"]
         assert skipped == []
 
     def test_multiple_overrides(self) -> None:
@@ -138,11 +138,9 @@ class TestBuildOverrideArgs:
         )
 
         args, skipped = _build_override_args({"model": "gpt-4o", "num_workers": "5"})
-        assert "--model" in args
-        assert "gpt-4o" in args
-        assert "--num-workers" in args
-        assert "5" in args
-        assert len(args) == 4
+        assert "--model=gpt-4o" in args
+        assert "--num-workers=5" in args
+        assert len(args) == 2
         assert skipped == []
 
     def test_skipped_keys_returned(self) -> None:
@@ -153,9 +151,19 @@ class TestBuildOverrideArgs:
         args, skipped = _build_override_args(
             {"model": "gpt-4o", "BAD-KEY!": "x", "0starts_digit": "y"}
         )
-        assert args == ["--model", "gpt-4o"]
+        assert args == ["--model=gpt-4o"]
         assert "BAD-KEY!" in skipped
         assert "0starts_digit" in skipped
+
+    def test_value_starting_with_dashes_uses_bound_form(self) -> None:
+        """Values starting with '--' must not be split into separate args."""
+        from integrations.claude_code.mcp_server.server import (
+            _build_override_args,
+        )
+
+        args, skipped = _build_override_args({"model": "--inject"})
+        assert args == ["--model=--inject"]
+        assert skipped == []
 
 
 # ── simulate_evaluate ─────────────────────────────────────────
@@ -193,8 +201,7 @@ class TestSimulateEvaluateSuccess:
         args_list = mock.call_args[0][0]
         assert "simulate-evaluate" in args_list
         assert "config.yaml" in args_list
-        assert "--model" in args_list
-        assert "gpt-4o" in args_list
+        assert "--model=gpt-4o" in args_list
 
 
 class TestSimulateEvaluateFailure:
@@ -237,8 +244,7 @@ class TestEvaluateSuccess:
             )
 
         args_list = mock.call_args[0][0]
-        assert "--simulation-file-path" in args_list
-        assert "/tmp/sim.json" in args_list
+        assert "--simulation-file-path=/tmp/sim.json" in args_list
 
 
 class TestEvaluateFailure:
@@ -304,6 +310,16 @@ class TestInitProjectFailure:
         assert result["status"] == "error"
         assert result["error_message"] == "permission denied"
 
+    def test_rejects_invalid_agent_type(self) -> None:
+        """Invalid agent_type returns a structured error, not a crash."""
+        from integrations.claude_code.mcp_server.server import _init_project
+
+        result = _init_project(agent_type="../../etc")
+
+        assert result["status"] == "error"
+        assert "Invalid agent_type" in result["error_message"]
+        assert "../../etc" in result["error_message"]
+
 
 # ── launch_ui ─────────────────────────────────────────────────
 
@@ -355,6 +371,23 @@ class TestLaunchUi:
         assert result["status"] == "success"
         assert "8080" in result["url"]
 
+    def test_returns_error_when_port_mismatch(self) -> None:
+        """Requesting a different port while UI is running returns an error."""
+        from integrations.claude_code.mcp_server import server
+
+        mock_proc = MagicMock()
+        mock_proc.poll.return_value = None  # still running
+        server._ui_process = mock_proc
+        server._ui_port = 8080
+
+        with patch("subprocess.Popen") as mock_popen:
+            result = server._launch_ui(port=9090)
+
+        mock_popen.assert_not_called()
+        assert result["status"] == "error"
+        assert "8080" in result["error_message"]
+        assert "9090" in result["error_message"]
+
     def test_restarts_when_process_has_exited(self) -> None:
         from integrations.claude_code.mcp_server import server
 
@@ -372,6 +405,20 @@ class TestLaunchUi:
         mock_popen.assert_called_once()
         assert result["status"] == "success"
         assert "9000" in result["url"]
+
+    def test_includes_stderr_when_process_exits_immediately(self) -> None:
+        """When the UI process crashes, stderr is included in the error."""
+        from integrations.claude_code.mcp_server import server
+
+        mock_proc = MagicMock()
+        mock_proc.poll.return_value = 1  # exited immediately
+        mock_proc.stderr.read.return_value = "Address already in use\n"
+
+        with patch("subprocess.Popen", return_value=mock_proc):
+            result = server._launch_ui(port=8080)
+
+        assert result["status"] == "error"
+        assert "Address already in use" in result["error_message"]
 
     def test_returns_error_when_arksim_not_found(self) -> None:
         from integrations.claude_code.mcp_server import server

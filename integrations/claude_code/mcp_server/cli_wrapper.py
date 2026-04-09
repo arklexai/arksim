@@ -9,7 +9,10 @@ from __future__ import annotations
 
 import json
 import subprocess
+from pathlib import Path
 from typing import Any
+
+_MAX_JSON_SIZE = 50 * 1024 * 1024  # 50 MB
 
 
 def run_cli(
@@ -100,6 +103,21 @@ def parse_json_file(path: str) -> dict[str, Any]:
         On success: ``{"status": "success", "data": <parsed>}``.
         On failure: ``{"status": "error", "error_message": ...}``.
     """
+    file_path = Path(path)
+    try:
+        file_size = file_path.stat().st_size
+    except FileNotFoundError:
+        return {
+            "status": "error",
+            "error_message": f"File not found: {path}",
+        }
+    if file_size > _MAX_JSON_SIZE:
+        return {
+            "status": "error",
+            "error_message": (
+                f"File too large: {path} ({file_size} bytes, max {_MAX_JSON_SIZE})"
+            ),
+        }
     try:
         with open(path) as fh:
             data = json.load(fh)
