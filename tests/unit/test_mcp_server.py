@@ -221,6 +221,19 @@ class TestEvaluateSuccess:
         assert "/tmp/sim.json" in args_list
 
 
+class TestEvaluateFailure:
+    """_evaluate returns error dict on CLI failure."""
+
+    def test_returns_error_on_cli_failure(self) -> None:
+        from integrations.claude_code.mcp_server.server import _evaluate
+
+        with patch(f"{_MOD}.run_cli", return_value=_cli_error("eval failed")):
+            result = _evaluate("bad.yaml")
+
+        assert result["status"] == "error"
+        assert result["error_message"] == "eval failed"
+
+
 # ── init_project ──────────────────────────────────────────────
 
 
@@ -247,6 +260,19 @@ class TestInitProject:
             _init_project(directory="/tmp/project")
 
         assert mock.call_args[1]["cwd"] == "/tmp/project"
+
+
+class TestInitProjectFailure:
+    """_init_project returns error dict on CLI failure."""
+
+    def test_returns_error_on_cli_failure(self) -> None:
+        from integrations.claude_code.mcp_server.server import _init_project
+
+        with patch(f"{_MOD}.run_cli", return_value=_cli_error("permission denied")):
+            result = _init_project(agent_type="custom")
+
+        assert result["status"] == "error"
+        assert result["error_message"] == "permission denied"
 
 
 # ── launch_ui ─────────────────────────────────────────────────
@@ -312,6 +338,21 @@ class TestLaunchUi:
         mock_popen.assert_called_once()
         assert result["status"] == "success"
         assert "9000" in result["url"]
+
+        # cleanup
+        server._ui_process = None
+        server._ui_port = None
+
+    def test_returns_error_when_arksim_not_found(self) -> None:
+        from integrations.claude_code.mcp_server import server
+
+        server._ui_process = None
+
+        with patch("subprocess.Popen", side_effect=FileNotFoundError("arksim")):
+            result = server._launch_ui(port=8080)
+
+        assert result["status"] == "error"
+        assert "arksim CLI not found" in result["error_message"]
 
         # cleanup
         server._ui_process = None

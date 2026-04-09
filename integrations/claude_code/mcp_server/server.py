@@ -132,9 +132,9 @@ def _read_result(result_path: str) -> dict[str, Any]:
 
     unique_errors = [
         {
-            "error_id": e["unique_error_id"],
-            "category": e["behavior_failure_category"],
-            "description": e["unique_error_description"],
+            "error_id": e.get("unique_error_id", ""),
+            "category": e.get("behavior_failure_category", ""),
+            "description": e.get("unique_error_description", ""),
             "severity": e.get("severity", "medium"),
             "occurrence_count": len(e.get("occurrences", [])),
         }
@@ -143,10 +143,10 @@ def _read_result(result_path: str) -> dict[str, Any]:
 
     conversation_summaries = [
         {
-            "conversation_id": c["conversation_id"],
-            "goal_completion_score": c["goal_completion_score"],
-            "overall_agent_score": c["overall_agent_score"],
-            "evaluation_status": c["evaluation_status"],
+            "conversation_id": c.get("conversation_id", ""),
+            "goal_completion_score": c.get("goal_completion_score", 0.0),
+            "overall_agent_score": c.get("overall_agent_score", 0.0),
+            "evaluation_status": c.get("evaluation_status", ""),
             "turn_count": len(c.get("turn_scores", [])),
         }
         for c in conversations
@@ -197,11 +197,19 @@ def _launch_ui(port: int = 8080) -> dict[str, Any]:
             "message": "UI is already running.",
         }
 
-    _ui_process = subprocess.Popen(
-        ["arksim", "ui", "--port", str(port)],
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )
+    try:
+        _ui_process = subprocess.Popen(
+            ["arksim", "ui", "--port", str(port)],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+    except FileNotFoundError:
+        return {
+            "status": "error",
+            "error_message": (
+                "arksim CLI not found. Install it with: pip install arksim"
+            ),
+        }
     _ui_port = port
     return {
         "status": "success",
