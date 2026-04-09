@@ -110,34 +110,52 @@ class TestBuildOverrideArgs:
             _build_override_args,
         )
 
-        assert _build_override_args(None) == []
+        args, skipped = _build_override_args(None)
+        assert args == []
+        assert skipped == []
 
     def test_empty_dict_returns_empty_list(self) -> None:
         from integrations.claude_code.mcp_server.server import (
             _build_override_args,
         )
 
-        assert _build_override_args({}) == []
+        args, skipped = _build_override_args({})
+        assert args == []
+        assert skipped == []
 
     def test_converts_underscores_to_hyphens(self) -> None:
         from integrations.claude_code.mcp_server.server import (
             _build_override_args,
         )
 
-        result = _build_override_args({"num_workers": "5"})
-        assert result == ["--num-workers", "5"]
+        args, skipped = _build_override_args({"num_workers": "5"})
+        assert args == ["--num-workers", "5"]
+        assert skipped == []
 
     def test_multiple_overrides(self) -> None:
         from integrations.claude_code.mcp_server.server import (
             _build_override_args,
         )
 
-        result = _build_override_args({"model": "gpt-4o", "num_workers": "5"})
-        assert "--model" in result
-        assert "gpt-4o" in result
-        assert "--num-workers" in result
-        assert "5" in result
-        assert len(result) == 4
+        args, skipped = _build_override_args({"model": "gpt-4o", "num_workers": "5"})
+        assert "--model" in args
+        assert "gpt-4o" in args
+        assert "--num-workers" in args
+        assert "5" in args
+        assert len(args) == 4
+        assert skipped == []
+
+    def test_skipped_keys_returned(self) -> None:
+        from integrations.claude_code.mcp_server.server import (
+            _build_override_args,
+        )
+
+        args, skipped = _build_override_args(
+            {"model": "gpt-4o", "BAD-KEY!": "x", "0starts_digit": "y"}
+        )
+        assert args == ["--model", "gpt-4o"]
+        assert "BAD-KEY!" in skipped
+        assert "0starts_digit" in skipped
 
 
 # ── simulate_evaluate ─────────────────────────────────────────
@@ -253,6 +271,16 @@ class TestInitProject:
         assert "init" in args_list
         assert "--agent-type" in args_list
         assert "a2a" in args_list
+        assert "--force" not in args_list
+
+    def test_passes_force_flag_when_requested(self) -> None:
+        from integrations.claude_code.mcp_server.server import _init_project
+
+        with patch(f"{_MOD}.run_cli", return_value=_cli_success()) as mock:
+            result = _init_project(agent_type="custom", force=True)
+
+        assert result["status"] == "success"
+        args_list = mock.call_args[0][0]
         assert "--force" in args_list
 
     def test_passes_directory_as_cwd(self) -> None:

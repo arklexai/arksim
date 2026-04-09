@@ -59,7 +59,7 @@ Present results in the same table format as `/arksim test`, but highlight what c
 | `faithfulness` | quantitative | 1-5 | Whether the response is grounded in provided knowledge |
 | `coherence` | quantitative | 1-5 | Logical consistency across turns |
 | `relevance` | quantitative | 1-5 | Whether the response addresses the user's question |
-| `verbosity` | quantitative | 1-5 | Appropriate response length (not too short or long) |
+| `verbosity` | quantitative | 1-5 | Appropriate response length (5 = concise and appropriate, 1 = too verbose) |
 | `goal_completion` | quantitative | 0-1 | Whether the user's goal was achieved |
 | `agent_behavior_failure` | qualitative | label | Detects harmful agent behaviors (false information, disobey user request, etc.) |
 | `tool_call_behavior_failure` | qualitative | label | Detects incorrect tool usage patterns |

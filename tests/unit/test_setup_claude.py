@@ -38,7 +38,10 @@ class TestSetupClaudeFreshProject:
         project_dir = tmp_path / "project"
         project_dir.mkdir()
 
-        with patch("arksim.cli._find_integration_dir", return_value=integration_dir):
+        with (
+            patch("arksim.cli._find_integration_dir", return_value=integration_dir),
+            patch("shutil.which", return_value="/usr/local/bin/arksim-mcp"),
+        ):
             _run_setup_claude(project_dir=str(project_dir))
 
         mcp_path = project_dir / ".mcp.json"
@@ -56,7 +59,10 @@ class TestSetupClaudeFreshProject:
         project_dir = tmp_path / "project"
         project_dir.mkdir()
 
-        with patch("arksim.cli._find_integration_dir", return_value=integration_dir):
+        with (
+            patch("arksim.cli._find_integration_dir", return_value=integration_dir),
+            patch("shutil.which", return_value="/usr/local/bin/arksim-mcp"),
+        ):
             _run_setup_claude(project_dir=str(project_dir))
 
         skills_dir = project_dir / ".claude" / "skills"
@@ -81,7 +87,10 @@ class TestSetupClaudeMerge:
         existing_mcp = {"mcpServers": {"other-tool": {"command": "other", "args": []}}}
         (project_dir / ".mcp.json").write_text(json.dumps(existing_mcp, indent=2))
 
-        with patch("arksim.cli._find_integration_dir", return_value=integration_dir):
+        with (
+            patch("arksim.cli._find_integration_dir", return_value=integration_dir),
+            patch("shutil.which", return_value="/usr/local/bin/arksim-mcp"),
+        ):
             _run_setup_claude(project_dir=str(project_dir))
 
         mcp_config = json.loads((project_dir / ".mcp.json").read_text())
@@ -121,7 +130,10 @@ class TestSetupClaudeSkillConflict:
         old_skill.mkdir(parents=True)
         (old_skill / "SKILL.md").write_text("old content")
 
-        with patch("arksim.cli._find_integration_dir", return_value=integration_dir):
+        with (
+            patch("arksim.cli._find_integration_dir", return_value=integration_dir),
+            patch("shutil.which", return_value="/usr/local/bin/arksim-mcp"),
+        ):
             _run_setup_claude(project_dir=str(project_dir), force=True)
 
         skills_dir = project_dir / ".claude" / "skills"
@@ -200,7 +212,10 @@ class TestSetupClaudeCLIIntegration:
             "argv",
             ["arksim", "setup-claude", "--project-dir", str(project_dir)],
         )
-        with patch("arksim.cli._find_integration_dir", return_value=integration_dir):
+        with (
+            patch("arksim.cli._find_integration_dir", return_value=integration_dir),
+            patch("shutil.which", return_value="/usr/local/bin/arksim-mcp"),
+        ):
             main()
 
         assert (project_dir / ".mcp.json").exists()

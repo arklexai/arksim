@@ -14,10 +14,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-from integrations.claude_code.mcp_server.cli_wrapper import (
-    parse_json_file,
-    run_cli,
-)
+from .cli_wrapper import parse_json_file, run_cli
 
 logger = logging.getLogger(__name__)
 
@@ -48,26 +45,32 @@ _OVERRIDE_KEY_PATTERN = re.compile(r"^[a-z][a-z0-9_]*$")
 # ---------------------------------------------------------------------------
 
 
-def _build_override_args(overrides: dict[str, str] | None) -> list[str]:
+def _build_override_args(
+    overrides: dict[str, str] | None,
+) -> tuple[list[str], list[str]]:
     """Convert a dict of CLI overrides to a flat list of flag pairs.
 
     Keys use underscores (Python style) and are converted to hyphenated
     CLI flags.  For example ``{"num_workers": "5"}`` becomes
     ``["--num-workers", "5"]``.
 
-    Keys that do not match the expected identifier pattern are skipped
-    with a warning log.
+    Returns:
+        A tuple of (args, skipped_keys). ``args`` contains the valid
+        CLI flags; ``skipped_keys`` lists any keys that did not match
+        the expected identifier pattern.
     """
     if not overrides:
-        return []
+        return [], []
     args: list[str] = []
+    skipped: list[str] = []
     for key, value in overrides.items():
         if not _OVERRIDE_KEY_PATTERN.match(key):
             logger.warning("Skipping invalid override key: %r", key)
+            skipped.append(key)
             continue
         flag = f"--{key.replace('_', '-')}"
         args.extend([flag, value])
-    return args
+    return args, skipped
 
 
 # ---------------------------------------------------------------------------
@@ -80,19 +83,24 @@ def _simulate_evaluate(
     cli_overrides: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     """Run simulation and evaluation in a single pass."""
-    override_args = _build_override_args(cli_overrides)
+    override_args, skipped_keys = _build_override_args(cli_overrides)
     result = run_cli(["simulate-evaluate", config_path, *override_args])
     if result["status"] != "success":
         return {
             "status": "error",
             "error_message": result["error_message"],
         }
-    return {
+    response: dict[str, Any] = {
         "status": "success",
         "output": result["stdout"],
         "stderr": result.get("stderr", ""),
         "message": "Simulation and evaluation completed successfully.",
     }
+    if skipped_keys:
+        response["warnings"] = [
+            f"Skipped invalid override keys: {', '.join(skipped_keys)}"
+        ]
+    return response
 
 
 def _evaluate(
@@ -104,19 +112,24 @@ def _evaluate(
     overrides = dict(cli_overrides or {})
     if simulation_file_path is not None:
         overrides["simulation_file_path"] = simulation_file_path
-    override_args = _build_override_args(overrides)
+    override_args, skipped_keys = _build_override_args(overrides)
     result = run_cli(["evaluate", config_path, *override_args])
     if result["status"] != "success":
         return {
             "status": "error",
             "error_message": result["error_message"],
         }
-    return {
+    response: dict[str, Any] = {
         "status": "success",
         "output": result["stdout"],
         "stderr": result.get("stderr", ""),
         "message": "Evaluation completed successfully.",
     }
+    if skipped_keys:
+        response["warnings"] = [
+            f"Skipped invalid override keys: {', '.join(skipped_keys)}"
+        ]
+    return response
 
 
 def _list_results(output_dir: str = ".") -> dict[str, Any]:
@@ -175,6 +188,10 @@ def _read_result(result_path: str) -> dict[str, Any]:
     if not isinstance(raw_unique_errors, list):
         raw_unique_errors = []
 
+    # "Done" means arksim's evaluator completed successfully for that
+    # conversation (all metrics scored).  Threshold-based pass/fail
+    # requires comparing ``overall_agent_score`` against user-defined
+    # thresholds, which are in the config, not the evaluation output.
     passed = sum(1 for c in conversations if c.get("evaluation_status") == "Done")
     failed = len(conversations) - passed
 
@@ -215,10 +232,14 @@ def _read_result(result_path: str) -> dict[str, Any]:
 def _init_project(
     agent_type: str = "custom",
     directory: str | None = None,
+    force: bool = False,
 ) -> dict[str, Any]:
     """Scaffold a new arksim project."""
+    cmd = ["init", "--agent-type", agent_type]
+    if force:
+        cmd.append("--force")
     result = run_cli(
-        ["init", "--agent-type", agent_type, "--force"],
+        cmd,
         cwd=directory,
     )
     if result["status"] != "success":
@@ -328,7 +349,11 @@ def read_result(result_path: str) -> dict[str, Any]:
 
     Returns a structured summary including per-conversation scores,
     unique errors with categories and severity, and overall pass/fail
-    counts.
+    counts.  The ``passed`` count reflects conversations where
+    ``evaluation_status == "Done"`` (evaluation completed and all
+    metrics scored).  For threshold-based pass/fail, compare each
+    conversation's ``overall_agent_score`` against your configured
+    thresholds.
     """
     return _read_result(result_path)
 
@@ -337,14 +362,16 @@ def read_result(result_path: str) -> dict[str, Any]:
 def init_project(
     agent_type: str = "custom",
     directory: str | None = None,
+    force: bool = False,
 ) -> dict[str, Any]:
     """Initialize a new arksim project.
 
     Scaffolds a project directory with config files, scenarios, and an
     agent stub.  Set ``agent_type`` to ``"custom"``, ``"a2a"``, or
     ``"chat_completions"`` depending on the agent architecture.
+    Pass ``force=True`` to overwrite existing files.
     """
-    return _init_project(agent_type=agent_type, directory=directory)
+    return _init_project(agent_type=agent_type, directory=directory, force=force)
 
 
 @mcp.tool()
