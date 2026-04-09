@@ -6,9 +6,12 @@ Provides the abstract base for all evaluation metrics, both built-in and user-de
 from __future__ import annotations
 
 import abc
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, ConfigDict, Field
+
+if TYPE_CHECKING:
+    from arksim.llms.chat.base.base_llm import BaseLLM
 
 
 class ChatMessage(BaseModel):
@@ -64,7 +67,30 @@ class ScoreInput(BaseModel):
     )
 
 
-class QuantitativeMetric(abc.ABC):
+class _LLMMixin:
+    """Mixin providing LLM injection support for metric base classes.
+
+    Exposes a read-only ``llm`` property backed by ``self._llm``.  Subclass
+    ``__init__`` is responsible for setting ``self._llm`` at construction time.
+    There is no setter: injection is a load-time operation performed by the
+    evaluator, not something metrics should mutate at runtime.
+    """
+
+    _llm: BaseLLM | None = None
+
+    @property
+    def llm(self) -> BaseLLM:
+        if self._llm is None:
+            raise RuntimeError(
+                f"{self.__class__.__name__}.llm is not set. "
+                "Metrics that need an LLM should accept 'llm=None' in __init__ "
+                "and pass it to super().__init__(llm=llm). The evaluator injects "
+                "the configured LLM automatically at load time."
+            )
+        return self._llm
+
+
+class QuantitativeMetric(_LLMMixin, abc.ABC):
     """Abstract base class for numeric score metrics.
 
     Args:
@@ -108,7 +134,7 @@ class QuantitativeMetric(abc.ABC):
         score_range: tuple[float, float] = (1, 5),
         additional_input: dict[str, Any] | None = None,
         description: str = "",
-        llm: object | None = None,
+        llm: BaseLLM | None = None,
     ) -> None:
         self.name = name if name is not None else self.__class__.__name__
         self.score_range = score_range
@@ -116,27 +142,12 @@ class QuantitativeMetric(abc.ABC):
         self.description = description
         self._llm = llm
 
-    @property
-    def llm(self) -> object:
-        if self._llm is None:
-            raise RuntimeError(
-                f"{self.__class__.__name__}.llm is not set. "
-                "Metrics that need an LLM should accept 'llm=None' in __init__ "
-                "and pass it to super().__init__(llm=llm). The evaluator injects "
-                "the configured LLM automatically at load time."
-            )
-        return self._llm
-
-    @llm.setter
-    def llm(self, value: object) -> None:
-        self._llm = value
-
     @abc.abstractmethod
     def score(self, score_input: ScoreInput) -> QuantResult:
         raise NotImplementedError()
 
 
-class QualitativeMetric(abc.ABC):
+class QualitativeMetric(_LLMMixin, abc.ABC):
     """Abstract base for qualitative (categorical-label) metrics.
 
     Unlike QuantitativeMetric which returns a numeric score, qualitative
@@ -179,27 +190,12 @@ class QualitativeMetric(abc.ABC):
         name: str | None = None,
         description: str = "",
         label_colors: dict[str, str] | None = None,
-        llm: object | None = None,
+        llm: BaseLLM | None = None,
     ) -> None:
         self.name = name if name is not None else self.__class__.__name__
         self.description = description
         self.label_colors: dict[str, str] = label_colors or {}
         self._llm = llm
-
-    @property
-    def llm(self) -> object:
-        if self._llm is None:
-            raise RuntimeError(
-                f"{self.__class__.__name__}.llm is not set. "
-                "Metrics that need an LLM should accept 'llm=None' in __init__ "
-                "and pass it to super().__init__(llm=llm). The evaluator injects "
-                "the configured LLM automatically at load time."
-            )
-        return self._llm
-
-    @llm.setter
-    def llm(self, value: object) -> None:
-        self._llm = value
 
     @abc.abstractmethod
     def evaluate(self, score_input: ScoreInput) -> QualResult:
