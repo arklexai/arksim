@@ -24,7 +24,13 @@ Scan the project for agent files. Look for:
 - Chat Completions endpoints (HTTP servers exposing `/v1/chat/completions`)
 - A2A agent cards (`.well-known/agent.json`)
 
-Ask the user to confirm which file is the agent entry point.
+If agent files are found, ask the user to confirm which file is the agent entry point.
+
+**If NO agent files are found**, propose scaffolding a starter project:
+
+> "I didn't find any agent code in this project. Want me to set up a starter agent you can customize? I'll create a config, sample scenarios, and a simple agent stub."
+
+If the user agrees, proceed directly to step 3 (Initialize) with `agent_type="custom"`. This creates `my_agent.py` with a working echo agent that the user can replace with their own logic.
 
 ### 2. Determine agent type
 

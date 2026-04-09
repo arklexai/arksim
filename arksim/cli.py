@@ -347,10 +347,19 @@ def _run_init(agent_type: str, force: bool = False) -> None:
 # setup-claude - Install/uninstall Claude Code integration
 # ============================================================================
 
-_MCP_SERVER_CONFIG = {
-    "command": sys.executable,
-    "args": ["-m", "integrations.claude_code.mcp_server.server"],
-}
+
+def _build_mcp_server_config(integration_dir: Path) -> dict[str, object]:
+    """Build the MCP server config with the correct PYTHONPATH.
+
+    The MCP server module lives inside the arksim package tree, so Claude Code
+    needs the arksim repo root on PYTHONPATH to import it.
+    """
+    repo_root = str(integration_dir.parent.parent)
+    return {
+        "command": sys.executable,
+        "args": ["-m", "integrations.claude_code.mcp_server.server"],
+        "env": {"PYTHONPATH": repo_root},
+    }
 
 
 def _find_integration_dir() -> Path:
@@ -463,7 +472,7 @@ def _install_claude(
             sys.exit(EXIT_CONFIG_ERROR)
 
     mcp_servers = settings.setdefault("mcpServers", {})
-    mcp_servers["arksim"] = _MCP_SERVER_CONFIG
+    mcp_servers["arksim"] = _build_mcp_server_config(integration_dir)
     settings_path.write_text(json.dumps(settings, indent=2) + "\n")
 
     # Copy skills (each skill is a directory with SKILL.md)

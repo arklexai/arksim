@@ -52,6 +52,8 @@ class TestSetupClaudeFreshProject:
             "-m",
             "integrations.claude_code.mcp_server.server",
         ]
+        assert "env" in server
+        assert "PYTHONPATH" in server["env"]
 
     def test_copies_skills_to_claude_skills_directories(self, tmp_path: Path) -> None:
         """Copies arksim-*/SKILL.md directories to .claude/skills/."""
