@@ -70,7 +70,15 @@ This creates `config.yaml` and `scenarios.json` in the working directory. For cu
 
 ### 4. Generate scenarios
 
-Read the agent's source code to understand its domain, tools, and capabilities. Generate 3-5 domain-specific scenarios and present them to the user for review before saving.
+Read the agent's source code thoroughly. Understand:
+
+- **Domain:** What business problem does this agent solve? (e.g., customer support, code review, scheduling)
+- **Tools:** What tools/functions can the agent call? Generate at least one scenario per tool.
+- **System prompt:** What instructions constrain the agent? Test both compliance and boundary conditions.
+- **Knowledge sources:** Does the agent reference a knowledge base, API, or database? Test with questions inside and outside its knowledge.
+- **Error handling:** How does the agent handle bad input, missing data, or requests outside its scope?
+
+Generate scenarios that exercise the agent's actual capabilities. Aim for one scenario per tool plus edge cases. For a simple agent, 3-5 scenarios is enough. For an agent with 5+ tools, generate 6-10. Present them to the user for review before saving.
 
 Write the approved scenarios to `scenarios.json` using the schema below.
 
