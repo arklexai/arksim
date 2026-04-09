@@ -50,7 +50,9 @@ Call the `init_project` MCP tool:
 init_project(agent_type="custom")
 ```
 
-This creates `config.yaml` and `scenarios.json` in the working directory. For custom agent type, it also creates `my_agent.py` with a starter agent stub.
+This creates `config.yaml` and `scenarios.json` in the working directory. For custom agent type, it also creates `my_agent.py` with a starter echo agent.
+
+**Important:** The starter `my_agent.py` is an echo agent that repeats user messages back. It is a placeholder. When showing results from the starter agent, tell the user: "The starter agent echoes messages, so low scores and failures like 'disobey user request' are expected. Replace the logic in my_agent.py with your real agent, then re-run /arksim-test."
 
 ### 4. Generate scenarios
 
