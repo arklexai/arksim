@@ -5,11 +5,11 @@ Test your AI agents inside Claude Code. Generate scenarios from your agent's cod
 ## Install
 
 ```bash
-pip install arksim
+pip install "arksim[claude]"
 arksim setup-claude
 ```
 
-`setup-claude` writes skill files to `.claude/skills/arksim-*/SKILL.md` and registers the MCP server in `.claude/settings.json`. No global configuration is modified.
+`setup-claude` writes skill files to `.claude/skills/arksim-*/SKILL.md` and registers the MCP server in `.mcp.json` at the project root. No global configuration is modified.
 
 ## What it does
 
@@ -119,22 +119,22 @@ Claude: Conversation: out_of_scope_question
         Turn 3 (Agent): "I apologize for the confusion. Let me check on that."
         ↳ Faithfulness: 3.8 - Agent acknowledged the mistake but too late.
 
-You:    /arksim:evaluate --add-metric tool_usage_efficiency
+You:    re-evaluate with just helpfulness and goal_completion
 
-Claude: Re-evaluating run_002 with added metric: tool_usage_efficiency
+Claude: Re-evaluating with helpfulness and goal_completion only...
 
         Results:
 
-        Scenario                  Helpful  Faithful  Goal  Tool Eff.  Pass
-        ───────────────────────── ──────── ───────── ───── ───────── ────
-        order_status_check           4.8      5.0     ✓      4.5      ✓
-        refund_eligible_order        4.5      4.8     ✓      4.2      ✓
-        refund_ineligible_order      4.3      4.7     ✓      3.9      ✓
-        cancel_processing_order      4.6      5.0     ✓      4.7      ✓
-        authentication_flow          4.4      4.9     ✓      4.6      ✓
-        out_of_scope_question        2.9      3.6     ✗      2.1      ✗
+        Scenario                  Helpfulness  Goal   Status
+        ───────────────────────── ─────────── ─────  ────────────────
+        order_status_check           4.8       1.0   Done
+        refund_eligible_order        4.5       1.0   Done
+        refund_ineligible_order      4.3       1.0   Done
+        cancel_processing_order      4.6       1.0   Done
+        authentication_flow          4.4       1.0   Done
+        out_of_scope_question        2.9       0.0   Partial Failure
 
-        Saved to .arksim/results/evaluation.json.
+        Saved to results/evaluation.json.
 ```
 
 ## Uninstall
@@ -143,7 +143,7 @@ Claude: Re-evaluating run_002 with added metric: tool_usage_efficiency
 arksim setup-claude --uninstall
 ```
 
-This removes the skill directories (`.claude/skills/arksim-*`) and the MCP server entry from `.claude/settings.json`. Your test results and config are not deleted.
+This removes the skill directories (`.claude/skills/arksim-*`) and the MCP server entry from `.mcp.json`. Your test results and config are not deleted.
 
 ## How it works
 
@@ -151,13 +151,13 @@ The integration adds two components to your project:
 
 **Skills** are SKILL.md files installed to `.claude/skills/arksim-*/`. Each skill directory tells Claude Code what the command does, what arguments it accepts, and what MCP tools to call. Claude reads these files when you type a slash command.
 
-**MCP Server** is a local process configured in `.claude/settings.json`. It exposes arksim operations (simulate, evaluate, read results) as tool calls that Claude Code can invoke. The server wraps the arksim CLI, so all work happens on your machine.
+**MCP Server** is a local process configured in `.mcp.json`. It exposes arksim operations (simulate, evaluate, read results) as tool calls that Claude Code can invoke. The server wraps the arksim CLI, so all work happens on your machine.
 
 Everything runs locally. No data is sent to external services beyond the LLM API calls that arksim already makes for simulation and evaluation.
 
 ## Requirements
 
 - Python 3.10+
-- arksim (`pip install arksim`)
+- arksim with Claude extra (`pip install "arksim[claude]"`)
 - [Claude Code](https://docs.anthropic.com/en/docs/claude-code)
 - An LLM API key (OpenAI, Anthropic, or Google) for simulation and evaluation
