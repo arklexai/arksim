@@ -24,7 +24,13 @@ Scan the project for agent files. Look for:
 - Chat Completions endpoints (HTTP servers exposing `/v1/chat/completions`)
 - A2A agent cards (`.well-known/agent.json`)
 
-If agent files are found, ask the user to confirm which file is the agent entry point.
+If agent files are found:
+1. Ask the user to confirm which file is the agent entry point.
+2. Determine the agent type (step 2 below).
+3. Call `init_project` with the detected type to scaffold `config.yaml` and `scenarios.json`.
+4. **Update `config.yaml`** to point `module_path` at the user's actual agent file (not the generated `my_agent.py`). For example, if the user's agent is in `agents/support_bot.py`, set `custom_config.module_path: ./agents/support_bot.py`. If the agent needs a specific class name, set `custom_config.class_name` too.
+5. For HTTP or A2A agents, update `api_config.endpoint` in `config.yaml` to point at the user's running server.
+6. Generate scenarios based on the real agent's code (step 4 below), not generic ones.
 
 **If NO agent files are found**, ask the user what kind of agent they want to test:
 
@@ -58,7 +64,9 @@ init_project(agent_type="custom")
 
 This creates `config.yaml` and `scenarios.json` in the working directory. For custom agent type, it also creates `my_agent.py` with a starter echo agent.
 
-**Important:** The starter `my_agent.py` is an echo agent that repeats user messages back. It is a placeholder. When showing results from the starter agent, tell the user: "The starter agent echoes messages, so low scores and failures like 'disobey user request' are expected. Replace the logic in my_agent.py with your real agent, then re-run /arksim-test."
+**If using the user's existing agent:** Skip `my_agent.py` entirely. The config already points to their real agent file via the `module_path` you set above.
+
+**If using the starter agent (no existing agent found):** The starter `my_agent.py` is an echo agent that repeats user messages back. It is a placeholder. When showing results from the starter agent, tell the user: "The starter agent echoes messages, so low scores and failures like 'disobey user request' are expected. Replace the logic in my_agent.py with your real agent, then re-run /arksim-test."
 
 ### 4. Generate scenarios
 
