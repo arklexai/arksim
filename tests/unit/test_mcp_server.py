@@ -48,6 +48,15 @@ def _make_eval_data(
             },
             {
                 "conversation_id": "conv-2",
+                "goal_completion_score": 0.6,
+                "goal_completion_reason": "partially done",
+                "turn_success_ratio": 0.75,
+                "overall_agent_score": 0.65,
+                "evaluation_status": "Partial Failure",
+                "turn_scores": [],
+            },
+            {
+                "conversation_id": "conv-3",
                 "goal_completion_score": 0.3,
                 "goal_completion_reason": "failed",
                 "turn_success_ratio": 0.5,
@@ -461,8 +470,9 @@ class TestListResults:
         assert run["evaluation_id"] == "eval-001"
         assert run["simulation_id"] == "sim-001"
         assert run["generated_at"] == "2025-01-15T10:00:00Z"
-        assert run["total_conversations"] == 2
+        assert run["total_conversations"] == 3
         assert run["passed"] == 1
+        assert run["partial"] == 1
         assert run["failed"] == 1
         assert run["unique_errors_count"] == 1
 
@@ -495,8 +505,9 @@ class TestReadResult:
         assert result["status"] == "success"
         assert result["evaluation_id"] == "eval-001"
         assert result["generated_at"] == "2025-01-15T10:00:00Z"
-        assert result["total_conversations"] == 2
+        assert result["total_conversations"] == 3
         assert result["passed"] == 1
+        assert result["partial"] == 1
         assert result["failed"] == 1
 
         errors = result["unique_errors"]
@@ -508,12 +519,10 @@ class TestReadResult:
         assert errors[0]["occurrence_count"] == 1
 
         convos = result["conversations"]
-        assert len(convos) == 2
-        assert convos[0]["conversation_id"] == "conv-1"
-        assert convos[0]["goal_completion_score"] == 0.8
-        assert convos[0]["overall_agent_score"] == 0.85
+        assert len(convos) == 3
         assert convos[0]["evaluation_status"] == "Done"
-        assert convos[0]["turn_count"] == 1
+        assert convos[1]["evaluation_status"] == "Partial Failure"
+        assert convos[2]["evaluation_status"] == "Failed"
 
     def test_returns_error_for_missing_file(self) -> None:
         from integrations.claude_code.mcp_server.server import _read_result

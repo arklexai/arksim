@@ -70,7 +70,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-* **integrations:** Claude Code integration with 5 skills and 6 MCP tools for IDE-native agent testing (`integrations/claude-code/`)
+* **integrations:** Claude Code integration with 5 skills and 6 MCP tools for IDE-native agent testing (`integrations/claude_code/`)
 * **cli:** `arksim setup-claude` command for one-command installation of Claude Code integration
 * **cli:** `arksim setup-claude --uninstall` to remove the integration
 * **cli:** add `arksim init` command to scaffold a starter `config.yaml` and `scenarios.json` for quick onboarding
