@@ -15,6 +15,8 @@ Re-evaluate simulation results with different settings without re-running the ag
 
 Re-evaluation is cheaper than re-simulation because it only runs the judge LLM against existing conversation transcripts. The agent is not invoked again.
 
+**No arguments?** If the user invokes this without specifying what to change, explain the difference between re-evaluation and re-simulation, then suggest the two most common changes: adjusting the metrics list or changing the pass/fail threshold.
+
 ## Flow
 
 ### 1. Find the simulation output

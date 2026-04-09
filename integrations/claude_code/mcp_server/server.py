@@ -28,8 +28,10 @@ except ImportError:
     # decorators and main() require it.
     from types import SimpleNamespace
 
+    # @mcp.tool() is called with no args to get a decorator, then applied
+    # to fn.  This no-op replicates that two-call pattern.
     mcp = SimpleNamespace(  # type: ignore[assignment]
-        tool=lambda: lambda fn: fn,  # no-op decorator
+        tool=lambda: lambda fn: fn,
     )
 
 # Module-level state for the UI subprocess.
@@ -38,6 +40,9 @@ _ui_port: int | None = None
 
 # Allowed pattern for CLI override keys (lowercase identifier style).
 _OVERRIDE_KEY_PATTERN = re.compile(r"^[a-z][a-z0-9_]*$")
+
+# Seconds to wait before checking if the UI process exited immediately.
+_UI_STARTUP_PROBE_DELAY = 0.2
 
 
 # ---------------------------------------------------------------------------
@@ -161,6 +166,7 @@ def _list_results(output_dir: str = ".") -> dict[str, Any]:
         runs.append(
             {
                 "evaluation_id": data.get("evaluation_id", ""),
+                "simulation_id": data.get("simulation_id", ""),
                 "generated_at": data.get("generated_at", ""),
                 "file_path": str(eval_path),
                 "total_conversations": len(conversations),
@@ -265,6 +271,10 @@ def _launch_ui(port: int = 8080) -> dict[str, Any]:
             "message": "UI is already running.",
         }
 
+    # Previous process exited; clear stale port before restarting.
+    if _ui_process is not None:
+        _ui_port = None
+
     try:
         _ui_process = subprocess.Popen(
             ["arksim", "ui", "--port", str(port)],
@@ -279,7 +289,7 @@ def _launch_ui(port: int = 8080) -> dict[str, Any]:
             ),
         }
 
-    time.sleep(0.2)
+    time.sleep(_UI_STARTUP_PROBE_DELAY)
     if _ui_process.poll() is not None:
         return {
             "status": "error",

@@ -111,6 +111,20 @@ class TestRunCliTimeout:
         assert "timed out" in result["error_message"]
         assert "600" in result["error_message"]
         assert result["return_code"] == -1
+        assert result["stdout"] == ""
+        assert result["stderr"] == ""
+
+    def test_captures_partial_output_on_timeout(self) -> None:
+        exc = subprocess.TimeoutExpired(cmd=["arksim", "evaluate"], timeout=60)
+        exc.stdout = "partial stdout"
+        exc.stderr = "partial stderr"
+
+        with patch("subprocess.run", side_effect=exc):
+            result = run_cli(["evaluate"], timeout=60)
+
+        assert result["status"] == "error"
+        assert result["stdout"] == "partial stdout"
+        assert result["stderr"] == "partial stderr"
 
 
 class TestRunCliFileNotFound:
