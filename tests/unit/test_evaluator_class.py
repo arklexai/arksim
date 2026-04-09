@@ -332,9 +332,7 @@ class TestLoadCustomMetricsLLMInjection:
         with pytest.raises(RuntimeError, match="llm is not set"):
             _ = quant[0].llm
 
-    def test_llm_aware_metric_with_no_llm_raises_on_access(
-        self, temp_dir: str
-    ) -> None:
+    def test_llm_aware_metric_with_no_llm_raises_on_access(self, temp_dir: str) -> None:
         """Accessing self.llm raises RuntimeError when no LLM was injected."""
         code = textwrap.dedent("""\
             from arksim.evaluator.base_metric import QuantitativeMetric, ScoreInput, QuantResult
@@ -354,9 +352,7 @@ class TestLoadCustomMetricsLLMInjection:
         with pytest.raises(RuntimeError, match="llm is not set"):
             _ = quant[0].llm
 
-    def test_metric_inheriting_base_init_receives_llm(
-        self, temp_dir: str
-    ) -> None:
+    def test_metric_inheriting_base_init_receives_llm(self, temp_dir: str) -> None:
         """Metrics with no __init__ override inherit the base class signature and receive the LLM."""
         code = textwrap.dedent("""\
             from arksim.evaluator.base_metric import QuantitativeMetric, ScoreInput, QuantResult
