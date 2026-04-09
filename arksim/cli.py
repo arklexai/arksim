@@ -564,6 +564,7 @@ def build_parser() -> argparse.ArgumentParser:
               arksim examples --list
               arksim examples bank-insurance
               arksim ui --port 9090
+              arksim setup-claude
         """),
     )
 

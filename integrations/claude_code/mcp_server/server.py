@@ -173,6 +173,9 @@ def _list_results(output_dir: str = ".") -> dict[str, Any]:
         if not isinstance(unique_errors_raw, list):
             unique_errors_raw = []
         passed = sum(1 for c in conversations if c.get("evaluation_status") == "Done")
+        partial = sum(
+            1 for c in conversations if c.get("evaluation_status") == "Partial Failure"
+        )
         runs.append(
             {
                 "evaluation_id": data.get("evaluation_id", ""),
@@ -181,7 +184,8 @@ def _list_results(output_dir: str = ".") -> dict[str, Any]:
                 "file_path": str(eval_path),
                 "total_conversations": len(conversations),
                 "passed": passed,
-                "failed": len(conversations) - passed,
+                "partial": partial,
+                "failed": len(conversations) - passed - partial,
                 "unique_errors_count": len(unique_errors_raw),
             }
         )
@@ -209,7 +213,10 @@ def _read_result(result_path: str) -> dict[str, Any]:
     # requires comparing ``overall_agent_score`` against user-defined
     # thresholds, which are in the config, not the evaluation output.
     passed = sum(1 for c in conversations if c.get("evaluation_status") == "Done")
-    failed = len(conversations) - passed
+    partial = sum(
+        1 for c in conversations if c.get("evaluation_status") == "Partial Failure"
+    )
+    failed = len(conversations) - passed - partial
 
     unique_errors = [
         {
@@ -239,6 +246,7 @@ def _read_result(result_path: str) -> dict[str, Any]:
         "generated_at": data.get("generated_at", ""),
         "total_conversations": len(conversations),
         "passed": passed,
+        "partial": partial,
         "failed": failed,
         "unique_errors": unique_errors,
         "conversations": conversation_summaries,
