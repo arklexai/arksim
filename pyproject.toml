@@ -67,6 +67,7 @@ dev = [
 
 [project.scripts]
 arksim = "arksim.cli:main"
+arksim-mcp = "integrations.claude_code.mcp_server.server:main"
 
 [build-system]
 requires = ["hatchling", "hatch-vcs"]
