@@ -386,27 +386,27 @@ def _run_setup_claude(
 
     Install mode (default):
       - Creates/merges .claude/settings.json with an mcpServers.arksim entry
-      - Copies skill files from integrations/claude_code/skills/ to
-        .claude/skills/arksim/
+      - Copies skill directories from integrations/claude_code/skills/arksim-*/
+        to .claude/skills/arksim-*/
 
     Uninstall mode:
       - Removes arksim from mcpServers in settings.json
-      - Removes .claude/skills/arksim/ directory
+      - Removes .claude/skills/arksim-*/ directories
     """
     root = Path(project_dir).resolve()
     claude_dir = root / ".claude"
     settings_path = claude_dir / "settings.json"
-    skills_dest = claude_dir / "skills" / "arksim"
+    skills_dir = claude_dir / "skills"
 
     if uninstall:
-        _uninstall_claude(settings_path, skills_dest)
+        _uninstall_claude(settings_path, skills_dir)
         return
 
     integration_dir = _find_integration_dir()
-    _install_claude(integration_dir, claude_dir, settings_path, skills_dest, force)
+    _install_claude(integration_dir, claude_dir, settings_path, skills_dir, force)
 
 
-def _uninstall_claude(settings_path: Path, skills_dest: Path) -> None:
+def _uninstall_claude(settings_path: Path, skills_dir: Path) -> None:
     """Remove arksim MCP config and skills from a project."""
     if settings_path.exists():
         try:
@@ -424,8 +424,11 @@ def _uninstall_claude(settings_path: Path, skills_dest: Path) -> None:
             settings["mcpServers"] = mcp_servers
         settings_path.write_text(json.dumps(settings, indent=2) + "\n")
 
-    if skills_dest.is_dir():
-        shutil.rmtree(skills_dest)
+    # Remove all arksim-* skill directories
+    if skills_dir.is_dir():
+        for skill_dir in sorted(skills_dir.glob("arksim-*")):
+            if skill_dir.is_dir():
+                shutil.rmtree(skill_dir)
 
     logger.info("Removed arksim Claude Code integration.")
 
@@ -434,14 +437,16 @@ def _install_claude(
     integration_dir: Path,
     claude_dir: Path,
     settings_path: Path,
-    skills_dest: Path,
+    skills_dir: Path,
     force: bool,
 ) -> None:
     """Install arksim MCP config and skills into a project."""
-    if skills_dest.is_dir() and not force:
+    # Check for existing arksim skills
+    existing_skills = list(skills_dir.glob("arksim-*")) if skills_dir.is_dir() else []
+    if existing_skills and not force:
         logger.error(
-            f"{skills_dest} already exists. "
-            "Use --force to overwrite, or remove it first."
+            "arksim skills already installed. "
+            "Use --force to overwrite, or --uninstall to remove first."
         )
         sys.exit(EXIT_CONFIG_ERROR)
 
@@ -461,21 +466,30 @@ def _install_claude(
     mcp_servers["arksim"] = _MCP_SERVER_CONFIG
     settings_path.write_text(json.dumps(settings, indent=2) + "\n")
 
-    # Copy skills
+    # Copy skills (each skill is a directory with SKILL.md)
     skills_src = integration_dir / "skills"
-    if skills_dest.is_dir():
-        shutil.rmtree(skills_dest)
-    skills_dest.mkdir(parents=True, exist_ok=True)
+    skills_dir.mkdir(parents=True, exist_ok=True)
+
+    # Remove existing arksim skills if --force
+    for old_skill in skills_dir.glob("arksim-*"):
+        if old_skill.is_dir():
+            shutil.rmtree(old_skill)
 
     copied = []
-    for md_file in sorted(skills_src.glob("*.md")):
-        dest_file = skills_dest / md_file.name
-        shutil.copy2(md_file, dest_file)
-        copied.append(dest_file)
+    for skill_dir in sorted(skills_src.iterdir()):
+        if not skill_dir.is_dir() or not skill_dir.name.startswith("arksim-"):
+            continue
+        skill_md = skill_dir / "SKILL.md"
+        if not skill_md.is_file():
+            continue
+        dest_dir = skills_dir / skill_dir.name
+        dest_dir.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(skill_md, dest_dir / "SKILL.md")
+        copied.append(dest_dir / "SKILL.md")
 
     if not copied:
         logger.error(
-            f"No skill files found in {skills_src}. Installation may be incomplete."
+            f"No skill directories found in {skills_src}. Installation may be incomplete."
         )
         sys.exit(EXIT_CONFIG_ERROR)
 
@@ -483,7 +497,7 @@ def _install_claude(
     logger.info(f"  Settings: {settings_path}")
     for path in copied:
         logger.info(f"  Skill:    {path}")
-    logger.info('\nStart Claude Code and type "/arksim test" to begin.')
+    logger.info('\nStart Claude Code and type "/arksim:test" to begin.')
 
 
 def _add_config_subparser(

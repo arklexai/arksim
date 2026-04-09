@@ -9,7 +9,7 @@ pip install arksim
 arksim setup-claude
 ```
 
-`setup-claude` writes skill files to `.claude/skills/arksim/` and registers the MCP server in `.claude/settings.json`. No global configuration is modified.
+`setup-claude` writes skill files to `.claude/skills/arksim-*/SKILL.md` and registers the MCP server in `.claude/settings.json`. No global configuration is modified.
 
 ## What it does
 
@@ -21,18 +21,18 @@ After simulation, ArkSim evaluates every turn across metrics like helpfulness, f
 
 | Skill | Description |
 |-------|-------------|
-| `/arksim test` | Test your agent. First time: guided setup (discovers your agent, generates scenarios, runs simulations). After that: re-runs the existing test suite. |
-| `/arksim evaluate` | Re-evaluate a previous run with different metrics or thresholds without re-simulating. |
-| `/arksim scenarios` | Generate new test scenarios from your agent's code, or edit existing ones. |
-| `/arksim results` | Explore results from previous runs. Drill into failures, compare runs side by side. |
-| `/arksim ui` | Open the web dashboard for browsing results interactively. |
+| `/arksim:test` | Test your agent. First time: guided setup (discovers your agent, generates scenarios, runs simulations). After that: re-runs the existing test suite. |
+| `/arksim:evaluate` | Re-evaluate a previous run with different metrics or thresholds without re-simulating. |
+| `/arksim:scenarios` | Generate new test scenarios from your agent's code, or edit existing ones. |
+| `/arksim:results` | Explore results from previous runs. Drill into failures, compare runs side by side. |
+| `/arksim:ui` | Open the web dashboard for browsing results interactively. |
 
 ## User journey: first time
 
 You have a customer service agent. You want to know if it handles refund requests correctly.
 
 ```
-You:    /arksim test
+You:    /arksim:test
 
 Claude: I found your agent in src/agent.py. It's a customer service bot using
         OpenAI Agents SDK with 4 tools (lookup_customer, get_order,
@@ -71,9 +71,9 @@ Claude: I found your agent in src/agent.py. It's a customer service bot using
         Saved to .arksim/results/evaluation.json.
 
         Next steps:
-        - Run /arksim results to inspect the failing conversations turn by turn
-        - Run /arksim scenarios to add edge cases for the failure patterns
-        - Run /arksim evaluate to try stricter thresholds
+        - Run /arksim:results to inspect the failing conversations turn by turn
+        - Run /arksim:scenarios to add edge cases for the failure patterns
+        - Run /arksim:evaluate to try stricter thresholds
 ```
 
 ## User journey: iterating after code changes
@@ -81,7 +81,7 @@ Claude: I found your agent in src/agent.py. It's a customer service bot using
 You fixed the refund logic. Now you want to verify the fix and add a stricter metric.
 
 ```
-You:    /arksim test
+You:    /arksim:test
 
 Claude: Found existing config at .arksim/config.yaml with 6 scenarios.
         Running simulations...
@@ -119,7 +119,7 @@ Claude: Conversation: out_of_scope_question
         Turn 3 (Agent): "I apologize for the confusion. Let me check on that."
         ↳ Faithfulness: 3.8 - Agent acknowledged the mistake but too late.
 
-You:    /arksim evaluate --add-metric tool_usage_efficiency
+You:    /arksim:evaluate --add-metric tool_usage_efficiency
 
 Claude: Re-evaluating run_002 with added metric: tool_usage_efficiency
 
@@ -143,13 +143,13 @@ Claude: Re-evaluating run_002 with added metric: tool_usage_efficiency
 arksim setup-claude --uninstall
 ```
 
-This removes the skill files from `.claude/skills/arksim/` and the MCP server entry from `.claude/settings.json`. Your test results and config are not deleted.
+This removes the skill directories (`.claude/skills/arksim-*`) and the MCP server entry from `.claude/settings.json`. Your test results and config are not deleted.
 
 ## How it works
 
 The integration adds two components to your project:
 
-**Skills** are markdown files installed to `.claude/skills/arksim/`. Each skill tells Claude Code what the command does, what arguments it accepts, and what MCP tools to call. Claude reads these files when you type a slash command.
+**Skills** are SKILL.md files installed to `.claude/skills/arksim-*/`. Each skill directory tells Claude Code what the command does, what arguments it accepts, and what MCP tools to call. Claude reads these files when you type a slash command.
 
 **MCP Server** is a local process configured in `.claude/settings.json`. It exposes arksim operations (simulate, evaluate, read results) as tool calls that Claude Code can invoke. The server wraps the arksim CLI, so all work happens on your machine.
 

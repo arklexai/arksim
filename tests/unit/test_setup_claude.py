@@ -14,12 +14,18 @@ from arksim.cli import EXIT_CONFIG_ERROR, _run_setup_claude, main
 
 
 def _make_integration_dir(tmp_path: Path) -> Path:
-    """Create a fake integration directory with test skill files."""
+    """Create a fake integration directory with per-skill SKILL.md files."""
     integration_dir = tmp_path / "integrations" / "claude_code"
     skills_dir = integration_dir / "skills"
-    skills_dir.mkdir(parents=True)
-    (skills_dir / "test.md").write_text("# Test skill\nRun tests.")
-    (skills_dir / "evaluate.md").write_text("# Evaluate skill\nRun eval.")
+
+    test_dir = skills_dir / "arksim-test"
+    test_dir.mkdir(parents=True)
+    (test_dir / "SKILL.md").write_text("# Test skill\nRun tests.")
+
+    evaluate_dir = skills_dir / "arksim-evaluate"
+    evaluate_dir.mkdir(parents=True)
+    (evaluate_dir / "SKILL.md").write_text("# Evaluate skill\nRun eval.")
+
     return integration_dir
 
 
@@ -47,8 +53,8 @@ class TestSetupClaudeFreshProject:
             "integrations.claude_code.mcp_server.server",
         ]
 
-    def test_copies_skills_to_claude_skills_arksim(self, tmp_path: Path) -> None:
-        """Copies skills/*.md files to .claude/skills/arksim/."""
+    def test_copies_skills_to_claude_skills_directories(self, tmp_path: Path) -> None:
+        """Copies arksim-*/SKILL.md directories to .claude/skills/."""
         integration_dir = _make_integration_dir(tmp_path)
         project_dir = tmp_path / "project"
         project_dir.mkdir()
@@ -56,11 +62,14 @@ class TestSetupClaudeFreshProject:
         with patch("arksim.cli._find_integration_dir", return_value=integration_dir):
             _run_setup_claude(project_dir=str(project_dir))
 
-        skills_dir = project_dir / ".claude" / "skills" / "arksim"
-        assert skills_dir.is_dir()
-        assert (skills_dir / "test.md").exists()
-        assert (skills_dir / "evaluate.md").exists()
-        assert (skills_dir / "test.md").read_text() == "# Test skill\nRun tests."
+        skills_dir = project_dir / ".claude" / "skills"
+        assert (skills_dir / "arksim-test").is_dir()
+        assert (skills_dir / "arksim-evaluate").is_dir()
+        assert (skills_dir / "arksim-test" / "SKILL.md").exists()
+        assert (skills_dir / "arksim-evaluate" / "SKILL.md").exists()
+        assert (
+            skills_dir / "arksim-test" / "SKILL.md"
+        ).read_text() == "# Test skill\nRun tests."
 
 
 class TestSetupClaudeMerge:
@@ -117,15 +126,15 @@ class TestSetupClaudeMerge:
 
 
 class TestSetupClaudeSkillConflict:
-    """setup-claude exits when skills directory already exists."""
+    """setup-claude exits when arksim-* skill directories already exist."""
 
     def test_exits_error_when_skills_exist_without_force(self, tmp_path: Path) -> None:
-        """Exits with EXIT_CONFIG_ERROR when skills already exist and --force not set."""
+        """Exits with EXIT_CONFIG_ERROR when arksim-* dirs exist and --force not set."""
         integration_dir = _make_integration_dir(tmp_path)
         project_dir = tmp_path / "project"
-        skills_dir = project_dir / ".claude" / "skills" / "arksim"
-        skills_dir.mkdir(parents=True)
-        (skills_dir / "old.md").write_text("old content")
+        old_skill = project_dir / ".claude" / "skills" / "arksim-test"
+        old_skill.mkdir(parents=True)
+        (old_skill / "SKILL.md").write_text("old content")
 
         with (
             patch(
@@ -138,36 +147,41 @@ class TestSetupClaudeSkillConflict:
 
         assert exc_info.value.code == EXIT_CONFIG_ERROR
         # Old file should still be there (no overwrite)
-        assert (skills_dir / "old.md").read_text() == "old content"
+        assert (old_skill / "SKILL.md").read_text() == "old content"
 
     def test_overwrites_skills_with_force(self, tmp_path: Path) -> None:
-        """With --force, overwrites existing skills directory."""
+        """With --force, overwrites existing arksim-* skill directories."""
         integration_dir = _make_integration_dir(tmp_path)
         project_dir = tmp_path / "project"
-        skills_dir = project_dir / ".claude" / "skills" / "arksim"
-        skills_dir.mkdir(parents=True)
-        (skills_dir / "old.md").write_text("old content")
+        old_skill = project_dir / ".claude" / "skills" / "arksim-test"
+        old_skill.mkdir(parents=True)
+        (old_skill / "SKILL.md").write_text("old content")
 
         with patch("arksim.cli._find_integration_dir", return_value=integration_dir):
             _run_setup_claude(project_dir=str(project_dir), force=True)
 
-        # Old file removed, new files present
-        assert not (skills_dir / "old.md").exists()
-        assert (skills_dir / "test.md").exists()
-        assert (skills_dir / "evaluate.md").exists()
+        skills_dir = project_dir / ".claude" / "skills"
+        # Old content replaced, new skills present
+        assert (skills_dir / "arksim-test" / "SKILL.md").read_text() != "old content"
+        assert (skills_dir / "arksim-test" / "SKILL.md").exists()
+        assert (skills_dir / "arksim-evaluate" / "SKILL.md").exists()
 
 
 class TestSetupClaudeUninstall:
     """setup-claude --uninstall removes arksim integration."""
 
     def test_removes_mcp_entry_and_skills(self, tmp_path: Path) -> None:
-        """Uninstall removes arksim from mcpServers and deletes skills dir."""
+        """Uninstall removes arksim from mcpServers and deletes arksim-* dirs."""
         project_dir = tmp_path / "project"
         claude_dir = project_dir / ".claude"
         claude_dir.mkdir(parents=True)
-        skills_dir = claude_dir / "skills" / "arksim"
-        skills_dir.mkdir(parents=True)
-        (skills_dir / "test.md").write_text("skill content")
+        skills_dir = claude_dir / "skills"
+        test_skill = skills_dir / "arksim-test"
+        test_skill.mkdir(parents=True)
+        (test_skill / "SKILL.md").write_text("skill content")
+        eval_skill = skills_dir / "arksim-evaluate"
+        eval_skill.mkdir(parents=True)
+        (eval_skill / "SKILL.md").write_text("eval content")
 
         settings = {
             "hooks": {"SessionStart": []},
@@ -187,7 +201,8 @@ class TestSetupClaudeUninstall:
         assert "arksim" not in updated.get("mcpServers", {})
         assert "other-tool" in updated["mcpServers"]
         assert updated["hooks"] == {"SessionStart": []}
-        assert not skills_dir.exists()
+        assert not test_skill.exists()
+        assert not eval_skill.exists()
 
     def test_uninstall_noop_when_not_installed(self, tmp_path: Path) -> None:
         """Uninstall succeeds gracefully when arksim is not installed."""
@@ -233,9 +248,9 @@ class TestSetupClaudeCLIIntegration:
         project_dir = tmp_path / "project"
         claude_dir = project_dir / ".claude"
         claude_dir.mkdir(parents=True)
-        skills_dir = claude_dir / "skills" / "arksim"
-        skills_dir.mkdir(parents=True)
-        (skills_dir / "test.md").write_text("# test")
+        test_skill = claude_dir / "skills" / "arksim-test"
+        test_skill.mkdir(parents=True)
+        (test_skill / "SKILL.md").write_text("# test")
 
         settings = {
             "mcpServers": {
@@ -262,7 +277,7 @@ class TestSetupClaudeCLIIntegration:
 
         updated = json.loads((claude_dir / "settings.json").read_text())
         assert "arksim" not in updated.get("mcpServers", {})
-        assert not skills_dir.exists()
+        assert not test_skill.exists()
 
 
 class TestSetupClaudeCorruptedSettings:
