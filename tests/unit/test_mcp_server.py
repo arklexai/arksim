@@ -412,6 +412,7 @@ class TestListResults:
 
         run = result["runs"][0]
         assert run["evaluation_id"] == "eval-001"
+        assert run["simulation_id"] == "sim-001"
         assert run["generated_at"] == "2025-01-15T10:00:00Z"
         assert run["total_conversations"] == 2
         assert run["passed"] == 1

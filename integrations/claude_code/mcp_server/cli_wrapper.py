@@ -45,12 +45,12 @@ def run_cli(
             cwd=cwd,
             timeout=timeout,
         )
-    except subprocess.TimeoutExpired:
+    except subprocess.TimeoutExpired as exc:
         return {
             "status": "error",
-            "error_message": (f"Command timed out after {timeout} seconds"),
-            "stdout": "",
-            "stderr": "",
+            "error_message": f"Command timed out after {timeout} seconds",
+            "stdout": exc.stdout or "",
+            "stderr": exc.stderr or "",
             "return_code": -1,
         }
     except FileNotFoundError:
