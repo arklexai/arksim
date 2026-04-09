@@ -14,8 +14,6 @@ import time
 from pathlib import Path
 from typing import Any
 
-from mcp.server.fastmcp import FastMCP
-
 from integrations.claude_code.mcp_server.cli_wrapper import (
     parse_json_file,
     run_cli,
@@ -23,7 +21,19 @@ from integrations.claude_code.mcp_server.cli_wrapper import (
 
 logger = logging.getLogger(__name__)
 
-mcp = FastMCP("arksim")
+try:
+    from mcp.server.fastmcp import FastMCP
+
+    mcp = FastMCP("arksim")
+except ImportError:
+    # FastMCP is optional (pip install arksim[claude]).
+    # Internal _functions work without it; only the @mcp.tool()
+    # decorators and main() require it.
+    from types import SimpleNamespace
+
+    mcp = SimpleNamespace(  # type: ignore[assignment]
+        tool=lambda: lambda fn: fn,  # no-op decorator
+    )
 
 # Module-level state for the UI subprocess.
 _ui_process: subprocess.Popen[str] | None = None
@@ -355,6 +365,8 @@ def launch_ui(port: int = 8080) -> dict[str, Any]:
 
 def main() -> None:
     """Run the MCP server over stdio."""
+    if not hasattr(mcp, "run"):
+        raise SystemExit("FastMCP is not installed. Run: pip install arksim[claude]")
     mcp.run(transport="stdio")
 
 
