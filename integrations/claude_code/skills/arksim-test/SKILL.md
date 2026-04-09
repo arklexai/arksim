@@ -96,6 +96,18 @@ When `config.yaml` already exists, skip detection and initialization. Call `simu
 
 If the user mentions code changes, remind them to update scenarios if the agent's capabilities changed.
 
+### Handling path errors
+
+If `simulate_evaluate` fails with a "No such file or directory" error, the most common cause is relative paths in the config that assume a specific working directory.
+
+Check the config file's relative paths (module_path, scenario_file_path, output_file_path). Paths like `./my_agent.py` resolve relative to the config file's directory. If the config is at `subdir/examples/agent/config.yaml` and contains `module_path: ./examples/agent/my_agent.py`, the path doubles.
+
+To fix:
+1. Read the config and identify the broken path.
+2. Determine what the path should be relative to the config file's location (usually just the filename, like `./my_agent.py`).
+3. Either update the config file with the correct relative path, or pass absolute paths via `cli_overrides`.
+4. If the config was designed to run from a specific directory (check comments in the config), pass that directory as `cwd` to `simulate_evaluate`.
+
 ## Formatting results
 
 Present results as a markdown table:
