@@ -15,7 +15,7 @@ Re-evaluation is cheaper than re-simulation because it only runs the judge LLM a
 
 ### 1. Find the simulation output
 
-Look for the most recent simulation output file. The default location is `./results/simulation/simulation.json`, but check `config.yaml` for a custom `output_file_path`.
+Look for the most recent simulation output file. The default location is `./results/simulation/simulation.json` (the path configured by `output_file_path` in `config.yaml`). This is distinct from the evaluation output, which is written to a separate `evaluation.json` file.
 
 If no simulation output exists, suggest running `/arksim test` first.
 

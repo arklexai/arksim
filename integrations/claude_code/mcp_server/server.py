@@ -7,7 +7,10 @@ thin ``@mcp.tool()`` wrapper that delegates to it.
 
 from __future__ import annotations
 
+import logging
+import re
 import subprocess
+import time
 from pathlib import Path
 from typing import Any
 
@@ -18,11 +21,16 @@ from integrations.claude_code.mcp_server.cli_wrapper import (
     run_cli,
 )
 
+logger = logging.getLogger(__name__)
+
 mcp = FastMCP("arksim")
 
 # Module-level state for the UI subprocess.
 _ui_process: subprocess.Popen[str] | None = None
 _ui_port: int | None = None
+
+# Allowed pattern for CLI override keys (lowercase identifier style).
+_OVERRIDE_KEY_PATTERN = re.compile(r"^[a-z][a-z0-9_]*$")
 
 
 # ---------------------------------------------------------------------------
@@ -36,11 +44,17 @@ def _build_override_args(overrides: dict[str, str] | None) -> list[str]:
     Keys use underscores (Python style) and are converted to hyphenated
     CLI flags.  For example ``{"num_workers": "5"}`` becomes
     ``["--num-workers", "5"]``.
+
+    Keys that do not match the expected identifier pattern are skipped
+    with a warning log.
     """
     if not overrides:
         return []
     args: list[str] = []
     for key, value in overrides.items():
+        if not _OVERRIDE_KEY_PATTERN.match(key):
+            logger.warning("Skipping invalid override key: %r", key)
+            continue
         flag = f"--{key.replace('_', '-')}"
         args.extend([flag, value])
     return args
@@ -66,6 +80,7 @@ def _simulate_evaluate(
     return {
         "status": "success",
         "output": result["stdout"],
+        "stderr": result.get("stderr", ""),
         "message": "Simulation and evaluation completed successfully.",
     }
 
@@ -89,19 +104,36 @@ def _evaluate(
     return {
         "status": "success",
         "output": result["stdout"],
+        "stderr": result.get("stderr", ""),
         "message": "Evaluation completed successfully.",
     }
 
 
 def _list_results(output_dir: str = ".") -> dict[str, Any]:
     """Scan a directory tree for evaluation.json files and summarize each."""
+    search_path = Path(output_dir)
+    if not search_path.is_dir():
+        return {"status": "success", "runs": [], "skipped": []}
+
     runs: list[dict[str, Any]] = []
-    for eval_path in sorted(Path(output_dir).rglob("evaluation.json")):
+    skipped: list[dict[str, str]] = []
+    for eval_path in sorted(search_path.rglob("evaluation.json")):
         parsed = parse_json_file(str(eval_path))
         if parsed["status"] != "success":
+            skipped.append(
+                {
+                    "file": str(eval_path),
+                    "reason": parsed.get("error_message", "unknown"),
+                }
+            )
             continue
         data = parsed["data"]
         conversations = data.get("conversations", [])
+        if not isinstance(conversations, list):
+            conversations = []
+        unique_errors_raw = data.get("unique_errors", [])
+        if not isinstance(unique_errors_raw, list):
+            unique_errors_raw = []
         passed = sum(1 for c in conversations if c.get("evaluation_status") == "Done")
         runs.append(
             {
@@ -111,10 +143,10 @@ def _list_results(output_dir: str = ".") -> dict[str, Any]:
                 "total_conversations": len(conversations),
                 "passed": passed,
                 "failed": len(conversations) - passed,
-                "unique_errors_count": len(data.get("unique_errors", [])),
+                "unique_errors_count": len(unique_errors_raw),
             }
         )
-    return {"status": "success", "runs": runs}
+    return {"status": "success", "runs": runs, "skipped": skipped}
 
 
 def _read_result(result_path: str) -> dict[str, Any]:
@@ -127,6 +159,12 @@ def _read_result(result_path: str) -> dict[str, Any]:
         }
     data = parsed["data"]
     conversations = data.get("conversations", [])
+    if not isinstance(conversations, list):
+        conversations = []
+    raw_unique_errors = data.get("unique_errors", [])
+    if not isinstance(raw_unique_errors, list):
+        raw_unique_errors = []
+
     passed = sum(1 for c in conversations if c.get("evaluation_status") == "Done")
     failed = len(conversations) - passed
 
@@ -138,7 +176,7 @@ def _read_result(result_path: str) -> dict[str, Any]:
             "severity": e.get("severity", "medium"),
             "occurrence_count": len(e.get("occurrences", [])),
         }
-        for e in data.get("unique_errors", [])
+        for e in raw_unique_errors
     ]
 
     conversation_summaries = [
@@ -159,7 +197,6 @@ def _read_result(result_path: str) -> dict[str, Any]:
         "total_conversations": len(conversations),
         "passed": passed,
         "failed": failed,
-        "failures_count": failed,
         "unique_errors": unique_errors,
         "conversations": conversation_summaries,
     }
@@ -210,6 +247,16 @@ def _launch_ui(port: int = 8080) -> dict[str, Any]:
                 "arksim CLI not found. Install it with: pip install arksim"
             ),
         }
+
+    time.sleep(0.2)
+    if _ui_process.poll() is not None:
+        return {
+            "status": "error",
+            "error_message": (
+                "UI process exited immediately. Check if the port is in use."
+            ),
+        }
+
     _ui_port = port
     return {
         "status": "success",

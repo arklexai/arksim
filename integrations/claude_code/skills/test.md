@@ -40,7 +40,7 @@ Call the `init_project` MCP tool:
 init_project(agent_type="custom")
 ```
 
-This creates `config.yaml`, `scenarios.json`, and (for custom agents) `my_agent.py` in the working directory.
+This creates `config.yaml` and `scenarios.json` in the working directory. For custom agent type, it also creates `my_agent.py` with a starter agent stub.
 
 ### 4. Generate scenarios
 
@@ -121,7 +121,7 @@ Always end with 1-2 suggested actions based on the results:
 - **agent_context**: Tells the simulated user what the agent can do, so it sets realistic expectations. Leave empty if not applicable.
 - **user_profile**: Demographics and personality only. Example: "You are Alex, a 35-year-old software engineer. You are patient and detail-oriented." Do not put scenario-specific context here.
 - **knowledge**: Ground truth facts the simulated user can reference during the conversation. Each item is a self-contained fact.
-- **assertions**: Optional tool-call trajectory checks. `match_mode` controls strictness: `strict` (exact order and set), `unordered` (same set, any order), `contains` (expected is a subset), `within` (expected is a superset).
+- **assertions**: Optional tool-call trajectory checks. `match_mode` controls strictness: `strict` (exact order and set), `unordered` (same set, any order), `contains` (expected is a subset of actual calls), `within` (actual calls are a subset of expected tools).
 
 ### Best practices
 
