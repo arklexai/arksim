@@ -429,7 +429,9 @@ def _uninstall_claude(mcp_config_path: Path, skills_dir: Path) -> None:
                 f"Invalid JSON in {mcp_config_path}. Fix or delete the file and retry."
             )
             sys.exit(EXIT_CONFIG_ERROR)
-        mcp_servers = mcp_config.get("mcpServers", {})
+        mcp_servers = mcp_config.get("mcpServers")
+        if not isinstance(mcp_servers, dict):
+            mcp_servers = {}
         mcp_servers.pop("arksim", None)
         if mcp_servers:
             mcp_config["mcpServers"] = mcp_servers
@@ -463,6 +465,10 @@ def _install_claude(
             "Use --force to overwrite, or --uninstall to remove first."
         )
         sys.exit(EXIT_CONFIG_ERROR)
+
+    # Build MCP server config before any filesystem mutation so we exit
+    # early if arksim-mcp is not on PATH.
+    server_config = _build_mcp_server_config()
 
     claude_dir.mkdir(parents=True, exist_ok=True)
 
@@ -511,7 +517,10 @@ def _install_claude(
             sys.exit(EXIT_CONFIG_ERROR)
 
     mcp_servers = mcp_config.setdefault("mcpServers", {})
-    mcp_servers["arksim"] = _build_mcp_server_config()
+    if not isinstance(mcp_servers, dict):
+        mcp_servers = {}
+        mcp_config["mcpServers"] = mcp_servers
+    mcp_servers["arksim"] = server_config
     mcp_config_path.write_text(json.dumps(mcp_config, indent=2) + "\n")
 
     logger.info("Installed arksim Claude Code integration:")

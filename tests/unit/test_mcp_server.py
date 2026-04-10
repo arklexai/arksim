@@ -338,12 +338,15 @@ class TestLaunchUi:
 
     @pytest.fixture(autouse=True)
     def _reset_ui_state(self) -> None:
-        """Reset module-level UI process state before each test."""
+        """Reset module-level UI process state and patch time.sleep."""
         from integrations.claude_code.mcp_server import server
 
         server._ui_process = None
         server._ui_port = None
-        yield
+        with patch(
+            "integrations.claude_code.mcp_server.server.time.sleep",
+        ):
+            yield
         server._ui_process = None
         server._ui_port = None
 
@@ -571,6 +574,24 @@ class TestReadResult:
 
 
 # ── list_results edge cases ──────────────────────────────────
+
+
+class TestListResultsSkipped:
+    """_list_results populates skipped when parse fails."""
+
+    def test_populates_skipped_when_parse_fails(self, tmp_path: Path) -> None:
+        from integrations.claude_code.mcp_server.server import _list_results
+
+        eval_dir = tmp_path / "bad_run"
+        eval_dir.mkdir()
+        (eval_dir / "evaluation.json").write_text("{invalid json content}")
+
+        result = _list_results(output_dir=str(tmp_path))
+
+        assert result["status"] == "success"
+        assert len(result["runs"]) == 0
+        assert len(result["skipped"]) == 1
+        assert "bad_run" in result["skipped"][0]["file"]
 
 
 class TestListResultsEdgeCases:
