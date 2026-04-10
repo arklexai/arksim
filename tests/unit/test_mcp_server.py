@@ -438,6 +438,15 @@ class TestLaunchUi:
         assert result["status"] == "error"
         assert "arksim CLI not found" in result["error_message"]
 
+    @pytest.mark.parametrize("bad_port", [0, -1, 65536, 99999])
+    def test_rejects_invalid_port(self, bad_port: int) -> None:
+        from integrations.claude_code.mcp_server import server
+
+        result = server._launch_ui(port=bad_port)
+
+        assert result["status"] == "error"
+        assert "Port must be between 1 and 65535" in result["error_message"]
+
 
 # ── list_results ──────────────────────────────────────────────
 

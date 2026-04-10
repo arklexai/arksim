@@ -60,7 +60,7 @@ def run_cli(
         return {
             "status": "error",
             "error_message": (
-                "arksim CLI not found. Install arksim with: pip install arksim"
+                "arksim CLI not found. Install arksim with: pip install arksim[claude]"
             ),
             "stdout": "",
             "stderr": "",
@@ -110,6 +110,11 @@ def parse_json_file(path: str) -> dict[str, Any]:
         return {
             "status": "error",
             "error_message": f"File not found: {path}",
+        }
+    except PermissionError:
+        return {
+            "status": "error",
+            "error_message": f"Permission denied: {path}",
         }
     if file_size > _MAX_JSON_SIZE:
         return {
