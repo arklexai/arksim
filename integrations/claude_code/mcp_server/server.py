@@ -57,7 +57,7 @@ def _build_override_args(
 
     Keys use underscores (Python style) and are converted to hyphenated
     CLI flags.  For example ``{"num_workers": "5"}`` becomes
-    ``["--num-workers", "5"]``.
+    ``["--num-workers=5"]``.
 
     Returns:
         A tuple of (args, skipped_keys). ``args`` contains the valid

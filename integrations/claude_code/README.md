@@ -68,7 +68,7 @@ Claude: I found your agent in src/agent.py. It's a customer service bot using
         - out_of_scope_question: The agent hallucinated a product feature
           that does not exist. See turn 1.
 
-        Saved to .arksim/results/evaluation.json.
+        Saved to results/evaluation.json.
 
         Next steps:
         - Run /arksim:results to inspect the failing conversations turn by turn

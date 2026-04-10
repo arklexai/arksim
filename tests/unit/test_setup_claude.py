@@ -285,6 +285,27 @@ class TestSetupClaudeCorruptedMcpJson:
         assert exc_info.value.code == EXIT_CONFIG_ERROR
 
 
+class TestBuildMcpServerConfig:
+    """_build_mcp_server_config exits when arksim-mcp is not on PATH."""
+
+    def test_exits_when_arksim_mcp_not_found(self, tmp_path: Path) -> None:
+        integration_dir = _make_integration_dir(tmp_path)
+        project_dir = tmp_path / "project"
+        project_dir.mkdir()
+
+        with (
+            patch(
+                "arksim.cli._find_integration_dir",
+                return_value=integration_dir,
+            ),
+            patch("shutil.which", return_value=None),
+            pytest.raises(SystemExit) as exc_info,
+        ):
+            _run_setup_claude(project_dir=str(project_dir))
+
+        assert exc_info.value.code == EXIT_CONFIG_ERROR
+
+
 class TestFindIntegrationDirFailure:
     """_find_integration_dir exits cleanly when integration is not found."""
 
