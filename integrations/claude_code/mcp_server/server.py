@@ -293,6 +293,12 @@ def _launch_ui(port: int = 8080) -> dict[str, Any]:
     """Start the arksim UI dashboard in a background process."""
     global _ui_process, _ui_port  # noqa: PLW0603
 
+    if not (1 <= port <= 65535):
+        return {
+            "status": "error",
+            "error_message": (f"Port must be between 1 and 65535, got {port}."),
+        }
+
     if _ui_process is not None and _ui_process.poll() is None:
         if port != _ui_port:
             return {
@@ -323,7 +329,7 @@ def _launch_ui(port: int = 8080) -> dict[str, Any]:
         return {
             "status": "error",
             "error_message": (
-                "arksim CLI not found. Install it with: pip install arksim"
+                "arksim CLI not found. Install it with: pip install arksim[claude]"
             ),
         }
 

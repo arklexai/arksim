@@ -51,7 +51,7 @@ otel = [
     "opentelemetry-proto>=1.20.0",
 ]
 claude = [
-    "fastmcp>=2.0.0",
+    "fastmcp>=2.0.0,<4",
 ]
 all = [
     "arksim[azure,anthropic,google,otel,claude]",
@@ -101,10 +101,13 @@ ignore = [
 ]
 
 [tool.coverage.run]
-source = ["arksim"]
+source = ["arksim", "integrations"]
 
 [tool.coverage.report]
 fail_under = 60
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
 
 [tool.bandit]
 exclude_dirs = ["tests"]
