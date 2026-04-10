@@ -1,0 +1,6 @@
+# Rasa training artifacts
+.rasa/
+models/
+
+# Rasa global config (auto-generated)
+.config/

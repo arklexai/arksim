@@ -4,25 +4,24 @@ Example custom metrics for e-commerce agent evaluation.
 
 This file is referenced by config.yaml via ``custom_metrics_file_paths``
 and loaded automatically by the evaluator. Every public ``QuantitativeMetric``
-or ``QualitativeMetric`` subclass found in the file is instantiated with
-no arguments.
+or ``QualitativeMetric`` subclass found in the file is instantiated by
+the evaluator, which injects the configured LLM via the ``llm`` keyword
+argument.
 
 To create your own metric:
   1. Subclass ``QuantitativeMetric`` or ``QualitativeMetric``.
-  2. Implement ``score()`` (quantitative) or ``evaluate()`` (qualitative).
+  2. Add ``llm=None`` to ``__init__`` and pass it to ``super().__init__(llm=llm)``.
+  3. Implement ``score()`` (quantitative) or ``evaluate()`` (qualitative).
      Both receive a ``ScoreInput`` with ``chat_history``, ``knowledge``,
-     ``user_goal``, and ``profile``.
-  3. Return a ``QuantResult`` or ``QualResult`` with ``name``, ``value``,
+     ``user_goal``, and ``profile``. Use ``self.llm`` to call the LLM.
+  4. Return a ``QuantResult`` or ``QualResult`` with ``name``, ``value``,
      and ``reason``.
-  4. Add the file path to ``custom_metrics_file_paths`` in config.yaml
+  5. Add the file path to ``custom_metrics_file_paths`` in config.yaml
      and (optionally) add the metric name to ``metrics_to_run``.
 """
 
 from __future__ import annotations
 
-from pathlib import Path
-
-import yaml
 from pydantic import BaseModel
 
 from arksim.evaluator import (
@@ -33,24 +32,6 @@ from arksim.evaluator import (
     ScoreInput,
     format_chat_history,
 )
-from arksim.llms.chat import LLM
-
-
-def _load_llm_from_config() -> LLM:
-    """Load model and provider from config.yaml in the same directory as this file."""
-    config_path = Path(__file__).resolve().parent / "config.yaml"
-    if not config_path.exists():
-        raise FileNotFoundError(f"config.yaml not found: {config_path}")
-    with open(config_path) as f:
-        data = yaml.safe_load(f) or {}
-    model = data["model"]
-    provider = data["provider"]
-    return LLM(model=model, provider=provider)
-
-
-# LLM for custom metrics; model and provider from config.yaml (same directory).
-llm = _load_llm_from_config()
-
 
 # ── Conversion Metric
 
@@ -109,19 +90,20 @@ class ConversionMetric(QuantitativeMetric):
     normalised to 0-5.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, llm: object | None = None) -> None:
         super().__init__(
             name="conversion",
             score_range=(0, 5),
             description="Scores purchase intent strength and conversion outcome. "
             "Final score = (intent_strength + conversion_outcome) / 2, scaled to 0-5.",
+            llm=llm,
         )
 
     def score(self, score_input: ScoreInput) -> QuantResult:
         chat_history = format_chat_history(score_input.chat_history)
         user_goal = score_input.user_goal or "N/A"
 
-        response: ConversionSchema = llm.call(
+        response: ConversionSchema = self.llm.call(
             [
                 {"role": "system", "content": CONVERSION_SYSTEM_PROMPT},
                 {
@@ -191,16 +173,17 @@ class ProductRecommendationMetric(QuantitativeMetric):
     Final score: ``(relevance + specificity) / 2``, scaled to 0-5.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, llm: object | None = None) -> None:
         super().__init__(
             name="product_recommendation",
             score_range=(0, 5),
             description="Evaluates relevance and specificity of product recommendations. "
             "Final score = (relevance + specificity) / 2, scaled to 0-5.",
+            llm=llm,
         )
 
     def score(self, score_input: ScoreInput) -> QuantResult:
-        response: RecommendationSchema = llm.call(
+        response: RecommendationSchema = self.llm.call(
             [
                 {"role": "system", "content": RECOMMENDATION_SYSTEM_PROMPT},
                 {
@@ -265,17 +248,24 @@ class UpsellBehaviorMetric(QualitativeMetric):
     or ``not_applicable``.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, llm: object | None = None) -> None:
         super().__init__(
             name="upsell_behavior",
             description="Classifies whether the agent's upselling was appropriate, "
             "too pushy, or a missed opportunity.",
+            label_colors={
+                "appropriate": "#22c55e",  # green — well-judged upsell
+                "too_pushy": "#ef4444",  # red   — overly aggressive
+                "missed_opportunity": "#f97316",  # orange — upsell omitted
+                "not_applicable": "#94a3b8",  # slate — no upsell context
+            },
+            llm=llm,
         )
 
     def evaluate(self, score_input: ScoreInput) -> QualResult:
         chat_history = format_chat_history(score_input.chat_history)
 
-        response: UpsellBehaviorSchema = llm.call(
+        response: UpsellBehaviorSchema = self.llm.call(
             [
                 {"role": "system", "content": UPSELL_SYSTEM_PROMPT},
                 {

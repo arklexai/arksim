@@ -30,25 +30,25 @@ from .entities import (
     TurnEvaluation,
     TurnItem,
 )
+from .tool_call_metrics import ToolCallBehaviorFailureMetric
 from .utils.constants import (
     BEHAVIOR_FAILURE_THRESHOLD,
     EVALUATION_PARTIAL_FAILURE_THRESHOLD,
     GOAL_COMPLETION_SCORE_WEIGHT,
     SCORE_NOT_COMPUTED,
+    SEVERITY_RANK,
+    SKIP_OUTCOMES,
     TURN_SUCCESS_RATIO_SCORE_WEIGHT,
 )
 from .utils.enums import (
+    AGENT_BEHAVIOR_FAILURE_SEVERITY,
+    AgentMetrics,
     EvaluationOutcomes,
     EvaluationStatus,
 )
 from .utils.error_messages import SKIPPED_GOOD_PERFORMANCE_REASON
 
 logger = logging.getLogger(__name__)
-
-_SKIP_OUTCOMES = {
-    EvaluationOutcomes.SKIPPED_GOOD_PERFORMANCE.value,
-    EvaluationOutcomes.AgentBehaviorFailureType.NO_FAILURE.value,
-}
 
 
 def _should_run(name: str, metrics_to_run: list[str] | None) -> bool:
@@ -176,6 +176,51 @@ def evaluate_turn(
         turn_behavior_failure = EvaluationOutcomes.SKIPPED_GOOD_PERFORMANCE.value
         turn_behavior_failure_reason = SKIPPED_GOOD_PERFORMANCE_REASON
 
+    # Tool call behavior failure check (independent of threshold, runs when turn has tool calls)
+    if (
+        _should_run("tool_call_behavior_failure", metrics_to_run)
+        and turn_item.tool_calls
+    ):
+        tool_score_input = ScoreInput(
+            chat_history=score_input.chat_history,
+            current_turn=score_input.current_turn,
+            knowledge=score_input.knowledge,
+            user_goal=score_input.user_goal,
+            profile=score_input.profile,
+            tool_calls=turn_item.tool_calls,
+        )
+        tool_qual = ToolCallBehaviorFailureMetric(llm).evaluate(tool_score_input)
+
+        # Surface tool call failures under agent_behavior_failure so the
+        # HTML report and downstream consumers treat them uniformly.
+        tool_qual_as_agent = QualResult(
+            name=AgentMetrics.AGENT_BEHAVIOR_FAILURE.value,
+            value=tool_qual.value,
+            reason=f"[Tool call] {tool_qual.reason}" if tool_qual.reason else "",
+        )
+        qual_scores.append(tool_qual_as_agent)
+
+        if tool_qual.value not in SKIP_OUTCOMES:
+            if turn_behavior_failure in SKIP_OUTCOMES:
+                turn_behavior_failure = tool_qual.value
+                turn_behavior_failure_reason = tool_qual_as_agent.reason
+            else:
+                # Both agent and tool call failures detected. Keep the
+                # higher-severity label so safety issues are not masked.
+                tool_sev = SEVERITY_RANK.get(
+                    AGENT_BEHAVIOR_FAILURE_SEVERITY.get(tool_qual.value, ""), 99
+                )
+                agent_sev = SEVERITY_RANK.get(
+                    AGENT_BEHAVIOR_FAILURE_SEVERITY.get(turn_behavior_failure, ""), 99
+                )
+                if tool_sev < agent_sev:
+                    turn_behavior_failure = tool_qual.value
+                    turn_behavior_failure_reason = tool_qual_as_agent.reason
+                else:
+                    turn_behavior_failure_reason += (
+                        f"\n[Tool call] {tool_qual.reason or ''}"
+                    )
+
     return TurnEvaluation(
         turn_id=turn_item.turn_id,
         scores=scores,
@@ -214,7 +259,7 @@ def evaluate_goal_completion(
         goal_completion_reason = ""
 
     behavior_failures = sum(
-        1 for t in turns_details if t.turn_behavior_failure not in _SKIP_OUTCOMES
+        1 for t in turns_details if t.turn_behavior_failure not in SKIP_OUTCOMES
     )
     num_turns = convo_item.turns
     turn_success_ratio = (

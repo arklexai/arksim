@@ -116,6 +116,7 @@ async def main() -> None:
     print("=" * 60)
 
     numeric_thresholds = {
+        "overall_score": 0.6,
         "clarity": 3.5,
         "goal_completion": 0.6,
     }

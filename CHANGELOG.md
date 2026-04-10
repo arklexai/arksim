@@ -5,6 +5,123 @@ All notable changes to ArkSim will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+* **cli:** add `arksim init` command to scaffold a starter `config.yaml` and `scenarios.json` for quick onboarding
+* **tracing:** add automatic tool call capture for agents that handle tools internally
+* **tracing:** add `ArksimTracingProcessor` for OpenAI Agents SDK (register once, zero per-turn wrapping)
+* **tracing:** add OTLP/HTTP trace receiver with protobuf and JSON support (`arksim[otel]`)
+* **tracing:** add dual attribute convention support (OTel GenAI semconv and OpenInference)
+* **examples:** add Dify chatbot integration example
+* **evaluator:** focus file generation after evaluation for targeted reruns of failing scenarios
+* **evaluator:** scenario IDs shown in CLI error output alongside focus file paths
+* **report:** scenario IDs displayed in HTML report error cards
+* **evaluator:** error-to-scenario mappings included in `evaluation.json` output
+
+### Changed
+
+* **docs:** rewrite README as a focused landing page (~180 lines) with two quickstart paths, report screenshot, and "Test Your Own Agent" guide
+* **docs:** move configuration reference, CLI reference, custom metrics examples, and Web UI docs from README to docs site
+* **simulation:** bump output schema version to v1.1 (additive `tool_calls` field on Message)
+* **evaluator:** bump evaluation output schema version to v1.1 (additive `error_scenario_mappings` field)
+* **chat-completions:** refactor to persistent httpx client with `AgentResponse` return type
+
+### Fixed
+
+* **chat-completions:** fix crash when endpoint returns `tool_calls` with `content=None`
+* **evaluator:** inject configured LLM into custom metrics instead of requiring metrics to load their own LLM from a hardcoded config file
+## [0.3.3](https://github.com/arklexai/arksim/compare/v0.3.2...v0.3.3) (2026-03-27)
+
+
+### Added
+
+* **eval:** add deterministic trajectory matching for tool calls ([#111](https://github.com/arklexai/arksim/issues/111)) ([1d0e81a](https://github.com/arklexai/arksim/commit/1d0e81a0a3632ecd6f31d4dca0856df6d2c7ff0e))
+* **examples:** upgrade Rasa integration to Rasa Pro with CALM ([#123](https://github.com/arklexai/arksim/issues/123)) ([0f5ccfa](https://github.com/arklexai/arksim/commit/0f5ccfa28207e35d014d99c276c6a74c0a755e5d))
+
+
+### Fixed
+
+* **evaluator:** tighten agent behavior failure prompts and add e2e test ([#125](https://github.com/arklexai/arksim/issues/125)) ([a77a413](https://github.com/arklexai/arksim/commit/a77a41334141459179a3eb313812a145f23ce27f))
+
+
+### Documentation
+
+* remove unrelated image in ci-integration page ([#120](https://github.com/arklexai/arksim/issues/120)) ([8bdf05b](https://github.com/arklexai/arksim/commit/8bdf05b010808cfe0d7408bc7108d4705802a1a1))
+* snapshot v0.3.2 from main ([#116](https://github.com/arklexai/arksim/issues/116)) ([a04bcef](https://github.com/arklexai/arksim/commit/a04bcef290f21a545651501ac33de66ce0565101))
+* update docs links to use main branch docs ([#117](https://github.com/arklexai/arksim/issues/117)) ([bd133b3](https://github.com/arklexai/arksim/commit/bd133b33e4287f5d33ee53054adc0c73aca86c48))
+
+
+### Changed
+
+* add Claude Code standards, skills, and hooks ([#122](https://github.com/arklexai/arksim/issues/122)) ([f52cbfc](https://github.com/arklexai/arksim/commit/f52cbfc3e156100d0fc15a2c5bd8a8030788e11b))
+* improve evaluation metrics display in html report ([#119](https://github.com/arklexai/arksim/issues/119)) ([a05a964](https://github.com/arklexai/arksim/commit/a05a96484cab92d03f4e3d02cb6ab275a1bc7b9c))
+
+## [0.3.2](https://github.com/arklexai/arksim/compare/v0.3.1...v0.3.2) (2026-03-20)
+
+
+### Added
+
+* **examples:** add Rasa integration example ([#99](https://github.com/arklexai/arksim/issues/99)) ([bfe200d](https://github.com/arklexai/arksim/commit/bfe200d261acaf3fa260d433da7c1101f6cb12c1))
+* **examples:** update integration examples and add docs page ([#110](https://github.com/arklexai/arksim/issues/110)) ([0102ea2](https://github.com/arklexai/arksim/commit/0102ea28df229977f600dc5ce40394a4f2032114))
+
+
+### Fixed
+
+* **ui:** handle missing output path when no sidebar config selected ([#106](https://github.com/arklexai/arksim/issues/106)) ([9a84334](https://github.com/arklexai/arksim/commit/9a843346a981a14c639c659ebbb5f0f657547da3))
+
+
+### Documentation
+
+* add versioned documentation structure with automated snapshots ([#104](https://github.com/arklexai/arksim/issues/104)) ([17d6aed](https://github.com/arklexai/arksim/commit/17d6aede141544732a49db2de52ae3a77c620ce4))
+* update readme quickstart section with documentation ([#112](https://github.com/arklexai/arksim/issues/112)) ([d0d63d9](https://github.com/arklexai/arksim/commit/d0d63d91eb6c37364bde5d482fccd416c95f5bc4))
+
+
+### Changed
+
+* add colors for qualitative metrics ([#109](https://github.com/arklexai/arksim/issues/109)) ([42abaf1](https://github.com/arklexai/arksim/commit/42abaf17099af3ad68818888f90c7359f86913fa))
+* fix tests for simulation schema version update ([#113](https://github.com/arklexai/arksim/issues/113)) ([641fd5e](https://github.com/arklexai/arksim/commit/641fd5e42779de499c31dcafd62dcf7018df0951))
+
+## [0.3.1](https://github.com/arklexai/arksim/compare/v0.3.0...v0.3.1) (2026-03-17)
+
+
+### Added
+
+* **evaluator:** add tool call evaluation with working example ([#95](https://github.com/arklexai/arksim/issues/95)) ([761a750](https://github.com/arklexai/arksim/commit/761a7500101eb324435168a15709f400468d32d0))
+
+
+### Fixed
+
+* **eval:** correctly provide conversation history to eval prompts ([#107](https://github.com/arklexai/arksim/issues/107)) ([2211112](https://github.com/arklexai/arksim/commit/22111124b0b011e628ba932309c26fdba1c3870f))
+* **ui:** fix scenario save and add agent_context field ([#105](https://github.com/arklexai/arksim/issues/105)) ([77e0d83](https://github.com/arklexai/arksim/commit/77e0d8349181418894a5b49a2c3cc507e1fd9226))
+
+## [0.3.0](https://github.com/arklexai/arksim/compare/v0.2.0...v0.3.0) (2026-03-17)
+
+
+### ⚠ BREAKING CHANGES
+
+* add CI integration templates, docs, and example updates ([#92](https://github.com/arklexai/arksim/issues/92))
+
+### Added
+
+* add CI integration templates, docs, and example updates ([#92](https://github.com/arklexai/arksim/issues/92)) ([09a3674](https://github.com/arklexai/arksim/commit/09a367402a849a4fb89845ab5e940e3756b56157))
+* add per-metric thresholds and structured exit codes ([#89](https://github.com/arklexai/arksim/issues/89)) ([5f0f93a](https://github.com/arklexai/arksim/commit/5f0f93aebbd03fd8bad624b7b4f707a01ab5d756))
+* **examples:** add 6 new SDK/framework integration examples ([#97](https://github.com/arklexai/arksim/issues/97)) ([883ff9a](https://github.com/arklexai/arksim/commit/883ff9a930167bb94440a5bf9c3eaae9cef9b511))
+
+
+### Documentation
+
+* update readme to include paper information ([#90](https://github.com/arklexai/arksim/issues/90)) ([8e18e5c](https://github.com/arklexai/arksim/commit/8e18e5c05c046fb71926450eaaf8517c6ecc0ea1))
+
+
+### Changed
+
+* add integration tests ([#91](https://github.com/arklexai/arksim/issues/91)) ([b047397](https://github.com/arklexai/arksim/commit/b047397bf0284bbf10925c74d380deca90be6efc))
+* bump actions/create-github-app-token from 2 to 3 ([#98](https://github.com/arklexai/arksim/issues/98)) ([724a779](https://github.com/arklexai/arksim/commit/724a77994037ce84178c54841750c88617fb1972))
+* update SECURITY.md supported versions ([#94](https://github.com/arklexai/arksim/issues/94)) ([2220870](https://github.com/arklexai/arksim/commit/22208706365d63e22d08743fa06d0e888a2b9d7e))
+* update vercel ai sdk deps for security updates ([#100](https://github.com/arklexai/arksim/issues/100)) ([412ad4c](https://github.com/arklexai/arksim/commit/412ad4cc84db932c9866c901d4d07e7c6d3f29df))
+
 ## [0.2.0](https://github.com/arklexai/arksim/compare/v0.1.0...v0.2.0) (2026-03-10)
 
 

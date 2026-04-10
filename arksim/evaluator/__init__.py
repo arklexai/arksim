@@ -5,6 +5,8 @@ Evaluator package for agent and user evaluation.
 
 from __future__ import annotations
 
+from arksim.scenario.entities import AssertionType, ToolCallsAssertion
+
 from .base_metric import (
     ChatMessage,
     QualitativeMetric,
@@ -15,16 +17,18 @@ from .base_metric import (
     format_chat_history,
 )
 from .entities import (
+    ErrorScenarioMapping,
     Evaluation,
     EvaluationInput,
     EvaluationParams,
 )
+from .error_scenarios import build_error_scenario_data
 from .evaluator import Evaluator, run_evaluation
 from .thresholds import (
     check_numeric_thresholds,
     check_qualitative_failure_labels,
-    check_score_threshold,
 )
+from .trajectory_matching import TrajectoryResult, match_trajectory
 
 __all__ = [
     "ChatMessage",
@@ -35,11 +39,16 @@ __all__ = [
     "QualResult",
     "Evaluator",
     "EvaluationParams",
+    "ErrorScenarioMapping",
     "ScoreInput",
     "QuantResult",
+    "build_error_scenario_data",
     "check_numeric_thresholds",
     "check_qualitative_failure_labels",
-    "check_score_threshold",
     "format_chat_history",
     "run_evaluation",
+    "TrajectoryResult",
+    "match_trajectory",
+    "AssertionType",
+    "ToolCallsAssertion",
 ]

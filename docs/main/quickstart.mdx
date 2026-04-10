@@ -1,0 +1,181 @@
+---
+title: "Quickstart"
+description: "Get started with ArkSim in minutes. Test your own agent or explore a pre-built example with a single command."
+---
+
+## Prerequisites
+
+- Python 3.10-3.13
+- An API key from a supported provider ([OpenAI](https://developers.openai.com/api/docs), [Anthropic](https://platform.claude.com/docs/en/home), or [Google Gemini](https://ai.google.dev/gemini-api/docs/api-key))
+
+## Option A: Test your own agent
+
+If you already have an agent running, use `arksim init` to scaffold a starter config and scenarios file, then point it at your endpoint.
+
+<Steps>
+  <Step title="Install and set your API key">
+    ```bash
+    pip install arksim
+    export OPENAI_API_KEY="your-api-key"
+    ```
+
+    For other providers: `pip install "arksim[anthropic]"` or `pip install "arksim[google]"`.
+  </Step>
+  <Step title="Scaffold a starter config">
+    ```bash
+    arksim init
+    ```
+
+    This creates three files in the current directory:
+    - **config.yaml** pointing at `./my_agent.py` with sensible defaults
+    - **scenarios.json** with four domain-agnostic starter scenarios (happy path, out of scope, ambiguous intent, multi-step)
+    - **my_agent.py** with a `BaseAgent` subclass ready to fill in (no server needed)
+
+    Open `my_agent.py` and replace the `execute()` body with your agent logic. All files include inline comments explaining each field.
+
+    <Tip>
+    For HTTP or A2A agents, use `arksim init --agent-type chat_completions` or `arksim init --agent-type a2a` instead. Use `--force` to re-scaffold if files already exist.
+    </Tip>
+  </Step>
+  <Step title="Run simulation and evaluation">
+    ```bash
+    arksim simulate-evaluate config.yaml
+    ```
+  </Step>
+  <Step title="View results">
+    Open `results/final_report.html` in your browser for an interactive report with scores, failure categories, and full conversation transcripts.
+  </Step>
+</Steps>
+
+## Option B: Explore a pre-built example
+
+If you want to see ArkSim in action before connecting your own agent, try one of the included examples.
+
+<Steps>
+  <Step title="Install and set your API key">
+    ```bash
+    pip install arksim
+    export OPENAI_API_KEY="your-api-key"
+    ```
+  </Step>
+  <Step title="Download examples">
+    ```bash
+    arksim examples
+    ```
+
+    This creates an `examples/` folder with ready-to-run projects (bank-insurance, e-commerce, customer-service, openclaw).
+  </Step>
+  <Step title="Run simulation and evaluation">
+    <Tabs>
+      <Tab title="CLI">
+        ```bash
+        cd examples/bank-insurance
+        arksim simulate-evaluate config.yaml
+        ```
+      </Tab>
+      <Tab title="Python">
+        ```python
+        import asyncio
+        from arksim.simulation_engine import run_simulation, SimulationInput
+        from arksim.evaluator import run_evaluation, EvaluationInput
+        from arksim.config import AgentConfig
+        from arksim.scenario import Scenarios
+
+        EXAMPLE_DIR = "./examples/bank-insurance"
+
+        agent_config = AgentConfig(
+            agent_type="chat_completions",
+            agent_name="bank-insurance",
+            api_config={
+                "endpoint": "https://api.openai.com/v1/chat/completions",
+                "headers": {
+                    "Content-Type": "application/json",
+                    "Authorization": "Bearer ${OPENAI_API_KEY}",
+                },
+                "body": {
+                    "model": "gpt-5.1",
+                    "messages": [
+                        {"role": "system", "content": "You are a customer service chatbot for XYZ Bank insurance."}
+                    ],
+                },
+            },
+        )
+
+        scenarios = Scenarios.load(f"{EXAMPLE_DIR}/scenarios.json")
+
+        simulation = asyncio.run(run_simulation(SimulationInput(
+            agent_config=agent_config,
+            num_conversations_per_scenario=1,
+            max_turns=5,
+            num_workers="50",
+            output_file_path=f"{EXAMPLE_DIR}/results/simulation.json",
+        )))
+
+        evaluation = run_evaluation(EvaluationInput(
+            scenario_file_path=f"{EXAMPLE_DIR}/scenarios.json",
+            output_dir=f"{EXAMPLE_DIR}/results",
+            custom_metrics_file_paths=[f"{EXAMPLE_DIR}/custom_metrics.py"],
+            metrics_to_run=[
+                "faithfulness", "helpfulness", "coherence",
+                "relevance", "goal_completion", "agent_behavior_failure",
+            ],
+            model="gpt-5.1",
+            provider="openai",
+            num_workers=50,
+            generate_html_report=True,
+        ), simulation=simulation, scenarios=scenarios)
+
+        print(f"Done. Simulated {len(simulation.conversations)} conversations.")
+        ```
+      </Tab>
+      <Tab title="Web UI">
+        ```bash
+        arksim ui
+        ```
+
+        Opens at [**http://localhost:8080**](http://localhost:8080). Load any example config and run from the browser.
+      </Tab>
+    </Tabs>
+  </Step>
+  <Step title="View results">
+    Open `results/evaluation/final_report.html` in your browser for scores, failure analysis, and full conversation transcripts.
+  </Step>
+</Steps>
+
+### Using other LLM providers
+
+ArkSim uses OpenAI by default for both the simulated user and the evaluator. To use Anthropic or Google instead, set the provider in your `config.yaml`:
+
+<Tabs>
+  <Tab title="Anthropic">
+    ```bash
+    pip install "arksim[anthropic]"
+    export ANTHROPIC_API_KEY="your-api-key"
+    ```
+
+    ```yaml
+    model: claude-opus-4-6
+    provider: anthropic
+    ```
+  </Tab>
+  <Tab title="Google Gemini">
+    ```bash
+    pip install "arksim[google]"
+    export GEMINI_API_KEY="your-api-key"
+    ```
+
+    ```yaml
+    model: gemini-2.5-flash
+    provider: google
+    ```
+  </Tab>
+</Tabs>
+
+---
+
+## Next Steps
+
+Now that you've run your first simulation and evaluation, here's where to go next.
+
+- **Explore the core concepts:** Dive deeper into [Scenarios](./build-scenario), [Simulation](./simulate-conversation), and [Evaluation](./evaluate-conversation) to understand how each piece works and how to configure them for your agent.
+- **Explore the examples:** Run ArkSim against [E-commerce](./e-commerce-customer-service-agent-evaluation), [Insurance](./insurance-customer-service-agent-evaluation), [Customer Service (tool calling)](./customer-service-tool-calling-agent-evaluation), and [Personal AI assistant (OpenClaw)](./personal-ai-assistant-openclaw-evaluation) to see different use cases and configs.

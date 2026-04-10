@@ -259,7 +259,7 @@
             <div class="grid grid-cols-3 gap-3">
               <div>
                 <label class="block text-sm font-medium t-label mb-1">Conversations per scenario <span class="tip" data-tip="Number of simulated conversations to generate per scenario"><svg class="w-3.5 h-3.5 inline-block align-middle" style="color: var(--text-5)" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"/></svg></span></label>
-                <input type="number" x-model.number="numConversations" min="1" placeholder="3" @blur="if (!numConversations) numConversations = _defaults.numConversations" class="w-full border t-input rounded-lg px-3 py-2 text-sm">
+                <input type="number" x-model.number="numConversations" min="1" placeholder="1" @blur="if (!numConversations) numConversations = _defaults.numConversations" class="w-full border t-input rounded-lg px-3 py-2 text-sm">
               </div>
               <div>
                 <label class="block text-sm font-medium t-label mb-1">Max turns <span class="tip" data-tip="Maximum number of back-and-forth turns per conversation"><svg class="w-3.5 h-3.5 inline-block align-middle" style="color: var(--text-5)" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"/></svg></span></label>
@@ -412,14 +412,10 @@
           <!-- Configuration -->
           <div class="t-surface rounded-xl border t-border p-5 mb-4">
             <h2 class="font-semibold t-heading mb-3">Configuration</h2>
-            <div class="grid grid-cols-3 gap-3">
+            <div class="grid grid-cols-2 gap-3 mb-3">
               <div>
                 <label class="block text-sm font-medium t-label mb-1">Workers <span class="tip" data-tip="Number of parallel workers for evaluation (auto = number of CPU cores)"><svg class="w-3.5 h-3.5 inline-block align-middle" style="color: var(--text-5)" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"/></svg></span></label>
                 <input type="text" x-model="evalNumWorkers" class="w-full border t-input rounded-lg px-3 py-2 text-sm" placeholder="auto" @blur="if (!evalNumWorkers) evalNumWorkers = _defaults.evalNumWorkers">
-              </div>
-              <div>
-                <label class="block text-sm font-medium t-label mb-1">Score threshold <span class="tip" data-tip="Minimum score (0.0-1.0) for a conversation to be considered passing"><svg class="w-3.5 h-3.5 inline-block align-middle" style="color: var(--text-5)" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"/></svg></span></label>
-                <input type="text" x-model="scoreThreshold" class="w-full border t-input rounded-lg px-3 py-2 text-sm" placeholder="0.0 - 1.0">
               </div>
               <div>
                 <label class="block text-sm font-medium t-label mb-1">HTML report <span class="tip" data-tip="Generate a detailed HTML report with conversation breakdowns"><svg class="w-3.5 h-3.5 inline-block align-middle" style="color: var(--text-5)" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"/></svg></span></label>
@@ -429,6 +425,16 @@
                     Generate
                   </label>
                 </div>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-sm font-medium t-label mb-1">Numeric thresholds <span class="tip" data-tip='JSON map of metric name to minimum score. Built-in turn-level metrics use 1–5; goal_completion and overall_score use 0–1. e.g. {"overall_score": 0.7, "goal_completion": 0.6}'><svg class="w-3.5 h-3.5 inline-block align-middle" style="color: var(--text-5)" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"/></svg></span></label>
+                <input type="text" x-model="numericThresholds" class="w-full border t-input rounded-lg px-3 py-2 text-sm" placeholder='{"overall_score": 0.7, "goal_completion": 0.6}'>
+              </div>
+              <div>
+                <label class="block text-sm font-medium t-label mb-1">Qualitative failure labels <span class="tip" data-tip='JSON map of metric name to list of labels that trigger failure. e.g. {"agent_behavior_failure": ["false information", "disobey user request"]}'><svg class="w-3.5 h-3.5 inline-block align-middle" style="color: var(--text-5)" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"/></svg></span></label>
+                <input type="text" x-model="qualitativeFailureLabels" class="w-full border t-input rounded-lg px-3 py-2 text-sm" placeholder='{"agent_behavior_failure": ["false information", "disobey user request"]}'>
               </div>
             </div>
           </div>
@@ -703,6 +709,9 @@
 
                   <label class="block text-sm font-medium t-label mb-1">Goal</label>
                   <input type="text" x-model="sc.goal" @input="scenarioDirty = true" class="w-full border t-input rounded-lg px-3 py-2 text-sm mb-3" placeholder="What should the simulated user try to accomplish?">
+
+                  <label class="block text-sm font-medium t-label mb-1">Agent Context <span class="font-normal t-caption">(system prompt or context for the agent under test)</span></label>
+                  <textarea x-model="sc.agent_context" @input="scenarioDirty = true" rows="2" class="w-full border t-input rounded-lg px-3 py-2 text-sm mb-3" placeholder="You are a helpful insurance agent for XYZ Insurance..."></textarea>
 
                   <label class="block text-sm font-medium t-label mb-1">Knowledge <span class="font-normal t-caption">(context the simulated user has)</span></label>
                   <textarea x-model="sc._knowledgeText" @input="scenarioDirty = true" rows="2" class="w-full border t-input rounded-lg px-3 py-2 text-sm mb-3" placeholder="Background information the user knows about..."></textarea>

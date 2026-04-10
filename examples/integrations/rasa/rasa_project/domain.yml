@@ -1,0 +1,34 @@
+version: "3.1"
+
+actions:
+  - action_check_order_status
+
+slots:
+  order_id:
+    type: text
+    mappings:
+      - type: from_llm
+  order_status:
+    type: text
+    mappings:
+      - type: controlled
+
+responses:
+  utter_greet:
+    - text: "Hello! How can I help you today?"
+  utter_goodbye:
+    - text: "Goodbye! Have a great day."
+  utter_pricing:
+    - text: "We offer three plans: Starter at $29/month, Professional at $79/month, and Enterprise with custom pricing. All plans include a 14-day free trial."
+  utter_features:
+    - text: "Our platform includes real-time analytics, team collaboration, API access, and custom integrations. Professional and Enterprise plans also include priority support and advanced reporting."
+  utter_order_status:
+    - text: "Your order {order_id} is currently: {order_status}"
+  utter_order_not_found:
+    - text: "Sorry, I couldn't find an order with ID {order_id}. Please double-check and try again."
+  utter_ask_order_id:
+    - text: "Sure, I can look that up. What is your order number?"
+
+session_config:
+  session_expiration_time: 60
+  carry_over_slots_to_new_session: true

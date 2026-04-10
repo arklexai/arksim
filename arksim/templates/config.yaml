@@ -1,0 +1,22 @@
+# ArkSim configuration
+# Edit my_agent.py with your agent logic, then run:
+#   arksim simulate-evaluate config.yaml
+
+# --- Agent connection (Python class, no server needed) ---
+agent_config:
+  agent_type: custom
+  agent_name: my-agent
+  custom_config:
+    # Path to your agent's Python file (must contain a BaseAgent subclass)
+    module_path: ./my_agent.py
+
+# --- Scenarios ---
+scenario_file_path: ./scenarios.json
+
+# --- Simulation ---
+num_conversations_per_scenario: 3
+max_turns: 5
+
+# --- Evaluation ---
+output_dir: ./results
+generate_html_report: true

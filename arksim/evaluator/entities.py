@@ -1,8 +1,11 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import logging
 import os
 import sys
+
+from arksim.simulation_engine.tool_types import ToolCall
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -22,6 +25,8 @@ from .base_metric import (
     QuantitativeMetric,
     QuantResult,
 )
+
+_entities_logger = logging.getLogger(__name__)
 
 _DEFAULT_METRICS_TO_RUN = [
     "faithfulness",
@@ -46,7 +51,7 @@ class EvaluationInput(BaseModel):
         description="Path to the simulation output file",
     )
     output_dir: str | None = Field(
-        default="./evaluation",
+        default="./results/evaluation",
         description="Output directory for evaluation results",
     )
     model: str = Field(default=DEFAULT_MODEL, description="LLM model for evaluation")
@@ -72,7 +77,8 @@ class EvaluationInput(BaseModel):
     score_threshold: float | None = Field(
         default=None,
         description=(
-            "Threshold for per-conversation final scores. "
+            "Deprecated. Use numeric_thresholds with key 'overall_score' instead. "
+            "Threshold for per-conversation final scores (0.0–1.0). "
             "If any score < threshold, exit with non-zero code."
         ),
     )
@@ -83,7 +89,8 @@ class EvaluationInput(BaseModel):
             "Keys are metric names (e.g. 'faithfulness', 'helpfulness'). "
             "Built-in turn-level metrics use a 1–5 scale; the mean across all "
             "turns per conversation is compared against the threshold. "
-            "'goal_completion' is stored as 0–1 and compared directly."
+            "'goal_completion' is stored as 0–1 and compared directly. "
+            "'overall_score' checks the per-conversation overall_agent_score (0–1)."
         ),
     )
     qualitative_failure_labels: dict[str, list[str]] | None = Field(
@@ -96,6 +103,28 @@ class EvaluationInput(BaseModel):
             "turns where the metric did not run are skipped."
         ),
     )
+
+    @model_validator(mode="before")
+    @classmethod
+    def _migrate_score_threshold(cls, data: object) -> object:
+        """Migrate deprecated score_threshold into numeric_thresholds['overall_score']."""
+        if not isinstance(data, dict):
+            return data
+        score_threshold = data.get("score_threshold")
+        if score_threshold is not None:
+            _entities_logger.warning(
+                "'score_threshold' is deprecated. "
+                "Use 'numeric_thresholds: {overall_score: <value>}' instead."
+            )
+            numeric_thresholds = dict(data.get("numeric_thresholds") or {})
+            if "overall_score" not in numeric_thresholds:
+                numeric_thresholds["overall_score"] = score_threshold
+            data = {
+                **data,
+                "numeric_thresholds": numeric_thresholds,
+                "score_threshold": None,
+            }
+        return data
 
     @model_validator(mode="after")
     def validate_evaluation_input(self, info: ValidationInfo) -> Self:
@@ -145,6 +174,7 @@ class TurnItem(BaseModel):
     knowledge: list[str]
     profile: str
     user_goal: str
+    tool_calls: list[ToolCall] | None = None
 
 
 class ConvoItem(BaseModel):
@@ -198,6 +228,16 @@ class ConversationEvaluation(BaseModel):
     turn_scores: list[TurnEvaluation]
 
 
+class ErrorScenarioMapping(BaseModel):
+    """Maps a unique error to the scenarios that triggered it."""
+
+    error_index: int
+    unique_error_id: str
+    error_description: str
+    severity: str
+    scenario_ids: list[str]
+
+
 class Evaluation(BaseModel):
     """Top-level evaluation output file."""
 
@@ -208,3 +248,4 @@ class Evaluation(BaseModel):
     simulation_id: str
     conversations: list[ConversationEvaluation]
     unique_errors: list[UniqueError]
+    error_scenario_mappings: list[ErrorScenarioMapping] = Field(default_factory=list)

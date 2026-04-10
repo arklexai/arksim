@@ -1,0 +1,279 @@
+---
+title: "Schema Reference"
+description: "JSON and YAML schemas used by ArkSim for scenarios, simulation output, evaluation output, and run configuration."
+---
+
+This page documents the structure of the main artifacts used and produced by ArkSim: scenario files, simulation output, evaluation output, and the run configuration file. Use it when building integrations, writing custom tooling, or debugging pipeline outputs.
+
+<Tip>
+  For agent connection details (Chat Completions, A2A, and config), see [Agent configuration](./simulate-conversation#agent-configuration).
+</Tip>
+---
+
+## Scenarios (`scenarios.json`)
+
+The scenario file is a single JSON document that lists scenario objects. Each scenario describes one simulated user and one conversation session. It is the input to [Simulation](./simulate-conversation) and is referenced during [Evaluation](./evaluate-conversation).
+
+### Schema
+
+<ResponseField name="schema_version" type="string" required>
+  Schema version identifier. Use `"v1"`.
+</ResponseField>
+
+<ResponseField name="scenarios" type="list[Scenario]" required>
+  List of scenario objects.
+
+  <Expandable title="Scenario fields">
+    <ResponseField name="scenario_id" type="string" required>
+      Unique identifier for this scenario.
+    </ResponseField>
+    <ResponseField name="user_id" type="string" required>
+      Unique identifier for the simulated user.
+    </ResponseField>
+    <ResponseField name="goal" type="string" required>
+      The user's conversational goal, passed into the simulated user prompt. Write in second person ("You want to...").
+    </ResponseField>
+    <ResponseField name="agent_context" type="string" required>
+      Context about the agent (e.g. company or product overview) supplied to the simulated user.
+    </ResponseField>
+    <ResponseField name="user_profile" type="string" required>
+      Natural-language persona description for the simulated user. Used directly in the simulation prompt. Write in second person ("You are...").
+    </ResponseField>
+    <ResponseField name="knowledge" type="list[KnowledgeItem]">
+      Knowledge items injected into the simulated user's context. Can be an empty list. Each item has:
+
+      - `content` (string, required): Text used as the user's background knowledge. (Additional keys such as `metadata` may be present in the file for traceability but are not part of the loaded model.)
+    </ResponseField>
+    <ResponseField name="origin" type="dict[string, Any]">
+      Provenance metadata (e.g. `target_agent_capability`, `goal_raw`, `user_attributes`). Not used by the simulator or evaluator.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+---
+
+## Simulation output (`simulation.json`)
+
+Written by `arksim simulate` or the simulation step of `arksim simulate-evaluate`. Path is set by `output_file_path` in your config.
+
+### Schema
+
+<ResponseField name="schema_version" type="string" required>
+  Output schema version (e.g. `"v1"`).
+</ResponseField>
+
+<ResponseField name="simulator_version" type="string" required>
+  ArkSim package version that produced this file.
+</ResponseField>
+
+<ResponseField name="simulation_id" type="string" required>
+  UUID that uniquely identifies this simulation run. Referenced by the evaluation output as `simulation_id` to link the two artifacts.
+</ResponseField>
+
+<ResponseField name="generated_at" type="string" required>
+  ISO-8601 UTC timestamp when the file was generated.
+</ResponseField>
+
+<ResponseField name="conversations" type="list[Conversation]" required>
+  One record per simulated conversation.
+
+  <Expandable title="Conversation fields">
+    <ResponseField name="conversation_id" type="string" required>
+      Unique ID for this conversation.
+    </ResponseField>
+    <ResponseField name="scenario_id" type="string" required>
+      ID of the scenario used for this conversation.
+    </ResponseField>
+    <ResponseField name="conversation_history" type="list[Message]" required>
+      Ordered list of messages in the conversation.
+
+      Each message has: `turn_id` (int), `message_id` (string), `role` (`"simulated_user"` or `"assistant"`), `content` (string).
+    </ResponseField>
+    <ResponseField name="simulated_user_prompt" type="SimulatedUserPrompt" required>
+      Rendered simulated user prompt and variables used to drive the conversation.
+
+      - `simulated_user_prompt_template`: The Jinja template used for the simulated user system prompt.
+      - `variables`: Dict used to render the template. Keys are `scenario.agent_context`, `scenario.goal`, `scenario.knowledge`, and `scenario.user_profile`.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+---
+
+## Evaluation output (`evaluation.json`)
+
+Written by `arksim evaluate` or the evaluation step of `arksim simulate-evaluate`. Path is `{output_dir}/evaluation.json`.
+
+### Schema
+
+<ResponseField name="schema_version" type="string" required>
+  Output schema version (e.g. `"v1.1"`).
+</ResponseField>
+
+<ResponseField name="generated_at" type="string" required>
+  ISO-8601 UTC timestamp when the file was generated.
+</ResponseField>
+
+<ResponseField name="evaluator_version" type="string" required>
+  ArkSim package version that produced this file.
+</ResponseField>
+
+<ResponseField name="evaluation_id" type="string" required>
+  UUID that uniquely identifies this evaluation run. Generated fresh for each `arksim evaluate` or `arksim simulate-evaluate` invocation.
+</ResponseField>
+
+<ResponseField name="simulation_id" type="string" required>
+  UUID of the simulation run that produced the conversations being evaluated. Copied from `simulation.json` to link the two artifacts.
+</ResponseField>
+
+<ResponseField name="conversations" type="list[ConversationEvaluation]" required>
+  One record per conversation evaluated.
+
+  <Expandable title="ConversationEvaluation fields">
+    <ResponseField name="conversation_id" type="string" required>
+      ID of the conversation.
+    </ResponseField>
+    <ResponseField name="goal_completion_score" type="float" required>
+      How fully the user goal was achieved (0–1).
+    </ResponseField>
+    <ResponseField name="goal_completion_reason" type="string" required>
+      Explanation for the goal completion score.
+    </ResponseField>
+    <ResponseField name="turn_success_ratio" type="float" required>
+      Proportion of turns with no detected behavior failure (0–1).
+    </ResponseField>
+    <ResponseField name="overall_agent_score" type="float" required>
+      Combined score for the conversation (0–1). Computed from turn_success_ratio and goal_completion_score.
+    </ResponseField>
+    <ResponseField name="evaluation_status" type="string" required>
+      One of: `completed`, `partial_failure`, `failed`.
+    </ResponseField>
+    <ResponseField name="turn_scores" type="list[TurnEvaluation]" required>
+      Per-turn scores and failure labels.
+
+      Each turn has: `turn_id`, `scores` (list of metric results with `name`, `value`, optional `reason`, optional `metadata`), `turn_score`, `turn_behavior_failure`, `turn_behavior_failure_reason`, `qual_scores`, `unique_error_ids`.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="unique_errors" type="list[UniqueError]" required>
+  Deduplicated behavior failures across all conversations.
+
+  <Expandable title="UniqueError fields">
+    <ResponseField name="unique_error_id" type="string" required>
+      Unique ID (e.g. UUID) for this error pattern.
+    </ResponseField>
+    <ResponseField name="behavior_failure_category" type="string" required>
+      Category of the failure (e.g. lack of specific information, repetition, false information).
+    </ResponseField>
+    <ResponseField name="unique_error_description" type="string" required>
+      Human-readable description of the error.
+    </ResponseField>
+    <ResponseField name="severity" type="string">
+      Default `"medium"`. Severity of the error.
+    </ResponseField>
+    <ResponseField name="occurrences" type="list[Occurrence]" required>
+      List of (conversation_id, turn_id) where this error occurred.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="error_scenario_mappings" type="list[ErrorScenarioMapping]">
+  Maps each unique error to the scenarios that triggered it. Empty when no errors are detected or no scenario file was provided. Added in schema version `v1.1`.
+
+  <Expandable title="ErrorScenarioMapping fields">
+    <ResponseField name="error_index" type="integer" required>
+      Position in the list, ordered by severity (1 = most severe) then by occurrence count.
+    </ResponseField>
+    <ResponseField name="unique_error_id" type="string" required>
+      Links to the matching entry in `unique_errors`.
+    </ResponseField>
+    <ResponseField name="error_description" type="string" required>
+      Human-readable description of the error.
+    </ResponseField>
+    <ResponseField name="severity" type="string" required>
+      `critical`, `high`, `medium`, or `low`.
+    </ResponseField>
+    <ResponseField name="scenario_ids" type="list[string]" required>
+      IDs of scenarios that triggered this error, sorted alphabetically.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+---
+
+## Focus files (`focus/error_N.json`, `focus/all_failures.json`)
+
+Written to `{output_dir}/focus/` when unique errors are detected and a scenario file is provided. Each file uses the standard [Scenario input](#scenarios-scenariosjson) schema.
+
+<ResponseField name="schema_version" type="string" required>
+  Copied from the original scenario file (e.g. `"v1"`).
+</ResponseField>
+
+<ResponseField name="scenarios" type="list[Scenario]" required>
+  Filtered subset of the original scenarios. For `error_N.json`, only scenarios that triggered error group N. For `all_failures.json`, the union of all failing scenarios (deduplicated).
+</ResponseField>
+
+Files are numbered by severity (1 = highest) then by occurrence count. See [Focus Files](./evaluate-conversation#focus-files) for usage.
+
+---
+
+## Run configuration (`config.yaml`)
+
+The same YAML file can be used for `arksim simulate`, `arksim evaluate`, and `arksim simulate-evaluate`. For `simulate-evaluate`, simulation and evaluation settings are merged from a single config.
+
+### Agent configuration
+
+| Key              | Type   | Description                                                                                                    |
+| ---------------- | ------ | -------------------------------------------------------------------------------------------------------------- |
+| `agent_config`   | object | Inline agent configuration. See [Agent configuration](./simulate-conversation#agent-configuration) for `chat_completions` and `a2a`. |
+
+### Simulation keys
+
+Used by `simulate` and the simulation phase of `simulate-evaluate`.
+
+| Key                              | Type          | Description                                                    |
+| -------------------------------- | ------------- | -------------------------------------------------------------- |
+| `scenario_file_path`             | string        | Path to `scenarios.json`.                                      |
+| `num_conversations_per_scenario` | int           | Number of conversations to run per scenario.                   |
+| `max_turns`                      | int           | Maximum turns per conversation.                                |
+| `output_file_path`               | string        | Path where `simulation.json` is written.                       |
+| `simulated_user_prompt_template` | string        | Optional. Jinja template for the simulated user system prompt. |
+| `model`                          | string        | LLM model (e.g. `gpt-5.1`).                                    |
+| `provider`                       | string        | LLM provider (e.g. `openai`).                                  |
+| `num_workers`                    | string \| int | Parallel workers (default `50`). Set `"auto"` to auto-scale.   |
+
+### Evaluation keys
+
+Used by `evaluate` and the evaluation phase of `simulate-evaluate`.
+
+| Key                         | Type          | Description                                                                                                        |
+| --------------------------- | ------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `scenario_file_path`        | string        | Path to `scenarios.json` (for goal and knowledge during evaluation).                                               |
+| `simulation_file_path`      | string        | Path to simulation output (`simulation.json`). Omitted when running `simulate-evaluate` (output passed in memory). |
+| `output_dir`                | string        | Directory for evaluation results; `evaluation.json` and optional reports are written here.                         |
+| `custom_metrics_file_paths` | list[string]  | Paths to Python files defining custom metrics.                                                                     |
+| `metrics_to_run`            | list[string]  | Names of built-in metrics to run. If empty, all built-in metrics run.                                              |
+| `generate_html_report`      | boolean       | Whether to generate `final_report.html`.                                                                           |
+| `numeric_thresholds`        | dict[string, float] \| null | Per-metric thresholds on each metric's native scale. Keys are metric names; values are minimum required scores. Built-in turn-level metrics use a 1–5 scale (mean across turns per conversation). `goal_completion` and `overall_score` use 0–1 and are compared directly. |
+| `qualitative_failure_labels` | dict[string, list[string]] \| null | Hard-gate failure labels for qualitative metrics. Keys are metric names; values are lists of labels that trigger failure (e.g. `agent_behavior_failure: ["false information", "disobey user request"]`). Any evaluated turn whose label appears in the list fails the run with exit code 1. |
+| `model`                     | string        | LLM model for scoring.                                                                                             |
+| `provider`                  | string        | LLM provider.                                                                                                      |
+| `num_workers`               | string \| int | Parallel workers (default `50`). Set `"auto"` to auto-scale.                                                       |
+
+<Note>
+  `model`, `provider`, and `num_workers` are shared across simulation and evaluation when both run from the same config.
+</Note>
+
+---
+
+## Exit codes
+
+The `arksim` CLI exits with one of the following codes, suitable for use in CI/CD pipelines:
+
+| Code | Constant           | When it is returned                                                                 |
+| ---- | ------------------ | ----------------------------------------------------------------------------------- |
+| `0`  | `EXIT_OK`          | Run completed successfully and all threshold checks passed.                         |
+| `1`  | `EXIT_EVAL_FAILED` | Evaluation completed but one or more threshold checks failed (`numeric_thresholds` or `qualitative_failure_labels`). |
+| `2`  | `EXIT_CONFIG_ERROR`| Invalid or missing configuration (bad YAML, unknown keys, missing required fields). |
+| `3`  | `EXIT_INTERNAL_ERROR` | Unexpected internal error.                                                       |

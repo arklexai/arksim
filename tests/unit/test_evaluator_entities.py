@@ -10,6 +10,7 @@ from arksim.evaluator import ChatMessage, QuantResult
 from arksim.evaluator.entities import (
     ConversationEvaluation,
     ConvoItem,
+    EvaluationInput,
     EvaluationParams,
     Occurrence,
     TurnEvaluation,
@@ -70,6 +71,7 @@ class TestAgentMetrics:
             "faithfulness",
             "goal_completion",
             "agent_behavior_failure",
+            "tool_call_behavior_failure",
         ]
         assert set(metrics) == set(expected)
 
@@ -88,10 +90,18 @@ class TestAgentBehaviorFailureType:
         """Test NO_FAILURE type."""
         assert AgentBehaviorFailureType.NO_FAILURE.value == "no failure"
 
+    def test_unsafe_action(self) -> None:
+        """Test UNSAFE_ACTION type."""
+        assert AgentBehaviorFailureType.UNSAFE_ACTION.value == "unsafe action"
+
+    def test_unsafe_state(self) -> None:
+        """Test UNSAFE_STATE type."""
+        assert AgentBehaviorFailureType.UNSAFE_STATE.value == "unsafe state"
+
     def test_all_failure_types_defined(self) -> None:
         """Test all expected failure types are defined."""
         types = [t.value for t in AgentBehaviorFailureType]
-        assert len(types) == 6
+        assert len(types) == 8
 
 
 class TestEvaluationParams:
@@ -340,3 +350,46 @@ class TestUniqueError:
                 occurrences=[],
             )
             assert item.severity == sev
+
+
+# ── EvaluationInput._migrate_score_threshold ─────────────
+
+
+class TestMigrateScoreThreshold:
+    """Tests for deprecated score_threshold → numeric_thresholds migration."""
+
+    def test_score_threshold_migrated_to_numeric_thresholds(self) -> None:
+        """score_threshold is moved into numeric_thresholds['overall_score']."""
+        ei = EvaluationInput(score_threshold=0.7)
+        assert ei.numeric_thresholds == {"overall_score": 0.7}
+        assert ei.score_threshold is None
+
+    def test_score_threshold_does_not_override_existing_overall_score(self) -> None:
+        """If overall_score already set in numeric_thresholds, score_threshold is ignored."""
+        ei = EvaluationInput(
+            score_threshold=0.5,
+            numeric_thresholds={"overall_score": 0.9},
+        )
+        assert ei.numeric_thresholds["overall_score"] == 0.9
+
+    def test_score_threshold_preserves_other_numeric_thresholds(self) -> None:
+        """Existing numeric_thresholds keys are preserved during migration."""
+        ei = EvaluationInput(
+            score_threshold=0.6,
+            numeric_thresholds={"faithfulness": 3.0},
+        )
+        assert ei.numeric_thresholds["faithfulness"] == 3.0
+        assert ei.numeric_thresholds["overall_score"] == 0.6
+
+    def test_none_score_threshold_is_no_op(self) -> None:
+        """When score_threshold is None, numeric_thresholds is unchanged."""
+        ei = EvaluationInput(numeric_thresholds={"faithfulness": 3.5})
+        assert ei.numeric_thresholds == {"faithfulness": 3.5}
+        assert ei.score_threshold is None
+
+    def test_non_dict_data_returned_as_is(self) -> None:
+        """_migrate_score_threshold returns non-dict data unchanged (e.g. model instance)."""
+        # Passing an already-constructed instance triggers mode="before" with the object
+        existing = EvaluationInput()
+        result = EvaluationInput._migrate_score_threshold(existing)
+        assert result is existing

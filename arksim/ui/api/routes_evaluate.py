@@ -25,7 +25,8 @@ class EvaluateRequest(BaseModel):
     custom_metrics_file_paths: list[str] = []
     metrics_to_run: list[str] | None = None
     generate_html_report: bool = True
-    score_threshold: float | None = None
+    numeric_thresholds: dict[str, float] | None = None
+    qualitative_failure_labels: dict[str, list[str]] | None = None
 
 
 @router.post("/evaluate")
@@ -106,7 +107,8 @@ def _run_evaluation(app_state: AppState, body: EvaluateRequest) -> None:
                 metrics_to_run=body.metrics_to_run or [],
                 output_dir=output_dir,
                 generate_html_report=body.generate_html_report,
-                score_threshold=body.score_threshold,
+                numeric_thresholds=body.numeric_thresholds,
+                qualitative_failure_labels=body.qualitative_failure_labels,
             )
 
             from arksim.evaluator import run_evaluation
@@ -118,14 +120,44 @@ def _run_evaluation(app_state: AppState, body: EvaluateRequest) -> None:
 
             result = run_evaluation(settings, on_progress=_on_progress)
 
+            from arksim.evaluator import (
+                check_numeric_thresholds,
+                check_qualitative_failure_labels,
+            )
+
+            threshold_error: str | None = None
+            if body.numeric_thresholds or body.qualitative_failure_labels:
+                numeric_ok = check_numeric_thresholds(
+                    result, body.numeric_thresholds or {}
+                )
+                qual_ok = check_qualitative_failure_labels(
+                    result, body.qualitative_failure_labels or {}
+                )
+                if not numeric_ok or not qual_ok:
+                    parts = []
+                    if not numeric_ok:
+                        parts.append("numeric thresholds")
+                    if not qual_ok:
+                        parts.append("qualitative failure labels")
+                    threshold_error = (
+                        f"Threshold checks failed: {' and '.join(parts)} did not pass."
+                    )
+
             with app_state._lock:
                 if app_state.evaluate.status == "cancelled":
                     return
                 app_state.evaluate.status = "done"
                 app_state.evaluate.output_dir = output_dir
                 app_state.evaluate.result = result
+                if threshold_error:
+                    app_state.evaluate.error = threshold_error
 
-            app_state.broadcast_status("evaluate", "done", output_dir=output_dir)
+            app_state.broadcast_status(
+                "evaluate",
+                "done",
+                output_dir=output_dir,
+                error=threshold_error,
+            )
 
         except InterruptedError:
             pass  # Already marked cancelled by the cancel endpoint

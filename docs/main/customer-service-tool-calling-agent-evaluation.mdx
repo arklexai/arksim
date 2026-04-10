@@ -1,0 +1,199 @@
+---
+title: "Customer Service Tool-Calling Agent"
+description: "End-to-end example of using ArkSim to evaluate a tool-calling customer service agent with trajectory matching against expected tool call sequences."
+---
+
+## Overview
+
+This example walks through running ArkSim against a customer service agent that uses tool calling (OpenAI Agents SDK) backed by a SQLite database. Unlike the chat-completions examples, this agent makes structured tool calls that arksim captures and evaluates using **trajectory matching**, a deterministic check that compares the agent's actual tool calls against expected tool calls defined in each scenario.
+
+The agent handles customer lookup, order management, product search, and identity verification for a fictional online store.
+
+---
+
+## Tools
+
+| Tool | Description |
+| ---- | ----------- |
+| `lookup_customer` | Look up a customer by email address |
+| `get_order` | Get order details by order ID |
+| `search_products` | Search the product catalog by keyword and optional price filter |
+| `cancel_order` | Cancel a processing order (requires confirmation) |
+| `send_verification_code` | Send a one-time verification code to a customer's email |
+| `verify_customer` | Verify a customer's identity using their email and code |
+
+---
+
+## Scenarios
+
+The example ships with 7 scenarios in `scenarios.json` covering all 4 trajectory match modes with authentication flow variations:
+
+| Scenario | Mode | What it tests |
+| -------- | ---- | ------------- |
+| `order_status_check` | `contains` | Auth + order lookup, extras allowed |
+| `product_search_with_budget` | `within` | Agent restricted to search only |
+| `nonexistent_order_lookup` | `contains` | Auth + error path, extras allowed |
+| `auth_cancel_order` | `strict` | Full auth flow in exact order |
+| `auth_check_order` | `unordered` | Auth + lookup, any order |
+| `auth_product_search` | `contains` | Auth required, extras allowed |
+| `auth_account_lookup` | `within` | Agent restricted to auth + lookup tools |
+
+Scenarios are defined in `scenarios.json` in the example directory and can be edited or extended to reflect your own use case.
+
+---
+
+## Trajectory Matching
+
+Each scenario defines expected tool calls using the `assertions` field:
+
+```json
+{
+  "assertions": [
+    {
+      "type": "tool_calls",
+      "expected": [
+        {"name": "send_verification_code"},
+        {"name": "verify_customer"},
+        {"name": "get_order"},
+        {"name": "cancel_order"}
+      ],
+      "match_mode": "strict"
+    }
+  ]
+}
+```
+
+### Match Modes
+
+| Mode | Behavior |
+| ---- | -------- |
+| `strict` | Exact order and count |
+| `unordered` | Same set, any order |
+| `contains` | Agent must call at least the expected tools (extras allowed) |
+| `within` | Agent can only call tools from the expected set (may skip some) |
+
+### Argument Match Modes
+
+Each expected tool call can optionally specify how arguments are compared:
+
+| Mode | Behavior |
+| ---- | -------- |
+| `ignore` (default) | Only tool names compared |
+| `exact` | Arguments must match exactly |
+| `partial` | Expected args must appear in actual args |
+
+Trajectory matching runs between turn-level evaluation and goal completion, so failures are reflected in the Turn Success Ratio.
+
+---
+
+<Note>
+  Before following these steps, ensure [ArkSim is installed](./installation) (`pip install arksim`).
+</Note>
+
+## Running the Example
+
+<Steps>
+  <Step title="Set your API key">
+    ```bash
+    export OPENAI_API_KEY="<YOUR_OPENAI_API_KEY>"
+    ```
+  </Step>
+  <Step title="Install agent dependencies">
+    The agent uses the OpenAI Agents SDK:
+
+    ```bash
+    pip install openai-agents
+    ```
+  </Step>
+  <Step title="Run simulation and evaluation">
+    From the `examples/customer-service` directory:
+
+    ```bash
+    cd examples/customer-service
+    arksim simulate-evaluate config.yaml
+    ```
+
+    Or run simulation and evaluation separately:
+
+    ```bash
+    arksim simulate config_simulate.yaml
+    arksim evaluate config_evaluate.yaml
+    ```
+  </Step>
+</Steps>
+
+### Programmatic Usage
+
+You can also run the full pipeline as a Python script with custom metrics and threshold checks:
+
+```bash
+cd examples/customer-service
+python run_pipeline.py
+```
+
+See `run_pipeline.py` for the full implementation.
+
+---
+
+## Custom Metrics
+
+The example includes four domain-specific metrics in `custom_metrics.py`:
+
+**Quantitative (0-5 scale):**
+- **verification_compliance** - Did the agent verify identity before sensitive actions?
+- **tool_usage_efficiency** - Did the agent select the right tools without redundancy?
+
+**Qualitative (categorical labels):**
+- **unauthorized_action** (`clean` | `violated`) - Did the agent perform actions without customer consent?
+- **data_privacy** (`compliant` | `leaked` | `over_collected`) - Did the agent handle customer data appropriately?
+
+---
+
+## Configuration
+
+The example uses a single config file for both simulation and evaluation:
+
+```yaml
+# AGENT CONFIGURATION
+agent_config:
+  agent_type: custom
+  agent_name: customer-service
+  custom_config:
+    module_path: ./custom_agent.py
+
+# SIMULATION SETTINGS
+scenario_file_path: ./scenarios.json
+num_conversations_per_scenario: 2
+max_turns: 3
+output_file_path: ./results/simulation/simulation.json
+
+# EVALUATION SETTINGS
+output_dir: ./results/evaluation
+
+custom_metrics_file_paths:
+  - ./custom_metrics.py
+
+metrics_to_run:
+  - helpfulness
+  - agent_behavior_failure
+  - tool_call_behavior_failure
+
+generate_html_report: true
+
+# SHARED SETTINGS
+model: gpt-4.1-mini
+provider: openai
+num_workers: 50
+```
+
+---
+
+## Output
+
+Results are written under the example directory:
+
+| Location | Contents |
+| -------- | -------- |
+| `./results/simulation/simulation.json` | Simulated conversations from the simulation step |
+| `./results/evaluation/evaluation.json` | Evaluation results (per-turn and per-conversation scores, unique errors) |
+| `./results/evaluation/final_report.html` | Interactive HTML report for browsing and sharing results |

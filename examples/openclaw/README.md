@@ -64,7 +64,7 @@ curl -sS "http://127.0.0.1:18789/v1/chat/completions" \
 
 ## Configuration
 
-For more information on configuration, see the [ArkSim documentation](https://docs.arklex.ai/overview).
+For more information on configuration, see the [ArkSim documentation](https://docs.arklex.ai/main/overview).
 
 ## Files
 

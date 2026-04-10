@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+from typing import Annotated, Any, Literal
+
 from pydantic import BaseModel, Field, model_validator
 
 from arksim.utils.output import load_json_file
@@ -10,6 +12,40 @@ class KnowledgeItem(BaseModel):
     """Knowledge used in a scenario."""
 
     content: str = ""
+
+
+class ExpectedToolCall(BaseModel):
+    """An expected tool call for trajectory matching.
+
+    Simplified model (no id/result/error) since expected calls only
+    describe what the agent should call, not the outcomes.
+    """
+
+    name: str
+    arguments: dict[str, Any] = {}
+    arg_match_mode: Literal["exact", "ignore", "partial"] = "ignore"
+
+
+# ── Assertion types ──
+
+
+class AssertionType:
+    """Constants for assertion type discriminators."""
+
+    TOOL_CALLS = "tool_calls"
+
+
+class ToolCallsAssertion(BaseModel):
+    """Assert expected tool calls with trajectory matching."""
+
+    type: Literal["tool_calls"]
+    expected: list[ExpectedToolCall]
+    match_mode: Literal["strict", "unordered", "contains", "within"] = "unordered"
+
+
+# Discriminated union on the "type" field. When adding new assertion
+# types, use Union: Annotated[TypeA | TypeB, Field(discriminator="type")]
+Assertion = Annotated[ToolCallsAssertion, Field(discriminator="type")]
 
 
 class Scenario(BaseModel):
@@ -22,6 +58,14 @@ class Scenario(BaseModel):
     knowledge: list[KnowledgeItem] = []
     user_profile: str
     origin: dict = Field(default_factory=dict)
+    assertions: list[Assertion] = []
+
+    def find_assertion(self, assertion_type: str) -> ToolCallsAssertion | None:
+        """Return the first assertion matching the given type, or None."""
+        for a in self.assertions:
+            if a.type == assertion_type:
+                return a
+        return None
 
     @model_validator(mode="before")
     @classmethod

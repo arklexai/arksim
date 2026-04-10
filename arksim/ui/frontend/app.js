@@ -48,7 +48,7 @@ function arksim() {
       model: 'gpt-5.1',
       provider: 'openai',
       outputFilePath: '',
-      numConversations: 5,
+      numConversations: 1,
       maxTurns: 5,
       numWorkers: '50',
       evalNumWorkers: '50',
@@ -59,7 +59,7 @@ function arksim() {
     agentConfigFilePath: '',
     model: 'gpt-5.1',
     provider: 'openai',
-    numConversations: 5,
+    numConversations: 1,
     maxTurns: 5,
     numWorkers: '50',
     outputFilePath: '',
@@ -71,7 +71,8 @@ function arksim() {
     evalSimulationFilePath: '',
     evalNumWorkers: '50',
     generateHtmlReport: true,
-    scoreThreshold: '',
+    numericThresholds: '',
+    qualitativeFailureLabels: '',
     metricsToRun: [],
     customMetricsFilePaths: '',
 
@@ -312,7 +313,8 @@ function arksim() {
           provider: this.evalProvider || d.provider,
           num_workers: (this.evalNumWorkers || d.evalNumWorkers) === 'auto' ? 'auto' : parseInt(this.evalNumWorkers),
           generate_html_report: this.generateHtmlReport ?? d.generateHtmlReport,
-          score_threshold: this.scoreThreshold ? parseFloat(this.scoreThreshold) : null,
+          numeric_thresholds: this.numericThresholds ? JSON.parse(this.numericThresholds) : null,
+          qualitative_failure_labels: this.qualitativeFailureLabels ? JSON.parse(this.qualitativeFailureLabels) : null,
           metrics_to_run: this.metricsToRun.length > 0 ? this.metricsToRun : null,
           custom_metrics_file_paths: this.customMetricsFilePaths
             ? this.customMetricsFilePaths.split(',').map(s => s.trim()).filter(Boolean)
@@ -373,7 +375,8 @@ function arksim() {
         await this.loadScenarioFile();
       }
       this.generateHtmlReport = s.generate_html_report !== undefined ? s.generate_html_report : d.generateHtmlReport;
-      this.scoreThreshold = s.score_threshold != null ? String(s.score_threshold) : '';
+      this.numericThresholds = s.numeric_thresholds ? JSON.stringify(s.numeric_thresholds) : '';
+      this.qualitativeFailureLabels = s.qualitative_failure_labels ? JSON.stringify(s.qualitative_failure_labels) : '';
       this.metricsToRun = Array.isArray(s.metrics_to_run) ? [...s.metrics_to_run] : [];
       this.customMetricsFilePaths = Array.isArray(s.custom_metrics_file_paths)
         ? s.custom_metrics_file_paths.join(', ')
@@ -475,7 +478,8 @@ function arksim() {
         provider: this.evalProvider,
         num_workers: this.evalNumWorkers || 50,
         generate_html_report: this.generateHtmlReport,
-        score_threshold: this.scoreThreshold ? parseFloat(this.scoreThreshold) : undefined,
+        numeric_thresholds: this.numericThresholds ? JSON.parse(this.numericThresholds) : undefined,
+        qualitative_failure_labels: this.qualitativeFailureLabels ? JSON.parse(this.qualitativeFailureLabels) : undefined,
       };
       const savePath = path || null;
       const resp = await fetch('/api/fs/config', {
@@ -526,6 +530,7 @@ function arksim() {
         scenario_id: `scenario-${String(idx).padStart(3, '0')}`,
         user_id: `user-${String(idx).padStart(3, '0')}`,
         goal: '',
+        agent_context: '',
         _knowledgeText: '',
         user_profile: '',
         origin: { source: 'ui', method: 'manual' },
@@ -545,12 +550,13 @@ function arksim() {
     _scenariosToJson() {
       return {
         schema_version: '1.0',
-        items: this.scenarios.map((sc, i) => {
+        scenarios: this.scenarios.map((sc, i) => {
           const origin = { ...(sc.origin || { source: 'ui', method: 'manual' }) };
           return {
             scenario_id: sc.scenario_id || `scenario-${String(i + 1).padStart(3, '0')}`,
             user_id: sc.user_id || `user-${String(i + 1).padStart(3, '0')}`,
             goal: sc.goal,
+            agent_context: sc.agent_context || '',
             knowledge: (sc._knowledgeText || '').trim()
               ? [{ content: sc._knowledgeText.trim() }]
               : [],
@@ -566,6 +572,7 @@ function arksim() {
         scenario_id: item.scenario_id || `scenario-${String(i + 1).padStart(3, '0')}`,
         user_id: item.user_id || `user-${String(i + 1).padStart(3, '0')}`,
         goal: item.goal || '',
+        agent_context: item.agent_context || '',
         _knowledgeText: (item.knowledge || []).map(k => k.content || '').join('\n'),
         user_profile: item.user_profile || '',
         origin: item.origin || {},

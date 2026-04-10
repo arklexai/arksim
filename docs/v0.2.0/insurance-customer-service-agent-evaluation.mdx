@@ -1,0 +1,280 @@
+---
+title: "Insurance Customer Service Agent"
+description: "A walkthrough of running ArkSim against a customer service agent for an insurance company use case."
+---
+
+## Overview
+
+This example walks through running ArkSim against a customer service agent built for an insurance company (XYZ Insurance, part of XYZ Bank Group). The agent is designed to answer customer questions about insurance products and coverage, including topics like policy details, claims processes, deductibles, and coverage limits.
+
+The example includes two ready-to-run agent implementations you can test against out of the box, and a guide for plugging in your own agent once you're familiar with the setup.
+
+---
+
+## Example Agents
+
+<CardGroup cols={2}>
+  <Card icon="bolt" title="Option 1: OpenAI API">
+    A lightweight agent that calls the OpenAI API directly. Quick start with minimal setup.
+  </Card>
+  <Card icon="diagram-project" title="Option 2: OpenAI Agents SDK">
+    Agent built with the OpenAI Agents SDK, backed by an insurance knowledge base; supports A2A, Chat Completions, or custom agent connector.
+  </Card>
+</CardGroup>
+
+---
+
+## Scenarios
+
+The example ships with a set of pre-built scenarios in `scenarios.json` representing realistic insurance customer interactions. Each scenario defines a simulated user with a distinct persona, goal, and background knowledge drawn from insurance product documentation.
+
+The scenario goals are:
+
+- Learn how home insurance deductibles work, when to file a claim, and how they affect your premium and payout.
+- Get a denied water damage claim (water heater 17 years old; policy excludes tanks 15+) overturned or learn how to fight it, including legal options; push back if the agent only repeats the policy.
+- Renew Basic Form home insurance at the same price; push back if the agent upsells Broad or Comprehensive Form or extra features.
+- Get a clear recommendation and dollar amount for personal condo insurance as a first-time buyer, without lengthy needs questions.
+- Bundle home, two cars, and motorcycle with XYZ and get a specific savings number; resist needs questions or comparisons.
+
+Scenarios are defined in `scenarios.json` in the example directory and can be edited or extended to reflect your own use case.
+
+---
+
+<Note>
+  Before following either path, ensure [ArkSim is installed](./installation) (`pip install arksim`).
+</Note>
+
+## Option 1: OpenAI Agent
+
+This agent calls the OpenAI API directly, with no server setup required.
+
+<Steps>
+  <Step title="Set your API key">
+    ```bash
+    export OPENAI_API_KEY="<YOUR_OPENAI_API_KEY>"
+    ```
+  </Step>
+  <Step title="Run simulation and evaluation">
+    Run from the `examples/bank-insurance` directory:
+
+    ```bash
+    cd examples/bank-insurance
+    arksim simulate-evaluate config.yaml
+    ```
+  </Step>
+</Steps>
+
+---
+
+## Option 2: In-house Agent (OpenAI Agents SDK)
+
+This agent is a customer service agent built with the OpenAI Agents SDK, backed by an insurance knowledge base. It can be exposed via either the A2A Protocol or a Chat Completions-compatible endpoint.
+
+<Steps>
+  <Step title="Select agent config">
+    In the example directory, use the config file for your chosen interface:
+
+    - **A2A:** `config_a2a.yaml` (inline agent config; uses `${A2A_API_KEY}`)
+    - **Chat Completions:** `config_chat_completions.yaml` (inline agent config; uses `${AGENT_API_KEY}`)
+    - **Custom agent connector:** `config_custom.yaml` (loads agent directly as a Python class — no server needed)
+
+    Set the matching environment variable before running.
+  </Step>
+  <Step title="Install agent dependencies">
+    <Tabs>
+      <Tab title="uv">
+        ```bash
+        uv venv --python 3.11
+        source .venv/bin/activate
+        pip install -r examples/bank-insurance/agent_server/requirements.txt
+        ```
+      </Tab>
+      <Tab title="conda">
+        ```bash
+        conda create -n bank_venv python=3.11 -y
+        conda activate bank_venv
+        pip install -r examples/bank-insurance/agent_server/requirements.txt
+        ```
+      </Tab>
+    </Tabs>
+    Or from inside the example directory: `pip install -r agent_server/requirements.txt`
+  </Step>
+  <Step title="Start the agent server">
+    <Tabs>
+      <Tab title="A2A">
+        Exposes an A2A-compatible agent on port `9999`. Run from the repository root:
+
+        ```bash
+        export OPENAI_API_KEY="<YOUR_OPENAI_API_KEY>"
+        export A2A_API_KEY=1234-4567-8910
+        python -m examples.bank-insurance.agent_server.a2a.server
+        ```
+
+        Run from the repository root (or the directory that contains the `examples` package). If your layout differs, use the module path that resolves to `agent_server/a2a/server.py` under the bank-insurance example.
+      </Tab>
+      <Tab title="Chat Completions">
+        Exposes a Chat Completions–compatible endpoint on port `8888` at `/chat/completions`. Run from the repository root:
+
+        ```bash
+        export OPENAI_API_KEY="<YOUR_OPENAI_API_KEY>"
+        export AGENT_API_KEY=123456
+        python -m examples.bank-insurance.agent_server.chat_completions.server
+        ```
+
+        Run from the repository root (or the directory that contains the `examples` package). If your layout differs, use the module path that resolves to `agent_server/chat_completions/server.py` under the bank-insurance example.
+      </Tab>
+      <Tab title="Custom">
+        No server needed. The custom agent connector loads `custom_agent.py` directly as a Python class at runtime. Skip this step and proceed to run simulation.
+      </Tab>
+    </Tabs>
+  </Step>
+  <Step title="Run simulation and evaluation">
+    In a **new terminal**, from `examples/bank-insurance`, run the commands for the same interface you used in step 3. Use the same API key you set there.
+
+    <Tabs>
+      <Tab title="A2A">
+        ```bash
+        cd examples/bank-insurance
+        export A2A_API_KEY=1234-4567-8910
+        arksim simulate-evaluate config_a2a.yaml
+        ```
+      </Tab>
+      <Tab title="Chat Completions">
+        ```bash
+        cd examples/bank-insurance
+        export AGENT_API_KEY=123456
+        arksim simulate-evaluate config_chat_completions.yaml
+        ```
+      </Tab>
+      <Tab title="Custom">
+        No separate server terminal is needed. From `examples/bank-insurance`:
+
+        ```bash
+        cd examples/bank-insurance
+        export OPENAI_API_KEY="<YOUR_OPENAI_API_KEY>"
+        arksim simulate-evaluate config_custom.yaml
+        ```
+
+        Or run the full pipeline as a Python script:
+
+        ```bash
+        export OPENAI_API_KEY="<YOUR_OPENAI_API_KEY>"
+        python run_pipeline.py
+        ```
+      </Tab>
+    </Tabs>
+  </Step>
+</Steps>
+
+---
+
+## Running with Your Own Agent
+
+To test your own backend agent against these scenarios:
+
+- **Chat Completions:** Follow the comments in `agent_server/chat_completions/server.py` to swap in your own backend logic or point to your endpoint.
+- **A2A:** Implement your own A2A executor in `agent_server/a2a/agent_executor.py`.
+- **Custom:** Subclass `BaseAgent` and point `config_custom.yaml` at your module. See [Custom agent configuration](./simulate-conversation#connection-types) for details.
+
+Make sure the `agent_config` field in the config YAML is updated. Then run simulation and evaluation as above.
+
+<Tip>
+  See [Agent configuration](./simulate-conversation#agent-configuration) for supported protocols and how to configure agent connections.
+</Tip>
+
+---
+
+## Configuration
+
+The example uses a single config file for both simulation and evaluation.
+
+```yaml
+# AGENT CONFIGURATION
+
+agent_config:
+  agent_type: chat_completions
+  agent_name: bank-insurance
+  api_config:
+    endpoint: https://api.openai.com/v1/chat/completions
+    headers:
+      Content-Type: application/json
+      Authorization: "Bearer ${OPENAI_API_KEY}"
+    body:
+      model: gpt-5.1
+      messages:
+        - role: system
+          content: >-
+            You are a customer service chatbot for XYZ Bank insurance.
+            XYZ Insurance—a core business within XYZ Bank Group—is one of
+            Canada's leading providers of life, health, home, auto, and
+            travel insurance.
+
+            Rules:
+            1. Do not flip roles.
+            2. Avoid using bullet points or lists.
+            3. Never exceed 80 words.
+
+# SIMULATION SETTINGS
+# Path to the scenarios file
+scenario_file_path: ./scenarios.json
+
+# Number of conversations per scenario to generate
+num_conversations_per_scenario: 1
+
+# Maximum turns per conversation
+max_turns: 5
+
+# Output file path for simulation results
+output_file_path: ./results/simulation/simulation.json
+
+# Jinja template for the simulated user's system prompt
+simulated_user_prompt_template: null
+
+# EVALUATION SETTINGS
+
+# Output directory for evaluation results
+output_dir: ./results/evaluation
+
+# Paths to Python files defining custom
+# QuantitativeMetric or QualitativeMetric subclasses
+custom_metrics_file_paths:
+  - ./custom_metrics.py
+
+# Built-in metrics to run; if empty, all built-in metrics run
+metrics_to_run:
+  - faithfulness
+  - helpfulness
+  - coherence
+  - relevance
+  - goal_completion
+  - agent_behavior_failure
+
+# Generate HTML report
+generate_html_report: true
+
+# Exit with non-zero if any score is below this (0.0–1.0); null to disable
+score_threshold: null
+
+# SHARED SETTINGS
+
+# LLM model
+model: gpt-5.1
+
+# LLM provider
+provider: openai
+
+# Workers for parallel processing
+num_workers: 50
+```
+
+---
+
+## Output
+
+Results are written under the example directory:
+
+| Location                                 | Contents                                                                 |
+| ---------------------------------------- | ------------------------------------------------------------------------ |
+| `./results/simulation/simulation.json`   | Simulated conversations from the simulation step                         |
+| `./results/evaluation/evaluation.json`   | Evaluation results (per-turn and per-conversation scores, unique errors) |
+| `./results/evaluation/final_report.html` | Interactive HTML report for browsing and sharing results                 |

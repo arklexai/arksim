@@ -1,0 +1,16 @@
+recipe: default.v1
+
+language: en
+
+assistant_id: rasa_customer_support
+
+pipeline:
+  - name: CompactLLMCommandGenerator
+    llm:
+      model_group: openai_llm
+    flow_retrieval:
+      embeddings:
+        model_group: openai_embeddings
+
+policies:
+  - name: FlowPolicy

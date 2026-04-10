@@ -1,0 +1,7 @@
+# Dependencies for the traced agent variant (traced_agent.py).
+# The standard custom_agent.py only needs openai-agents.
+openai-agents>=0.0.7
+
+# For cross-process agents using HTTP export instead of direct injection,
+# also install the OTel SDK:
+#   pip install opentelemetry-sdk opentelemetry-exporter-otlp-proto-http

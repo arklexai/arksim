@@ -17,7 +17,7 @@ agent_config:
         - role: system
           content: >-
             You are a customer service chatbot for XYZ Bank insurance.
-            XYZ Insurance—a core business within XYZ Bank Group—is one of
+            XYZ Insurance, a core business within XYZ Bank Group, is one of
             Canada's leading providers of life, health, home, auto, and
             travel insurance.
 
@@ -49,3 +49,14 @@ provider: openai
 
 # Workers for parallel processing
 num_workers: 50
+
+# OTel trace receiver for capturing tool calls from agents that handle
+# tools internally (e.g. OpenAI function calling, LangChain agents).
+# Agents must set arksim.conversation_id and arksim.turn_id as span
+# or resource attributes for traces to route correctly.
+# See docs/main/tool-call-capture.mdx for full guide.
+# trace_receiver:
+#   enabled: true
+#   host: 127.0.0.1   # use 0.0.0.0 for container deployments
+#   port: 4318
+#   wait_timeout: 5  # seconds to wait for traces after each agent response

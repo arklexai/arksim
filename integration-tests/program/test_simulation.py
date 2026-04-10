@@ -11,6 +11,8 @@ import uuid
 
 import pytest
 
+from arksim.simulation_engine import SIMULATION_SCHEMA_VERSION
+
 from .conftest import OPENAI_MODEL, requires_openai
 
 pytestmark = [pytest.mark.integration, pytest.mark.timeout(300), requires_openai]
@@ -48,7 +50,7 @@ class TestSimulateWithChatCompletions:
         simulation = asyncio.run(run_simulation(simulation_input))
 
         assert isinstance(simulation, Simulation)
-        assert simulation.schema_version == "v1"
+        assert simulation.schema_version == SIMULATION_SCHEMA_VERSION
         assert simulation.simulation_id
         assert simulation.generated_at
 
@@ -73,7 +75,7 @@ class TestSimulateWithChatCompletions:
 
         loaded = Simulation.model_validate(data)
         assert len(loaded.conversations) == 3
-        assert loaded.schema_version == "v1"
+        assert loaded.schema_version == SIMULATION_SCHEMA_VERSION
 
 
 class TestSimulateWithCustomAgent:

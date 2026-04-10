@@ -1,15 +1,23 @@
 # SPDX-License-Identifier: Apache-2.0
 """Tests for the shared module loader utility."""
 
+from __future__ import annotations
+
 import sys
 import textwrap
 from pathlib import Path
 
 import pytest
 
-from arksim.utils.module_loader import load_module_from_file
+from arksim.utils.module_loader import _module_cache, load_module_from_file
 
 # ── Fixtures ────────────────────────────────────────────────────────────────
+
+
+@pytest.fixture(autouse=True)
+def _clear_module_cache() -> None:
+    """Clear the module cache between tests."""
+    _module_cache.clear()
 
 
 @pytest.fixture
@@ -65,14 +73,14 @@ class TestLoadModuleFromFile:
         assert hasattr(module, "HelloWorld")
         assert module.HelloWorld.greeting == "hello"
 
-    def test_unique_module_name(self, valid_module: Path) -> None:
-        """Each load produces a unique module name to avoid collisions."""
+    def test_cached_by_file_path(self, valid_module: Path) -> None:
+        """Same file path returns the same cached module."""
         mod1 = load_module_from_file(str(valid_module))
         mod2 = load_module_from_file(str(valid_module))
 
-        assert mod1.__name__ != mod2.__name__
+        assert mod1 is mod2
+        assert mod1.__name__ == mod2.__name__
         assert mod1.__name__.startswith("_arksim_")
-        assert mod2.__name__.startswith("_arksim_")
 
     def test_module_registered_in_sys_modules(self, valid_module: Path) -> None:
         module = load_module_from_file(str(valid_module))

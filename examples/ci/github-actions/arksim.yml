@@ -1,0 +1,154 @@
+# ArkSim CI – Agent Quality Gate
+# ─────────────────────────────────────────────────────────────────────────────
+# Copy this file to .github/workflows/arksim.yml in your repository.
+#
+# What this workflow does:
+#   1. Checks out your repo
+#   2. Installs your agent's dependencies
+#   3. Starts your agent as a background HTTP server
+#   4. Waits for the server health check to pass
+#   5. Runs `arksim simulate-evaluate` against it
+#   6. Fails the CI job if any quality threshold is not met
+#   7. Always uploads the HTML evaluation report as an artifact
+#
+# Exit codes from arksim:
+#   0  –  All evaluations passed
+#   1  –  Evaluation failed (a score/label threshold was not met)
+#   2  –  Config / usage error
+#   3  –  Internal / engine error
+#
+# Required GitHub secrets (repo → Settings → Secrets and variables → Actions):
+#   OPENAI_API_KEY   API key for the LLM ArkSim uses to evaluate your agent
+#   AGENT_API_KEY    (optional) API key your own agent server needs
+# ─────────────────────────────────────────────────────────────────────────────
+
+name: ArkSim Agent Quality Gate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  arksim:
+    name: Agent Quality Gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      # ── 1. Checkout ───────────────────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── 2. Python setup ───────────────────────────────────────────────────
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      # ── 3. Install dependencies ───────────────────────────────────────────
+      - name: Install ArkSim
+        run: pip install arksim
+
+      # TODO: adjust to your agent's dependency file
+      - name: Install agent dependencies
+        run: pip install -r requirements.txt
+
+      # ── 4. Start agent server ─────────────────────────────────────────────
+      # TODO: replace the command below with whatever starts your agent as an
+      #       HTTP server exposing an OpenAI-compatible chat completions endpoint.
+      #
+      # The endpoint URL must match `agent_config.api_config.endpoint` in
+      # arksim/config.yaml (default: http://localhost:8888/v1/chat/completions).
+      #
+      # Agent framework examples:
+      #
+      #   FastAPI / uvicorn:
+      #     uvicorn my_agent:app --host 0.0.0.0 --port 8888 &
+      #
+      #   LangChain + LangServe:
+      #     python -m uvicorn my_chain_server:app --port 8888 &
+      #
+      #   OpenAI Agents SDK:
+      #     python my_agent_server.py --port 8888 &
+      #
+      #   Google ADK:
+      #     adk api_server --port 8888 &
+      #
+      # The '&' runs the server in the background.
+      # The PID is saved so the cleanup step can stop it later.
+      - name: Start agent server
+        run: |
+          python my_agent_server.py --port 8888 > /tmp/agent_server.log 2>&1 &
+          echo $! > /tmp/agent_server.pid
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          # AGENT_API_KEY: ${{ secrets.AGENT_API_KEY }}
+
+      # ── 5. Wait for server health ─────────────────────────────────────────
+      # TODO: update the URL to match your agent's health/readiness endpoint.
+      #       If your server has no /health route, try /v1/models or another
+      #       lightweight endpoint that returns HTTP 200 when ready.
+      - name: Wait for agent to be healthy
+        run: |
+          echo "Waiting for agent server…"
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:8888/health > /dev/null 2>&1; then
+              echo "Agent is ready (attempt $i)"
+              exit 0
+            fi
+            echo "  attempt $i/30 - not ready, retrying in 2 s"
+            sleep 2
+          done
+          echo "Agent server did not become healthy within 60 s"
+          exit 1
+
+      # ── 6. Run ArkSim ─────────────────────────────────────────────────────
+      # TODO: point to your arksim config file
+      - name: Run ArkSim Quality Gates
+        run: arksim simulate-evaluate arksim/config.yaml
+        env:
+          # API key for the LLM ArkSim uses internally to run evaluations
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          # AGENT_API_KEY: ${{ secrets.AGENT_API_KEY }}
+
+      # ── 7. Upload artifacts ───────────────────────────────────────────────
+      # All artifacts are uploaded even when the job fails so you can
+      # inspect results regardless of whether the quality gate passed.
+
+      # HTML report - download this one artifact, unzip, and open in browser.
+      - name: Upload HTML report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: arksim-html-report
+          path: tests/arksim/results/evaluation/final_report.html
+          if-no-files-found: ignore
+
+      # Full results
+      - name: Upload full results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: arksim-full-results
+          path: tests/arksim/results/
+          if-no-files-found: ignore
+
+      # Agent server logs - useful for debugging startup failures or crashes
+      - name: Upload agent server logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: arksim-agent-server-logs
+          path: /tmp/agent_server.log
+          if-no-files-found: ignore
+
+      # ── 8. Stop agent server ──────────────────────────────────────────────
+      - name: Stop agent server
+        if: always()
+        run: |
+          if [ -f /tmp/agent_server.pid ]; then
+            kill "$(cat /tmp/agent_server.pid)" 2>/dev/null || true
+          fi

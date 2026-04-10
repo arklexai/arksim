@@ -1,0 +1,37 @@
+{
+    "schema_version": "v1",
+    "scenarios": [
+        {
+            "scenario_id": "happy_path",
+            "user_id": "user_patient",
+            "goal": "You have a straightforward question that the agent should be able to answer. Ask clearly, provide any details the agent requests, and evaluate whether the response is helpful and accurate.",
+            "agent_context": "Describe what your agent does and what it knows. This context is given to the simulated user so it knows what to expect from the agent. Leave empty if not applicable.",
+            "user_profile": "You are Alex, a 35-year-old software engineer. You are patient, detail-oriented, and technically literate. You communicate clearly and concisely. When you ask a question, you provide relevant context up front.",
+            "knowledge": []
+        },
+        {
+            "scenario_id": "out_of_scope",
+            "user_id": "user_impatient",
+            "goal": "You want help with something the agent is not designed to handle. Ask about an unrelated topic (e.g. medical advice, legal questions, or something clearly outside the agent's domain). A good agent should politely decline or redirect you rather than making something up.",
+            "agent_context": "",
+            "user_profile": "You are Jordan, a 28-year-old marketing manager. You are impatient and not very technical. You tend to ask vague questions and get frustrated when things are not immediately clear. You do not read instructions carefully.",
+            "knowledge": []
+        },
+        {
+            "scenario_id": "ambiguous_intent",
+            "user_id": "user_casual",
+            "goal": "You have a request that could be interpreted multiple ways. State it vaguely on purpose. If the agent picks one interpretation and runs with it, ask about the other interpretation. A good agent should ask for clarification before committing to an answer.",
+            "agent_context": "",
+            "user_profile": "You are Sam, a 42-year-old small business owner. You are friendly but imprecise with language. You often say things like 'the usual thing' or 'you know what I mean' and expect the other person to figure it out.",
+            "knowledge": []
+        },
+        {
+            "scenario_id": "multi_step",
+            "user_id": "user_patient",
+            "goal": "You have a goal that requires multiple steps to accomplish. Start by explaining what you want at a high level. When the agent responds, ask a follow-up question to clarify one of the details. Then change your mind about one aspect and ask the agent to adjust. A good agent should track context across turns and handle the revision gracefully.",
+            "agent_context": "",
+            "user_profile": "You are Alex, a 35-year-old software engineer. You are patient, detail-oriented, and technically literate. You communicate clearly and concisely. When you ask a question, you provide relevant context up front.",
+            "knowledge": []
+        }
+    ]
+}

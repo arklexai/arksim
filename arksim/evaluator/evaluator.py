@@ -9,16 +9,23 @@ from collections import Counter, defaultdict
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
+from typing import TYPE_CHECKING
 
 from tqdm import tqdm
 
 from arksim.llms.chat import LLM
 from arksim.scenario import Scenarios
+from arksim.scenario.entities import AssertionType, ExpectedToolCall
+
+if TYPE_CHECKING:
+    from arksim.scenario.entities import Scenario
+
+    from .entities import ErrorScenarioMapping
 from arksim.simulation_engine import Conversation, Simulation
 from arksim.utils.module_loader import load_module_from_file
 from arksim.utils.output import load_json_file, save_json_file
 
-from .base_metric import ChatMessage, QualitativeMetric, QuantitativeMetric
+from .base_metric import ChatMessage, QualitativeMetric, QualResult, QuantitativeMetric
 from .entities import (
     ConversationEvaluation,
     ConvoItem,
@@ -34,13 +41,24 @@ from .evaluate import (
     evaluate_goal_completion,
     evaluate_turn,
 )
-from .utils.constants import SCORE_NOT_COMPUTED, score_label
-from .utils.enums import AgentBehaviorFailureType, EvaluationOutcomes
+from .trajectory_matching import match_trajectory
+from .utils.constants import (
+    SCORE_NOT_COMPUTED,
+    SEVERITY_RANK,
+    SKIP_OUTCOMES,
+    score_label,
+)
+from .utils.enums import (
+    AGENT_BEHAVIOR_FAILURE_SEVERITY,
+    AgentBehaviorFailureType,
+    AgentMetrics,
+    EvaluationOutcomes,
+)
 
 logger = logging.getLogger(__name__)
 
 
-EVALUATION_SCHEMA_VERSION = "v1"
+EVALUATION_SCHEMA_VERSION = "v1.1"
 EVALUATOR_VERSION = "v1"
 
 
@@ -49,13 +67,27 @@ class Evaluator:
         self,
         params: EvaluationParams,
         llm: LLM | None = None,
+        scenarios: Scenarios | None = None,
     ) -> None:
         self.params = params
         self.llm = llm
+        self.scenarios = scenarios
         self.evaluation_results: Evaluation | None = None
         self.total_turns: int = 0
         self.total_conversations: int = 0
         self.chat_id_to_label: dict[str, str] = {}
+        self._conv_to_scenario: dict[str, str] = {}
+        # Build scenario_id -> (expected_tool_calls, match_mode) mapping
+        self._scenario_expected: dict[str, tuple[list[ExpectedToolCall], str]] = {}
+        if scenarios:
+            for s in scenarios.scenarios:
+                tc_assertion = s.find_assertion(AssertionType.TOOL_CALLS)
+                if tc_assertion:
+                    self._scenario_expected[s.scenario_id] = (
+                        tc_assertion.expected,
+                        tc_assertion.match_mode,
+                    )
+
         logger.info(f"Evaluator initialized: num_workers={params.num_workers}")
 
     def _process_input(self, entry: Conversation) -> tuple[list[TurnItem], ConvoItem]:
@@ -83,6 +115,9 @@ class Evaluator:
                         ChatMessage(role="assistant", content=output_msg),
                     ]
                     all_messages.extend(turn_messages)
+
+                    turn_tool_calls = msg.tool_calls if msg.tool_calls else None
+
                     convo_list.append(
                         TurnItem(
                             chat_id=entry.conversation_id,
@@ -93,6 +128,7 @@ class Evaluator:
                             knowledge=knowledge,
                             profile=profile,
                             user_goal=user_goal,
+                            tool_calls=turn_tool_calls,
                         )
                     )
                     turn_id += 1
@@ -108,6 +144,86 @@ class Evaluator:
             turns=turn_id,
         )
         return convo_list, convo_item
+
+    def _apply_trajectory_matching(
+        self,
+        conversations: list[Conversation],
+        processed_entries: list[tuple[list[TurnItem], ConvoItem]],
+        turn_results: dict[str, list[TurnEvaluation]],
+    ) -> None:
+        """Run conversation-level trajectory matching and attribute failures.
+
+        Aggregates all tool calls across a conversation's turns, matches
+        against the scenario's tool_calls assertions, and attributes any
+        failure to the last turn that had tool calls.
+
+        Note: when ``num_convos_per_scenario > 1``, every conversation
+        for the same scenario is compared against the same expected
+        trajectory.  If the simulated user can diverge (e.g. decline a
+        cancellation), use ``contains`` mode instead of ``strict`` so the
+        agent is not penalised for correctly adapting to user input.
+        """
+        for entry, (convo_list, _) in zip(
+            conversations, processed_entries, strict=False
+        ):
+            expected_info = self._scenario_expected.get(entry.scenario_id)
+            if not expected_info:
+                continue
+            expected_calls, match_mode_val = expected_info
+
+            # Aggregate tool calls across all turns in the conversation
+            all_tool_calls = []
+            last_tool_turn_id = -1
+            for turn_item in convo_list:
+                if turn_item.tool_calls:
+                    all_tool_calls.extend(turn_item.tool_calls)
+                    last_tool_turn_id = turn_item.turn_id
+
+            traj_result = match_trajectory(
+                all_tool_calls, expected_calls, match_mode_val
+            )
+            if traj_result.matched:
+                continue
+
+            turns = turn_results.get(entry.conversation_id, [])
+            if last_tool_turn_id >= 0:
+                target_turn = next(
+                    (t for t in turns if t.turn_id == last_tool_turn_id), None
+                )
+            else:
+                # No tool calls at all; attribute to the last turn
+                target_turn = max(turns, key=lambda t: t.turn_id) if turns else None
+            if target_turn is None:
+                continue
+
+            traj_qual = QualResult(
+                name=AgentMetrics.AGENT_BEHAVIOR_FAILURE.value,
+                value=traj_result.failure_label,
+                reason=f"[Trajectory] {traj_result.reason}",
+            )
+            target_turn.qual_scores.append(traj_qual)
+
+            if target_turn.turn_behavior_failure in SKIP_OUTCOMES:
+                target_turn.turn_behavior_failure = traj_result.failure_label
+                target_turn.turn_behavior_failure_reason = traj_qual.reason
+            else:
+                traj_sev = SEVERITY_RANK.get(
+                    AGENT_BEHAVIOR_FAILURE_SEVERITY.get(
+                        traj_result.failure_label or "", ""
+                    ),
+                    99,
+                )
+                current_sev = SEVERITY_RANK.get(
+                    AGENT_BEHAVIOR_FAILURE_SEVERITY.get(
+                        target_turn.turn_behavior_failure, ""
+                    ),
+                    99,
+                )
+                if traj_sev < current_sev:
+                    target_turn.turn_behavior_failure = traj_result.failure_label
+                    target_turn.turn_behavior_failure_reason = traj_qual.reason
+                else:
+                    target_turn.turn_behavior_failure_reason += f"\n{traj_qual.reason}"
 
     def evaluate(
         self,
@@ -188,6 +304,19 @@ class Evaluator:
                         )
                     _on_turn_complete()
 
+        # Phase 1.5: Conversation-level trajectory matching (deterministic,
+        # no LLM cost). Runs before goal completion so trajectory failures
+        # are reflected in TSR. Only runs when tool_call_behavior_failure
+        # is in metrics_to_run (or metrics_to_run is None/empty, meaning
+        # "run all").
+        _mtrs = self.params.metrics_to_run
+        if self._scenario_expected and (
+            not _mtrs or "tool_call_behavior_failure" in _mtrs
+        ):
+            self._apply_trajectory_matching(
+                conversations, processed_entries, turn_results
+            )
+
         # Phase 2: goal_completion for each conversation (parallel)
         convo_score_list: list[ConversationEvaluation] = []
 
@@ -258,6 +387,22 @@ class Evaluator:
         self.total_turns = sum(len(conv.turn_scores) for conv in convo_score_list)
         self.total_conversations = len(conversations)
 
+        # Build conv->scenario mapping and compute error-to-scenario mappings
+        self._conv_to_scenario = (
+            {c.conversation_id: c.scenario_id for c in conversations}
+            if self.scenarios
+            else {}
+        )
+        if unique_errors and self.scenarios and self._conv_to_scenario:
+            from .error_scenarios import build_error_scenario_data
+
+            mappings, _ = build_error_scenario_data(
+                unique_errors=unique_errors,
+                conv_to_scenario=self._conv_to_scenario,
+                scenarios=self.scenarios,
+            )
+            self.evaluation_results.error_scenario_mappings = mappings
+
         logger.info(
             f"Evaluation complete: {self.total_conversations} conversations, "
             f"{self.total_turns} turns, {len(unique_errors)} unique errors"
@@ -265,7 +410,11 @@ class Evaluator:
         return self.evaluation_results
 
     def save_results(self) -> None:
-        """Save evaluation results to evaluation.json.
+        """Save evaluation results and focus files to disk.
+
+        Writes ``evaluation.json`` (always) and per-error focus files
+        under ``focus/`` (when ``error_scenario_mappings`` is populated
+        and the original scenario set is available).
 
         Raises:
             ValueError: If evaluate() has not been called yet.
@@ -276,17 +425,74 @@ class Evaluator:
             )
             raise ValueError("No evaluation results to save. Call evaluate() first.")
 
-        save_dir = os.path.join(self.params.output_dir, "evaluation.json")
-        if os.path.exists(save_dir):
-            logger.warning(f"Overwriting existing file: {save_dir}")
-        logger.info(f"Saving evaluation results to {save_dir}")
+        eval_path = os.path.join(self.params.output_dir, "evaluation.json")
+        if os.path.exists(eval_path):
+            logger.warning(f"Overwriting existing file: {eval_path}")
+        logger.info(f"Saving evaluation results to {eval_path}")
 
         save_json_file(
             self.evaluation_results.model_dump(),
-            save_dir,
+            eval_path,
             overwrite=True,
         )
         logger.info("Evaluation results saved successfully")
+
+        # Write focus files (best-effort; failures must not crash the save)
+        mappings = self.evaluation_results.error_scenario_mappings
+        if mappings and self.scenarios:
+            try:
+                self._write_focus_files(mappings)
+            except Exception:
+                logger.exception(
+                    "Focus file writing failed; evaluation.json was saved successfully"
+                )
+
+    def _write_focus_files(
+        self,
+        mappings: list[ErrorScenarioMapping],
+    ) -> None:
+        """Write per-error and combined focus files to disk."""
+        scenario_lookup: dict[str, Scenario] = {
+            s.scenario_id: s for s in self.scenarios.scenarios
+        }
+        focus_dir = os.path.join(self.params.output_dir, "focus")
+        all_scenario_ids: set[str] = set()
+
+        for mapping in mappings:
+            matched = [
+                scenario_lookup[sid]
+                for sid in mapping.scenario_ids
+                if sid in scenario_lookup
+            ]
+            if not matched:
+                continue
+
+            file_path = os.path.join(focus_dir, f"error_{mapping.error_index}.json")
+            filtered = Scenarios(
+                schema_version=self.scenarios.schema_version,
+                scenarios=matched,
+            )
+            save_json_file(filtered.model_dump(), file_path, overwrite=True)
+            all_scenario_ids.update(mapping.scenario_ids)
+
+        if all_scenario_ids:
+            all_scenarios = [
+                scenario_lookup[sid]
+                for sid in sorted(all_scenario_ids)
+                if sid in scenario_lookup
+            ]
+            all_path = os.path.join(focus_dir, "all_failures.json")
+            all_bundle = Scenarios(
+                schema_version=self.scenarios.schema_version,
+                scenarios=all_scenarios,
+            )
+            save_json_file(all_bundle.model_dump(), all_path, overwrite=True)
+
+        logger.info(
+            "Generated %d focus file(s) in %s",
+            len(mappings),
+            os.path.join(self.params.output_dir, "focus/"),
+        )
 
     @staticmethod
     def _truncate_reason(reason: str | None, max_words: int = 10) -> str:
@@ -366,9 +572,10 @@ class Evaluator:
                 f"   - Status: {c.evaluation_status}",
             )
 
-    _SEVERITY_ORDER = {"critical": 0, "high": 1, "medium": 2, "low": 3}
-
-    def _display_top_unique_errors(self, unique_errors: list[UniqueError]) -> None:
+    def _display_top_unique_errors(
+        self,
+        unique_errors: list[UniqueError],
+    ) -> None:
         """Display top unique errors sorted by severity then occurrence count."""
         if not unique_errors:
             logger.info(
@@ -379,7 +586,7 @@ class Evaluator:
         top_errors = sorted(
             unique_errors,
             key=lambda e: (
-                self._SEVERITY_ORDER.get(e.severity, 2),
+                SEVERITY_RANK.get(e.severity, len(SEVERITY_RANK)),
                 -len(e.occurrences),
             ),
         )[:5]
@@ -389,6 +596,14 @@ class Evaluator:
             else "TOP 5 UNIQUE ERRORS (by severity):"
         )
         logger.info(f"\n{title}\n" + "-" * len(title))
+
+        # Build lookup from error ID to mapping for focus file paths
+        mappings = (
+            self.evaluation_results.error_scenario_mappings
+            if self.evaluation_results
+            else []
+        )
+        mapping_by_id = {m.unique_error_id: m for m in (mappings or [])}
 
         for i, err in enumerate(top_errors, 1):
             desc = err.unique_error_description or "N/A"
@@ -409,9 +624,28 @@ class Evaluator:
             logger.info(f"Unique Error: {desc}")
             logger.info(f"Agent Behavior Failure Category: {category}")
 
-        logger.info(
-            "Note: Suggested fixes are module-level heuristics and may not apply to your architecture."
-        )
+            # Show scenario IDs and focus file path from error_scenario_mappings
+            mapping = mapping_by_id.get(err.unique_error_id)
+            if mapping:
+                logger.info(f"Scenarios: {', '.join(mapping.scenario_ids)}")
+                logger.info(
+                    "Focus file: %s",
+                    os.path.join(
+                        self.params.output_dir,
+                        "focus",
+                        f"error_{mapping.error_index}.json",
+                    ),
+                )
+            elif self._conv_to_scenario:
+                scenario_ids = sorted(
+                    {
+                        self._conv_to_scenario[c]
+                        for c in occ_convs
+                        if c in self._conv_to_scenario
+                    }
+                )
+                if scenario_ids:
+                    logger.info(f"Scenarios: {', '.join(scenario_ids)}")
 
     def _format_metric_score(self, value: float, use_label: bool = True) -> str:
         """Format a metric score, handling not-computed sentinel."""
@@ -531,17 +765,65 @@ class Evaluator:
         if results.unique_errors:
             self._display_top_unique_errors(results.unique_errors)
 
+        if results.error_scenario_mappings:
+            logger.info("\nFOCUS FILES FOR TARGETED RERUNS:")
+            logger.info(
+                "  Rerun all failures: arksim simulate-evaluate <config> "
+                "--scenario_file_path %s",
+                os.path.join(self.params.output_dir, "focus", "all_failures.json"),
+            )
+            logger.info(
+                "  Or target a specific error: --scenario_file_path %s",
+                os.path.join(self.params.output_dir, "focus", "error_N.json"),
+            )
+            logger.info("  Tip: pass --output_dir to avoid overwriting these results.")
+
         logger.info(f"\n{'=' * 60}")
+
+
+def _instantiate_with_optional_llm(cls: type, llm: object | None) -> object:
+    """Instantiate a metric class, injecting ``llm`` if the signature accepts it.
+
+    Inspects ``cls.__init__`` directly (not the resolved MRO) so that legacy
+    metrics overriding ``__init__`` without an ``llm`` param are instantiated
+    without injection. Metrics that do not override ``__init__`` inherit the
+    base class signature (which includes ``llm``) and receive it automatically.
+
+    Emits a warning when ``**kwargs`` is present in the signature, because
+    ``llm`` would be swallowed by ``**kwargs`` without being forwarded to
+    ``super().__init__``, causing silent injection failure.
+    """
+    try:
+        sig = inspect.signature(cls.__init__)
+    except ValueError:
+        return cls()
+
+    params = sig.parameters
+    if any(p.kind == inspect.Parameter.VAR_KEYWORD for p in params.values()):
+        logger.warning(
+            "Metric '%s' uses **kwargs in __init__; LLM injection may silently "
+            "fail if 'llm' is not explicitly forwarded to super().__init__().",
+            cls.__name__,
+        )
+
+    if "llm" in params:
+        return cls(llm=llm)
+    return cls()
 
 
 def _load_custom_metrics(
     file_paths: list[str],
+    llm: object | None = None,
 ) -> tuple[list[QuantitativeMetric], list[QualitativeMetric]]:
     """Dynamically load QuantitativeMetric and QualitativeMetric subclasses from .py files.
 
     Args:
         file_paths: Paths to Python files containing
             QuantitativeMetric or QualitativeMetric subclass definitions.
+        llm: Optional LLM instance to inject into metrics that accept it.
+            Metrics whose ``__init__`` accepts a ``llm`` keyword argument receive
+            this instance on ``self.llm``.  Metrics that do not accept ``llm``
+            are instantiated without it for backward compatibility.
 
     Returns:
         Tuple of (quantitative metrics, qualitative metrics).
@@ -553,8 +835,13 @@ def _load_custom_metrics(
         module = load_module_from_file(abs_path)
         for _, obj in inspect.getmembers(module, inspect.isclass):
             if issubclass(obj, QuantitativeMetric) and obj is not QuantitativeMetric:
+                if inspect.isabstract(obj):
+                    logger.debug(
+                        "Skipping abstract class '%s' from %s", obj.__name__, abs_path
+                    )
+                    continue
                 try:
-                    metrics.append(obj())
+                    metrics.append(_instantiate_with_optional_llm(obj, llm))  # type: ignore[arg-type]
                     logger.info(
                         f"Loaded quantitative metric '{obj.__name__}' from {abs_path}"
                     )
@@ -562,11 +849,17 @@ def _load_custom_metrics(
                     raise RuntimeError(
                         f"Could not instantiate quantitative metric '{obj.__name__}' "
                         f"from {abs_path}: {e}. "
-                        f"Make sure the class can be instantiated with no arguments."
+                        "Make sure the class can be instantiated with at most an "
+                        "`llm=` keyword argument (all other parameters must have defaults)."
                     ) from e
             elif issubclass(obj, QualitativeMetric) and obj is not QualitativeMetric:
+                if inspect.isabstract(obj):
+                    logger.debug(
+                        "Skipping abstract class '%s' from %s", obj.__name__, abs_path
+                    )
+                    continue
                 try:
-                    qual_metrics.append(obj())
+                    qual_metrics.append(_instantiate_with_optional_llm(obj, llm))  # type: ignore[arg-type]
                     logger.info(
                         f"Loaded qualitative metric '{obj.__name__}' from {abs_path}"
                     )
@@ -574,7 +867,8 @@ def _load_custom_metrics(
                     raise RuntimeError(
                         f"Could not instantiate qualitative metric '{obj.__name__}' "
                         f"from {abs_path}: {e}. "
-                        f"Make sure the class can be instantiated with no arguments."
+                        "Make sure the class can be instantiated with at most an "
+                        "`llm=` keyword argument (all other parameters must have defaults)."
                     ) from e
     return metrics, qual_metrics
 
@@ -591,7 +885,8 @@ def run_evaluation(
         settings: EvaluationInput with evaluation settings
         simulation: Optional in-memory simulation output from run_simulation.
             If not provided, load from settings.simulation_file_path.
-        scenarios: Optional in-memory scenarios for HTML report context.
+        scenarios: Optional in-memory scenarios. Used for trajectory matching
+            (when scenarios define tool_calls assertions) and HTML report context.
             If not provided, load from settings.scenario_file_path.
     """
     if simulation is None:
@@ -604,12 +899,23 @@ def run_evaluation(
             load_json_file(settings.simulation_file_path)
         )
 
+    # Load scenarios early so they're available for both trajectory matching
+    # and (later) the HTML report.
+    if scenarios is None and settings.scenario_file_path:
+        try:
+            scenarios = Scenarios.load(settings.scenario_file_path)
+        except Exception:
+            logger.warning(
+                "Could not load scenarios; trajectory matching and report "
+                "scenario context will be unavailable"
+            )
+
     llm = LLM(
         model=settings.model,
         provider=settings.provider,
     )
     custom_metrics, custom_qualitative_metrics = _load_custom_metrics(
-        settings.custom_metrics_file_paths
+        settings.custom_metrics_file_paths, llm=llm
     )
 
     params = EvaluationParams(
@@ -623,13 +929,13 @@ def run_evaluation(
     evaluator = Evaluator(
         params=params,
         llm=llm,
+        scenarios=scenarios,
     )
     evaluator_output = evaluator.evaluate(simulation, on_progress=on_progress)
-    evaluator.display_evaluation_summary()
     evaluator.save_results()
+    evaluator.display_evaluation_summary()
 
     if settings.generate_html_report:
-        from arksim.scenario import Scenarios
         from arksim.utils.html_report.generate_html_report import (
             HtmlReportParams,
             generate_html_report,
@@ -638,19 +944,14 @@ def run_evaluation(
         html_output_path = os.path.join(settings.output_dir, "final_report.html")
 
         logger.info("Generating HTML report...")
-
-        if scenarios is None and settings.scenario_file_path:
-            try:
-                scenarios = Scenarios.load(settings.scenario_file_path)
-            except Exception:
-                logger.warning(
-                    "Could not load scenarios; scenarios will be empty in report"
-                )
         all_custom = list(custom_metrics) + list(custom_qualitative_metrics)
         metric_descriptions = {
             m.name: m.description for m in all_custom if m.description
         }
         metric_ranges = {m.name: tuple(m.score_range) for m in custom_metrics}
+        qual_label_colors = {
+            m.name: m.label_colors for m in custom_qualitative_metrics if m.label_colors
+        }
         report_params = HtmlReportParams(
             simulation=simulation,
             evaluation=evaluator_output,
@@ -659,6 +960,7 @@ def run_evaluation(
             chat_id_to_label=evaluator.chat_id_to_label,
             metric_descriptions=metric_descriptions,
             metric_ranges=metric_ranges,
+            qual_label_colors=qual_label_colors,
             evaluation_model=settings.model,
             evaluation_provider=settings.provider,
         )

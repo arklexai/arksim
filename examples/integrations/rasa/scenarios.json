@@ -1,0 +1,33 @@
+{
+    "schema_version": "v1",
+    "scenarios": [
+        {
+            "scenario_id": "product_inquiry",
+            "user_id": "user_0001",
+            "goal": "You are evaluating a SaaS product for your team. Ask about pricing and available plans, then ask what features the platform offers. You want to understand whether the product fits your budget and needs before starting a trial.",
+            "agent_context": "You are a customer support assistant for a SaaS platform. You answer questions about pricing and features, and can look up order status by order ID.",
+            "user_profile": "You are Alex, a 31-year-old engineering manager at a mid-sized startup. You are methodical and like to gather all the details before making a purchasing decision. You ask direct, specific questions and appreciate concise, factual answers."
+        },
+        {
+            "scenario_id": "order_status_check",
+            "user_id": "user_0002",
+            "goal": "You placed an order recently with order number ORD-001 and want to check its current shipping status. Greet the assistant, ask about your order, provide the order number when asked, and confirm you received the information.",
+            "agent_context": "You are a customer support assistant for a SaaS platform. You answer questions about pricing and features, and can look up order status by order ID.",
+            "user_profile": "You are Jordan, a 28-year-old software developer. You are straightforward and keep messages short and to the point."
+        },
+        {
+            "scenario_id": "topic_switching",
+            "user_id": "user_0003",
+            "goal": "You are a current customer evaluating an upgrade. Start by asking about product features. Then switch topics and ask to check the status of your order ORD-002. After getting the order status, switch back and ask about pricing for an upgrade.",
+            "agent_context": "You are a customer support assistant for a SaaS platform. You answer questions about pricing and features, and can look up order status by order ID.",
+            "user_profile": "You are Morgan, a 34-year-old product manager at a growing company. You are friendly but efficient, and you tend to juggle multiple questions in a single conversation."
+        },
+        {
+            "scenario_id": "unknown_order",
+            "user_id": "user_0004",
+            "goal": "You want to check the status of order ORD-999. When the assistant tells you the order was not found, ask them to double-check or try again. Accept the result if they confirm the order does not exist.",
+            "agent_context": "You are a customer support assistant for a SaaS platform. You answer questions about pricing and features, and can look up order status by order ID.",
+            "user_profile": "You are Riley, a 26-year-old freelance designer. You are polite but persistent."
+        }
+    ]
+}

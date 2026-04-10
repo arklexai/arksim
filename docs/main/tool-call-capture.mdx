@@ -1,0 +1,120 @@
+---
+title: "Tool Call Capture"
+description: "Capture and evaluate tool calls from agents that handle tools internally using ArkSim's trace receiver and trajectory matching."
+---
+
+## Overview
+
+Some agents handle tool calling internally (e.g. OpenAI Agents SDK, LangChain) and only return text. arksim can capture these tool calls so the evaluator can score them.
+
+There are two ways to provide tool calls to arksim:
+
+1. **Explicit**: Return `AgentResponse` with tool calls from `execute()` (Python connector).
+2. **Automatic capture**: Enable `trace_receiver` in your config. arksim captures tool calls via the SDK's tracing interface. The agent just returns text.
+
+If both are active, arksim deduplicates automatically (see [Deduplication](#deduplication) below).
+
+---
+
+## Connector Support
+
+| Connector | Explicit (`AgentResponse`) | Automatic Capture |
+|-----------|--------------------------|-------------------|
+| Python connector | Supported | Supported via `ArksimTracingProcessor` |
+| Chat Completions | Planned | Planned |
+| A2A | Planned | Planned |
+
+<Info>
+Tool call capture currently works with the Python connector only. Chat Completions and A2A support is planned.
+</Info>
+
+---
+
+## Explicit Capture (Python Connector)
+
+Return `AgentResponse` from your agent's `execute()` method with the tool calls your agent made:
+
+```python
+from arksim.simulation_engine.tool_types import AgentResponse, ToolCall
+
+class MyAgent(BaseAgent):
+    async def execute(self, user_query, **kwargs):
+        # ... run your agent ...
+        return AgentResponse(
+            content="Here are the results.",
+            tool_calls=[
+                ToolCall(
+                    id="call_1",
+                    name="search_products",
+                    arguments={"query": "laptop"},
+                    result='[{"name": "ThinkPad", "price": 1299}]',
+                ),
+            ],
+        )
+```
+
+No extra config needed.
+
+### Metadata keys
+
+arksim passes a `metadata` dict to your agent's `execute()` via `kwargs["metadata"]`:
+
+| Key | Type | Description |
+|-----|------|-------------|
+| `chat_id` | `str` | Conversation ID assigned by `agent.get_chat_id()` |
+| `turn_id` | `int` | Zero-based turn index within the conversation |
+
+These keys are always present for Python connector agents regardless of which capture method you use.
+
+---
+
+## Automatic Capture (Python Connector)
+
+For agents using the OpenAI Agents SDK with the Python connector, add two things:
+
+**1. Register the processor at module level in your agent file:**
+
+```python
+from agents.tracing import add_trace_processor
+from arksim.tracing.openai import ArksimTracingProcessor
+
+add_trace_processor(ArksimTracingProcessor())
+```
+
+**2. Enable the trace receiver in your config:**
+
+```yaml
+trace_receiver:
+  enabled: true
+  wait_timeout: 5
+```
+
+That's it. Your agent's `execute()` method just returns a string:
+
+```python
+class MyAgent(BaseAgent):
+    async def execute(self, user_query, **kwargs):
+        result = await Runner.run(
+            self._agent,
+            input=[{"role": "user", "content": user_query}],
+        )
+        return result.final_output
+```
+
+The simulator sets routing context (conversation ID, turn ID) before each call to `execute()`. When the SDK fires `on_span_end`, the processor reads this context and injects tool calls into the receiver's buffer. No wrapping, no manual context management.
+
+The module loader caches modules by file path, so `add_trace_processor` runs exactly once regardless of how many conversations the simulator creates.
+
+See `examples/customer-service/traced_agent.py` for a complete working example.
+
+Requires `pip install openai-agents`.
+
+---
+
+## Deduplication
+
+When both `AgentResponse` and automatic capture (via `ArksimTracingProcessor`) provide tool calls for the same turn, arksim merges and deduplicates:
+
+1. **By ID**: tool calls with matching IDs are deduplicated (AgentResponse wins)
+2. **By signature**: tool calls with matching `(name, arguments)` are deduplicated (AgentResponse wins)
+3. **Unique**: tool calls from either source that don't match anything are included

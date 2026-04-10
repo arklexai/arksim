@@ -73,6 +73,16 @@ Keep the subject line under 72 characters, use lowercase, imperative mood.
 6. Link any related issues
 7. Keep PRs focused on a single change
 
+## Claude Code (optional)
+
+This repo includes [Claude Code](https://claude.ai/code) skills for contributors:
+
+- `/pre-review` - Check your branch before opening a PR (runs lint, tests, validates title)
+- `/draft-pr` - Generate a PR title and description from your changes
+- `/review-pr <number>` - Review a PR against project standards
+
+These are optional. You can contribute without Claude Code.
+
 ## Reporting Issues
 
 Open an issue at [github.com/arklexai/arksim/issues](https://github.com/arklexai/arksim/issues) with:

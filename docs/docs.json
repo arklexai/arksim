@@ -9,37 +9,138 @@
   },
   "favicon": "/favicon.svg",
   "navigation": {
-    "pages": [
-      "overview",
+    "versions": [
       {
-        "group": "Getting started",
-        "expanded": true,
+        "version": "0.3.x",
         "pages": [
-          "installation",
-          "quickstart"
+          "v0.3.x/overview",
+          {
+            "group": "Getting started",
+            "expanded": true,
+            "pages": [
+              "v0.3.x/installation",
+              "v0.3.x/quickstart"
+            ]
+          },
+          {
+            "group": "Core Capabilities",
+            "pages": [
+              "v0.3.x/build-scenario",
+              "v0.3.x/simulate-conversation",
+              "v0.3.x/evaluate-conversation",
+              "v0.3.x/schema-reference"
+            ]
+          },
+          {
+            "group": "CI/CD",
+            "pages": [
+              "v0.3.x/ci-integration"
+            ]
+          },
+          {
+            "group": "Examples",
+            "pages": [
+              "v0.3.x/insurance-customer-service-agent-evaluation",
+              "v0.3.x/e-commerce-customer-service-agent-evaluation",
+              "v0.3.x/personal-ai-assistant-openclaw-evaluation"
+            ]
+          },
+          {
+            "group": "Help",
+            "pages": [
+              "v0.3.x/contact-email"
+            ]
+          }
+        ],
+        "tag": "Latest",
+        "default": true
+      },
+      {
+        "version": "0.2.0",
+        "pages": [
+          "v0.2.0/overview",
+          {
+            "group": "Getting started",
+            "expanded": true,
+            "pages": [
+              "v0.2.0/installation",
+              "v0.2.0/quickstart"
+            ]
+          },
+          {
+            "group": "Core Capabilities",
+            "pages": [
+              "v0.2.0/build-scenario",
+              "v0.2.0/simulate-conversation",
+              "v0.2.0/evaluate-conversation",
+              "v0.2.0/schema-reference"
+            ]
+          },
+          {
+            "group": "Examples",
+            "pages": [
+              "v0.2.0/insurance-customer-service-agent-evaluation",
+              "v0.2.0/e-commerce-customer-service-agent-evaluation",
+              "v0.2.0/personal-ai-assistant-openclaw-evaluation"
+            ]
+          },
+          {
+            "group": "Help",
+            "pages": [
+              "v0.2.0/contact-email"
+            ]
+          }
         ]
       },
       {
-        "group": "Core Capabilities",
+        "version": "main",
         "pages": [
-          "build-scenario",
-          "simulate-conversation",
-          "evaluate-conversation",
-          "schema-reference"
-        ]
-      },
-      {
-        "group": "Examples",
-        "pages": [
-          "insurance-customer-service-agent-evaluation",
-          "e-commerce-customer-service-agent-evaluation",
-          "personal-ai-assistant-openclaw-evaluation"
-        ]
-      },
-      {
-        "group": "Help",
-        "pages": [
-          "contact-email"
+          "main/overview",
+          {
+            "group": "Getting started",
+            "expanded": true,
+            "pages": [
+              "main/installation",
+              "main/quickstart"
+            ]
+          },
+          {
+            "group": "Core Capabilities",
+            "pages": [
+              "main/build-scenario",
+              "main/simulate-conversation",
+              "main/evaluate-conversation",
+              "main/tool-call-capture",
+              "main/schema-reference"
+            ]
+          },
+          {
+            "group": "CI/CD",
+            "pages": [
+              "main/ci-integration"
+            ]
+          },
+          {
+            "group": "Integrations",
+            "pages": [
+              "main/integrations"
+            ]
+          },
+          {
+            "group": "Examples",
+            "pages": [
+              "main/insurance-customer-service-agent-evaluation",
+              "main/e-commerce-customer-service-agent-evaluation",
+              "main/customer-service-tool-calling-agent-evaluation",
+              "main/personal-ai-assistant-openclaw-evaluation"
+            ]
+          },
+          {
+            "group": "Help",
+            "pages": [
+              "main/contact-email"
+            ]
+          }
         ]
       }
     ]
@@ -68,15 +169,15 @@
   },
   "contextual": {
     "options": [
-     "copy",
-     "view",
-     "chatgpt",
-     "claude",
-     "perplexity",
-     "mcp",
-     "cursor",
-     "vscode"
-   ]
+      "copy",
+      "view",
+      "chatgpt",
+      "claude",
+      "perplexity",
+      "mcp",
+      "cursor",
+      "vscode"
+    ]
   },
   "fonts": {
     "family": "DM Sans",
@@ -101,7 +202,11 @@
   },
   "seo": {
     "metatags": {
-      "canonical": "https://docs.arklex.ai/"
+      "canonical": "https://docs.arklex.ai/",
+      "og:site_name": "ArkSim Docs",
+      "og:type": "website",
+      "og:description": "ArkSim is an open-source agent testing framework. Simulate realistic multi-turn conversations with your AI agent and evaluate performance before production.",
+      "twitter:card": "summary_large_image"
     }
   }
 }
