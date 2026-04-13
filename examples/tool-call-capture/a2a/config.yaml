@@ -2,10 +2,11 @@
 # Configuration for 'arksim simulate-evaluate' command
 # Runs simulation followed by evaluation in a single pipeline.
 #
-# Weather agent that reports tool calls via A2A DataPart.
+# Weather agent that reports tool calls via the arksim A2A tool capture
+# extension (https://arksim.arklex.ai/a2a/tool-call-capture/v1).
 # Tools: get_weather
-# arksim extracts the DataPart automatically and evaluates tool usage
-# against the assertions in scenarios.json.
+# arksim reads tool calls from Task.artifacts[*].metadata and evaluates
+# tool usage against the assertions in scenarios.json.
 #
 # Usage:
 #   cd examples/tool-call-capture/a2a

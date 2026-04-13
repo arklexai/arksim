@@ -1,20 +1,20 @@
 # SPDX-License-Identifier: Apache-2.0
 """Weather agent using the OpenAI Agents SDK.
 
-Demonstrates the A2A tool call capture pattern: invoke() returns both the
-agent's text answer and the tool calls made during inference, so the server
-can embed them in a DataPart for arksim to extract and evaluate.
+invoke() returns both the agent's text answer and the tool calls made
+during inference (extracted via the arksim helper). The server embeds
+those tool calls in artifact metadata for arksim to extract and evaluate.
 """
 
 from __future__ import annotations
 
-import json
 from typing import Any
 
 from agents import Agent as SDKAgent
-from agents import Runner, RunResult, function_tool
-from agents.items import ToolCallItem, ToolCallOutputItem
-from openai.types.responses import ResponseFunctionToolCall
+from agents import Runner, function_tool
+
+from arksim import ToolCall
+from arksim.tracing.openai import extract_tool_calls
 
 
 @function_tool
@@ -45,58 +45,6 @@ _sdk_agent = SDKAgent(
 )
 
 
-def _extract_tool_calls(result: RunResult) -> list[dict[str, Any]]:
-    """Pair ToolCallItems with their ToolCallOutputItems from a RunResult.
-
-    Iterates result.new_items twice: first to collect outputs keyed by
-    call_id, then to build the call list in invocation order.
-
-    Args:
-        result: The RunResult from Runner.run().
-
-    Returns:
-        A list of dicts with keys: id, name, arguments, result.
-    """
-    outputs: dict[str, str] = {}
-    for item in result.new_items:
-        if isinstance(item, ToolCallOutputItem):
-            # raw_item is a dict in older SDK versions and a typed object
-            # in newer ones; handle both for forward compatibility.
-            raw = item.raw_item
-            call_id = (
-                raw.get("call_id", "")
-                if isinstance(raw, dict)
-                else getattr(raw, "call_id", "")  # noqa: B009
-            )
-            output = (
-                raw.get("output", "")
-                if isinstance(raw, dict)
-                else getattr(raw, "output", "")  # noqa: B009
-            )
-            if isinstance(output, list):
-                output = json.dumps(output)
-            outputs[call_id] = str(output)
-
-    tool_calls: list[dict[str, Any]] = []
-    for item in result.new_items:
-        if not isinstance(item, ToolCallItem):
-            continue
-        raw = item.raw_item
-        if not isinstance(raw, ResponseFunctionToolCall):
-            continue
-        call_id = raw.call_id
-        tool_calls.append(
-            {
-                "id": call_id,
-                "name": raw.name,
-                "arguments": json.loads(raw.arguments) if raw.arguments else {},
-                "result": outputs.get(call_id),
-            }
-        )
-
-    return tool_calls
-
-
 class Agent:
     """Stateful per-session weather agent.
 
@@ -116,11 +64,19 @@ class Agent:
 
         Returns:
             A tuple of (answer, tool_calls) where tool_calls is a list of
-            dicts with keys: id, name, arguments, result.
+            JSON-serializable dicts ready to embed in an A2A artifact's
+            metadata.
         """
         self._history.append({"role": "user", "content": question})
         result = await Runner.run(_sdk_agent, input=self._history)
         answer: str = result.final_output
         self._history.append({"role": "assistant", "content": answer})
-        tool_calls = _extract_tool_calls(result)
-        return answer, tool_calls
+        # extract_tool_calls returns ToolCall objects; serialize to plain
+        # dicts so the server can include them in artifact metadata as JSON.
+        # We exclude ``source`` because arksim sets it on extraction based
+        # on the capture path; sending it over the wire would be overwritten
+        # and clutters the payload documented in the extension schema.
+        tool_calls: list[ToolCall] = extract_tool_calls(result)
+        return answer, [
+            tc.model_dump(exclude={"source"}, exclude_none=True) for tc in tool_calls
+        ]

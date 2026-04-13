@@ -10,9 +10,15 @@ from .entities import (
     SimulationParams,
 )
 from .simulator import SIMULATION_SCHEMA_VERSION, Simulator, run_simulation
-from .tool_types import AgentResponse, ToolCall, ToolCallSource
+from .tool_types import (
+    A2AToolCaptureExtension,
+    AgentResponse,
+    ToolCall,
+    ToolCallSource,
+)
 
 __all__ = [
+    "A2AToolCaptureExtension",
     "AgentResponse",
     "Simulator",
     "SimulationInput",

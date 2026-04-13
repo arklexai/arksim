@@ -21,9 +21,8 @@ from pathlib import Path
 
 from agents import Agent, Runner, RunResult, function_tool
 
-from arksim.config import AgentConfig
+from arksim import AgentConfig, AgentResponse
 from arksim.simulation_engine.agent.base import BaseAgent
-from arksim.simulation_engine.tool_types import AgentResponse
 from arksim.tracing.openai import extract_tool_calls
 
 # ── Database setup ──

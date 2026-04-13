@@ -1,9 +1,24 @@
 # SPDX-License-Identifier: Apache-2.0
-"""OpenAI Agents SDK integration for arksim's trace receiver.
+"""OpenAI Agents SDK integration for arksim.
 
-Provides ``ArksimTracingProcessor``, a ``TracingProcessor`` implementation
-that captures tool calls from the OpenAI Agents SDK and injects them into
-arksim's trace receiver.
+This module provides two complementary ways to surface tool calls made
+by agents built on the OpenAI Agents SDK:
+
+* ``ArksimTracingProcessor`` - a ``TracingProcessor`` that captures tool
+  calls via SDK tracing hooks and injects them into arksim's trace
+  receiver (zero per-turn wrapping).
+* ``extract_tool_calls`` - a helper for explicit capture from a
+  ``RunResult``, used when your agent returns ``AgentResponse`` directly.
+
+Both require ``pip install openai-agents``.
+
+---
+
+``ArksimTracingProcessor``
+--------------------------
+
+A ``TracingProcessor`` implementation that captures tool calls from the
+OpenAI Agents SDK and injects them into arksim's trace receiver.
 
 When used with ``arksim simulate``, the simulator sets routing context
 via ``contextvars`` automatically. The agent registers the processor once
@@ -38,7 +53,7 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from arksim.tracing.receiver import TraceReceiver
 
-from arksim.simulation_engine.tool_types import ToolCall
+from arksim.simulation_engine.tool_types import ToolCall, ToolCallSource
 from arksim.tracing.context import (
     trace_conversation_id,
     trace_receiver_ref,
@@ -175,6 +190,7 @@ class ArksimTracingProcessor(_Base):  # type: ignore[misc]
             arguments=arguments,
             result=result,
             error=error,
+            source=ToolCallSource.OPENAI_AGENTS,
         )
 
         # In-process: inject directly into receiver buffer
@@ -255,6 +271,7 @@ def extract_tool_calls(result: object) -> list[ToolCall]:
                 name=raw.name,
                 arguments=json.loads(raw.arguments) if raw.arguments else {},
                 result=outputs.get(call_id),
+                source=ToolCallSource.OPENAI_AGENTS,
             )
         )
 

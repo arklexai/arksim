@@ -2,22 +2,28 @@
 
 This example shows how to surface tool call data through the A2A protocol so arksim can evaluate tool usage with the `tool_call_behavior_failure` metric.
 
-The agent includes tool calls as a `DataPart` alongside the text answer in every A2A response. arksim's A2A client extracts the `DataPart` automatically - no custom agent wrapper needed.
+The agent declares the arksim tool capture extension in its AgentCard and surfaces tool calls in artifact metadata on the Task. arksim's A2A client extracts them automatically - no custom agent wrapper needed.
 
 ## How it works
 
 ```
 User message -> A2A server -> Agent runs get_weather tool
-  -> Response: TextPart(answer) + DataPart({"tool_calls": [...]})
-  -> arksim extracts DataPart -> evaluator scores tool_call_behavior_failure
+  -> Response: Task with Artifact
+       parts:    [TextPart(answer)]
+       extensions: ["https://arksim.arklex.ai/a2a/tool-call-capture/v1"]
+       metadata: {".../tool_calls": [...]}
+  -> arksim reads Task.artifacts -> evaluator scores tool_call_behavior_failure
 ```
+
+This follows A2A spec section 3.7 (task outputs go in artifacts, not messages) and uses the [AgentExtension](https://a2a-protocol.org/latest/topics/extensions/) mechanism to declare the convention.
 
 ## Setup
 
-1. Install dependencies:
+All commands below must be run from `examples/tool-call-capture/a2a/` (the server uses a relative package import, and `config.yaml` references `scenarios.json` by relative path).
+
+1. Install dependencies. The example uses a few arksim helpers (`A2AToolCaptureExtension`, `ToolCall`, and `extract_tool_calls`), so `arksim` is listed in `requirements.txt` alongside `a2a-sdk` and `openai-agents`:
    ```bash
    pip install -r requirements.txt
-   pip install arksim
    ```
 
 2. Set your OpenAI API key:
@@ -25,17 +31,17 @@ User message -> A2A server -> Agent runs get_weather tool
    export OPENAI_API_KEY="<your-key>"
    ```
 
-3. Start the agent server:
+3. Start the agent server (foreground; `Ctrl+C` to stop):
    ```bash
-   cd examples/tool-call-capture/a2a
    python -m agent_server.server
    ```
 
-4. In a separate terminal, run arksim:
+4. In a separate terminal (also from this directory), run arksim against the server:
    ```bash
-   cd examples/tool-call-capture/a2a
    arksim simulate-evaluate config.yaml
    ```
+
+5. When you're done, stop the server with `Ctrl+C` in the terminal from step 3.
 
 ## Scenarios
 

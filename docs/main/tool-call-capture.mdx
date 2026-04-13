@@ -22,10 +22,10 @@ If both are active, arksim deduplicates automatically (see [Deduplication](#dedu
 |-----------|--------------------------|-------------------|
 | Python connector | Supported | Supported via `ArksimTracingProcessor` |
 | Chat Completions | Planned | Planned |
-| A2A | Supported via A2A protocol `DataPart` | Not applicable |
+| A2A | Supported via A2A AgentExtension | Not applicable |
 
 <Info>
-Tool call capture works with the Python connector and A2A. The A2A connector extracts tool calls from `DataPart` in the protocol response automatically. Chat Completions support is planned.
+Tool call capture works with the Python connector and A2A. A2A agents declare the `https://arksim.arklex.ai/a2a/tool-call-capture/v1` extension and surface tool calls in `Task.artifacts[*].metadata`. Chat Completions support is planned.
 </Info>
 
 ---
@@ -35,7 +35,7 @@ Tool call capture works with the Python connector and A2A. The A2A connector ext
 Return `AgentResponse` from your agent's `execute()` method with the tool calls your agent made:
 
 ```python
-from arksim.simulation_engine.tool_types import AgentResponse, ToolCall
+from arksim import AgentResponse, ToolCall
 
 class MyAgent(BaseAgent):
     async def execute(self, user_query, **kwargs):
@@ -113,35 +113,111 @@ Requires `pip install openai-agents`.
 
 ## A2A Protocol Capture
 
-For agents connected via the A2A protocol, the remote agent embeds tool call data in a `DataPart` alongside its text response. arksim's A2A client extracts these automatically.
+A2A defines no native tool-call semantics (it [defers to MCP](https://a2a-protocol.org/latest/topics/a2a-and-mcp/) for tool invocation), so arksim layers a versioned [A2A AgentExtension](https://a2a-protocol.org/latest/topics/extensions/) on top:
 
-The remote agent must include a `DataPart` with the following JSON schema in its response message:
-
-```json
-{
-  "tool_calls": [
-    {
-      "id": "call_001",
-      "name": "get_weather",
-      "arguments": {"city": "Tokyo"},
-      "result": "72F, sunny",
-      "error": null
-    }
-  ]
-}
 ```
+https://arksim.arklex.ai/a2a/tool-call-capture/v1
+```
+
+### Why artifacts, not messages?
+
+Per [A2A spec section 3.7](https://a2a-protocol.org/latest/specification/), task outputs are delivered through `Artifacts` on a `Task`, not through `Messages`. Messages are for conversational turns (initiation, clarification, status); Artifacts are the durable output record. Tool calls are part of the agent's task output, so they belong in an Artifact.
+
+<Warning>
+Embedding tool call data in a `Message` part (including `DataPart`) will not be picked up: arksim's A2A client reads `Task.artifacts` only, per the spec.
+</Warning>
+
+### Server requirements
+
+Both snippets below use these imports:
+
+```python
+from a2a.server.agent_execution import AgentExecutor, RequestContext
+from a2a.server.events import EventQueue
+from a2a.server.tasks import TaskUpdater
+from a2a.types import (
+    AgentCapabilities,
+    AgentCard,
+    AgentExtension,
+    Part,
+    TextPart,
+)
+
+from arksim import A2AToolCaptureExtension
+```
+
+**1. Declare the extension** in the `AgentCard.capabilities.extensions`:
+
+```python
+capabilities = AgentCapabilities(
+    streaming=False,
+    extensions=[
+        AgentExtension(
+            uri=A2AToolCaptureExtension.URI,
+            description="Tool calls surfaced in artifact metadata for arksim evaluation.",
+            required=False,
+        ),
+    ],
+)
+```
+
+**2. Emit a Task with an artifact** carrying the tool call list in `metadata` and listing the URI in `extensions`. Inside your `AgentExecutor.execute()`:
+
+```python
+updater = TaskUpdater(event_queue, context.task_id, context.context_id)
+# Move the task through the spec-required lifecycle: submitted -> working
+# -> completed. submit() is only needed for a brand-new task; if the
+# request handler already submitted it (context.current_task is not None)
+# skip the submit to avoid an illegal state transition.
+if context.current_task is None:
+    await updater.submit()
+await updater.start_work()
+await updater.add_artifact(
+    parts=[Part(root=TextPart(text=answer))],
+    name="response",
+    metadata={
+        A2AToolCaptureExtension.METADATA_KEY: [
+            {
+                "id": "call_001",
+                "name": "get_weather",
+                "arguments": {"city": "Tokyo"},
+                "result": "72F, sunny",
+            },
+        ],
+    },
+    extensions=[A2AToolCaptureExtension.URI],
+)
+await updater.complete()
+```
+
+The `AgentExtension.params` field is not used by v1 of this extension; leave it unset. Server-to-client parameter negotiation is not part of this convention (the schema is documented here rather than encoded in `params`, because A2A clients do not act on schema constraints at runtime). If you emit streaming updates via `TaskArtifactUpdateEvent` followed by a final `Task` snapshot, include the same tool calls on both: arksim treats the final `Task` snapshot as authoritative and re-merges its artifacts, so including the tool calls there guarantees they survive.
+
+### Tool call schema
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `id` | string | No | Unique identifier for the tool call. Defaults to `""` if omitted. |
-| `name` | string | **Yes** | Tool function name. Entries missing this field are skipped. |
-| `arguments` | object | No | Arguments passed to the tool. Defaults to `{}` if omitted. |
-| `result` | string | No | Tool execution result |
-| `error` | string | No | Error message if the tool call failed |
+| `id` | string | No | Unique identifier. Defaults to `""` if omitted. |
+| `name` | string | **Yes** | Tool function name. Entries missing this field or with a non-string name are skipped. |
+| `arguments` | object | No | Arguments passed to the tool. Must be a JSON object; defaults to `{}` if omitted. |
+| `result` | string | No | Tool execution result. Non-string values are JSON-serialized. |
+| `error` | string | No | Error message if the tool call failed. Non-string values are JSON-serialized. |
+| `source` | - | N/A | **Do not include.** arksim sets this client-side to `ToolCallSource.A2A_PROTOCOL` (serialized as `"a2a_protocol"`) for provenance tracking. Custom metrics can filter by `ToolCall.source`. |
 
-arksim adds a `source` field (`"a2a_protocol"`) to each extracted tool call internally for provenance tracking. You do not need to include it in the DataPart.
+### Streaming
 
-The `DataPart` is included alongside a `TextPart` containing the agent's text answer. arksim ignores `DataPart` entries that do not contain a `tool_calls` key.
+For streaming agents (`AgentCapabilities.streaming=True`), emit tool call data on both the incremental `TaskArtifactUpdateEvent` and the final `Task` snapshot. arksim's client:
+
+1. Accumulates tool calls from each `TaskArtifactUpdateEvent` as they arrive.
+2. On the final `Task` snapshot, clears accumulated state and re-merges from `Task.artifacts` (the snapshot is treated as authoritative).
+3. Treats `TaskStatusUpdateEvent` as a no-op that does not affect accumulated state.
+
+Because the snapshot is authoritative, any tool calls streamed via `TaskArtifactUpdateEvent` must also appear on the corresponding artifact in the final `Task.artifacts`. Otherwise they will be dropped.
+
+### Versioning
+
+Per the [A2A extensions spec](https://a2a-protocol.org/latest/topics/extensions/), breaking changes to this schema MUST bump the URI version (`/v1` -> `/v2`). Breaking changes include renaming the `tool_calls` key, renaming any field in a tool call dict, or making an optional field required. Adding a new optional field is non-breaking.
+
+When arksim bumps to a new version, both `A2AToolCaptureExtension.URI` and `A2AToolCaptureExtension.METADATA_KEY` change together (the key is derived from the URI), and the client's `extensions=` negotiation header flips to the new URI. The arksim client advertises and reads a single URI at a time; a server still on the old URI silently produces zero tool calls (the artifact is extracted but its `extensions` list no longer matches). For a hard cutover, update server and client together. For graceful migration, the server can declare both URIs in its AgentCard and emit **two separate artifacts** (one per URI, each listing its URI in `extensions` and carrying tool calls under its respective `{URI}/tool_calls` metadata key) until all clients upgrade.
 
 See the [A2A tool call capture example](https://github.com/arklexai/arksim/tree/main/examples/tool-call-capture/a2a) for a complete working example.
 
