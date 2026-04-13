@@ -190,3 +190,7 @@ Apache-2.0. See [LICENSE](https://github.com/arklexai/arksim/blob/main/LICENSE).
       url={https://arxiv.org/abs/2510.11997},
 }
 ```
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=arklexai/arksim&type=date)](https://star-history.com/#arklexai/arksim&date)
