@@ -1,15 +1,15 @@
 # Dify Integration
 
-This example demonstrates how to connect a [Dify](https://dify.ai) chatbot to ArkSim using the custom agent connector. It tests a customer service bot backed by a Dify knowledge base.
+This example connects a [Dify](https://dify.ai) Chatbot app to ArkSim using the custom agent connector. It uses Dify's Chat API directly via httpx with no SDK dependency.
 
-> **Note:** This integration requires a **Chatbot** app in Dify (not a Workflow or Text Generator app).
+> **Note:** This integration uses blocking mode, which requires a **Chatbot** app in Dify (not an Agent, Workflow, or Text Generator app).
 
 ## Prerequisites
 
-1. Install ArkSim and the Dify Python SDK:
+1. Install ArkSim:
 
    ```bash
-   pip install arksim dify-client
+   pip install arksim
    ```
 
 2. Create a **Chatbot** app in Dify (Cloud or self-hosted) and add a knowledge base with your documents. The included scenarios assume a home improvement store knowledge base, but you can adapt them to match your own content.
@@ -46,6 +46,6 @@ Results are written to `./results/simulation/simulation.json`. The evaluation re
 
 | File              | Description                                              |
 | ----------------- | -------------------------------------------------------- |
-| `custom_agent.py` | ArkSim agent that connects to Dify via the Chat API      |
+| `custom_agent.py` | ArkSim agent that connects to Dify via HTTP (httpx)      |
 | `config.yaml`     | ArkSim simulation and evaluation settings                |
 | `scenarios.json`  | Test scenarios for a home improvement customer service bot |

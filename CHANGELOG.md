@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * **simulation:** bump output schema version to v1.1 (additive `tool_calls` field on Message)
 * **evaluator:** bump evaluation output schema version to v1.1 (additive `error_scenario_mappings` field)
 * **chat-completions:** refactor to persistent httpx client with `AgentResponse` return type
+* **examples:** replace `dify-client` SDK with direct HTTP (httpx) in the Dify integration
 
 ### Fixed
 
