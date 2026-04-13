@@ -127,6 +127,7 @@ class SimulationParams(BaseModel):
     num_workers: int | str = Field(default=50)
     output_file_path: str = Field(default="./simulation.json")
     simulated_user_prompt_template: str | None = None
+    custom_rules: list[str] | None = None
 
 
 # ── Conversation state during simulation ──

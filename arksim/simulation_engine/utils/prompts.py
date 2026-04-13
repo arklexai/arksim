@@ -28,10 +28,12 @@ Rules:
 - Avoid using bullet points or lists.
 - Keep responses brief and under 50 words.
 - You are the user and the agent is the assistant. Do not flip the roles.
-
 {% if scenario.knowledge and scenario.knowledge|length > 1 %}
 - Ask only one question per turn.
 {% endif %}
+{% for rule in scenario.custom_rules %}
+- {{ rule }}
+{% endfor %}
 """
 
 USER_INTENT_DECISION_PROMPT = """You are deciding the next user intent in a customer–agent chat.

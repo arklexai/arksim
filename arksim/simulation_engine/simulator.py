@@ -72,6 +72,7 @@ class Simulator:
         goal: str,
         knowledge: list[KnowledgeItem],
         agent_context: str,
+        custom_rules: list[str] | None = None,
     ) -> str:
         """Render the simulated-user system prompt via Jinja2."""
         template = SandboxedEnvironment().from_string(simulated_user_prompt_template)
@@ -81,6 +82,7 @@ class Simulator:
                 "goal": goal,
                 "knowledge": knowledge,
                 "user_profile": profile,
+                "custom_rules": custom_rules or [],
             },
         )
 
@@ -121,6 +123,7 @@ class Simulator:
         scenario_id: str = "",
         on_turn_complete: Callable[[], None] | None = None,
         on_turn_display: Callable[[str, str, str, int], None] | None = None,
+        custom_rules: list[str] | None = None,
     ) -> ConversationState | None:
         """Run a single conversation and return its state."""
         knowledge_content: list[str] = [
@@ -134,7 +137,14 @@ class Simulator:
             or DEFAULT_SIMULATED_USER_PROMPT_TEMPLATE
         )
         instructional_prompt = self._render_simulated_user_prompt(
-            simulated_user_prompt_template, profile, goal, knowledge, agent_context
+            simulated_user_prompt_template,
+            profile,
+            goal,
+            knowledge,
+            agent_context,
+            custom_rules=custom_rules
+            if custom_rules is not None
+            else self.simulator_params.custom_rules,
         )
 
         agent = create_agent(self.agent_config)
@@ -351,6 +361,9 @@ class Simulator:
                             logger.error(f"Error processing conversation: {str(e)}")
                             logger.error(traceback.format_exc())
 
+                merged_rules = list(scenario.custom_rules) + list(
+                    self.simulator_params.custom_rules or []
+                )
                 coro = self._run_single_conversation(
                     scenario.user_profile,
                     scenario.goal,
@@ -360,6 +373,7 @@ class Simulator:
                     scenario_id=scenario.scenario_id,
                     on_turn_complete=on_turn_complete,
                     on_turn_display=on_turn_display,
+                    custom_rules=merged_rules or None,
                 )
                 running_tasks.add(asyncio.create_task(coro))
 

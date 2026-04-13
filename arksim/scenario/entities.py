@@ -58,6 +58,7 @@ class Scenario(BaseModel):
     knowledge: list[KnowledgeItem] = []
     user_profile: str
     origin: dict = Field(default_factory=dict)
+    custom_rules: list[str] = Field(default_factory=list)
     assertions: list[Assertion] = []
 
     def find_assertion(self, assertion_type: str) -> ToolCallsAssertion | None:
