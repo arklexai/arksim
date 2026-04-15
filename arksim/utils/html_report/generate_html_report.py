@@ -90,6 +90,7 @@ class ReportSummary(BaseModel):
     evaluation_model: str | None = None
     evaluation_provider: str | None = None
     evaluation_prompts: list[EvaluationPromptSummary] | None = None
+    root_cause_insights: list[dict[str, Any]] | None = None
 
 
 class ConvoRow(BaseModel):
@@ -297,6 +298,12 @@ def _build_final_report_data(
     except Exception:
         pass
 
+    root_cause_insights: list[dict[str, Any]] | None = None
+    if evaluation.root_cause_analysis:
+        root_cause_insights = [
+            h.model_dump() for h in evaluation.root_cause_analysis.hypotheses
+        ]
+
     return ReportSummary(
         total_conversations=total_conversations,
         total_turns=total_turns,
@@ -307,6 +314,7 @@ def _build_final_report_data(
         evaluation_model=evaluation_model,
         evaluation_provider=evaluation_provider,
         evaluation_prompts=eval_prompts,
+        root_cause_insights=root_cause_insights,
     )
 
 

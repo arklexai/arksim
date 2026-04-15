@@ -932,6 +932,14 @@ def run_evaluation(
         scenarios=scenarios,
     )
     evaluator_output = evaluator.evaluate(simulation, on_progress=on_progress)
+
+    from .root_cause_analysis import generate_root_cause_analysis
+
+    logger.info("Running root cause analysis...")
+    evaluator_output.root_cause_analysis = generate_root_cause_analysis(
+        evaluator_output, simulation, llm
+    )
+
     evaluator.save_results()
     evaluator.display_evaluation_summary()
 
