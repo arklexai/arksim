@@ -1,0 +1,21 @@
+agent_config:
+  agent_type: custom
+  agent_name: financial-advisor
+  custom_config:
+    module_path: ./agent/financial_agent.py
+    class_name: FinancialAdvisorAgent
+
+scenario_file_path: ./scenarios.json
+
+simulation:
+  provider: openai
+  model: gpt-4o-mini
+  num_conversations_per_scenario: 2
+  max_turns: 5
+
+evaluation:
+  provider: openai
+  model: gpt-4o-mini
+  custom_metrics_file_paths:
+    - ./metrics/custom_metrics.py
+  generate_html_report: true

@@ -1,5 +1,70 @@
 # Financial Simulation Module Proposal for ArkSim
 
+
+# 4/17 Financial Research Example for ArkSim
+
+## Overview
+This example adds a filing-grounded financial research agent on top of ArkSim.
+
+The current version is intentionally simplified to use only fixed local sources, so the simulation is more stable and reproducible.
+
+## Current scope
+This example currently uses:
+- local company filing PDFs
+- offline document ingestion
+- a local retrieval index built from those filings
+- ArkSim simulation and evaluation
+
+It does not currently depend on live web search or external financial data APIs.
+
+## Why this version is simplified
+Earlier iterations included external tools such as web/news retrieval and structured financial data adapters.
+Those sources made behavior less stable across runs and introduced avoidable noise during evaluation.
+
+To better match ArkSim’s simulation/evaluation workflow, this version keeps only fixed filing-based inputs.
+
+## Current workflow
+1. Put filing PDFs into `data/reports/`
+2. Run offline ingestion to build the local index
+3. Run ArkSim simulation/evaluation against the filing-grounded agent
+
+## What this example is trying to show
+- multi-turn filing-grounded financial Q&A
+- scenario-based financial research simulation
+- ArkSim-based evaluation of domain-specific agent behavior
+- a more reproducible setup using fixed local evidence
+
+## Current limitations
+This is still a prototype example.
+
+Known limitations:
+- some turn-level answers are still too generic or incomplete
+- some table-heavy questions need more deterministic extraction/calculation logic
+- retrieval and synthesis can still be improved for detailed filing analysis
+
+## Future improvement directions
+Possible next steps:
+- improve deterministic handling of filing tables and derived metrics
+- add better section-aware retrieval
+- optionally reintroduce structured financial data or earnings materials as fixed local sources
+- improve domain-specific evaluation metrics
+
+## Setup
+1. Put report PDFs into `data/reports/`
+2. Build the local index:
+   `python scripts/ingest_docs.py`
+3. Run ArkSim:
+   `arksim simulate-evaluate config.yaml`
+
+## Summary
+This example does not modify ArkSim core.
+
+It is a lightweight, filing-grounded financial research example that uses ArkSim as the simulation and evaluation backbone, while intentionally keeping the data sources fixed and local.
+
+
+
+
+
 ## What this does
 This module adds a financial research simulation agent on top of ArkSim.
 
