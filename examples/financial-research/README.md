@@ -1,4 +1,97 @@
-# Financial Simulation Module Proposal for ArkSim
+# Financial Research Example for ArkSim
+
+## Overview
+This example adds a filing-grounded financial research agent on top of ArkSim.
+
+The current version is intentionally simplified to use only fixed local sources so that simulation behavior is more stable, reproducible, and easier to evaluate.
+
+## Current status
+This example currently uses:
+- local company filing PDFs
+- offline document ingestion
+- a local retrieval index built from those filings
+- ArkSim simulation and evaluation
+
+It does not currently depend on live web search or external financial data APIs.
+
+## Why this version was simplified
+Earlier iterations included external tools such as structured financial datasets and web/news retrieval.
+Those sources made behavior less stable across runs and introduced avoidable noise during evaluation.
+
+To better match ArkSim’s simulation/evaluation workflow, the current version keeps only fixed filing-based inputs.
+
+## Current workflow
+1. Put filing PDFs into `data/reports/`
+2. Run offline ingestion to build the local index
+3. Run ArkSim simulation/evaluation against the filing-grounded agent
+
+## What this example is trying to show
+- multi-turn filing-grounded financial Q&A
+- scenario-based financial research simulation
+- ArkSim-based evaluation of domain-specific agent behavior
+- a more reproducible setup using fixed local evidence
+
+## How this differs from other ArkSim examples
+Compared with other ArkSim examples, this one is more filing-grounded and retrieval-driven.
+
+In many ArkSim examples, the agent behavior is backed by relatively explicit tools or pre-structured domain data.
+In this example, the main evidence source is local SEC-style filing content that is ingested offline and retrieved at runtime.
+
+So the architecture is closer to:
+
+ArkSim scenario -> simulated user -> financial agent -> filing retrieval -> answer -> evaluation
+
+rather than a pure skill-server or mock-backend setup.
+
+## Why the evaluation scores are not high yet
+This example is still a prototype, and the current evaluation results are not yet strong for a few reasons:
+
+- some table-heavy filing questions still need more deterministic extraction and calculation
+- some responses are still too generic or incomplete for narrow analyst-style follow-up questions
+- some answers should be derived directly from filing tables instead of relying on free-form LLM synthesis
+- retrieval and answer synthesis can still be improved for detailed filing analysis
+
+In other words, the current version is already useful for demonstrating a stable ArkSim-compatible financial research workflow, but it is not yet optimized for high-scoring filing analysis performance.
+
+## Current limitations
+Known limitations:
+- some turn-level answers are still too generic or incomplete
+- some table-heavy questions need more deterministic extraction/calculation logic
+- retrieval and synthesis can still be improved for detailed filing analysis
+
+## Future improvement directions
+Possible next steps:
+- improve deterministic handling of filing tables and derived metrics
+- add better section-aware retrieval
+- optionally add other fixed local sources such as earnings releases or quarterly presentation materials
+- improve domain-specific evaluation metrics
+
+## Setup
+1. Put report PDFs into `data/reports/`
+2. Build the local index:
+   `python scripts/ingest_docs.py`
+3. Run ArkSim:
+   `arksim simulate-evaluate config.yaml`
+
+## Summary
+This example does not modify ArkSim core.
+
+It is a lightweight, filing-grounded financial research example that uses ArkSim as the simulation and evaluation backbone, while intentionally keeping the data sources fixed and local.
+
+---
+
+## Earlier broader proposal / future extension direction
+The broader long-term direction for this example originally included:
+- structured financial datasets
+- web/news retrieval
+- richer role-conditioned market analysis flows
+
+That broader direction is still relevant as a future extension area, but it is not the focus of the current simplified version.
+The current priority is to keep the example stable, reproducible, and aligned with ArkSim’s multi-turn simulation/evaluation workflow before reintroducing optional external sources.
+
+
+
+<!-- # Financial Simulation Module Proposal for ArkSim
 
 
 # 4/17 Financial Research Example for ArkSim
@@ -147,11 +240,14 @@ A financial module would make ArkSim useful for a new class of evaluation proble
 * role-specific financial reasoning
 * source-grounded investment research assistance
 
-This is a good fit for ArkSim because the framework already handles the hard part of **simulation + evaluation**; the new work is mainly in **domain-specific agent behavior + data grounding**.
+This is a good fit for ArkSim because the framework already handles the hard part of **simulation + evaluation**; the new work is mainly in **domain-specific agent behavior + data grounding**. -->
 
----
 
-## Current architecture idea
+
+
+<!-- --- -->
+
+<!-- ## Current architecture idea -->
 
 ```text
 ArkSim Scenarios
