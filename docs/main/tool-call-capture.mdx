@@ -124,7 +124,7 @@ https://arksim.arklex.ai/a2a/tool-call-capture/v1
 Per [A2A spec section 3.7](https://a2a-protocol.org/latest/specification/), task outputs are delivered through `Artifacts` on a `Task`, not through `Messages`. Messages are for conversational turns (initiation, clarification, status); Artifacts are the durable output record. Tool calls are part of the agent's task output, so they belong in an Artifact.
 
 <Warning>
-Embedding tool call data in a `Message` part (including `DataPart`) will not be picked up: arksim's A2A client reads `Task.artifacts` only, per the spec.
+arksim's A2A client reads `Task.artifacts` only (per A2A spec section 3.7). Tool call data embedded in `Message.parts`, including `DataPart`, will not be captured.
 </Warning>
 
 ### Server requirements
@@ -174,7 +174,6 @@ if context.current_task is None:
 await updater.start_work()
 await updater.add_artifact(
     parts=[Part(root=TextPart(text=answer))],
-    name="response",
     metadata={
         A2AToolCaptureExtension.METADATA_KEY: [
             {
@@ -219,7 +218,37 @@ Per the [A2A extensions spec](https://a2a-protocol.org/latest/topics/extensions/
 
 When arksim bumps to a new version, both `A2AToolCaptureExtension.URI` and `A2AToolCaptureExtension.METADATA_KEY` change together (the key is derived from the URI), and the client's `extensions=` negotiation header flips to the new URI. The arksim client advertises and reads a single URI at a time; a server still on the old URI silently produces zero tool calls (the artifact is extracted but its `extensions` list no longer matches). For a hard cutover, update server and client together. For graceful migration, the server can declare both URIs in its AgentCard and emit **two separate artifacts** (one per URI, each listing its URI in `extensions` and carrying tool calls under its respective `{URI}/tool_calls` metadata key) until all clients upgrade.
 
-See the [A2A tool call capture example](https://github.com/arklexai/arksim/tree/main/examples/tool-call-capture/a2a) for a complete working example.
+See the [customer-service A2A example](https://github.com/arklexai/arksim/tree/main/examples/customer-service/a2a_server) for a complete working example using the same tools and scenarios as the Python connector variant.
+
+---
+
+## Security considerations
+
+Tool call metadata is more sensitive than the agent's text response. Arguments can contain PII (email addresses, customer IDs), verification codes, internal tool names that expose your agent's architecture, and verbatim tool results. A server that emits this data unconditionally exposes strictly more than it would without the extension.
+
+The arksim example server gates tool call emission on the client's `A2A-Extensions` request header: if the client does not request the extension, the server omits tool call metadata from the artifact. This is the right default, but the request header is not access control; any HTTP client can send it.
+
+Three deployment options, ordered by isolation strength:
+
+**Option A: Dedicated evaluation deployment.** Run two instances of the agent: a production instance that does not declare the extension in its AgentCard, and an eval-only instance behind private networking that does. Zero risk of leaking tool traces to production traffic. Best fit for regulated domains (HIPAA, PCI) or when production and evaluation are operated by different teams.
+
+**Option B: Single deployment with transport auth.** One endpoint, behind bearer token or mTLS declared in [`AgentCard.securitySchemes`](https://a2a-protocol.org/latest/specification/). arksim carries the credential via `A2AConfig.headers` in the config:
+
+```yaml
+agent_config:
+  agent_type: a2a
+  agent_name: my-agent
+  api_config:
+    endpoint: https://agent.internal:9998
+    headers:
+      Authorization: "Bearer ${ARKSIM_A2A_TOKEN}"
+```
+
+The server gates tool call emission on both valid auth at the transport layer and the `A2A-Extensions` request header. Auth keeps unauthorized clients out; the negotiation gate provides least-privilege within the authenticated group.
+
+**Option C: Environment flag gate.** The server only emits the extension when an environment variable (e.g. `ARKSIM_TOOL_CAPTURE_ENABLED=true`) is set at startup. Simplest but weakest: useful for CI/staging where the entire deployment is evaluation-facing, but a flipped flag in production silently turns on exposure.
+
+For most teams, Option B is the practical default.
 
 ---
 

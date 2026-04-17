@@ -1,16 +1,12 @@
 # SPDX-License-Identifier: Apache-2.0
-"""A2A server that surfaces tool calls via the arksim A2A tool capture extension.
+"""A2A server for the customer-service example.
 
-The server declares the extension URI in its AgentCard and emits a Task
-artifact whose metadata carries the tool calls made during inference.
-arksim's A2A client extracts these and feeds them into the
-``tool_call_behavior_failure`` metric.
+Surfaces tool calls via the arksim A2A tool capture extension
+(``A2AToolCaptureExtension``). The server declares the extension in its
+AgentCard and emits tool call data in Task artifact metadata.
 
-Per A2A spec section 3.7, task outputs are delivered through Artifacts on
-a Task, not through Messages. A2A defines no native tool-call semantics
-(it defers to MCP for tool invocation), so arksim's tool capture is
-defined as an AgentExtension identified by
-``A2AToolCaptureExtension.URI``.
+Per A2A spec section 3.7, task outputs are delivered through Artifacts
+on a Task, not through Messages.
 """
 
 from __future__ import annotations
@@ -46,7 +42,7 @@ _TOOL_CAPTURE_EXTENSION = AgentExtension(
 )
 
 
-class ToolCallAgentExecutor(AgentExecutor):
+class CustomerServiceExecutor(AgentExecutor):
     """A2A executor that surfaces tool calls via Task artifacts."""
 
     def __init__(self) -> None:
@@ -70,18 +66,15 @@ class ToolCallAgentExecutor(AgentExecutor):
 
         answer, tool_calls = await self._agents[context_id].invoke(user_input)
 
-        # Mark the extension as activated for this request so the framework
-        # echoes it back in the A2A-Extensions response header per the A2A
-        # extension negotiation protocol.
-        if A2AToolCaptureExtension.URI in context.requested_extensions:
+        # Mark the extension as activated so the framework echoes it back
+        # in the response header per the A2A extension negotiation protocol.
+        # Only emit tool call metadata when the client requested the
+        # extension; this is least-privilege by default (see the Security
+        # section in the tool-call-capture docs for deployment guidance).
+        emit_tool_calls = A2AToolCaptureExtension.URI in context.requested_extensions
+        if emit_tool_calls:
             context.add_activated_extension(A2AToolCaptureExtension.URI)
 
-        # Use TaskUpdater to emit a Task with an artifact carrying the
-        # answer text and tool call metadata. Per A2A spec section 3.7,
-        # task outputs go in artifacts, not in Message parts.
-        # context.task_id is assigned by the DefaultRequestHandler; we
-        # require it rather than inventing one, so task tracking in the
-        # task store stays consistent.
         if not context.task_id:
             raise ValueError(f"context.task_id is required (context_id={context_id})")
         updater = TaskUpdater(event_queue, context.task_id, context_id)
@@ -91,13 +84,13 @@ class ToolCallAgentExecutor(AgentExecutor):
 
         metadata: dict[str, object] = {}
         extensions: list[str] = []
-        if tool_calls:
+        if emit_tool_calls and tool_calls:
             metadata[A2AToolCaptureExtension.METADATA_KEY] = tool_calls
             extensions.append(A2AToolCaptureExtension.URI)
 
         await updater.add_artifact(
             parts=[Part(root=TextPart(text=answer))],
-            name="response",
+            # Artifact.name is a human-readable label, not consumed by arksim.
             metadata=metadata or None,
             extensions=extensions or None,
         )
@@ -109,25 +102,25 @@ class ToolCallAgentExecutor(AgentExecutor):
 
 if __name__ == "__main__":
     skill = AgentSkill(
-        id="weather_tool_capture",
-        name="Weather assistant with tool call capture",
+        id="customer_service_tool_capture",
+        name="Customer service with tool call capture",
         description=(
-            "A weather assistant that reports tool calls via the arksim "
-            "A2A tool capture extension so arksim can evaluate tool usage "
-            "against scenario assertions."
+            "A customer service agent backed by SQLite that reports tool "
+            "calls via the arksim A2A tool capture extension."
         ),
-        tags=["weather", "tool-call-capture", "a2a"],
+        tags=["customer-service", "tool-call-capture", "a2a"],
         examples=[
-            "What is the weather in Tokyo?",
-            "How is the weather in Paris today?",
+            "Can you check the status of order ORD-1001?",
+            "I want to cancel order ORD-1002.",
         ],
     )
 
     public_agent_card = AgentCard(
-        name="Weather Tool Capture Agent",
+        name="Customer Service Agent",
         description=(
-            "A minimal weather agent that surfaces tool call data via the "
-            "arksim A2A tool capture extension on Task artifacts."
+            "A customer service agent for an online store that surfaces "
+            "tool call data via the arksim A2A tool capture extension on "
+            "Task artifacts."
         ),
         url=os.getenv("A2A_SERVER_URL", "http://localhost:9998/"),
         version="1.0.0",
@@ -141,7 +134,7 @@ if __name__ == "__main__":
     )
 
     request_handler = DefaultRequestHandler(
-        agent_executor=ToolCallAgentExecutor(),
+        agent_executor=CustomerServiceExecutor(),
         task_store=InMemoryTaskStore(),
     )
 

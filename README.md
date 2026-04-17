@@ -115,7 +115,7 @@ agent_config:
     endpoint: http://localhost:9999/agent
 ```
 
-A2A agents can also surface tool calls for evaluation via the arksim [tool call capture extension](https://docs.arklex.ai/main/tool-call-capture). See `examples/tool-call-capture/a2a/` for a runnable reference server.
+A2A agents can also surface tool calls for evaluation via the arksim [tool call capture extension](https://docs.arklex.ai/main/tool-call-capture). See `examples/customer-service/a2a_server/` for a runnable reference server.
 
 Write scenarios that match your agent's domain. See the [Scenarios documentation](https://docs.arklex.ai/main/build-scenario) for how to define goals, user profiles, and knowledge.
 
