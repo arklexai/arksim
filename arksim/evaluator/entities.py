@@ -34,7 +34,7 @@ _DEFAULT_METRICS_TO_RUN = [
     "coherence",
     "verbosity",
     "relevance",
-    "goal_completion",
+    "user_goal_completion",
     "agent_behavior_failure",
 ]
 
@@ -103,6 +103,16 @@ class EvaluationInput(BaseModel):
             "turns where the metric did not run are skipped."
         ),
     )
+    agent_constraints: list[str] = Field(
+        default_factory=list,
+        description=(
+            "Global list of constraints the agent must adhere to across all scenarios. "
+            "Each entry is a plain-language rule the agent must never violate "
+            "(e.g. 'Agent must not provide medical or legal advice'). "
+            "Evaluated per turn via a separate constraint violation check alongside "
+            "agent_behavior_failure. Violations surface as a constraint_violation label."
+        ),
+    )
 
     @model_validator(mode="before")
     @classmethod
@@ -163,6 +173,7 @@ class EvaluationParams(BaseModel):
     custom_metrics: list[QuantitativeMetric] = Field(default_factory=list)
     custom_qualitative_metrics: list[QualitativeMetric] = Field(default_factory=list)
     metrics_to_run: list[str] | None = None
+    agent_constraints: list[str] = Field(default_factory=list)
 
 
 class TurnItem(BaseModel):
@@ -175,6 +186,8 @@ class TurnItem(BaseModel):
     profile: str
     user_goal: str
     tool_calls: list[ToolCall] | None = None
+    agent_constraints: list[str] = Field(default_factory=list)
+    expected_behavior: str = ""
 
 
 class ConvoItem(BaseModel):
@@ -197,6 +210,7 @@ class TurnEvaluation(BaseModel):
     turn_behavior_failure_reason: str
     qual_scores: list[QualResult] = Field(default_factory=list)
     unique_error_ids: list[str] = Field(default_factory=list)
+    constraints_fulfilled: list[str] = Field(default_factory=list)
 
 
 class Occurrence(BaseModel):
@@ -220,12 +234,46 @@ class ConversationEvaluation(BaseModel):
     """Per-conversation evaluation result."""
 
     conversation_id: str
-    goal_completion_score: float  # 0–1 (normalized from 1–5)
-    goal_completion_reason: str
+    user_goal_completion_score: float  # 0–1 (normalized from 1–5)
+    user_goal_completion_reason: str
     turn_success_ratio: float  # 0–1
     overall_agent_score: float  # 0–1
     evaluation_status: str
     turn_scores: list[TurnEvaluation]
+
+    @model_validator(mode="before")
+    @classmethod
+    def _migrate_goal_completion(cls, data: object) -> object:
+        """Accept deprecated goal_completion_* field names from old JSON output."""
+        if not isinstance(data, dict):
+            return data
+        if "goal_completion_score" in data and "user_goal_completion_score" not in data:
+            data = {**data, "user_goal_completion_score": data["goal_completion_score"]}
+        if "goal_completion_reason" in data and "user_goal_completion_reason" not in data:
+            data = {**data, "user_goal_completion_reason": data["goal_completion_reason"]}
+        return data
+
+    @property
+    def goal_completion_score(self) -> float:
+        import warnings
+
+        warnings.warn(
+            "goal_completion_score is deprecated, use user_goal_completion_score",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.user_goal_completion_score
+
+    @property
+    def goal_completion_reason(self) -> str:
+        import warnings
+
+        warnings.warn(
+            "goal_completion_reason is deprecated, use user_goal_completion_reason",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.user_goal_completion_reason
 
 
 class Evaluation(BaseModel):

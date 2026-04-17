@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any, Literal, Union
 
 from pydantic import BaseModel, Field, model_validator
 
@@ -33,6 +33,7 @@ class AssertionType:
     """Constants for assertion type discriminators."""
 
     TOOL_CALLS = "tool_calls"
+    AGENT_RESPONSE = "agent_response"
 
 
 class ToolCallsAssertion(BaseModel):
@@ -43,9 +44,23 @@ class ToolCallsAssertion(BaseModel):
     match_mode: Literal["strict", "unordered", "contains", "within"] = "unordered"
 
 
+class AgentResponseAssertion(BaseModel):
+    """Assert expected agent response behavior at the scenario level.
+
+    Used to declare the expected agent response for a specific constrained
+    scenario. Applied to every turn: the evaluator checks whether each
+    assistant response aligns with this expectation.
+    """
+
+    type: Literal["agent_response"]
+    expected: str
+
+
 # Discriminated union on the "type" field. When adding new assertion
-# types, use Union: Annotated[TypeA | TypeB, Field(discriminator="type")]
-Assertion = Annotated[ToolCallsAssertion, Field(discriminator="type")]
+# types, extend the union here.
+Assertion = Annotated[
+    Union[ToolCallsAssertion, AgentResponseAssertion], Field(discriminator="type")
+]
 
 
 class Scenario(BaseModel):
@@ -60,7 +75,9 @@ class Scenario(BaseModel):
     origin: dict = Field(default_factory=dict)
     assertions: list[Assertion] = []
 
-    def find_assertion(self, assertion_type: str) -> ToolCallsAssertion | None:
+    def find_assertion(
+        self, assertion_type: str
+    ) -> ToolCallsAssertion | AgentResponseAssertion | None:
         """Return the first assertion matching the given type, or None."""
         for a in self.assertions:
             if a.type == assertion_type:

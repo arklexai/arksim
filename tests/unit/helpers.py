@@ -9,7 +9,7 @@ from unittest.mock import MagicMock
 def make_mock_convo(
     convo_id: str,
     metric_scores: dict[str, list[float]] | None = None,
-    goal_completion_score: float = -1.0,
+    user_goal_completion_score: float = -1.0,
     overall_agent_score: float = 0.9,
     abf_labels: list[str] | None = None,
     qual_scores: dict[str, list[str]] | None = None,
@@ -19,8 +19,8 @@ def make_mock_convo(
     Args:
         convo_id: Conversation identifier.
         metric_scores: Per-metric numeric turn scores, e.g. ``{"faithfulness": [4.0, 3.5]}``.
-        goal_completion_score: Conversation-level goal completion score (0–1, or -1 if skipped).
-        overall_agent_score: Conversation-level overall agent score (0–1).
+        user_goal_completion_score: Conversation-level goal completion score (0-1, or -1 if skipped).
+        overall_agent_score: Conversation-level overall agent score (0-1).
         abf_labels: Per-turn ``agent_behavior_failure`` labels.
         qual_scores: Per-metric qualitative turn labels, e.g. ``{"prohibited": ["ok", "violated"]}``.
     """
@@ -63,7 +63,7 @@ def make_mock_convo(
     convo = MagicMock()
     convo.conversation_id = convo_id
     convo.turn_scores = turns
-    convo.goal_completion_score = goal_completion_score
+    convo.user_goal_completion_score = user_goal_completion_score
     convo.overall_agent_score = overall_agent_score
     return convo
 

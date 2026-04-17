@@ -14,7 +14,7 @@ from tqdm import tqdm
 
 from arksim.llms.chat import LLM
 from arksim.scenario import Scenarios
-from arksim.scenario.entities import AssertionType, ExpectedToolCall
+from arksim.scenario.entities import AssertionType, AgentResponseAssertion, ExpectedToolCall
 from arksim.simulation_engine import Conversation, Simulation
 from arksim.utils.module_loader import load_module_from_file
 from arksim.utils.output import load_json_file, save_json_file
@@ -73,6 +73,8 @@ class Evaluator:
 
         # Build scenario_id -> (expected_tool_calls, match_mode) mapping
         self._scenario_expected: dict[str, tuple[list[ExpectedToolCall], str]] = {}
+        # Build scenario_id -> expected_behavior (from agent_response assertion)
+        self._scenario_agent_response: dict[str, str] = {}
         if scenarios:
             for s in scenarios.scenarios:
                 tc_assertion = s.find_assertion(AssertionType.TOOL_CALLS)
@@ -81,6 +83,9 @@ class Evaluator:
                         tc_assertion.expected,
                         tc_assertion.match_mode,
                     )
+                ar_assertion = s.find_assertion(AssertionType.AGENT_RESPONSE)
+                if ar_assertion and isinstance(ar_assertion, AgentResponseAssertion):
+                    self._scenario_agent_response[s.scenario_id] = ar_assertion.expected
 
         logger.info(f"Evaluator initialized: num_workers={params.num_workers}")
 
@@ -92,6 +97,8 @@ class Evaluator:
         knowledge = variables.get("scenario.knowledge", [])
         profile = variables.get("scenario.user_profile", "")
         user_goal = variables.get("scenario.goal", "")
+        agent_constraints = self.params.agent_constraints
+        expected_behavior = self._scenario_agent_response.get(entry.scenario_id, "")
 
         convo_list = []
         all_messages: list[ChatMessage] = []
@@ -123,6 +130,8 @@ class Evaluator:
                             profile=profile,
                             user_goal=user_goal,
                             tool_calls=turn_tool_calls,
+                            agent_constraints=agent_constraints,
+                            expected_behavior=expected_behavior,
                         )
                     )
                     turn_id += 1
@@ -483,7 +492,7 @@ class Evaluator:
         for i, c in enumerate(convo_evaluations, 1):
             logger.info(
                 f"\nConversation {i} (Turns: {len(c.turn_scores)}):\n"
-                f"   - Goal Completion Rate: {c.goal_completion_score:.2f}\n"
+                f"   - User Goal Completion Rate: {c.user_goal_completion_score:.2f}\n"
                 f"   - Turn Success Ratio: {c.turn_success_ratio:.2f}\n"
                 f"   - Overall Agent Score: {c.overall_agent_score:.2f}\n"
                 f"   - Status: {c.evaluation_status}",
@@ -753,6 +762,7 @@ def run_evaluation(
         custom_metrics=custom_metrics,
         custom_qualitative_metrics=custom_qualitative_metrics,
         metrics_to_run=settings.metrics_to_run or None,
+        agent_constraints=settings.agent_constraints,
     )
 
     evaluator = Evaluator(

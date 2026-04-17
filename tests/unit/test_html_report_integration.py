@@ -196,8 +196,8 @@ def _build_test_data(env: SimpleNamespace) -> tuple[Any, Any, dict[str, str]]:
         conversations=[
             env.ConversationEvaluation(
                 conversation_id="conv-uuid-1",
-                goal_completion_score=1.0,
-                goal_completion_reason="Completed",
+                user_goal_completion_score=1.0,
+                user_goal_completion_reason="Completed",
                 turn_success_ratio=1.0,
                 overall_agent_score=1.0,
                 evaluation_status="Done",
@@ -232,8 +232,8 @@ def _build_test_data(env: SimpleNamespace) -> tuple[Any, Any, dict[str, str]]:
             ),
             env.ConversationEvaluation(
                 conversation_id="conv-uuid-2",
-                goal_completion_score=0.3,
-                goal_completion_reason="Incomplete",
+                user_goal_completion_score=0.3,
+                user_goal_completion_reason="Incomplete",
                 turn_success_ratio=0.5,
                 overall_agent_score=0.45,
                 evaluation_status="Failed",

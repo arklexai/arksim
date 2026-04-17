@@ -22,3 +22,9 @@ class UniqueErrorSchema(BaseModel):
 
 class UniqueErrorsSchema(BaseModel):
     unique_errors: list[UniqueErrorSchema]
+
+
+class ConstraintViolationSchema(BaseModel):
+    violated_constraints: list[str]
+    fulfilled_constraints: list[str]
+    reason: str

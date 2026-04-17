@@ -134,8 +134,8 @@ class TestDisplayHelpers:
         )
         return ConversationEvaluation(
             conversation_id="conv-1",
-            goal_completion_score=0.8,
-            goal_completion_reason="mostly done",
+            user_goal_completion_score=0.8,
+            user_goal_completion_reason="mostly done",
             turn_success_ratio=1.0,
             overall_agent_score=0.95,
             evaluation_status="Done",

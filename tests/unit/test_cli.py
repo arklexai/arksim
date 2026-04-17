@@ -173,7 +173,7 @@ class TestMainEvaluateThresholds:
                 make_mock_convo(
                     "c1",
                     overall_agent_score=goal_completion,
-                    goal_completion_score=goal_completion,
+                    user_goal_completion_score=goal_completion,
                 )
             ]
         )
@@ -217,7 +217,7 @@ class TestMainEvaluateThresholds:
         c = MagicMock()
         c.conversation_id = "c1"
         c.overall_agent_score = 0.9
-        c.goal_completion_score = 0.9
+        c.user_goal_completion_score = 0.9
         c.turn_scores = [turn]
         ev = MagicMock()
         ev.conversations = [c]

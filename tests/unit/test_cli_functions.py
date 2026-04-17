@@ -224,12 +224,12 @@ class TestCheckNumericThresholds:
 
     def test_goal_completion_uses_convo_score(self) -> None:
         """goal_completion reads the per-conversation score, not turn scores."""
-        ev = make_mock_evaluation([make_mock_convo("c1", goal_completion_score=0.9)])
+        ev = make_mock_evaluation([make_mock_convo("c1", user_goal_completion_score=0.9)])
         assert check_numeric_thresholds(ev, {"goal_completion": 0.8}) is True
 
     def test_goal_completion_not_computed_skips(self) -> None:
         """goal_completion_score == -1 (not computed) is skipped with a warning."""
-        ev = make_mock_evaluation([make_mock_convo("c1", goal_completion_score=-1.0)])
+        ev = make_mock_evaluation([make_mock_convo("c1", user_goal_completion_score=-1.0)])
         assert check_numeric_thresholds(ev, {"goal_completion": 0.8}) is True
 
     def test_metric_not_found_skips_with_warning(self) -> None:

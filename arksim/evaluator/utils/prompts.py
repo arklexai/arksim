@@ -145,6 +145,9 @@ Evaluation Form:
 
 goal_completion_system_prompt = """
 You are given a conversation between user and AI assistant. Please evaluate whether the user's goal has been successfully addressed by the AI assistant.
+
+If agent context is provided, use it to understand what the agent is designed to do. Score 1 only if the user's goal was genuinely achieved given the agent's scope and capabilities.
+
 You need to output 1 for success or 0 for failure, and reasoning in a VALID JSON only. DO NOT PREFIX WITH json language label. DO NOT USE MARKDOWN. DO NOT include explanations, markdown, or extra text. Use this format exactly:
 
 {{
@@ -155,6 +158,8 @@ Keep the "reason" to 2-3 sentences maximum. Be specific and concise.
 """
 
 goal_completion_user_prompt = """
+Agent context: {agent_context}
+
 Here is the conversation between user and AI assistant:
 {full_conversation}
 
@@ -165,6 +170,12 @@ Evaluation Form:
 
 agent_behavior_failure_system_prompt = """
 You are given a conversation between a user and an AI assistant. Identify agent behavior failures IN THE LAST ASSISTANT TURN ONLY using the categories below. Some categories require checking the provided knowledge, which will be supplied alongside the conversation when relevant.
+
+When agent context, agent restrictions, or expected behavior are provided:
+- Use agent context to understand what the agent is designed to do and what constraints it operates under.
+- If agent restrictions are provided and the agent correctly enforces them, suppress only the failure labels directly caused by the constraint being enforced. Any failure independent of the constraint must still be emitted.
+- If expected behavior is provided and the agent's response aligns with it, suppress failure labels that are directly caused by the constraint. Failures unrelated to the expected behavior (e.g. false information, safety issues) must still be emitted.
+- Apply the full standard failure categories when no restrictions or expected behavior are provided, or when the agent directly contradicts them.
 
 CRITICAL: You need to output in a VALID JSON only. DO NOT PREFIX WITH json language label. DO NOT USE MARKDOWN. DO NOT include explanations, markdown, or extra text. Use this format exactly:
 
@@ -304,6 +315,12 @@ Output: {"label": "no failure", "reason": "The assistant directly answered the u
 
 
 agent_behavior_failure_user_prompt = """
+    Agent context: {agent_context}
+
+    Agent restrictions: {agent_constraints}
+
+    Expected behavior: {expected_behavior}
+
     Here is the user's goal for this conversation:
     {user_goal}
 
@@ -430,6 +447,45 @@ tool_call_behavior_failure_user_prompt = """
     {tool_calls}
 
     tool call behavior failure on the last assistant turn:
+"""
+
+
+### Constraint Violation Prompt
+
+constraint_violation_system_prompt = """
+You are given a conversation between a user and an AI assistant, along with a list of constraints the agent must adhere to. Evaluate whether each constraint was violated or fulfilled IN THE LAST ASSISTANT TURN ONLY.
+
+For each constraint, determine:
+- fulfilled (1): the agent's response in this turn is consistent with the constraint
+- violated (0): the agent's response directly contradicts or fails to enforce the constraint
+
+Return the results as a single all-at-once evaluation. List constraints separately under "violated_constraints" and "fulfilled_constraints".
+
+CRITICAL: You need to output in a VALID JSON only. DO NOT PREFIX WITH json language label. DO NOT USE MARKDOWN. DO NOT include explanations, markdown, or extra text. Use this format exactly:
+
+{
+    "violated_constraints": ["<constraint text>", ...],
+    "fulfilled_constraints": ["<constraint text>", ...],
+    "reason": "<brief summary of findings>"
+}
+
+Rules:
+- Every constraint provided must appear in exactly one of the two lists.
+- "violated_constraints" is empty if all constraints were fulfilled.
+- Reasons must be concise and tied to the last assistant turn only.
+"""
+
+constraint_violation_user_prompt = """
+    Agent context: {agent_context}
+
+    Constraints to evaluate:
+    {constraints_list}
+
+    Conversation up to the last assistant turn:
+
+    {conversation}
+
+    constraint adherence evaluation on the last assistant turn:
 """
 
 

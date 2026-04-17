@@ -50,8 +50,8 @@ def check_numeric_thresholds(
         for convo in evaluator_output.conversations:
             if metric_name == "overall_score":
                 score: float | None = convo.overall_agent_score
-            elif metric_name == "goal_completion":
-                raw = convo.goal_completion_score
+            elif metric_name in ("goal_completion", "user_goal_completion"):
+                raw = convo.user_goal_completion_score
                 score: float | None = raw if raw >= 0 else None
             else:
                 values = [

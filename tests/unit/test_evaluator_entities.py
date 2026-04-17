@@ -258,8 +258,8 @@ class TestConversationEvaluation:
         """Test creating a valid ConversationEvaluation."""
         item = ConversationEvaluation(
             conversation_id="conv-1",
-            goal_completion_score=0.9,
-            goal_completion_reason="Goal achieved",
+            user_goal_completion_score=0.9,
+            user_goal_completion_reason="Goal achieved",
             turn_success_ratio=0.8,
             overall_agent_score=0.87,
             evaluation_status="Done",
@@ -281,8 +281,8 @@ class TestConversationEvaluation:
         )
         item = ConversationEvaluation(
             conversation_id="conv-2",
-            goal_completion_score=0.5,
-            goal_completion_reason="Partial",
+            user_goal_completion_score=0.5,
+            user_goal_completion_reason="Partial",
             turn_success_ratio=0.5,
             overall_agent_score=0.5,
             evaluation_status="Partial Failure",

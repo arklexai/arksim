@@ -1892,7 +1892,7 @@
                         ${row.goal ? `<span class="has-tooltip">${escapeHtml(row.scenario_id || '')}</span>` : escapeHtml(row.scenario_id || '')}
                         ${row.goal ? `<span class="user-goal-tooltip"><strong>Goal:</strong> ${escapeHtml(row.goal)}</span>` : ''}
                     </td>
-                    <td><span class="score-highlight">${parseFloat(row.goal_completion_score).toFixed(2)}</span></td>
+                    <td><span class="score-highlight">${parseFloat(row.user_goal_completion_score).toFixed(2)}</span></td>
                     <td><span class="score-highlight">${parseFloat(row.final_score).toFixed(2)}</span></td>
                     <td>
                         <span class="status-badge ${statusClass}">
@@ -2009,15 +2009,15 @@
                     <div class="info-section">
                         <div class="info-label">Scores</div>
                         <div class="info-value">
-                            <strong>Goal Completion Score:</strong> ${parseFloat(convosRow.goal_completion_score).toFixed(2)} |
+                            <strong>User Goal Completion Score:</strong> ${parseFloat(convosRow.user_goal_completion_score).toFixed(2)} |
                             <strong>Final Score:</strong> ${parseFloat(convosRow.final_score).toFixed(2)} |
                             <strong>Status:</strong> <span class="status-badge ${modalStatusClass}">${cleanedModalStatus}</span>
                         </div>
                     </div>
 
                     <div class="info-section">
-                        <div class="info-label">Goal Completion Reason</div>
-                        <div class="info-value">${convosRow.goal_completion_reason || 'N/A'}</div>
+                        <div class="info-label">User Goal Completion Reason</div>
+                        <div class="info-value">${convosRow.user_goal_completion_reason || 'N/A'}</div>
                     </div>
 
                     <details class="info-section" style="margin-bottom:24px">

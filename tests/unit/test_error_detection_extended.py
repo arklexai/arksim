@@ -26,8 +26,8 @@ def _turn(
 def _conv(conv_id: str, turns: list[TurnEvaluation]) -> ConversationEvaluation:
     return ConversationEvaluation(
         conversation_id=conv_id,
-        goal_completion_score=0.5,
-        goal_completion_reason="ok",
+        user_goal_completion_score=0.5,
+        user_goal_completion_reason="ok",
         turn_success_ratio=0.5,
         overall_agent_score=0.5,
         evaluation_status="Done",

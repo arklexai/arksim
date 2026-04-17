@@ -26,8 +26,8 @@ def _make_conv_eval(conversation_id: str, turns: list) -> ConversationEvaluation
     """Build a ConversationEvaluation with minimal fields."""
     return ConversationEvaluation(
         conversation_id=conversation_id,
-        goal_completion_score=0.5,
-        goal_completion_reason="OK",
+        user_goal_completion_score=0.5,
+        user_goal_completion_reason="OK",
         turn_success_ratio=0.5,
         overall_agent_score=0.5,
         evaluation_status="Done",

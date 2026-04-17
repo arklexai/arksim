@@ -18,6 +18,7 @@ from .base_metric import (
 from .builtin_metrics import (
     AgentBehaviorFailureMetric,
     CoherenceMetric,
+    ConstraintViolationMetric,
     FaithfulnessMetric,
     GoalCompletionMetric,
     HelpfulnessMetric,
@@ -52,7 +53,14 @@ logger = logging.getLogger(__name__)
 
 
 def _should_run(name: str, metrics_to_run: list[str] | None) -> bool:
-    return not metrics_to_run or name in metrics_to_run
+    if not metrics_to_run:
+        return True
+    if name in metrics_to_run:
+        return True
+    # Accept deprecated "goal_completion" as alias for "user_goal_completion"
+    if name == "user_goal_completion" and "goal_completion" in metrics_to_run:
+        return True
+    return False
 
 
 def evaluate_turn(
@@ -80,6 +88,9 @@ def evaluate_turn(
         knowledge=combine_knowledge(turn_item.knowledge or []),
         user_goal=turn_item.user_goal,
         profile=turn_item.profile,
+        agent_context=turn_item.system_prompt,
+        agent_constraints=turn_item.agent_constraints,
+        expected_behavior=turn_item.expected_behavior,
     )
 
     builtin: list[QuantitativeMetric] = [
@@ -221,6 +232,40 @@ def evaluate_turn(
                         f"\n[Tool call] {tool_qual.reason or ''}"
                     )
 
+    # Constraint violation check: runs when any constraints are defined,
+    # independent of the behavior failure threshold.
+    constraints_fulfilled: list[str] = []
+    has_constraints = bool(turn_item.agent_constraints or turn_item.expected_behavior)
+    if _should_run("agent_behavior_failure", metrics_to_run) and has_constraints:
+        cv_metric = ConstraintViolationMetric(llm)
+        cv_qual = cv_metric.evaluate(score_input)
+        qual_scores.append(
+            QualResult(
+                name=AgentMetrics.AGENT_BEHAVIOR_FAILURE.value,
+                value=cv_qual.value,
+                reason=f"[Constraint] {cv_qual.reason}" if cv_qual.reason else "",
+            )
+        )
+        if cv_qual.metadata:
+            constraints_fulfilled = cv_qual.metadata.get("fulfilled_constraints", [])
+
+        if cv_qual.value not in SKIP_OUTCOMES:
+            if turn_behavior_failure in SKIP_OUTCOMES:
+                turn_behavior_failure = cv_qual.value
+                turn_behavior_failure_reason = f"[Constraint] {cv_qual.reason or ''}"
+            else:
+                cv_sev = SEVERITY_RANK.get(
+                    AGENT_BEHAVIOR_FAILURE_SEVERITY.get(cv_qual.value, ""), 99
+                )
+                agent_sev = SEVERITY_RANK.get(
+                    AGENT_BEHAVIOR_FAILURE_SEVERITY.get(turn_behavior_failure, ""), 99
+                )
+                if cv_sev < agent_sev:
+                    turn_behavior_failure = cv_qual.value
+                    turn_behavior_failure_reason = f"[Constraint] {cv_qual.reason or ''}"
+                else:
+                    turn_behavior_failure_reason += f"\n[Constraint] {cv_qual.reason or ''}"
+
     return TurnEvaluation(
         turn_id=turn_item.turn_id,
         scores=scores,
@@ -228,6 +273,7 @@ def evaluate_turn(
         turn_behavior_failure=turn_behavior_failure,
         turn_behavior_failure_reason=turn_behavior_failure_reason,
         qual_scores=qual_scores,
+        constraints_fulfilled=constraints_fulfilled,
     )
 
 
@@ -245,11 +291,12 @@ def evaluate_goal_completion(
         turns_details: Completed TurnEvaluation objects for this conversation.
         metrics_to_run: Optional list of metric names to run.
     """
-    if _should_run("goal_completion", metrics_to_run):
+    if _should_run("user_goal_completion", metrics_to_run):
         result = GoalCompletionMetric(llm).score(
             ScoreInput(
                 chat_history=convo_item.chat_history,
                 user_goal=convo_item.user_goal,
+                agent_context=convo_item.system_prompt,
             )
         )
         goal_completion_score = result.value
@@ -287,8 +334,8 @@ def evaluate_goal_completion(
 
     return ConversationEvaluation(
         conversation_id=convo_item.chat_id,
-        goal_completion_score=goal_completion_score,
-        goal_completion_reason=goal_completion_reason,
+        user_goal_completion_score=goal_completion_score,
+        user_goal_completion_reason=goal_completion_reason or "",
         turn_success_ratio=turn_success_ratio,
         overall_agent_score=overall_agent_score,
         evaluation_status=status,

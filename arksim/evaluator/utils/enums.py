@@ -20,7 +20,8 @@ class AgentMetrics(str, Enum):
     VERBOSITY = "verbosity"
     RELEVANCE = "relevance"
     FAITHFULNESS = "faithfulness"
-    GOAL_COMPLETION = "goal_completion"
+    USER_GOAL_COMPLETION = "user_goal_completion"
+    GOAL_COMPLETION = "goal_completion"  # deprecated: use USER_GOAL_COMPLETION
     AGENT_BEHAVIOR_FAILURE = "agent_behavior_failure"
     TOOL_CALL_BEHAVIOR_FAILURE = "tool_call_behavior_failure"
 
@@ -45,6 +46,7 @@ class AgentBehaviorFailureType(str, Enum):
     FALSE_INFORMATION = "false information"
     UNSAFE_ACTION = "unsafe action"
     UNSAFE_STATE = "unsafe state"
+    CONSTRAINT_VIOLATION = "constraint_violation"
     NO_FAILURE = "no failure"
 
 
@@ -58,6 +60,7 @@ AGENT_BEHAVIOR_FAILURE_SEVERITY = {
     "unsafe state": "critical",
     "false information": "critical",
     "disobey user request": "high",
+    "constraint_violation": "high",
     "lack of specific information": "medium",
     "failure to ask for clarification": "medium",
     "repetition": "low",

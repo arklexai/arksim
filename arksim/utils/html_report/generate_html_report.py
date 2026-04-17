@@ -99,11 +99,11 @@ class ConvoRow(BaseModel):
     scenario_id: str
     goal: str
     user_profile: str = ""
-    goal_completion_score: float
+    user_goal_completion_score: float
     final_score: float
     status: str
     knowledge: list[str] = Field(default_factory=list)
-    goal_completion_reason: str
+    user_goal_completion_reason: str
 
 
 class TurnRow(BaseModel):
@@ -345,13 +345,13 @@ def _build_convo_rows(
                 scenario_id=sim_conv.scenario_id if sim_conv else "",
                 goal=scenario.goal if scenario else "",
                 user_profile=scenario.user_profile if scenario else "",
-                goal_completion_score=conv.goal_completion_score,
+                user_goal_completion_score=conv.user_goal_completion_score,
                 final_score=conv.overall_agent_score,
                 status=conv.evaluation_status,
                 knowledge=[k.content for k in scenario.knowledge]
                 if scenario and scenario.knowledge
                 else [],
-                goal_completion_reason=conv.goal_completion_reason,
+                user_goal_completion_reason=conv.user_goal_completion_reason,
             )
         )
     return rows

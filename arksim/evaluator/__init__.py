@@ -5,7 +5,7 @@ Evaluator package for agent and user evaluation.
 
 from __future__ import annotations
 
-from arksim.scenario.entities import AssertionType, ToolCallsAssertion
+from arksim.scenario.entities import AgentResponseAssertion, AssertionType, ToolCallsAssertion
 
 from .base_metric import (
     ChatMessage,
@@ -47,4 +47,5 @@ __all__ = [
     "match_trajectory",
     "AssertionType",
     "ToolCallsAssertion",
+    "AgentResponseAssertion",
 ]

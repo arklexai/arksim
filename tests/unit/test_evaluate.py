@@ -73,8 +73,8 @@ class TestEvaluateGoalCompletion:
         llm = _mock_llm(score=5, reason="perfect")
         turns = [_turn_eval(0), _turn_eval(1)]
         result = evaluate_goal_completion(llm, _convo_item(turns=2), turns)
-        assert result.goal_completion_score == 5
-        assert result.goal_completion_reason == "perfect"
+        assert result.user_goal_completion_score == 5
+        assert result.user_goal_completion_reason == "perfect"
         assert result.conversation_id == "conv-1"
 
     def test_goal_completion_skipped(self) -> None:
@@ -83,7 +83,7 @@ class TestEvaluateGoalCompletion:
         result = evaluate_goal_completion(
             llm, _convo_item(turns=1), turns, metrics_to_run=["helpfulness"]
         )
-        assert result.goal_completion_score == -1
+        assert result.user_goal_completion_score == -1
         assert result.overall_agent_score == result.turn_success_ratio
 
     def test_turn_success_ratio_with_failures(self) -> None:

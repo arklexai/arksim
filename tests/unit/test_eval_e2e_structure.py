@@ -128,7 +128,7 @@ class TestEvalE2EStructure:
             llm=_mock_llm(score=4),
         ).evaluate(sim)
         for conv in result.conversations:
-            assert 0.0 <= conv.goal_completion_score <= 1.0
+            assert 0.0 <= conv.user_goal_completion_score <= 1.0
             assert 0.0 <= conv.overall_agent_score <= 1.0
             assert 0.0 <= conv.turn_success_ratio <= 1.0
 
