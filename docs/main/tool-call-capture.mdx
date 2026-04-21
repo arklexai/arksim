@@ -140,7 +140,6 @@ from a2a.types import (
     AgentCard,
     AgentExtension,
     Part,
-    TextPart,
 )
 
 from arksim import A2AToolCaptureExtension
@@ -184,7 +183,7 @@ if emit_tool_calls and tool_calls:
     extensions.append(A2AToolCaptureExtension.URI)
 
 await updater.add_artifact(
-    parts=[Part(root=TextPart(text=answer))],
+    parts=[Part(text=answer)],
     metadata=metadata or None,
     extensions=extensions or None,
 )

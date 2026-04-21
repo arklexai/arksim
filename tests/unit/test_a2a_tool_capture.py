@@ -8,6 +8,7 @@ and artifact accumulation) rather than private helpers.
 
 from __future__ import annotations
 
+import json
 import uuid
 from collections.abc import AsyncIterator
 from typing import Any
@@ -19,11 +20,10 @@ from a2a.types import (
     Message,
     Part,
     Role,
+    StreamResponse,
     Task,
-    TaskArtifactUpdateEvent,
     TaskState,
     TaskStatus,
-    TextPart,
 )
 
 from arksim.simulation_engine.agent.clients.a2a import A2AAgent
@@ -33,9 +33,15 @@ from arksim.simulation_engine.tool_types import (
     ToolCallSource,
 )
 
+# ---------------------------------------------------------------------------
+# Builder helpers: _text_part, _make_artifact, _make_task, _make_message,
+# _task_response, _message_response, _artifact_update_response,
+# _status_update_response, _mock_agent.
+# ---------------------------------------------------------------------------
+
 
 def _text_part(text: str) -> Part:
-    return Part(root=TextPart(text=text))
+    return Part(text=text)
 
 
 def _make_artifact(
@@ -53,13 +59,15 @@ def _make_artifact(
         metadata[A2AToolCaptureExtension.METADATA_KEY] = tool_calls
     if extensions is None and tool_calls is not None:
         extensions = [A2AToolCaptureExtension.URI]
-    return Artifact(
+    artifact = Artifact(
         artifact_id=str(uuid.uuid4()),
-        name=name,
         parts=parts,
-        metadata=metadata or None,
-        extensions=extensions,
     )
+    if extensions:
+        artifact.extensions.extend(extensions)
+    if metadata:
+        artifact.metadata.update(metadata)
+    return artifact
 
 
 def _make_task(artifacts: list[Artifact], status_text: str | None = None) -> Task:
@@ -67,29 +75,68 @@ def _make_task(artifacts: list[Artifact], status_text: str | None = None) -> Tas
     status_message = None
     if status_text is not None:
         status_message = Message(
-            role=Role.agent,
+            role=Role.ROLE_AGENT,
             parts=[_text_part(status_text)],
             message_id=str(uuid.uuid4()),
         )
-    return Task(
+    task = Task(
         id=str(uuid.uuid4()),
         context_id="test-ctx",
-        status=TaskStatus(state=TaskState.completed, message=status_message),
-        artifacts=artifacts,
+        status=TaskStatus(state=TaskState.TASK_STATE_COMPLETED),
     )
+    if status_message is not None:
+        task.status.message.CopyFrom(status_message)
+    task.artifacts.extend(artifacts)
+    return task
 
 
 def _make_message(text: str) -> Message:
     return Message(
-        role=Role.agent,
+        role=Role.ROLE_AGENT,
         parts=[_text_part(text)],
         message_id=str(uuid.uuid4()),
         context_id="test-ctx",
     )
 
 
+def _task_response(task: Task) -> StreamResponse:
+    """Wrap a Task in a StreamResponse."""
+    resp = StreamResponse()
+    resp.task.CopyFrom(task)
+    return resp
+
+
+def _message_response(msg: Message) -> StreamResponse:
+    """Wrap a Message in a StreamResponse."""
+    resp = StreamResponse()
+    resp.message.CopyFrom(msg)
+    return resp
+
+
+def _artifact_update_response(
+    task_id: str, context_id: str, artifact: Artifact
+) -> StreamResponse:
+    """Wrap a TaskArtifactUpdateEvent in a StreamResponse."""
+    resp = StreamResponse()
+    resp.artifact_update.task_id = task_id
+    resp.artifact_update.context_id = context_id
+    resp.artifact_update.artifact.CopyFrom(artifact)
+    return resp
+
+
+def _status_update_response(
+    task_id: str, context_id: str, status: TaskStatus
+) -> StreamResponse:
+    """Wrap a TaskStatusUpdateEvent in a StreamResponse."""
+    resp = StreamResponse()
+    resp.status_update.task_id = task_id
+    resp.status_update.context_id = context_id
+    resp.status_update.status.CopyFrom(status)
+    return resp
+
+
 def _mock_agent(
-    events: list[Any],
+    events: list[StreamResponse],
     card_declares_extension: bool = True,
 ) -> A2AAgent:
     """Build an A2AAgent with a mock client that yields the given events."""
@@ -101,10 +148,11 @@ def _mock_agent(
 
     agent = A2AAgent(config)
 
-    async def mock_send_message(_payload: object) -> AsyncIterator[Any]:
+    async def mock_send_message(_payload: object) -> AsyncIterator[StreamResponse]:
         for ev in events:
             yield ev
 
+    # Bypass _ensure_initialized: no live server needed in unit tests.
     mock_client = MagicMock()
     mock_client.send_message = mock_send_message
     agent._client = mock_client
@@ -133,7 +181,7 @@ class TestTaskResponse:
                 )
             ]
         )
-        agent = _mock_agent([(task, None)])
+        agent = _mock_agent([_task_response(task)])
         result = await agent.execute("What is the weather?")
 
         assert isinstance(result, AgentResponse)
@@ -149,7 +197,7 @@ class TestTaskResponse:
     @pytest.mark.asyncio()
     async def test_text_only_artifact(self) -> None:
         task = _make_task([_make_artifact(text="Hello.")])
-        agent = _mock_agent([(task, None)])
+        agent = _mock_agent([_task_response(task)])
         result = await agent.execute("hi")
         assert result.content == "Hello."
         assert result.tool_calls == []
@@ -157,20 +205,17 @@ class TestTaskResponse:
     @pytest.mark.asyncio()
     async def test_artifact_without_extension_uri_ignored(self) -> None:
         """Tool calls in metadata are ignored if the extension URI is not on the artifact."""
-        task = _make_task(
-            [
-                _make_artifact(
-                    text="Some text.",
-                    metadata={
-                        A2AToolCaptureExtension.METADATA_KEY: [
-                            {"id": "x", "name": "should_be_ignored", "arguments": {}}
-                        ]
-                    },
-                    extensions=[],
-                )
-            ]
+        artifact = _make_artifact(
+            text="Some text.",
+            metadata={
+                A2AToolCaptureExtension.METADATA_KEY: [
+                    {"id": "x", "name": "should_be_ignored", "arguments": {}}
+                ]
+            },
+            extensions=[],
         )
-        agent = _mock_agent([(task, None)])
+        task = _make_task([artifact])
+        agent = _mock_agent([_task_response(task)])
         result = await agent.execute("q")
         assert result.content == "Some text."
         assert result.tool_calls == []
@@ -193,7 +238,7 @@ class TestTaskResponse:
                 ),
             ]
         )
-        agent = _mock_agent([(task, None)])
+        agent = _mock_agent([_task_response(task)])
         result = await agent.execute("q")
         assert "First." in result.content
         assert "Second." in result.content
@@ -202,7 +247,7 @@ class TestTaskResponse:
     @pytest.mark.asyncio()
     async def test_falls_back_to_status_message_when_no_artifact_text(self) -> None:
         task = _make_task(artifacts=[], status_text="Done.")
-        agent = _mock_agent([(task, None)])
+        agent = _mock_agent([_task_response(task)])
         result = await agent.execute("q")
         assert result.content == "Done."
         assert result.tool_calls == []
@@ -212,30 +257,27 @@ class TestTaskResponse:
         task = Task(
             id="t1",
             context_id="c1",
-            status=TaskStatus(state=TaskState.completed),
-            artifacts=None,
+            status=TaskStatus(state=TaskState.TASK_STATE_COMPLETED),
         )
-        agent = _mock_agent([(task, None)])
+        agent = _mock_agent([_task_response(task)])
         result = await agent.execute("q")
         assert result.content == ""
         assert result.tool_calls == []
 
     @pytest.mark.asyncio()
     async def test_artifact_with_none_parts_does_not_crash(self) -> None:
-        """An artifact with parts=None is handled gracefully."""
-        artifact = Artifact(
-            artifact_id="a1",
-            name="empty",
-            parts=[],
-            metadata={
+        """An artifact with empty parts is handled gracefully."""
+        artifact = Artifact(artifact_id="a1")
+        artifact.extensions.append(A2AToolCaptureExtension.URI)
+        artifact.metadata.update(
+            {
                 A2AToolCaptureExtension.METADATA_KEY: [
                     {"id": "c1", "name": "t", "arguments": {}, "result": "r"}
                 ]
-            },
-            extensions=[A2AToolCaptureExtension.URI],
+            }
         )
         task = _make_task([artifact])
-        agent = _mock_agent([(task, None)])
+        agent = _mock_agent([_task_response(task)])
         result = await agent.execute("q")
         assert result.tool_calls[0].name == "t"
 
@@ -256,7 +298,7 @@ class TestMalformedToolCallData:
                 )
             ]
         )
-        agent = _mock_agent([(task, None)])
+        agent = _mock_agent([_task_response(task)])
         result = await agent.execute("q")
         assert len(result.tool_calls) == 1
         assert result.tool_calls[0].name == "valid_tool"
@@ -271,7 +313,7 @@ class TestMalformedToolCallData:
                 )
             ]
         )
-        agent = _mock_agent([(task, None)])
+        agent = _mock_agent([_task_response(task)])
         result = await agent.execute("q")
         assert len(result.tool_calls) == 1
         assert result.tool_calls[0].name == "valid"
@@ -289,7 +331,7 @@ class TestMalformedToolCallData:
                 )
             ]
         )
-        agent = _mock_agent([(task, None)])
+        agent = _mock_agent([_task_response(task)])
         result = await agent.execute("q")
         assert len(result.tool_calls) == 1
         assert result.tool_calls[0].name == "good_args"
@@ -305,14 +347,14 @@ class TestMalformedToolCallData:
                 )
             ]
         )
-        agent = _mock_agent([(task, None)])
+        agent = _mock_agent([_task_response(task)])
         result = await agent.execute("q")
         assert result.content == "Text."
         assert result.tool_calls == []
 
     @pytest.mark.asyncio()
     async def test_non_string_result_coerced_to_json(self) -> None:
-        """Dict/list results are JSON-serialized rather than crashing Pydantic."""
+        """Dict/list results are JSON-serialized into the str-typed ToolCall field."""
         task = _make_task(
             [
                 _make_artifact(
@@ -328,7 +370,7 @@ class TestMalformedToolCallData:
                 )
             ]
         )
-        agent = _mock_agent([(task, None)])
+        agent = _mock_agent([_task_response(task)])
         result = await agent.execute("q")
         assert len(result.tool_calls) == 1
         assert result.tool_calls[0].result == '[{"name": "item1"}, {"name": "item2"}]'
@@ -350,9 +392,13 @@ class TestMalformedToolCallData:
                 )
             ]
         )
-        agent = _mock_agent([(task, None)])
+        agent = _mock_agent([_task_response(task)])
         result = await agent.execute("q")
-        assert result.tool_calls[0].error == '{"code": 500, "msg": "Internal"}'
+        # Protobuf Struct may normalize ints to floats; 500 == 500.0 in Python.
+        assert json.loads(result.tool_calls[0].error) == {
+            "code": 500,
+            "msg": "Internal",
+        }
 
     @pytest.mark.asyncio()
     async def test_error_field_preserved(self) -> None:
@@ -371,7 +417,7 @@ class TestMalformedToolCallData:
                 )
             ]
         )
-        agent = _mock_agent([(task, None)])
+        agent = _mock_agent([_task_response(task)])
         result = await agent.execute("q")
         assert result.tool_calls[0].error == "ConnectionTimeout"
 
@@ -382,7 +428,7 @@ class TestMessageResponse:
     @pytest.mark.asyncio()
     async def test_message_text_extracted(self) -> None:
         msg = _make_message("Just text.")
-        agent = _mock_agent([msg])
+        agent = _mock_agent([_message_response(msg)])
         result = await agent.execute("hi")
         assert result.content == "Just text."
         assert result.tool_calls == []
@@ -406,15 +452,11 @@ class TestStreamingArtifactEvents:
                 }
             ],
         )
-        update_event = TaskArtifactUpdateEvent(
-            task_id="t1",
-            context_id="c1",
-            artifact=artifact,
-        )
+        update_resp = _artifact_update_response("t1", "c1", artifact)
         # Final Task snapshot has the same artifact (typical server behavior).
         final_task = _make_task([artifact])
 
-        agent = _mock_agent([(final_task, update_event), (final_task, None)])
+        agent = _mock_agent([update_resp, _task_response(final_task)])
         result = await agent.execute("q")
         # Final snapshot replaces accumulated state; no duplication.
         assert len(result.tool_calls) == 1
@@ -430,18 +472,8 @@ class TestStreamingArtifactEvents:
                 {"id": "c1", "name": "streamed_tool", "arguments": {}, "result": "r"}
             ],
         )
-        update_event = TaskArtifactUpdateEvent(
-            task_id="t1",
-            context_id="c1",
-            artifact=artifact,
-        )
-        empty_task = Task(
-            id="t1",
-            context_id="c1",
-            status=TaskStatus(state=TaskState.working),
-            artifacts=None,
-        )
-        agent = _mock_agent([(empty_task, update_event)])
+        update_resp = _artifact_update_response("t1", "c1", artifact)
+        agent = _mock_agent([update_resp])
         result = await agent.execute("q")
 
         assert len(result.tool_calls) == 1
@@ -467,7 +499,7 @@ class TestMissingExtensionDeclaration:
                 )
             ]
         )
-        agent = _mock_agent([(task, None)], card_declares_extension=False)
+        agent = _mock_agent([_task_response(task)], card_declares_extension=False)
         with caplog.at_level(logging.WARNING):
             result = await agent.execute("q")
 
@@ -494,7 +526,7 @@ class TestTypeGuards:
                 )
             ]
         )
-        agent = _mock_agent([(task, None)])
+        agent = _mock_agent([_task_response(task)])
         result = await agent.execute("q")
         assert len(result.tool_calls) == 1
         assert result.tool_calls[0].name == "valid"
@@ -513,7 +545,7 @@ class TestTypeGuards:
                 )
             ]
         )
-        agent = _mock_agent([(task, None)])
+        agent = _mock_agent([_task_response(task)])
         result = await agent.execute("q")
         assert len(result.tool_calls) == 1
         assert result.tool_calls[0].name == "y"
@@ -525,34 +557,20 @@ class TestStreamingSequences:
     @pytest.mark.asyncio()
     async def test_status_update_does_not_wipe_accumulated_state(self) -> None:
         """A TaskStatusUpdateEvent after an artifact update must not clear accumulated tool calls."""
-        from a2a.types import TaskStatusUpdateEvent
-
         artifact = _make_artifact(
             text="Streamed.",
             tool_calls=[
                 {"id": "c1", "name": "streamed_tool", "arguments": {}, "result": "r"}
             ],
         )
-        update_event = TaskArtifactUpdateEvent(
-            task_id="t1",
-            context_id="c1",
-            artifact=artifact,
+        update_resp = _artifact_update_response("t1", "c1", artifact)
+        status_resp = _status_update_response(
+            "t1",
+            "c1",
+            TaskStatus(state=TaskState.TASK_STATE_WORKING),
         )
-        status_event = TaskStatusUpdateEvent(
-            task_id="t1",
-            context_id="c1",
-            status=TaskStatus(state=TaskState.working),
-            final=False,
-        )
-        partial_task = Task(
-            id="t1",
-            context_id="c1",
-            status=TaskStatus(state=TaskState.working),
-            artifacts=None,
-        )
-        agent = _mock_agent(
-            [(partial_task, update_event), (partial_task, status_event)]
-        )
+
+        agent = _mock_agent([update_resp, status_resp])
         result = await agent.execute("q")
 
         # The streamed tool call survives the status update.
@@ -572,19 +590,9 @@ class TestStreamingSequences:
                 {"id": "c_new", "name": "new_tool", "arguments": {}, "result": "r"}
             ],
         )
-        update_event = TaskArtifactUpdateEvent(
-            task_id="t1",
-            context_id="c1",
-            artifact=old_artifact,
-        )
-        partial_task = Task(
-            id="t1",
-            context_id="c1",
-            status=TaskStatus(state=TaskState.working),
-            artifacts=None,
-        )
+        update_resp = _artifact_update_response("t1", "c1", old_artifact)
         final_task = _make_task([final_artifact])
-        agent = _mock_agent([(partial_task, update_event), (final_task, None)])
+        agent = _mock_agent([update_resp, _task_response(final_task)])
         result = await agent.execute("q")
 
         # The Task snapshot is authoritative; only its artifacts are kept.
@@ -641,21 +649,11 @@ class TestExtraArtifactsInFinalSnapshot:
                 {"id": "e1", "name": "extra_tool", "arguments": {}, "result": "e"}
             ],
         )
-        update_event = TaskArtifactUpdateEvent(
-            task_id="t1",
-            context_id="c1",
-            artifact=stream_artifact,
-        )
-        partial_task = Task(
-            id="t1",
-            context_id="c1",
-            status=TaskStatus(state=TaskState.working),
-            artifacts=None,
-        )
+        update_resp = _artifact_update_response("t1", "c1", stream_artifact)
         # Final snapshot has BOTH artifacts: the earlier streamed one AND
         # a new one that wasn't streamed.
         final_task = _make_task([stream_artifact, extra_artifact])
-        agent = _mock_agent([(partial_task, update_event), (final_task, None)])
+        agent = _mock_agent([update_resp, _task_response(final_task)])
         result = await agent.execute("q")
 
         names = {tc.name for tc in result.tool_calls}
@@ -677,7 +675,7 @@ class TestMetadataEdgeCases:
                 )
             ]
         )
-        agent = _mock_agent([(task, None)])
+        agent = _mock_agent([_task_response(task)])
         result = await agent.execute("q")
         assert result.content == "Text."
         assert result.tool_calls == []
@@ -751,10 +749,9 @@ class TestEmptyTaskWithMessageFallback:
         empty_task = Task(
             id="t1",
             context_id="c1",
-            status=TaskStatus(state=TaskState.completed),
-            artifacts=None,
+            status=TaskStatus(state=TaskState.TASK_STATE_COMPLETED),
         )
-        agent = _mock_agent([msg, (empty_task, None)])
+        agent = _mock_agent([_message_response(msg), _task_response(empty_task)])
         result = await agent.execute("hi")
         assert result.content == "Hello from message."
 
@@ -778,43 +775,7 @@ class TestCloseExecuteRace:
             await agent.execute("q")
 
 
-class TestUnknownUpdateEventType:
-    """Coverage for the 'future SDK event type' fallback branch."""
-
-    @pytest.mark.asyncio()
-    async def test_unknown_update_with_task_applies_snapshot(self) -> None:
-        """An unknown update type alongside a Task snapshot still merges the Task."""
-        task = _make_task(
-            [
-                _make_artifact(
-                    text="From task.",
-                    tool_calls=[
-                        {"id": "c1", "name": "t", "arguments": {}, "result": "r"}
-                    ],
-                )
-            ]
-        )
-        # Stand-in for a future SDK update type we don't recognize.
-        unknown_update = object()
-        agent = _mock_agent([(task, unknown_update)])
-        result = await agent.execute("q")
-
-        assert result.content == "From task."
-        assert len(result.tool_calls) == 1
-
-    @pytest.mark.asyncio()
-    async def test_unknown_update_without_task_is_skipped(self) -> None:
-        """An unknown update type with a non-Task first element is skipped cleanly."""
-        unknown_update = object()
-        bad_first = "not a task"
-        agent = _mock_agent([(bad_first, unknown_update)])
-        result = await agent.execute("q")
-
-        assert result.content == ""
-        assert result.tool_calls == []
-
-
-class TestAllMalformedSnapshot:
+class TestToolCallFromDictCallerSemantics:
     """Behavioral contract: all-malformed tool_calls yield None, not []."""
 
     def test_all_none_collapses_to_none(self) -> None:
