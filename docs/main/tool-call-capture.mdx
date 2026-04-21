@@ -165,26 +165,28 @@ capabilities = AgentCapabilities(
 
 ```python
 updater = TaskUpdater(event_queue, context.task_id, context.context_id)
-# Move the task through the spec-required lifecycle: submitted -> working
-# -> completed. submit() is only needed for a brand-new task; if the
-# request handler already submitted it (context.current_task is not None)
-# skip the submit to avoid an illegal state transition.
 if context.current_task is None:
     await updater.submit()
 await updater.start_work()
+
+# Only emit tool call metadata when the client requested the extension.
+# See #security-considerations for why this gate matters.
+emit_tool_calls = (
+    A2AToolCaptureExtension.URI in context.requested_extensions
+)
+if emit_tool_calls:
+    context.add_activated_extension(A2AToolCaptureExtension.URI)
+
+metadata = {}
+extensions = []
+if emit_tool_calls and tool_calls:
+    metadata[A2AToolCaptureExtension.METADATA_KEY] = tool_calls
+    extensions.append(A2AToolCaptureExtension.URI)
+
 await updater.add_artifact(
     parts=[Part(root=TextPart(text=answer))],
-    metadata={
-        A2AToolCaptureExtension.METADATA_KEY: [
-            {
-                "id": "call_001",
-                "name": "get_weather",
-                "arguments": {"city": "Tokyo"},
-                "result": "72F, sunny",
-            },
-        ],
-    },
-    extensions=[A2AToolCaptureExtension.URI],
+    metadata=metadata or None,
+    extensions=extensions or None,
 )
 await updater.complete()
 ```
