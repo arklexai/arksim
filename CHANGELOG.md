@@ -5,6 +5,39 @@ All notable changes to ArkSim will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.4](https://github.com/arklexai/arksim/compare/v0.3.3...v0.3.4) (2026-04-13)
+
+
+### Added
+
+* **evaluator:** add focus file generation for targeted reruns ([#130](https://github.com/arklexai/arksim/issues/130)) ([e160a73](https://github.com/arklexai/arksim/commit/e160a73e180f8ac5323b0721808da61b72b8577b))
+* **examples:** add Dify chatbot integration example ([#135](https://github.com/arklexai/arksim/issues/135)) ([fccbbc1](https://github.com/arklexai/arksim/commit/fccbbc11d7fe2d9cb66edcb16fb72403dc4bec23))
+* **init:** add arksim init scaffolding command ([#137](https://github.com/arklexai/arksim/issues/137)) ([844ec5b](https://github.com/arklexai/arksim/commit/844ec5b0e58d62bd1f4234671c0b50bd76cbfeb4))
+
+
+### Fixed
+
+* **chat-completions:** fix crash on tool-calling responses ([#132](https://github.com/arklexai/arksim/issues/132)) ([471b39a](https://github.com/arklexai/arksim/commit/471b39a403b63a6237ddcec9e00c0d017a78f83a))
+* **evaluator:** inject configured LLM into custom metrics ([#134](https://github.com/arklexai/arksim/issues/134)) ([0e026ff](https://github.com/arklexai/arksim/commit/0e026ff63ab50129917ae636ab9f497c6a175b61))
+
+
+### Documentation
+
+* add star history chart to README ([203025a](https://github.com/arklexai/arksim/commit/203025a70151ba231caf8bfd65977f734cea9416))
+* add star history section to README ([#146](https://github.com/arklexai/arksim/issues/146)) ([203025a](https://github.com/arklexai/arksim/commit/203025a70151ba231caf8bfd65977f734cea9416))
+* clean up README integrations table and headings ([#139](https://github.com/arklexai/arksim/issues/139)) ([44c114f](https://github.com/arklexai/arksim/commit/44c114fcf60d06c11a339300afb1d7c2ca2a0ef5))
+* rewrite README as landing page with report preview ([#138](https://github.com/arklexai/arksim/issues/138)) ([51c35bd](https://github.com/arklexai/arksim/commit/51c35bd8d879ae63c3dbdb7f101af7a6ee7004fc))
+* **seo:** improve frontmatter descriptions and add OpenGraph metatags ([#136](https://github.com/arklexai/arksim/issues/136)) ([599ba07](https://github.com/arklexai/arksim/commit/599ba07cff8197a074b5d8820e1bfc216d39d728))
+* snapshot v0.3.3 from main ([#126](https://github.com/arklexai/arksim/issues/126)) ([92c3f15](https://github.com/arklexai/arksim/commit/92c3f152ab0f402eb20066b15503591d3ca4e5a2))
+
+
+### Changed
+
+* bump codecov/codecov-action from 5 to 6 ([#127](https://github.com/arklexai/arksim/issues/127)) ([3ea37ec](https://github.com/arklexai/arksim/commit/3ea37ecff2ed44e5d4c4f5092143b13c765fbf6c))
+* **dify:** replace dify-client SDK with httpx ([#143](https://github.com/arklexai/arksim/issues/143)) ([8b688a6](https://github.com/arklexai/arksim/commit/8b688a69c35ad89f33d665346e41fc1c2326f03e))
+* replace daily schedule with merge queue and push-to-main triggers ([#133](https://github.com/arklexai/arksim/issues/133)) ([6be8352](https://github.com/arklexai/arksim/commit/6be8352b1d6e23415564a0bed3c23ff36df09bfc))
+* upgrade jinja2 minimum version to 3.1.5 ([#124](https://github.com/arklexai/arksim/issues/124)) ([2681e65](https://github.com/arklexai/arksim/commit/2681e65e65c90742520e15216f9134f1d72b9c20))
+
 ## [Unreleased]
 
 ### Added
@@ -27,6 +60,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * **simulation:** bump output schema version to v1.1 (additive `tool_calls` field on Message)
 * **evaluator:** bump evaluation output schema version to v1.1 (additive `error_scenario_mappings` field)
 * **chat-completions:** refactor to persistent httpx client with `AgentResponse` return type
+* **examples:** replace `dify-client` SDK with direct HTTP (httpx) in the Dify integration
 
 ### Fixed
 
