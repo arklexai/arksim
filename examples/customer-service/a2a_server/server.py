@@ -15,18 +15,19 @@ import os
 
 import uvicorn
 from a2a.server.agent_execution import AgentExecutor, RequestContext
-from a2a.server.apps import A2AStarletteApplication
 from a2a.server.events import EventQueue
 from a2a.server.request_handlers import DefaultRequestHandler
+from a2a.server.routes import create_agent_card_routes, create_jsonrpc_routes
 from a2a.server.tasks import InMemoryTaskStore, TaskUpdater
 from a2a.types import (
     AgentCapabilities,
     AgentCard,
     AgentExtension,
+    AgentInterface,
     AgentSkill,
     Part,
-    TextPart,
 )
+from starlette.applications import Starlette
 
 from arksim import A2AToolCaptureExtension
 
@@ -46,6 +47,7 @@ class CustomerServiceExecutor(AgentExecutor):
     """A2A executor that surfaces tool calls via Task artifacts."""
 
     def __init__(self) -> None:
+        # NOTE: grows unbounded; add eviction for production use.
         self._agents: dict[str, Agent] = {}
 
     async def execute(
@@ -89,8 +91,7 @@ class CustomerServiceExecutor(AgentExecutor):
             extensions.append(A2AToolCaptureExtension.URI)
 
         await updater.add_artifact(
-            parts=[Part(root=TextPart(text=answer))],
-            # Artifact.name is a human-readable label, not consumed by arksim.
+            parts=[Part(text=answer)],
             metadata=metadata or None,
             extensions=extensions or None,
         )
@@ -115,6 +116,8 @@ if __name__ == "__main__":
         ],
     )
 
+    server_url = os.getenv("A2A_SERVER_URL", "http://localhost:9998/")
+
     public_agent_card = AgentCard(
         name="Customer Service Agent",
         description=(
@@ -122,7 +125,7 @@ if __name__ == "__main__":
             "tool call data via the arksim A2A tool capture extension on "
             "Task artifacts."
         ),
-        url=os.getenv("A2A_SERVER_URL", "http://localhost:9998/"),
+        supported_interfaces=[AgentInterface(url=server_url)],
         version="1.0.0",
         default_input_modes=["text"],
         default_output_modes=["text"],
@@ -133,14 +136,21 @@ if __name__ == "__main__":
         skills=[skill],
     )
 
+    task_store = InMemoryTaskStore()
     request_handler = DefaultRequestHandler(
         agent_executor=CustomerServiceExecutor(),
-        task_store=InMemoryTaskStore(),
-    )
-
-    server = A2AStarletteApplication(
+        task_store=task_store,
         agent_card=public_agent_card,
-        http_handler=request_handler,
     )
 
-    uvicorn.run(server.build(), host="0.0.0.0", port=9998)
+    app = Starlette(
+        routes=[
+            *create_agent_card_routes(agent_card=public_agent_card),
+            *create_jsonrpc_routes(
+                request_handler=request_handler,
+                rpc_url="/",
+            ),
+        ],
+    )
+
+    uvicorn.run(app, host="0.0.0.0", port=9998)
