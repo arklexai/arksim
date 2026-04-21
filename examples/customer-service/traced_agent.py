@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-"""Traced variant of the customer-service example agent.
+"""Customer-service agent with automatic tool call capture via tracing.
 
 Captures tool calls via arksim's ``ArksimTracingProcessor`` and the
 OpenAI Agents SDK's ``TracingProcessor`` interface. Compare with
@@ -9,6 +9,9 @@ The agent registers the processor once at module load. The simulator
 sets routing context automatically, so no per-turn wrapping is needed.
 The module loader caches modules by file path, so this registration
 runs exactly once regardless of conversation count.
+
+Tools and database setup are in ``tools.py`` (shared with the explicit
+and A2A variants of this example).
 
 Install: pip install openai-agents
 Auth:    export OPENAI_API_KEY="<your-key>"
@@ -20,17 +23,7 @@ import uuid
 
 from agents import Agent, Runner, RunResult
 from agents.tracing import add_trace_processor
-
-# Import shared tools and DB setup from the standard agent
-from custom_agent import (
-    _init_db,
-    cancel_order,
-    get_order,
-    lookup_customer,
-    search_products,
-    send_verification_code,
-    verify_customer,
-)
+from tools import AGENT_INSTRUCTIONS, TOOLS_LIST, init_db
 
 from arksim.config import AgentConfig
 from arksim.simulation_engine.agent.base import BaseAgent
@@ -52,24 +45,12 @@ class TracedToolCallAgent(BaseAgent):
 
     def __init__(self, agent_config: AgentConfig) -> None:
         super().__init__(agent_config)
-        _init_db()
+        init_db()
         self._chat_id = str(uuid.uuid4())
         self._agent = Agent(
             name="assistant",
-            instructions=(
-                "You are a customer service assistant for an online store. "
-                "You have access to tools to look up customers, check orders, "
-                "search products, and cancel orders. Use them to help the user. "
-                "Always confirm destructive actions like cancellations before proceeding."
-            ),
-            tools=[
-                lookup_customer,
-                get_order,
-                search_products,
-                cancel_order,
-                send_verification_code,
-                verify_customer,
-            ],
+            instructions=AGENT_INSTRUCTIONS,
+            tools=TOOLS_LIST,
         )
         self._last_result: RunResult | None = None
 

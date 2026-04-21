@@ -49,6 +49,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * **tracing:** add dual attribute convention support (OTel GenAI semconv and OpenInference)
 * **examples:** add Dify chatbot integration example
 * **evaluator:** focus file generation after evaluation for targeted reruns of failing scenarios
+* **a2a:** add tool call capture via A2A AgentExtension (`https://arksim.arklex.ai/a2a/tool-call-capture/v1`); agents declare the extension in the AgentCard and surface tool calls in `Task.artifacts[*].metadata`. See [Tool Call Capture docs](https://docs.arklex.ai/main/tool-call-capture)
+* **tracing:** add `ToolCallSource` enum (`a2a_protocol`, `openai_agents`, `otel_trace`) for tool call provenance tracking on `ToolCall.source`
 * **evaluator:** scenario IDs shown in CLI error output alongside focus file paths
 * **report:** scenario IDs displayed in HTML report error cards
 * **evaluator:** error-to-scenario mappings included in `evaluation.json` output
