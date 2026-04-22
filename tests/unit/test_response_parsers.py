@@ -361,7 +361,6 @@ class TestParseGemini:
         assert response.tool_calls == []
 
     def test_function_call_parts(self) -> None:
-        """Function call parts in response are not extracted; only text is."""
         result = {
             "candidates": [
                 {
@@ -380,7 +379,80 @@ class TestParseGemini:
         }
         response = parse_gemini(result)
         assert response.content == ""
-        assert response.tool_calls == []
+        assert len(response.tool_calls) == 1
+        tc = response.tool_calls[0]
+        assert tc.id == ""  # Gemini has no id field; A2A convention applies
+        assert tc.name == "get_weather"
+        assert tc.arguments == {"city": "NYC"}
+        assert tc.source == ToolCallSource.CHAT_COMPLETIONS
+
+    def test_mixed_text_and_function_call(self) -> None:
+        result = {
+            "candidates": [
+                {
+                    "content": {
+                        "parts": [
+                            {"text": "Let me check. "},
+                            {
+                                "functionCall": {
+                                    "name": "search",
+                                    "args": {"q": "test"},
+                                }
+                            },
+                        ]
+                    }
+                }
+            ]
+        }
+        response = parse_gemini(result)
+        assert response.content == "Let me check. "
+        assert len(response.tool_calls) == 1
+        assert response.tool_calls[0].name == "search"
+
+    def test_multiple_function_calls(self) -> None:
+        result = {
+            "candidates": [
+                {
+                    "content": {
+                        "parts": [
+                            {"functionCall": {"name": "a", "args": {}}},
+                            {"functionCall": {"name": "b", "args": {}}},
+                        ]
+                    }
+                }
+            ]
+        }
+        response = parse_gemini(result)
+        assert [tc.name for tc in response.tool_calls] == ["a", "b"]
+
+    def test_function_call_missing_name_skipped(self) -> None:
+        result = {
+            "candidates": [
+                {
+                    "content": {
+                        "parts": [
+                            {"functionCall": {"args": {}}},
+                            {"functionCall": {"name": "ok", "args": {}}},
+                        ]
+                    }
+                }
+            ]
+        }
+        response = parse_gemini(result)
+        assert [tc.name for tc in response.tool_calls] == ["ok"]
+
+    def test_function_call_args_not_dict(self) -> None:
+        result = {
+            "candidates": [
+                {
+                    "content": {
+                        "parts": [{"functionCall": {"name": "f", "args": "not-dict"}}]
+                    }
+                }
+            ]
+        }
+        response = parse_gemini(result)
+        assert response.tool_calls[0].arguments == {}
 
     def test_empty_candidates_raises(self) -> None:
         with pytest.raises(ValueError, match="empty 'candidates'"):
