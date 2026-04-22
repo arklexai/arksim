@@ -5,6 +5,12 @@ All notable changes to ArkSim will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+* **a2a:** migrate from a2a-sdk 0.3.x (Pydantic) to 1.0.0 (protobuf) ([#152](https://github.com/arklexai/arksim/pull/152))
+
 ## [0.3.4](https://github.com/arklexai/arksim/compare/v0.3.3...v0.3.4) (2026-04-13)
 
 
@@ -49,6 +55,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * **tracing:** add dual attribute convention support (OTel GenAI semconv and OpenInference)
 * **examples:** add Dify chatbot integration example
 * **evaluator:** focus file generation after evaluation for targeted reruns of failing scenarios
+* **a2a:** add tool call capture via A2A AgentExtension (`https://arksim.arklex.ai/a2a/tool-call-capture/v1`); agents declare the extension in the AgentCard and surface tool calls in `Task.artifacts[*].metadata`. See [Tool Call Capture docs](https://docs.arklex.ai/main/tool-call-capture)
+* **tracing:** add `ToolCallSource` enum (`a2a_protocol`, `openai_agents`, `otel_trace`) for tool call provenance tracking on `ToolCall.source`
 * **evaluator:** scenario IDs shown in CLI error output alongside focus file paths
 * **report:** scenario IDs displayed in HTML report error cards
 * **evaluator:** error-to-scenario mappings included in `evaluation.json` output
