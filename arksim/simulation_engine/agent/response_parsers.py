@@ -161,6 +161,7 @@ def _extract_anthropic_tool_calls(blocks: list[Any]) -> list[ToolCall]:
 def parse_anthropic(result: dict[str, Any]) -> AgentResponse:
     """Parse Anthropic Messages API format."""
     blocks = result.get("content", [])
+    # Defensive for direct callers; parse_response already checks this.
     if not isinstance(blocks, list):
         blocks = []
     text_parts: list[str] = []

@@ -113,7 +113,7 @@ Requires `pip install openai-agents`.
 
 ## Chat Completions Capture
 
-Arksim's Chat Completions connector extracts tool calls directly from the response body when the endpoint returns them in the standard location for each format:
+arksim's Chat Completions connector extracts tool calls directly from the response body when the endpoint returns them in the standard location for each format:
 
 - **OpenAI format:** `choices[0].message.tool_calls`
 - **Anthropic format:** `content[]` blocks with `type: "tool_use"`
@@ -242,6 +242,8 @@ See the [customer-service A2A example](https://github.com/arklexai/arksim/tree/m
 ## Security considerations
 
 Tool call metadata is more sensitive than the agent's text response. Arguments can contain PII (email addresses, customer IDs), verification codes, internal tool names that expose your agent's architecture, and verbatim tool results. A server that emits this data unconditionally exposes strictly more than it would without the extension.
+
+Unlike A2A (where tool call emission is gated by the client's `A2A-Extensions` request header), Chat Completions capture is unconditional: any tool call the endpoint returns in the response body is captured by arksim. If the endpoint is public or shared with non-arksim clients, tool call metadata is already visible in the response — arksim just reads what's already there. Apply endpoint-level auth or a separate evaluation-only deployment if this is a concern.
 
 The arksim example server gates tool call emission on the client's `A2A-Extensions` request header: if the client does not request the extension, the server omits tool call metadata from the artifact. This is the right default, but the request header is not access control; any HTTP client can send it.
 
