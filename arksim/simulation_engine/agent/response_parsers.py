@@ -17,12 +17,75 @@ wrap it in OpenAI format, use the custom connector, or use OTel.
 
 from __future__ import annotations
 
+import json
 import logging
 from typing import Any
 
-from arksim.simulation_engine.tool_types import AgentResponse
+from arksim.simulation_engine.tool_types import AgentResponse, ToolCall, ToolCallSource
 
 logger = logging.getLogger(__name__)
+
+
+def _coerce_openai_arguments(raw: object) -> dict[str, Any]:
+    """Normalize OpenAI tool call ``arguments`` into a dict.
+
+    Spec-compliant OpenAI returns a JSON string, but LiteLLM, vLLM, and
+    some Azure routers return a dict. None and other types fall back
+    to an empty dict with a debug log.
+    """
+    if isinstance(raw, dict):
+        return raw
+    if raw is None:
+        logger.debug("Tool call arguments is None; using empty dict")
+        return {}
+    if isinstance(raw, str):
+        try:
+            parsed = json.loads(raw)
+        except json.JSONDecodeError:
+            logger.debug("Tool call arguments is not valid JSON: %r", raw)
+            return {}
+        if isinstance(parsed, dict):
+            return parsed
+        logger.debug("Tool call arguments JSON did not decode to dict: %r", parsed)
+        return {}
+    logger.debug("Tool call arguments has unexpected type %s", type(raw).__name__)
+    return {}
+
+
+def _extract_openai_tool_calls(msg: dict[str, Any]) -> list[ToolCall]:
+    """Extract tool calls from an OpenAI chat message dict.
+
+    Skips entries missing a string ``function.name``. Each captured call
+    carries ``source=ToolCallSource.CHAT_COMPLETIONS``. ``result`` is left
+    as ``None`` (not available on this path -- see spec).
+    """
+    raw_calls = msg.get("tool_calls") or []
+    if not isinstance(raw_calls, list):
+        return []
+    tool_calls: list[ToolCall] = []
+    for entry in raw_calls:
+        if not isinstance(entry, dict):
+            continue
+        fn = entry.get("function")
+        if not isinstance(fn, dict):
+            continue
+        name = fn.get("name")
+        if not isinstance(name, str) or not name:
+            logger.debug(
+                "Skipping tool call with missing or non-string name: %r", entry
+            )
+            continue
+        call_id = entry.get("id")
+        tool_calls.append(
+            ToolCall(
+                id=call_id if isinstance(call_id, str) else "",
+                name=name,
+                arguments=_coerce_openai_arguments(fn.get("arguments")),
+                result=None,
+                source=ToolCallSource.CHAT_COMPLETIONS,
+            )
+        )
+    return tool_calls
 
 
 def parse_response(result: dict[str, Any]) -> AgentResponse:
@@ -58,12 +121,48 @@ def parse_openai(result: dict[str, Any]) -> AgentResponse:
     raw_content = msg.get("content")
     content = raw_content if isinstance(raw_content, str) else ""
 
-    return AgentResponse(content=content, tool_calls=[])
+    return AgentResponse(
+        content=content,
+        tool_calls=_extract_openai_tool_calls(msg),
+    )
+
+
+def _extract_anthropic_tool_calls(blocks: list[Any]) -> list[ToolCall]:
+    """Extract tool calls from an Anthropic ``content[]`` block list.
+
+    Skips entries missing a string ``name``. ``input`` is already a dict
+    in spec-compliant responses; non-dict values fall back to empty dict.
+    """
+    tool_calls: list[ToolCall] = []
+    for block in blocks:
+        if not isinstance(block, dict):
+            continue
+        if block.get("type") != "tool_use":
+            continue
+        name = block.get("name")
+        if not isinstance(name, str) or not name:
+            logger.debug("Skipping Anthropic tool_use block missing name: %r", block)
+            continue
+        raw_input = block.get("input")
+        arguments = raw_input if isinstance(raw_input, dict) else {}
+        block_id = block.get("id")
+        tool_calls.append(
+            ToolCall(
+                id=block_id if isinstance(block_id, str) else "",
+                name=name,
+                arguments=arguments,
+                result=None,
+                source=ToolCallSource.CHAT_COMPLETIONS,
+            )
+        )
+    return tool_calls
 
 
 def parse_anthropic(result: dict[str, Any]) -> AgentResponse:
     """Parse Anthropic Messages API format."""
     blocks = result.get("content", [])
+    if not isinstance(blocks, list):
+        blocks = []
     text_parts: list[str] = []
 
     for block in blocks:
@@ -72,7 +171,41 @@ def parse_anthropic(result: dict[str, Any]) -> AgentResponse:
         if block.get("type") == "text":
             text_parts.append(block.get("text", ""))
 
-    return AgentResponse(content="".join(text_parts), tool_calls=[])
+    return AgentResponse(
+        content="".join(text_parts),
+        tool_calls=_extract_anthropic_tool_calls(blocks),
+    )
+
+
+def _extract_gemini_tool_calls(parts: list[Any]) -> list[ToolCall]:
+    """Extract tool calls from a Gemini ``content.parts[]`` list.
+
+    Skips entries missing a string ``name``. Gemini has no per-call id
+    field; id defaults to ``""`` (matches the A2A convention).
+    """
+    tool_calls: list[ToolCall] = []
+    for part in parts:
+        if not isinstance(part, dict):
+            continue
+        fn = part.get("functionCall")
+        if not isinstance(fn, dict):
+            continue
+        name = fn.get("name")
+        if not isinstance(name, str) or not name:
+            logger.debug("Skipping Gemini functionCall part missing name: %r", part)
+            continue
+        raw_args = fn.get("args")
+        arguments = raw_args if isinstance(raw_args, dict) else {}
+        tool_calls.append(
+            ToolCall(
+                id="",
+                name=name,
+                arguments=arguments,
+                result=None,
+                source=ToolCallSource.CHAT_COMPLETIONS,
+            )
+        )
+    return tool_calls
 
 
 def parse_gemini(result: dict[str, Any]) -> AgentResponse:
@@ -83,6 +216,8 @@ def parse_gemini(result: dict[str, Any]) -> AgentResponse:
 
     content_obj = candidates[0].get("content", {})
     parts = content_obj.get("parts", []) if isinstance(content_obj, dict) else []
+    if not isinstance(parts, list):
+        parts = []
 
     text_parts: list[str] = []
 
@@ -92,7 +227,10 @@ def parse_gemini(result: dict[str, Any]) -> AgentResponse:
         if "text" in part:
             text_parts.append(part["text"])
 
-    return AgentResponse(content="".join(text_parts), tool_calls=[])
+    return AgentResponse(
+        content="".join(text_parts),
+        tool_calls=_extract_gemini_tool_calls(parts),
+    )
 
 
 __all__ = ["parse_response", "parse_openai", "parse_anthropic", "parse_gemini"]

@@ -11,6 +11,7 @@ from arksim.simulation_engine.agent.response_parsers import (
     parse_openai,
     parse_response,
 )
+from arksim.simulation_engine.tool_types import ToolCallSource
 
 
 class TestParseOpenAI:
@@ -21,7 +22,7 @@ class TestParseOpenAI:
         assert response.tool_calls == []
 
     def test_tool_calls_only(self) -> None:
-        """content=None with tool_calls: the crash fix (content=None -> "")."""
+        """content=None with tool_calls captured as-is; content falls back to ""."""
         result = {
             "choices": [
                 {
@@ -44,10 +45,16 @@ class TestParseOpenAI:
         }
         response = parse_openai(result)
         assert response.content == ""
-        assert response.tool_calls == []
+        assert len(response.tool_calls) == 1
+        tc = response.tool_calls[0]
+        assert tc.id == "call_1"
+        assert tc.name == "get_weather"
+        assert tc.arguments == {"city": "NYC"}
+        assert tc.result is None
+        assert tc.source == ToolCallSource.CHAT_COMPLETIONS
 
     def test_text_and_tool_calls(self) -> None:
-        """Tool calls in response are ignored; only content is extracted."""
+        """Both content and tool_calls captured."""
         result = {
             "choices": [
                 {
@@ -70,19 +77,60 @@ class TestParseOpenAI:
         }
         response = parse_openai(result)
         assert response.content == "Let me check."
-        assert response.tool_calls == []
+        assert len(response.tool_calls) == 1
+        assert response.tool_calls[0].name == "search"
+        assert response.tool_calls[0].arguments == {"q": "test"}
 
-    def test_empty_choices_raises(self) -> None:
-        with pytest.raises(ValueError, match="empty 'choices'"):
-            parse_openai({"choices": []})
-
-    def test_malformed_arguments_ignored(self) -> None:
-        """Tool calls in response are not extracted, so malformed args are irrelevant."""
+    def test_arguments_as_dict(self) -> None:
+        """Some OpenAI-compatible routers (LiteLLM, vLLM) return arguments as a dict."""
         result = {
             "choices": [
                 {
                     "message": {
-                        "role": "assistant",
+                        "content": None,
+                        "tool_calls": [
+                            {
+                                "id": "call_dict",
+                                "type": "function",
+                                "function": {
+                                    "name": "f",
+                                    "arguments": {"k": "v"},
+                                },
+                            }
+                        ],
+                    }
+                }
+            ]
+        }
+        response = parse_openai(result)
+        assert response.tool_calls[0].arguments == {"k": "v"}
+
+    def test_arguments_none(self) -> None:
+        result = {
+            "choices": [
+                {
+                    "message": {
+                        "content": None,
+                        "tool_calls": [
+                            {
+                                "id": "call_none",
+                                "type": "function",
+                                "function": {"name": "f", "arguments": None},
+                            }
+                        ],
+                    }
+                }
+            ]
+        }
+        response = parse_openai(result)
+        assert response.tool_calls[0].arguments == {}
+
+    def test_arguments_malformed_json(self) -> None:
+        """Malformed JSON string falls back to empty dict; call still captured."""
+        result = {
+            "choices": [
+                {
+                    "message": {
                         "content": None,
                         "tool_calls": [
                             {
@@ -99,16 +147,87 @@ class TestParseOpenAI:
             ]
         }
         response = parse_openai(result)
-        assert response.content == ""
-        assert response.tool_calls == []
+        assert len(response.tool_calls) == 1
+        assert response.tool_calls[0].name == "bad_tool"
+        assert response.tool_calls[0].arguments == {}
 
-    def test_tool_call_id_missing_ignored(self) -> None:
-        """Tool calls in response are not extracted regardless of missing fields."""
+    def test_multiple_tool_calls(self) -> None:
         result = {
             "choices": [
                 {
                     "message": {
-                        "role": "assistant",
+                        "content": None,
+                        "tool_calls": [
+                            {
+                                "id": "c1",
+                                "type": "function",
+                                "function": {"name": "a", "arguments": "{}"},
+                            },
+                            {
+                                "id": "c2",
+                                "type": "function",
+                                "function": {"name": "b", "arguments": "{}"},
+                            },
+                        ],
+                    }
+                }
+            ]
+        }
+        response = parse_openai(result)
+        assert [tc.name for tc in response.tool_calls] == ["a", "b"]
+
+    def test_missing_name_skipped(self) -> None:
+        """Tool call entries without a name are skipped."""
+        result = {
+            "choices": [
+                {
+                    "message": {
+                        "content": None,
+                        "tool_calls": [
+                            {
+                                "id": "c1",
+                                "type": "function",
+                                "function": {"arguments": "{}"},
+                            },
+                            {
+                                "id": "c2",
+                                "type": "function",
+                                "function": {"name": "ok", "arguments": "{}"},
+                            },
+                        ],
+                    }
+                }
+            ]
+        }
+        response = parse_openai(result)
+        assert [tc.name for tc in response.tool_calls] == ["ok"]
+
+    def test_non_string_name_skipped(self) -> None:
+        result = {
+            "choices": [
+                {
+                    "message": {
+                        "content": None,
+                        "tool_calls": [
+                            {
+                                "id": "c1",
+                                "type": "function",
+                                "function": {"name": 42, "arguments": "{}"},
+                            }
+                        ],
+                    }
+                }
+            ]
+        }
+        response = parse_openai(result)
+        assert response.tool_calls == []
+
+    def test_missing_id_defaults_to_empty_string(self) -> None:
+        """Matches the A2A convention; OpenAI spec requires id but be defensive."""
+        result = {
+            "choices": [
+                {
+                    "message": {
                         "content": None,
                         "tool_calls": [
                             {
@@ -121,8 +240,18 @@ class TestParseOpenAI:
             ]
         }
         response = parse_openai(result)
-        assert response.content == ""
+        assert response.tool_calls[0].id == ""
+        assert response.tool_calls[0].name == "f"
+
+    def test_empty_tool_calls_list(self) -> None:
+        result = {"choices": [{"message": {"content": "hi", "tool_calls": []}}]}
+        response = parse_openai(result)
+        assert response.content == "hi"
         assert response.tool_calls == []
+
+    def test_empty_choices_raises(self) -> None:
+        with pytest.raises(ValueError, match="empty 'choices'"):
+            parse_openai({"choices": []})
 
 
 class TestParseAnthropic:
@@ -248,8 +377,8 @@ class TestParseResponseDispatch:
         with pytest.raises(ValueError, match="Unsupported response format"):
             parse_response({"data": "something"})
 
-    def test_tool_calls_not_extracted(self) -> None:
-        """Response parsers no longer extract tool calls from responses."""
+    def test_tool_calls_extracted_via_dispatch(self) -> None:
+        """parse_response delegates tool call extraction to the provider parser."""
         result = {
             "choices": [
                 {
@@ -267,7 +396,8 @@ class TestParseResponseDispatch:
             ]
         }
         response = parse_response(result)
-        assert response.tool_calls == []
+        assert len(response.tool_calls) == 1
+        assert response.tool_calls[0].name == "f"
 
     def test_openai_takes_precedence_over_anthropic(self) -> None:
         """A response with both 'choices' and 'content' is parsed as OpenAI."""
