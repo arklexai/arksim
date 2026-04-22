@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+* **chat-completions:** capture tool calls from response bodies (OpenAI `tool_calls`, Anthropic `tool_use` blocks, Google Gemini `functionCall` parts). Captured calls carry `source="chat_completions"`; tool results are not captured on this path. See [Tool Call Capture docs](https://docs.arklex.ai/main/tool-call-capture).
+
 ### Changed
 
 * **a2a:** migrate from a2a-sdk 0.3.x (Pydantic) to 1.0.0 (protobuf) ([#152](https://github.com/arklexai/arksim/pull/152))
