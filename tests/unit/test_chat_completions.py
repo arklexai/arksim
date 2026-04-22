@@ -114,3 +114,69 @@ class TestParseResponseUnsupported:
         result = {"id": "xyz", "usage": {}}
         with pytest.raises(ValueError, match="Keys present"):
             parse_response(result)
+
+
+class TestChatCompletionsAgentExecute:
+    """End-to-end: execute() flows captured tool calls into AgentResponse."""
+
+    @pytest.mark.asyncio
+    async def test_execute_populates_tool_calls(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Full path: execute() -> parse_openai -> AgentResponse.tool_calls."""
+        from arksim.config import AgentConfig, AgentType
+        from arksim.simulation_engine.agent.clients.chat_completions import (
+            ChatCompletionsAgent,
+        )
+        from arksim.simulation_engine.tool_types import ToolCallSource
+
+        # AgentConfig's mode='before' validator calls ChatCompletionsConfig(**api_config),
+        # so api_config must be a plain dict, not a pre-constructed model instance.
+        config = AgentConfig(
+            agent_name="test",
+            agent_type=AgentType.CHAT_COMPLETIONS.value,
+            api_config={
+                "endpoint": "http://localhost:9999/v1/chat/completions",
+                "headers": {"Authorization": "Bearer test"},
+                "body": {
+                    "model": "test-model",
+                    "messages": [{"role": "system", "content": "you are a test"}],
+                },
+            },
+        )
+        agent = ChatCompletionsAgent(config)
+
+        async def fake_post(payload: dict) -> dict:
+            return {
+                "choices": [
+                    {
+                        "message": {
+                            "role": "assistant",
+                            "content": None,
+                            "tool_calls": [
+                                {
+                                    "id": "call_x",
+                                    "type": "function",
+                                    "function": {
+                                        "name": "get_weather",
+                                        "arguments": '{"city": "SF"}',
+                                    },
+                                }
+                            ],
+                        }
+                    }
+                ]
+            }
+
+        monkeypatch.setattr(agent, "_post_request", fake_post)
+
+        response = await agent.execute("what's the weather?")
+        assert response.content == ""
+        assert len(response.tool_calls) == 1
+        tc = response.tool_calls[0]
+        assert tc.id == "call_x"
+        assert tc.name == "get_weather"
+        assert tc.arguments == {"city": "SF"}
+        assert tc.source == ToolCallSource.CHAT_COMPLETIONS
+
+        await agent.close()
