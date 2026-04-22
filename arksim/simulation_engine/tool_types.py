@@ -29,6 +29,13 @@ class ToolCallSource(str, Enum):
     #: Captured from an OTLP / OpenInference span (via the trace receiver).
     OTEL_TRACE = "otel_trace"
 
+    #: Captured from a Chat Completions connector response body (OpenAI,
+    #: Anthropic, or Gemini formats). Result is not captured on this path:
+    #: raw Chat Completions endpoints return tool results through follow-up
+    #: ``role=tool`` messages sent by the client, and arksim does not supply
+    #: the tool implementations needed to produce those messages.
+    CHAT_COMPLETIONS = "chat_completions"
+
 
 class A2AToolCaptureExtension:
     """A2A AgentExtension URI for arksim's tool call capture convention.
