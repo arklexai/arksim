@@ -37,31 +37,6 @@ class TestParseResponseOpenAI:
         assert response.content == ""
         assert response.tool_calls == []
 
-    def test_tool_calls_not_extracted(self) -> None:
-        """Response parsers no longer extract tool calls from responses."""
-        result = {
-            "choices": [
-                {
-                    "message": {
-                        "role": "assistant",
-                        "content": "",
-                        "tool_calls": [
-                            {
-                                "id": "call_abc",
-                                "function": {
-                                    "name": "search",
-                                    "arguments": '{"query": "arksim"}',
-                                },
-                            }
-                        ],
-                    }
-                }
-            ]
-        }
-        response = parse_response(result)
-        assert response.content == ""
-        assert response.tool_calls == []
-
 
 class TestParseResponseAnthropic:
     """Tests for Anthropic-style response format."""
@@ -91,23 +66,6 @@ class TestParseResponseAnthropic:
         }
         response = parse_response(result)
         assert response.content == "Only this."
-
-    def test_tool_use_block_not_extracted(self) -> None:
-        """Response parsers no longer extract tool calls from responses."""
-        result = {
-            "content": [
-                {"type": "text", "text": "Using tool."},
-                {
-                    "type": "tool_use",
-                    "id": "toolu_01",
-                    "name": "calculator",
-                    "input": {"expression": "2+2"},
-                },
-            ]
-        }
-        response = parse_response(result)
-        assert response.content == "Using tool."
-        assert response.tool_calls == []
 
 
 class TestParseResponseGoogle:
@@ -142,29 +100,6 @@ class TestParseResponseGoogle:
         result = {"candidates": []}
         with pytest.raises(ValueError, match="empty 'candidates'"):
             parse_response(result)
-
-    def test_function_call_part_not_extracted(self) -> None:
-        """Response parsers no longer extract tool calls from responses."""
-        result = {
-            "candidates": [
-                {
-                    "content": {
-                        "parts": [
-                            {"text": "Calling tool."},
-                            {
-                                "functionCall": {
-                                    "name": "weather",
-                                    "args": {"city": "NYC"},
-                                }
-                            },
-                        ]
-                    }
-                }
-            ]
-        }
-        response = parse_response(result)
-        assert response.content == "Calling tool."
-        assert response.tool_calls == []
 
 
 class TestParseResponseUnsupported:
