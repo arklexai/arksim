@@ -262,7 +262,6 @@ class TestParseAnthropic:
         assert response.tool_calls == []
 
     def test_tool_use_blocks(self) -> None:
-        """Tool use blocks in response are not extracted; only text is."""
         result = {
             "content": [
                 {
@@ -275,10 +274,14 @@ class TestParseAnthropic:
         }
         response = parse_anthropic(result)
         assert response.content == ""
-        assert response.tool_calls == []
+        assert len(response.tool_calls) == 1
+        tc = response.tool_calls[0]
+        assert tc.id == "toolu_01"
+        assert tc.name == "get_weather"
+        assert tc.arguments == {"city": "NYC"}
+        assert tc.source == ToolCallSource.CHAT_COMPLETIONS
 
     def test_mixed_text_and_tool_use(self) -> None:
-        """Only text blocks are extracted; tool_use blocks are ignored."""
         result = {
             "content": [
                 {"type": "text", "text": "Let me check. "},
@@ -292,7 +295,43 @@ class TestParseAnthropic:
         }
         response = parse_anthropic(result)
         assert response.content == "Let me check. "
-        assert response.tool_calls == []
+        assert len(response.tool_calls) == 1
+        assert response.tool_calls[0].name == "search"
+
+    def test_multiple_tool_use_blocks(self) -> None:
+        result = {
+            "content": [
+                {"type": "tool_use", "id": "t1", "name": "a", "input": {}},
+                {"type": "tool_use", "id": "t2", "name": "b", "input": {}},
+            ]
+        }
+        response = parse_anthropic(result)
+        assert [tc.name for tc in response.tool_calls] == ["a", "b"]
+
+    def test_tool_use_missing_name_skipped(self) -> None:
+        result = {
+            "content": [
+                {"type": "tool_use", "id": "t1", "input": {}},
+                {"type": "tool_use", "id": "t2", "name": "ok", "input": {}},
+            ]
+        }
+        response = parse_anthropic(result)
+        assert [tc.name for tc in response.tool_calls] == ["ok"]
+
+    def test_tool_use_input_not_dict(self) -> None:
+        """Defensive: if input isn't a dict, fall back to empty dict."""
+        result = {
+            "content": [
+                {
+                    "type": "tool_use",
+                    "id": "t1",
+                    "name": "f",
+                    "input": "not-a-dict",
+                }
+            ]
+        }
+        response = parse_anthropic(result)
+        assert response.tool_calls[0].arguments == {}
 
     def test_non_dict_blocks_ignored(self) -> None:
         """Malformed non-dict entries in content list are silently skipped."""
