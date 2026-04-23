@@ -124,7 +124,15 @@ def parse_response(result: dict[str, Any]) -> AgentResponse:
 
 
 def parse_openai(result: dict[str, Any]) -> AgentResponse:
-    """Parse OpenAI Chat Completions format."""
+    """Parse OpenAI Chat Completions format.
+
+    Reads text content from ``choices[0].message.content`` (or falls back
+    to ``choices[0].delta.content`` for streaming-shaped inputs). Tool
+    calls are extracted only when ``message.tool_calls`` is a complete,
+    non-streaming list; partial ``tool_calls`` arrays from SSE ``delta``
+    chunks are not supported and their incomplete ``arguments`` strings
+    will decode to empty dicts via the defensive fallback.
+    """
     choices = result.get("choices", [])
     if not choices:
         raise ValueError("API response has empty 'choices'")
