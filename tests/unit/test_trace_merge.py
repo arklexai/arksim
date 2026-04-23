@@ -420,3 +420,112 @@ async def test_trace_merge_three_way_overlap() -> None:
     ids = [tc["id"] for tc in tc_list]
     assert "b" in ids
     assert "span-b" not in ids
+
+
+@pytest.mark.asyncio
+async def test_empty_ids_do_not_collapse_distinct_traced_calls() -> None:
+    """Empty tool-call ids must not be treated as a match in ID dedup.
+
+    Gemini (always id="") and A2A (id="" when absent) emit empty ids.
+    If turn_tool_calls contains any empty-id call, every traced call
+    with a distinct (name, arguments) signature must still be merged.
+    """
+    receiver = AsyncMock()
+    receiver.signal_turn_complete = MagicMock()
+    receiver.wait_for_traces = AsyncMock(
+        return_value=[
+            ToolCall(id="", name="c", arguments={"z": 3}),
+        ]
+    )
+
+    sim = _make_simulator(trace_receiver=receiver)
+
+    mock_agent = AsyncMock()
+    mock_agent.get_chat_id = AsyncMock(return_value="conv-1")
+    mock_agent.execute = AsyncMock(
+        return_value=AgentResponse(
+            content="result",
+            tool_calls=[
+                ToolCall(id="", name="a", arguments={"x": 1}),
+                ToolCall(id="", name="b", arguments={"y": 2}),
+            ],
+        )
+    )
+    mock_agent.close = AsyncMock()
+
+    sim.llm.call_async = AsyncMock(side_effect=["hello", "###STOP###"])
+
+    with patch(
+        "arksim.simulation_engine.simulator.create_agent",
+        return_value=mock_agent,
+    ):
+        state = await sim._run_single_conversation(
+            profile="test user",
+            goal="test goal",
+            knowledge=[{"content": "k1"}],
+            agent_context="context",
+            max_turns=3,
+            scenario_id="s1",
+        )
+
+    assert state is not None
+    agent_msgs = [m for m in state.conversation_history if m.get("role") == "user"]
+    assert len(agent_msgs) == 1
+    tc_list = agent_msgs[0].get("tool_calls", [])
+    # 2 explicit (a, b) + 1 traced (c) = 3; empty ids must not collapse them
+    assert len(tc_list) == 3
+    names = {tc["name"] for tc in tc_list}
+    assert names == {"a", "b", "c"}
+
+
+@pytest.mark.asyncio
+async def test_empty_id_signature_match_still_dedupes() -> None:
+    """Signature-based dedup fires even when both sides have empty ids.
+
+    When turn_tool_calls and traced both carry id="" for the same
+    (name, arguments), the call must appear exactly once in the result.
+    """
+    receiver = AsyncMock()
+    receiver.signal_turn_complete = MagicMock()
+    receiver.wait_for_traces = AsyncMock(
+        return_value=[
+            ToolCall(id="", name="a", arguments={"x": 1}),
+        ]
+    )
+
+    sim = _make_simulator(trace_receiver=receiver)
+
+    mock_agent = AsyncMock()
+    mock_agent.get_chat_id = AsyncMock(return_value="conv-1")
+    mock_agent.execute = AsyncMock(
+        return_value=AgentResponse(
+            content="result",
+            tool_calls=[
+                ToolCall(id="", name="a", arguments={"x": 1}),
+            ],
+        )
+    )
+    mock_agent.close = AsyncMock()
+
+    sim.llm.call_async = AsyncMock(side_effect=["hello", "###STOP###"])
+
+    with patch(
+        "arksim.simulation_engine.simulator.create_agent",
+        return_value=mock_agent,
+    ):
+        state = await sim._run_single_conversation(
+            profile="test user",
+            goal="test goal",
+            knowledge=[{"content": "k1"}],
+            agent_context="context",
+            max_turns=3,
+            scenario_id="s1",
+        )
+
+    assert state is not None
+    agent_msgs = [m for m in state.conversation_history if m.get("role") == "user"]
+    assert len(agent_msgs) == 1
+    tc_list = agent_msgs[0].get("tool_calls", [])
+    # Signature match: only 1 call, not 2
+    assert len(tc_list) == 1
+    assert tc_list[0]["name"] == "a"
