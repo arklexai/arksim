@@ -1,0 +1,29 @@
+# Traced agent variant: tool calls captured automatically by the simulator.
+# The agent returns plain text; arksim captures tool calls via TracingProcessor.
+# See traced_agent.py and README.md for details.
+
+agent_config:
+  agent_type: custom
+  agent_name: tool-call-traced-example
+  custom_config:
+    module_path: ./traced_agent.py
+
+scenario_file_path: ./scenarios.json
+num_conversations_per_scenario: 1
+max_turns: 3
+output_file_path: ./results/simulation/simulation_traced.json
+simulated_user_prompt_template: null
+
+num_workers: 50
+
+trace_receiver:
+  enabled: true
+  wait_timeout: 5
+
+metrics_to_run:
+  - helpfulness
+  - agent_behavior_failure
+  - tool_call_behavior_failure
+
+model: gpt-4.1-mini
+provider: openai

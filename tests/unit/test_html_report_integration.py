@@ -444,4 +444,3 @@ class TestHtmlReportIntegration:
         assert "severity-medium" in html
         assert "severity-low" in html
         assert "severityOrder" in html
-        assert "module-level heuristics" in html

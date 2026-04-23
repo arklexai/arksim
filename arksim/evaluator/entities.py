@@ -228,6 +228,7 @@ class ConversationEvaluation(BaseModel):
     turn_scores: list[TurnEvaluation]
 
 
+
 class TokenUsage(BaseModel):
     """Token usage summary from LLM calls."""
 
@@ -235,6 +236,18 @@ class TokenUsage(BaseModel):
     total_output_tokens: int = 0
     by_model: dict[str, dict[str, int]] = Field(default_factory=dict)
 
+      
+      
+class ErrorScenarioMapping(BaseModel):
+    """Maps a unique error to the scenarios that triggered it."""
+
+    error_index: int
+    unique_error_id: str
+    error_description: str
+    severity: str
+    scenario_ids: list[str]
+
+      
 
 class Evaluation(BaseModel):
     """Top-level evaluation output file."""
@@ -247,3 +260,4 @@ class Evaluation(BaseModel):
     conversations: list[ConversationEvaluation]
     unique_errors: list[UniqueError]
     usage: TokenUsage | None = None
+    error_scenario_mappings: list[ErrorScenarioMapping] = Field(default_factory=list)

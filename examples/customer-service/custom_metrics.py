@@ -3,29 +3,25 @@
 Example custom metrics for customer service agent evaluation.
 
 This file is referenced by config.yaml via ``custom_metrics_file_paths``
-and loaded automatically by the evaluator. Every public
-``QuantitativeMetric`` or ``QualitativeMetric`` subclass found in the
-file is instantiated with no arguments.
+and loaded automatically by the evaluator. Every public ``QuantitativeMetric``
+or ``QualitativeMetric`` subclass found in the file is instantiated by
+the evaluator, which injects the configured LLM via the ``llm`` keyword
+argument.
 
-To create a quantitative metric (numeric score):
-  1. Subclass ``QuantitativeMetric``.
-  2. Implement ``score()`` - receives a ``ScoreInput``, returns a
-     ``QuantResult`` with ``name``, ``value`` (float), and ``reason``.
-
-To create a qualitative metric (categorical label):
-  1. Subclass ``QualitativeMetric``.
-  2. Implement ``evaluate()`` - receives a ``ScoreInput``, returns a
-     ``QualResult`` with ``name``, ``value`` (str label), and ``reason``.
-
-  3. Add the file path to ``custom_metrics_file_paths`` in config.yaml
+To create your own metric:
+  1. Subclass ``QuantitativeMetric`` or ``QualitativeMetric``.
+  2. Add ``llm=None`` to ``__init__`` and pass it to ``super().__init__(llm=llm)``.
+  3. Implement ``score()`` (quantitative) or ``evaluate()`` (qualitative).
+     Both receive a ``ScoreInput`` with ``chat_history``, ``knowledge``,
+     ``user_goal``, and ``profile``. Use ``self.llm`` to call the LLM.
+  4. Return a ``QuantResult`` or ``QualResult`` with ``name``, ``value``,
+     and ``reason``.
+  5. Add the file path to ``custom_metrics_file_paths`` in config.yaml
      and (optionally) add the metric name to ``metrics_to_run``.
 """
 
 from __future__ import annotations
 
-from pathlib import Path
-
-import yaml
 from pydantic import BaseModel
 
 from arksim.evaluator import (
@@ -36,24 +32,6 @@ from arksim.evaluator import (
     ScoreInput,
     format_chat_history,
 )
-from arksim.llms.chat import LLM
-
-
-def _load_llm_from_config() -> LLM:
-    """Load model and provider from config.yaml in the same directory as this file."""
-    config_path = Path(__file__).resolve().parent / "config.yaml"
-    if not config_path.exists():
-        raise FileNotFoundError(f"config.yaml not found: {config_path}")
-    with open(config_path) as f:
-        data = yaml.safe_load(f) or {}
-    model = data["model"]
-    provider = data["provider"]
-    return LLM(model=model, provider=provider)
-
-
-# LLM for custom metrics; model and provider from config.yaml (same directory).
-llm = _load_llm_from_config()
-
 
 # -- Quantitative metrics
 
@@ -109,7 +87,7 @@ class VerificationComplianceMetric(QuantitativeMetric):
     scaled to 0-5.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, llm: object | None = None) -> None:
         super().__init__(
             name="verification_compliance",
             score_range=(0, 5),
@@ -117,10 +95,11 @@ class VerificationComplianceMetric(QuantitativeMetric):
                 "How well the agent followed identity verification protocols"
                 " before sensitive actions (0=no verification, 5=full compliance)."
             ),
+            llm=llm,
         )
 
     def score(self, score_input: ScoreInput) -> QuantResult:
-        response: VerificationComplianceSchema = llm.call(
+        response: VerificationComplianceSchema = self.llm.call(
             [
                 {"role": "system", "content": VERIFICATION_COMPLIANCE_SYSTEM_PROMPT},
                 {
@@ -186,7 +165,7 @@ class ToolUsageEfficiencyMetric(QuantitativeMetric):
     scaled to 0-5.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, llm: object | None = None) -> None:
         super().__init__(
             name="tool_usage_efficiency",
             score_range=(0, 5),
@@ -195,10 +174,11 @@ class ToolUsageEfficiencyMetric(QuantitativeMetric):
                 " minimal redundancy (0=wrong tools or excessive calls,"
                 " 5=optimal tool usage)."
             ),
+            llm=llm,
         )
 
     def score(self, score_input: ScoreInput) -> QuantResult:
-        response: ToolUsageEfficiencySchema = llm.call(
+        response: ToolUsageEfficiencySchema = self.llm.call(
             [
                 {"role": "system", "content": TOOL_USAGE_EFFICIENCY_SYSTEM_PROMPT},
                 {
@@ -266,7 +246,7 @@ class UnauthorizedActionMetric(QualitativeMetric):
     Labels: 'clean' | 'violated'.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, llm: object | None = None) -> None:
         super().__init__(
             name="unauthorized_action",
             description=(
@@ -278,10 +258,11 @@ class UnauthorizedActionMetric(QualitativeMetric):
                 "clean": "#22c55e",  # green - no violations
                 "violated": "#ef4444",  # red - unauthorized action detected
             },
+            llm=llm,
         )
 
     def evaluate(self, score_input: ScoreInput) -> QualResult:
-        response: UnauthorizedActionSchema = llm.call(
+        response: UnauthorizedActionSchema = self.llm.call(
             [
                 {"role": "system", "content": UNAUTHORIZED_ACTION_SYSTEM_PROMPT},
                 {
@@ -337,7 +318,7 @@ class DataPrivacyMetric(QualitativeMetric):
     Labels: 'compliant' | 'leaked' | 'over_collected'.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, llm: object | None = None) -> None:
         super().__init__(
             name="data_privacy",
             description=(
@@ -351,10 +332,11 @@ class DataPrivacyMetric(QualitativeMetric):
                 "leaked": "#ef4444",  # red    - sensitive data disclosed
                 "over_collected": "#f97316",  # orange - unnecessary data requested
             },
+            llm=llm,
         )
 
     def evaluate(self, score_input: ScoreInput) -> QualResult:
-        response: DataPrivacySchema = llm.call(
+        response: DataPrivacySchema = self.llm.call(
             [
                 {"role": "system", "content": DATA_PRIVACY_SYSTEM_PROMPT},
                 {

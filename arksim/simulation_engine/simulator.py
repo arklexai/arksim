@@ -2,15 +2,17 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 import traceback
 from collections.abc import Callable
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from jinja2.sandbox import SandboxedEnvironment
+from pydantic import ValidationError
 from tqdm import tqdm
 
-from arksim.config import AgentConfig
+from arksim.config import AgentConfig, AgentType
 from arksim.llms.chat import LLM
 from arksim.llms.chat.base.usage import (
     UsageTracker,
@@ -24,6 +26,11 @@ from arksim.scenario import (
 from arksim.utils.concurrency import resolve_num_workers
 from arksim.utils.output import save_json_file_async
 
+if TYPE_CHECKING:
+    from arksim.tracing import TraceReceiver
+
+from arksim.tracing.context import _clear_trace_context, _set_trace_context
+
 from .agent.factory import create_agent
 from .core import TURN_KNOWLEDGE_FN
 from .entities import (
@@ -36,7 +43,7 @@ from .entities import (
     SimulationParams,
     TokenUsage,
 )
-from .tool_types import AgentResponse, ToolCall
+from .tool_types import AgentResponse, ToolCall, ToolCallSource
 from .utils.prompts import DEFAULT_SIMULATED_USER_PROMPT_TEMPLATE
 from .utils.utils import flip_hist
 
@@ -51,16 +58,49 @@ SIMULATOR_VERSION = "v1"
 STOP_SIGNAL = "###STOP###"
 
 
+_KNOWN_TOOL_CALL_SOURCES = {s.value for s in ToolCallSource}
+
+
+def _tool_call_from_dict(tc: dict[str, Any]) -> ToolCall | None:
+    """Build a ToolCall from a serialized dict, tolerating schema drift.
+
+    Old simulation snapshots may carry ``source`` values that are no longer
+    in ``ToolCallSource`` (dropped to None with a warning), or be missing
+    required fields like ``name`` (returns None with a warning so the rest
+    of the snapshot still loads).
+
+    Extra fields on the dict are silently ignored by Pydantic per the
+    ``extra="ignore"`` config on ``ToolCall``.
+    """
+    source = tc.get("source")
+    if source is not None and source not in _KNOWN_TOOL_CALL_SOURCES:
+        logger.warning(
+            "Ignoring unknown tool_call source %r when loading snapshot", source
+        )
+        tc = {**tc, "source": None}
+    try:
+        return ToolCall(**tc)
+    except ValidationError as e:
+        logger.warning(
+            "Skipping malformed tool call in snapshot (id=%r): %s",
+            tc.get("id"),
+            e,
+        )
+        return None
+
+
 class Simulator:
     def __init__(
         self,
         agent_config: AgentConfig,
         simulator_params: SimulationParams,
         llm: LLM,
+        trace_receiver: TraceReceiver | None = None,
     ) -> None:
         self.agent_config = agent_config
         self.simulator_params = simulator_params
         self.llm = llm
+        self.trace_receiver = trace_receiver
         self.simulation: Simulation | None = None
 
     def _render_simulated_user_prompt(
@@ -143,7 +183,7 @@ class Simulator:
             history: list[dict[str, Any]] = [
                 {"role": "system", "content": instructional_prompt}
             ]
-            metadata = {
+            metadata: dict[str, Any] = {
                 "chat_id": conversation_id,
                 "user_goal": goal,
                 "knowledge": knowledge,
@@ -169,18 +209,50 @@ class Simulator:
                     )
                     break
 
-                result = await agent.execute(
-                    user_query=output,
-                    metadata=metadata,
-                )
+                metadata["turn_id"] = turn
+
+                # Set trace routing context so processors can read it
+                # without the agent passing it explicitly.
+                if self.trace_receiver is not None:
+                    _set_trace_context(conversation_id, turn, self.trace_receiver)
+
+                try:
+                    result = await agent.execute(
+                        user_query=output,
+                        metadata=metadata,
+                    )
+                finally:
+                    if self.trace_receiver is not None:
+                        self.trace_receiver.signal_turn_complete(conversation_id, turn)
+                        _clear_trace_context()
 
                 # Normalize response
                 if isinstance(result, AgentResponse):
                     answer = result.content
-                    turn_tool_calls = result.tool_calls
+                    turn_tool_calls = result.tool_calls or []
                 else:
                     answer = result
-                    turn_tool_calls = None
+                    turn_tool_calls = []
+
+                # Merge tool calls from trace receiver (if active).
+                # Dedup by ID first, then by (name, arguments) to handle
+                # cases where the trace receiver falls back to spanId while
+                # AgentResponse carries an SDK-assigned tool call ID.
+                if self.trace_receiver is not None:
+                    traced = await self.trace_receiver.wait_for_traces(
+                        conversation_id, turn
+                    )
+                    if traced:
+                        existing_ids = {tc.id for tc in turn_tool_calls}
+                        sig_to_idx: dict[tuple[str, str], int] = {}
+                        for i, tc in enumerate(turn_tool_calls):
+                            sig = (tc.name, json.dumps(tc.arguments, sort_keys=True))
+                            sig_to_idx[sig] = i
+
+                        for tc in traced:
+                            sig = (tc.name, json.dumps(tc.arguments, sort_keys=True))
+                            if tc.id not in existing_ids and sig not in sig_to_idx:
+                                turn_tool_calls.append(tc)
 
                 history.append(
                     {
@@ -236,7 +308,11 @@ class Simulator:
                 )
             elif role == "assistant":
                 raw_tcs = msg.get("tool_calls")
-                tool_calls = [ToolCall(**tc) for tc in raw_tcs] if raw_tcs else None
+                if raw_tcs:
+                    parsed = [_tool_call_from_dict(tc) for tc in raw_tcs]
+                    tool_calls = [tc for tc in parsed if tc is not None] or None
+                else:
+                    tool_calls = None
                 messages.append(
                     Message(
                         turn_id=turn_id,
@@ -426,19 +502,51 @@ async def run_simulation(
         )
     finally:
         reset_current_tracker(token)
+    # Start trace receiver if configured (lazy import to avoid circular deps)
+    trace_cfg = settings.trace_receiver
+    trace_receiver: TraceReceiver | None = None
+    if trace_cfg and trace_cfg.enabled:
+        from arksim.tracing import TraceReceiver as _TraceReceiver
 
-    if not simulation_output.conversations:
-        raise RuntimeError(
-            "Simulation failed: no conversations were completed successfully. "
-            "Check the errors above for details."
+        trace_receiver = _TraceReceiver(
+            host=trace_cfg.host,
+            port=trace_cfg.port,
+            wait_timeout=trace_cfg.wait_timeout,
         )
 
-    simulation_output.usage = TokenUsage(
-        total_input_tokens=tracker.total_input_tokens,
-        total_output_tokens=tracker.total_output_tokens,
-        by_model=tracker.summary(),
-    )
-    tracker.log_summary()
+        # Same-process agents use direct injection via contextvars,
+        # so no HTTP listener is needed. Cross-process agents (Chat
+        # Completions, A2A) need the HTTP endpoint for OTel export.
+        is_same_process = agent_config.agent_type == AgentType.CUSTOM.value
+        await trace_receiver.start(start_http=not is_same_process)
 
-    await simulator.save()
-    return simulation_output
+    try:
+        simulator = Simulator(
+            agent_config=agent_config,
+            simulator_params=simulation_params,
+            llm=llm,
+            trace_receiver=trace_receiver,
+        )
+        simulation_output = await simulator.simulate(
+            scenarios, on_progress=on_progress, verbose=verbose
+        )
+
+        if not simulation_output.conversations:
+            raise RuntimeError(
+                "Simulation failed: no conversations were completed successfully. "
+                "Check the errors above for details."
+            )
+
+        simulation_output.usage = TokenUsage(
+            total_input_tokens=tracker.total_input_tokens,
+            total_output_tokens=tracker.total_output_tokens,
+            by_model=tracker.summary(),
+        )
+        tracker.log_summary()
+
+
+        await simulator.save()
+        return simulation_output
+    finally:
+        if trace_receiver is not None:
+            await trace_receiver.stop()

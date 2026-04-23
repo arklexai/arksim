@@ -53,6 +53,34 @@ arksim simulate-evaluate config_custom.yaml
 python run_pipeline.py
 ```
 
+### Traced agent (automatic tool call capture)
+
+The example includes a traced agent variant (`traced_agent.py`) that captures tool calls automatically instead of returning them in `AgentResponse`. The agent registers `ArksimTracingProcessor` once at module load. The simulator passes routing context automatically.
+
+**How it differs from `custom_agent.py`:**
+- `custom_agent.py` returns `AgentResponse` with explicit tool calls (agent extracts them from `RunResult`)
+- `traced_agent.py` returns plain `str`. Tool calls are captured automatically by the SDK's `TracingProcessor` interface.
+
+```
+Simulator sets routing context -> agent.execute() runs normally
+-> SDK fires TracingProcessor.on_span_end -> arksim captures -> evaluator scores
+```
+
+```bash
+pip install -r requirements-traced.txt
+arksim simulate-evaluate config_traced.yaml
+```
+
+The trace receiver is configured in config_traced.yaml:
+
+```yaml
+trace_receiver:
+  enabled: true
+  wait_timeout: 5
+```
+
+When `trace_receiver.enabled` is false or omitted, arksim only captures tool calls from `AgentResponse` (the standard path). See the [Tool Call Capture docs](https://docs.arklex.ai/main/tool-call-capture) for full details.
+
 ## Trajectory matching
 
 This example demonstrates **trajectory matching**, which compares the agent's actual tool calls against expected tool calls defined in each scenario. This catches structural issues (wrong tools, wrong order, missing steps) that the LLM-based judge cannot detect.

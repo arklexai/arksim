@@ -14,7 +14,9 @@ from arksim.config import (
     ChatCompletionsConfig,
 )
 from arksim.simulation_engine.agent.base import BaseAgent
+from arksim.simulation_engine.agent.response_parsers import parse_response
 from arksim.simulation_engine.agent.utils import rate_limit_handler
+from arksim.simulation_engine.tool_types import AgentResponse
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +35,7 @@ class ChatCompletionsAgent(BaseAgent):
             self.chat_headers = self.config.get_headers()
             self.chat_id = str(uuid.uuid4())
             self.conversation_history: list[dict[str, Any]] = []
+            self._client = httpx.AsyncClient(timeout=120)
 
         except Exception as e:
             logger.error(f"Error: Could not initialize chat completion agent: {e}")
@@ -42,13 +45,17 @@ class ChatCompletionsAgent(BaseAgent):
         """Get the chat ID."""
         return self.chat_id
 
+    async def close(self) -> None:
+        """Close the persistent HTTP client."""
+        if hasattr(self, "_client"):
+            await self._client.aclose()
+
     async def _post_request(self, payload: dict[str, Any]) -> dict[str, Any]:
         @rate_limit_handler
         async def _raw_post() -> httpx.Response:
-            async with httpx.AsyncClient(timeout=120) as client:
-                return await client.post(
-                    self.chat_endpoint, headers=self.chat_headers, json=payload
-                )
+            return await self._client.post(
+                self.chat_endpoint, headers=self.chat_headers, json=payload
+            )
 
         response = await _raw_post()
         data = response.json()
@@ -63,7 +70,7 @@ class ChatCompletionsAgent(BaseAgent):
 
         return data
 
-    async def execute(self, user_query: str, **kwargs: object) -> str:
+    async def execute(self, user_query: str, **kwargs: object) -> AgentResponse:
         """Execute user query using chat completions API."""
         metadata = kwargs.get("metadata")
         self.conversation_history.append({"role": "user", "content": user_query})
@@ -85,61 +92,12 @@ class ChatCompletionsAgent(BaseAgent):
                     )
 
             result = await self._post_request(payload_data)
-            answer = self._extract_content(result)
-            self.conversation_history.append({"role": "assistant", "content": answer})
-            return answer
+            response = parse_response(result)
+            self.conversation_history.append(
+                {"role": "assistant", "content": response.content}
+            )
+            return response
 
         except Exception as e:
             logger.error(f"Error: Error calling chat completions API: {str(e)}")
             raise
-
-    def _extract_content(self, result: dict[str, Any]) -> str:
-        """Extract assistant text from API response.
-
-        Supports:
-        - OpenAI-style: result["choices"][0]["message"]["content"]
-        - Anthropic-style: result["content"] as list of { "type": "text", "text": "..." }
-        - Google-style: result["candidates"][0]["content"]["parts"][*]["text"]
-        """
-        # OpenAI-compatible format
-        if "choices" in result:
-            choices = result["choices"]
-            if not choices:
-                raise ValueError("API response has empty 'choices'")
-            msg = choices[0].get("message") or choices[0].get("delta")
-            if not msg:
-                raise ValueError("API response choice has no 'message' or 'delta'")
-            content = msg.get("content")
-            if content is None and "delta" in choices[0]:
-                content = choices[0]["delta"].get("content")
-            if content is not None:
-                return content if isinstance(content, str) else str(content)
-
-        # Anthropic Messages API format: content = [{"type": "text", "text": "..."}]
-        if "content" in result and isinstance(result["content"], list):
-            parts = []
-            for block in result["content"]:
-                if isinstance(block, dict) and block.get("type") == "text":
-                    parts.append(block.get("text", ""))
-            if parts:
-                return "".join(parts)
-
-        # Google Gemini API format: candidates[0].content.parts[*].text
-        if "candidates" in result:
-            candidates = result["candidates"]
-            if not candidates:
-                raise ValueError("API response has empty 'candidates'")
-            content = candidates[0].get("content")
-            if content and isinstance(content, dict):
-                parts = content.get("parts") or []
-                if isinstance(parts, list):
-                    text_parts = [
-                        p.get("text", "") if isinstance(p, dict) else "" for p in parts
-                    ]
-                    return "".join(text_parts)
-
-        raise ValueError(
-            "Unsupported response format: expected 'choices' (OpenAI), "
-            "'content' list (Anthropic), or 'candidates' (Google). "
-            f"Keys present: {list(result.keys())}"
-        )

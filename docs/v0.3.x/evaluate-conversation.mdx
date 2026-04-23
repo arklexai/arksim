@@ -1,6 +1,6 @@
 ---
 title: "Evaluation"
-description: "Score your agent's responses across every conversation turn and surface failure patterns with actionable fixes."
+description: "Use ArkSim to score your agent's responses on helpfulness, coherence, relevance, faithfulness, and goal completion, and surface failure patterns with actionable fixes."
 ---
 
 ## What is Evaluation?
@@ -50,14 +50,14 @@ Beyond numeric scores, evaluation detects the type of failure in each underperfo
 
 | Failure type                       | Description                                              |
 | ---------------------------------- | -------------------------------------------------------- |
-| `lack of specific information`     | Generic or partial answer that omits important details   |
-| `failure to ask for clarification` | Proceeds with an assumption instead of asking the user   |
-| `disobey user request`             | Completely ignores what the user asked                   |
-| `repetition`                       | Restates previous content without adding value           |
-| `false information`                | Contradicts/fabricates information relative to knowledge |
+| `lack of specific information`     | Correct but incomplete answer that omits details present in the knowledge |
+| `failure to ask for clarification` | Proceeds with an assumption instead of asking the user                    |
+| `disobey user request`             | Completely ignores what the user asked                                    |
+| `repetition`                       | Restates previous content without adding value                            |
+| `false information`                | Directly contradicts what is stated in the knowledge                      |
 | `no failure`                       | No failure detected                                      |
 
-Across all conversations, duplicate failures are deduplicated into a **unique errors** list with occurrence counts.
+Across all conversations, duplicate failures are deduplicated into a **unique errors** list with occurrence counts. When errors are found and a scenario file is available, the evaluator automatically generates **focus files** for targeted reruns (see [Focus Files](#focus-files) below).
 
 ---
 
@@ -142,10 +142,13 @@ In addition to the built-in metrics (helpfulness, coherence, relevance, verbosit
     )
 
     class ClarityScore(QuantitativeMetric):
+        def __init__(self, llm=None):
+            super().__init__(name="clarity", score_range=(0, 5), llm=llm)
+
         def score(self, score_input: ScoreInput) -> QuantResult:
-            # Use your own LLM or any logic; independent of evaluator model config.
+            # self.llm is the evaluator's configured LLM, injected automatically.
             # score_input.chat_history, .user_goal, .knowledge, etc.
-            value = ...  # your scoring logic or LLM call
+            value = ...  # your scoring logic using self.llm or any other logic
             return QuantResult(name="clarity", value=value, reason="...")
     ```
   </Tab>
@@ -166,8 +169,12 @@ In addition to the built-in metrics (helpfulness, coherence, relevance, verbosit
     )
 
     class NeedsAssessment(QualitativeMetric):
+        def __init__(self, llm=None):
+            super().__init__(name="needs_assessment", llm=llm)
+
         def evaluate(self, score_input: ScoreInput) -> QualResult:
-            # Use score_input.chat_history, .user_goal, .knowledge, etc.
+            # self.llm is the evaluator's configured LLM, injected automatically.
+            # score_input.chat_history, .user_goal, .knowledge, etc.
             label = ...  # "complete" | "partial" | "missing"
             return QualResult(name="needs_assessment", value=label, reason="...")
     ```
@@ -325,12 +332,14 @@ for convo in evaluator_output.conversations:
 | ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `evaluation.json`   | Full evaluation output: conversations with scores, failure labels, and unique errors. See [Evaluation output](./schema-reference#evaluation-output-evaluationjson) for the schema. |
 | `final_report.html` | High-level summary with metric averages, overall assessment, and top unique errors, rendered for easier browsing and sharing.                                                      |
+| `focus/error_N.json` | Filtered scenario file for error group N (sorted by severity). Only appears when unique errors are detected and a scenario file is provided. See [Focus Files](#focus-files).     |
+| `focus/all_failures.json` | Union of all failing scenarios across every error group. Use this to rerun everything that failed in one pass.                                                                |
 
 ---
 
 ## Reading the Output
 
-Results go to `evaluation.json`: **conversations** (one per run) and **unique_errors** (deduplicated failures).
+Results go to `evaluation.json`: **conversations** (one per run), **unique_errors** (deduplicated failures), and **error_scenario_mappings** (which scenarios triggered each error).
 
 <Expandable title="By conversation">
   Each `conversations[]` entry has:
@@ -353,3 +362,63 @@ Results go to `evaluation.json`: **conversations** (one per run) and **unique_er
 
   Use **`occurrences`** to go from an error to the exact turn; then check **`turn_scores`** and the transcript.
 </Expandable>
+
+<Expandable title="By error scenario mapping">
+  Each **`error_scenario_mappings[]`** entry maps one unique error to the scenarios that triggered it:
+
+  - **`unique_error_id`**: Links to the matching entry in `unique_errors`.
+  - **`scenario_ids`**: Which scenarios triggered this error. Use these IDs with `--scenario_file_path` to rerun only the affected scenarios.
+  - **`severity`** and **`error_description`**: Same as the linked `unique_errors` entry, included for convenience.
+
+  This field is empty when no errors are detected or no scenario file was provided. See [Focus Files](#focus-files) for the file-based workflow.
+</Expandable>
+
+---
+
+## Focus Files
+
+When evaluation detects unique errors and a scenario file is provided, the evaluator generates **focus files** in a `focus/` subdirectory. These are filtered scenario files that let you rerun only the failing subset without any manual config.
+
+### How it works
+
+Each unique error group is mapped back to the scenarios that triggered it. The evaluator writes one JSON file per error group plus a combined file with all failing scenarios:
+
+```
+evaluation/
+  evaluation.json
+  final_report.html
+  focus/
+    error_1.json          # scenarios for the highest-severity error
+    error_2.json          # scenarios for the second error
+    all_failures.json     # union of all failing scenarios
+```
+
+Error files are numbered by severity (critical first, then high, medium, low) and by occurrence count within the same severity level.
+
+Each focus file uses the standard [Scenarios schema](./schema-reference#scenario-input-scenariosjson), so it works directly with `--scenario_file_path`:
+
+```bash
+# Rerun only the scenarios that triggered error group 1
+arksim simulate-evaluate config.yaml \
+  --scenario_file_path ./evaluation/focus/error_1.json
+
+# Or rerun all failing scenarios at once
+arksim simulate-evaluate config.yaml \
+  --scenario_file_path ./evaluation/focus/all_failures.json
+```
+
+<Tip>
+  Pass a separate `--output_dir` for each rerun so results do not overwrite the original evaluation. Each rerun produces its own evaluation, report, and focus files (or no focus files if everything passes).
+</Tip>
+
+### Iterative fix workflow
+
+Focus files support an iterative fix-and-verify loop:
+
+1. Run `arksim simulate-evaluate config.yaml` and review the errors
+2. Fix the highest-severity bug in your agent
+3. Rerun with the focus file: `--scenario_file_path ./evaluation/focus/error_1.json --output_dir ./results/rerun_1`
+4. If the error is resolved, move to the next error group
+5. When all targeted reruns pass, do a full battle test with the original scenario file
+
+The focus set shrinks as you fix bugs. Scenarios that pass on rerun will not appear in the new run's focus files.

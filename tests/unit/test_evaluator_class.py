@@ -265,3 +265,130 @@ class TestLoadCustomMetrics:
             RuntimeError, match="Could not instantiate quantitative metric"
         ):
             _load_custom_metrics([path])
+
+
+class TestLoadCustomMetricsLLMInjection:
+    """_load_custom_metrics injects the LLM into metrics that accept it."""
+
+    def test_llm_is_set_on_quantitative_metric(self, temp_dir: str) -> None:
+        """Metrics that accept llm= receive the injected instance on self.llm."""
+        code = textwrap.dedent("""\
+            from arksim.evaluator.base_metric import QuantitativeMetric, ScoreInput, QuantResult
+
+            class LLMAwareMetric(QuantitativeMetric):
+                def __init__(self, llm=None):
+                    super().__init__(name="llm_aware", llm=llm)
+
+                def score(self, score_input: ScoreInput) -> QuantResult:
+                    return QuantResult(name=self.name, value=1.0)
+        """)
+        path = os.path.join(temp_dir, "llm_aware_metric.py")
+        with open(path, "w") as f:
+            f.write(code)
+
+        sentinel = object()
+        quant, _ = _load_custom_metrics([path], llm=sentinel)
+        assert quant[0].llm is sentinel
+
+    def test_llm_is_set_on_qualitative_metric(self, temp_dir: str) -> None:
+        """Qualitative metrics that accept llm= receive the injected instance."""
+        code = textwrap.dedent("""\
+            from arksim.evaluator.base_metric import QualitativeMetric, ScoreInput, QualResult
+
+            class LLMAwareQual(QualitativeMetric):
+                def __init__(self, llm=None):
+                    super().__init__(name="llm_aware_qual", llm=llm)
+
+                def evaluate(self, score_input: ScoreInput) -> QualResult:
+                    return QualResult(name=self.name, value="ok")
+        """)
+        path = os.path.join(temp_dir, "llm_aware_qual.py")
+        with open(path, "w") as f:
+            f.write(code)
+
+        sentinel = object()
+        _, qual = _load_custom_metrics([path], llm=sentinel)
+        assert qual[0].llm is sentinel
+
+    def test_metric_without_llm_param_still_loads(self, temp_dir: str) -> None:
+        """Metrics with no llm parameter in __init__ are not broken by injection."""
+        code = textwrap.dedent("""\
+            from arksim.evaluator.base_metric import QuantitativeMetric, ScoreInput, QuantResult
+
+            class LegacyMetric(QuantitativeMetric):
+                def __init__(self):
+                    super().__init__(name="legacy")
+
+                def score(self, score_input: ScoreInput) -> QuantResult:
+                    return QuantResult(name=self.name, value=1.0)
+        """)
+        path = os.path.join(temp_dir, "legacy_metric.py")
+        with open(path, "w") as f:
+            f.write(code)
+
+        sentinel = object()
+        quant, _ = _load_custom_metrics([path], llm=sentinel)
+        assert quant[0].name == "legacy"
+        with pytest.raises(RuntimeError, match="llm is not set"):
+            _ = quant[0].llm
+
+    def test_llm_aware_metric_with_no_llm_raises_on_access(self, temp_dir: str) -> None:
+        """Accessing self.llm raises RuntimeError when no LLM was injected."""
+        code = textwrap.dedent("""\
+            from arksim.evaluator.base_metric import QuantitativeMetric, ScoreInput, QuantResult
+
+            class LLMAwareMetric(QuantitativeMetric):
+                def __init__(self, llm=None):
+                    super().__init__(name="llm_aware", llm=llm)
+
+                def score(self, score_input: ScoreInput) -> QuantResult:
+                    return QuantResult(name=self.name, value=1.0)
+        """)
+        path = os.path.join(temp_dir, "llm_aware_no_llm.py")
+        with open(path, "w") as f:
+            f.write(code)
+
+        quant, _ = _load_custom_metrics([path])  # no llm= given
+        with pytest.raises(RuntimeError, match="llm is not set"):
+            _ = quant[0].llm
+
+    def test_metric_inheriting_base_init_receives_llm(self, temp_dir: str) -> None:
+        """Metrics with no __init__ override inherit the base class signature and receive the LLM."""
+        code = textwrap.dedent("""\
+            from arksim.evaluator.base_metric import QuantitativeMetric, ScoreInput, QuantResult
+
+            class MinimalMetric(QuantitativeMetric):
+                # No __init__ override - inherits base class signature including llm=
+                def score(self, score_input: ScoreInput) -> QuantResult:
+                    return QuantResult(name=self.name, value=1.0)
+        """)
+        path = os.path.join(temp_dir, "minimal_metric.py")
+        with open(path, "w") as f:
+            f.write(code)
+
+        sentinel = object()
+        quant, _ = _load_custom_metrics([path], llm=sentinel)
+        assert quant[0].llm is sentinel
+
+    def test_abstract_subclass_is_skipped(self, temp_dir: str) -> None:
+        """Abstract intermediate subclasses are skipped; concrete subclasses still load."""
+        code = textwrap.dedent("""\
+            import abc
+            from arksim.evaluator.base_metric import QuantitativeMetric, ScoreInput, QuantResult
+
+            class AbstractBase(QuantitativeMetric, abc.ABC):
+                # Shared helper that users may define as an abstract intermediate class
+                @abc.abstractmethod
+                def score(self, score_input: ScoreInput) -> QuantResult: ...
+
+            class ConcreteMetric(AbstractBase):
+                def score(self, score_input: ScoreInput) -> QuantResult:
+                    return QuantResult(name=self.name, value=1.0)
+        """)
+        path = os.path.join(temp_dir, "abstract_metric.py")
+        with open(path, "w") as f:
+            f.write(code)
+
+        quant, _ = _load_custom_metrics([path])
+        assert len(quant) == 1
+        assert quant[0].name == "ConcreteMetric"

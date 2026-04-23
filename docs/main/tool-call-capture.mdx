@@ -1,0 +1,262 @@
+---
+title: "Tool Call Capture"
+description: "Capture and evaluate tool calls from agents that handle tools internally using ArkSim's trace receiver and trajectory matching."
+---
+
+## Overview
+
+Some agents handle tool calling internally (e.g. OpenAI Agents SDK, LangChain) and only return text. arksim can capture these tool calls so the evaluator can score them.
+
+There are two ways to provide tool calls to arksim:
+
+1. **Explicit**: Return `AgentResponse` with tool calls from `execute()` (Python connector).
+2. **Automatic capture**: Enable `trace_receiver` in your config. arksim captures tool calls via the SDK's tracing interface. The agent just returns text.
+
+If both are active, arksim deduplicates automatically (see [Deduplication](#deduplication) below).
+
+---
+
+## Connector Support
+
+| Connector | Explicit (`AgentResponse`) | Automatic Capture |
+|-----------|--------------------------|-------------------|
+| Python connector | Supported | Supported via `ArksimTracingProcessor` |
+| Chat Completions | Planned | Planned |
+| A2A | Supported via A2A AgentExtension | Not applicable |
+
+<Info>
+Tool call capture works with the Python connector and A2A. A2A agents declare the `https://arksim.arklex.ai/a2a/tool-call-capture/v1` extension and surface tool calls in `Task.artifacts[*].metadata`. Chat Completions support is planned.
+</Info>
+
+---
+
+## Explicit Capture (Python Connector)
+
+Return `AgentResponse` from your agent's `execute()` method with the tool calls your agent made:
+
+```python
+from arksim import AgentResponse, ToolCall
+
+class MyAgent(BaseAgent):
+    async def execute(self, user_query, **kwargs):
+        # ... run your agent ...
+        return AgentResponse(
+            content="Here are the results.",
+            tool_calls=[
+                ToolCall(
+                    id="call_1",
+                    name="search_products",
+                    arguments={"query": "laptop"},
+                    result='[{"name": "ThinkPad", "price": 1299}]',
+                ),
+            ],
+        )
+```
+
+No extra config needed.
+
+### Metadata keys
+
+arksim passes a `metadata` dict to your agent's `execute()` via `kwargs["metadata"]`:
+
+| Key | Type | Description |
+|-----|------|-------------|
+| `chat_id` | `str` | Conversation ID assigned by `agent.get_chat_id()` |
+| `turn_id` | `int` | Zero-based turn index within the conversation |
+
+These keys are always present for Python connector agents regardless of which capture method you use.
+
+---
+
+## Automatic Capture (Python Connector)
+
+For agents using the OpenAI Agents SDK with the Python connector, add two things:
+
+**1. Register the processor at module level in your agent file:**
+
+```python
+from agents.tracing import add_trace_processor
+from arksim.tracing.openai import ArksimTracingProcessor
+
+add_trace_processor(ArksimTracingProcessor())
+```
+
+**2. Enable the trace receiver in your config:**
+
+```yaml
+trace_receiver:
+  enabled: true
+  wait_timeout: 5
+```
+
+That's it. Your agent's `execute()` method just returns a string:
+
+```python
+class MyAgent(BaseAgent):
+    async def execute(self, user_query, **kwargs):
+        result = await Runner.run(
+            self._agent,
+            input=[{"role": "user", "content": user_query}],
+        )
+        return result.final_output
+```
+
+The simulator sets routing context (conversation ID, turn ID) before each call to `execute()`. When the SDK fires `on_span_end`, the processor reads this context and injects tool calls into the receiver's buffer. No wrapping, no manual context management.
+
+The module loader caches modules by file path, so `add_trace_processor` runs exactly once regardless of how many conversations the simulator creates.
+
+See `examples/customer-service/traced_agent.py` for a complete working example.
+
+Requires `pip install openai-agents`.
+
+---
+
+## A2A Protocol Capture
+
+A2A defines no native tool-call semantics (it [defers to MCP](https://a2a-protocol.org/latest/topics/a2a-and-mcp/) for tool invocation), so arksim layers a versioned [A2A AgentExtension](https://a2a-protocol.org/latest/topics/extensions/) on top:
+
+```
+https://arksim.arklex.ai/a2a/tool-call-capture/v1
+```
+
+### Why artifacts, not messages?
+
+Per [A2A spec section 3.7](https://a2a-protocol.org/latest/specification/), task outputs are delivered through `Artifacts` on a `Task`, not through `Messages`. Messages are for conversational turns (initiation, clarification, status); Artifacts are the durable output record. Tool calls are part of the agent's task output, so they belong in an Artifact.
+
+<Warning>
+arksim's A2A client reads `Task.artifacts` only (per A2A spec section 3.7). Tool call data embedded in `Message.parts`, including `DataPart`, will not be captured.
+</Warning>
+
+### Server requirements
+
+Both snippets below use these imports:
+
+```python
+from a2a.server.agent_execution import AgentExecutor, RequestContext
+from a2a.server.events import EventQueue
+from a2a.server.tasks import TaskUpdater
+from a2a.types import (
+    AgentCapabilities,
+    AgentCard,
+    AgentExtension,
+    Part,
+)
+
+from arksim import A2AToolCaptureExtension
+```
+
+**1. Declare the extension** in the `AgentCard.capabilities.extensions`:
+
+```python
+capabilities = AgentCapabilities(
+    streaming=False,
+    extensions=[
+        AgentExtension(
+            uri=A2AToolCaptureExtension.URI,
+            description="Tool calls surfaced in artifact metadata for arksim evaluation.",
+            required=False,
+        ),
+    ],
+)
+```
+
+**2. Emit a Task with an artifact** carrying the tool call list in `metadata` and listing the URI in `extensions`. Inside your `AgentExecutor.execute()`:
+
+```python
+updater = TaskUpdater(event_queue, context.task_id, context.context_id)
+if context.current_task is None:
+    await updater.submit()
+await updater.start_work()
+
+# Only emit tool call metadata when the client requested the extension.
+# See #security-considerations for why this gate matters.
+emit_tool_calls = (
+    A2AToolCaptureExtension.URI in context.requested_extensions
+)
+if emit_tool_calls:
+    context.add_activated_extension(A2AToolCaptureExtension.URI)
+
+metadata = {}
+extensions = []
+if emit_tool_calls and tool_calls:
+    metadata[A2AToolCaptureExtension.METADATA_KEY] = tool_calls
+    extensions.append(A2AToolCaptureExtension.URI)
+
+await updater.add_artifact(
+    parts=[Part(text=answer)],
+    metadata=metadata or None,
+    extensions=extensions or None,
+)
+await updater.complete()
+```
+
+The `AgentExtension.params` field is not used by v1 of this extension; leave it unset. Server-to-client parameter negotiation is not part of this convention (the schema is documented here rather than encoded in `params`, because A2A clients do not act on schema constraints at runtime). If you emit streaming updates via `TaskArtifactUpdateEvent` followed by a final `Task` snapshot, include the same tool calls on both: arksim treats the final `Task` snapshot as authoritative and re-merges its artifacts, so including the tool calls there guarantees they survive.
+
+### Tool call schema
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `id` | string | No | Unique identifier. Defaults to `""` if omitted. |
+| `name` | string | **Yes** | Tool function name. Entries missing this field or with a non-string name are skipped. |
+| `arguments` | object | No | Arguments passed to the tool. Must be a JSON object; defaults to `{}` if omitted. |
+| `result` | string | No | Tool execution result. Non-string values are JSON-serialized. |
+| `error` | string | No | Error message if the tool call failed. Non-string values are JSON-serialized. |
+| `source` | - | N/A | **Do not include.** arksim sets this client-side to `ToolCallSource.A2A_PROTOCOL` (serialized as `"a2a_protocol"`) for provenance tracking. Custom metrics can filter by `ToolCall.source`. |
+
+### Streaming
+
+For streaming agents (`AgentCapabilities.streaming=True`), emit tool call data on both the incremental `TaskArtifactUpdateEvent` and the final `Task` snapshot. arksim's client:
+
+1. Accumulates tool calls from each `TaskArtifactUpdateEvent` as they arrive.
+2. On the final `Task` snapshot, clears accumulated state and re-merges from `Task.artifacts` (the snapshot is treated as authoritative).
+3. Treats `TaskStatusUpdateEvent` as a no-op that does not affect accumulated state.
+
+Because the snapshot is authoritative, any tool calls streamed via `TaskArtifactUpdateEvent` must also appear on the corresponding artifact in the final `Task.artifacts`. Otherwise they will be dropped.
+
+### Versioning
+
+Per the [A2A extensions spec](https://a2a-protocol.org/latest/topics/extensions/), breaking changes to this schema MUST bump the URI version (`/v1` -> `/v2`). Breaking changes include renaming the `tool_calls` key, renaming any field in a tool call dict, or making an optional field required. Adding a new optional field is non-breaking.
+
+When arksim bumps to a new version, both `A2AToolCaptureExtension.URI` and `A2AToolCaptureExtension.METADATA_KEY` change together (the key is derived from the URI), and the client's `extensions=` negotiation header flips to the new URI. The arksim client advertises and reads a single URI at a time; a server still on the old URI silently produces zero tool calls (the artifact is extracted but its `extensions` list no longer matches). For a hard cutover, update server and client together. For graceful migration, the server can declare both URIs in its AgentCard and emit **two separate artifacts** (one per URI, each listing its URI in `extensions` and carrying tool calls under its respective `{URI}/tool_calls` metadata key) until all clients upgrade.
+
+See the [customer-service A2A example](https://github.com/arklexai/arksim/tree/main/examples/customer-service/a2a_server) for a complete working example using the same tools and scenarios as the Python connector variant.
+
+---
+
+## Security considerations
+
+Tool call metadata is more sensitive than the agent's text response. Arguments can contain PII (email addresses, customer IDs), verification codes, internal tool names that expose your agent's architecture, and verbatim tool results. A server that emits this data unconditionally exposes strictly more than it would without the extension.
+
+The arksim example server gates tool call emission on the client's `A2A-Extensions` request header: if the client does not request the extension, the server omits tool call metadata from the artifact. This is the right default, but the request header is not access control; any HTTP client can send it.
+
+Three deployment options, ordered by isolation strength:
+
+**Option A: Dedicated evaluation deployment.** Run two instances of the agent: a production instance that does not declare the extension in its AgentCard, and an eval-only instance behind private networking that does. Zero risk of leaking tool traces to production traffic. Best fit for regulated domains (HIPAA, PCI) or when production and evaluation are operated by different teams.
+
+**Option B: Single deployment with transport auth.** One endpoint, behind bearer token or mTLS declared in [`AgentCard.securitySchemes`](https://a2a-protocol.org/latest/specification/). arksim carries the credential via `A2AConfig.headers` in the config:
+
+```yaml
+agent_config:
+  agent_type: a2a
+  agent_name: my-agent
+  api_config:
+    endpoint: https://agent.internal:9998
+    headers:
+      Authorization: "Bearer ${ARKSIM_A2A_TOKEN}"
+```
+
+The server gates tool call emission on both valid auth at the transport layer and the `A2A-Extensions` request header. Auth keeps unauthorized clients out; the negotiation gate provides least-privilege within the authenticated group.
+
+**Option C: Environment flag gate.** The server only emits the extension when an environment variable (e.g. `ARKSIM_TOOL_CAPTURE_ENABLED=true`) is set at startup. Simplest but weakest: useful for CI/staging where the entire deployment is evaluation-facing, but a flipped flag in production silently turns on exposure.
+
+For most teams, Option B is the practical default.
+
+---
+
+## Deduplication
+
+When both `AgentResponse` and automatic capture (via `ArksimTracingProcessor`) provide tool calls for the same turn, arksim merges and deduplicates:
+
+1. **By ID**: tool calls with matching IDs are deduplicated (AgentResponse wins)
+2. **By signature**: tool calls with matching `(name, arguments)` are deduplicated (AgentResponse wins)
+3. **Unique**: tool calls from either source that don't match anything are included

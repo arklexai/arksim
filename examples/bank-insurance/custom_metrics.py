@@ -5,27 +5,29 @@ Example custom metrics for bank/insurance agent evaluation.
 This file is referenced by config.yaml via ``custom_metrics_file_paths``
 and loaded automatically by the evaluator. Every public
 ``QuantitativeMetric`` or ``QualitativeMetric`` subclass found in the
-file is instantiated with no arguments.
+file is instantiated by the evaluator, which injects the configured LLM
+via the ``llm`` keyword argument.
 
 To create a quantitative metric (numeric score):
   1. Subclass ``QuantitativeMetric``.
-  2. Implement ``score()`` — receives a ``ScoreInput``, returns a
+  2. Add ``llm=None`` to ``__init__`` and pass it to ``super().__init__(llm=llm)``.
+  3. Implement ``score()`` — receives a ``ScoreInput``, returns a
      ``QuantResult`` with ``name``, ``value`` (float), and ``reason``.
+     Use ``self.llm`` to call the LLM.
 
 To create a qualitative metric (categorical label):
   1. Subclass ``QualitativeMetric``.
-  2. Implement ``evaluate()`` — receives a ``ScoreInput``, returns a
+  2. Add ``llm=None`` to ``__init__`` and pass it to ``super().__init__(llm=llm)``.
+  3. Implement ``evaluate()`` — receives a ``ScoreInput``, returns a
      ``QualResult`` with ``name``, ``value`` (str label), and ``reason``.
+     Use ``self.llm`` to call the LLM.
 
-  3. Add the file path to ``custom_metrics_file_paths`` in config.yaml
+  4. Add the file path to ``custom_metrics_file_paths`` in config.yaml
      and (optionally) add the metric name to ``metrics_to_run``.
 """
 
 from __future__ import annotations
 
-from pathlib import Path
-
-import yaml
 from pydantic import BaseModel
 
 from arksim.evaluator import (
@@ -36,24 +38,6 @@ from arksim.evaluator import (
     ScoreInput,
     format_chat_history,
 )
-from arksim.llms.chat import LLM
-
-
-def _load_llm_from_config() -> LLM:
-    """Load model and provider from config.yaml in the same directory as this file."""
-    config_path = Path(__file__).resolve().parent / "config.yaml"
-    if not config_path.exists():
-        raise FileNotFoundError(f"config.yaml not found: {config_path}")
-    with open(config_path) as f:
-        data = yaml.safe_load(f) or {}
-    model = data["model"]
-    provider = data["provider"]
-    return LLM(model=model, provider=provider)
-
-
-# LLM for custom metrics; model and provider from config.yaml (same directory).
-llm = _load_llm_from_config()
-
 
 # ── Quantitative metrics
 
@@ -106,7 +90,7 @@ class ProductSuitabilityMetric(QuantitativeMetric):
     Final score: ``(needs_match + risk_alignment) / 2``, scaled to 0-5.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, llm: object | None = None) -> None:
         super().__init__(
             name="product_suitability",
             score_range=(0, 5),
@@ -114,10 +98,11 @@ class ProductSuitabilityMetric(QuantitativeMetric):
                 "How well the agent matched its product recommendation to the"
                 " customer's stated needs and risk profile (0=poor match, 5=excellent match)."
             ),
+            llm=llm,
         )
 
     def score(self, score_input: ScoreInput) -> QuantResult:
-        response: SuitabilitySchema = llm.call(
+        response: SuitabilitySchema = self.llm.call(
             [
                 {"role": "system", "content": SUITABILITY_SYSTEM_PROMPT},
                 {
@@ -191,7 +176,7 @@ class NeedsAssessmentMetric(QuantitativeMetric):
     scaled to 0-5.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, llm: object | None = None) -> None:
         super().__init__(
             name="needs_assessment",
             score_range=(0, 5),
@@ -200,10 +185,11 @@ class NeedsAssessmentMetric(QuantitativeMetric):
                 " making a recommendation (0=jumped straight to product,"
                 " 5=comprehensive needs discovery)."
             ),
+            llm=llm,
         )
 
     def score(self, score_input: ScoreInput) -> QuantResult:
-        response: NeedsAssessmentSchema = llm.call(
+        response: NeedsAssessmentSchema = self.llm.call(
             [
                 {"role": "system", "content": NEEDS_ASSESSMENT_SYSTEM_PROMPT},
                 {
@@ -270,7 +256,7 @@ class ClarityMetric(QuantitativeMetric):
     scaled to 0-5.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, llm: object | None = None) -> None:
         super().__init__(
             name="clarity",
             score_range=(0, 5),
@@ -279,10 +265,11 @@ class ClarityMetric(QuantitativeMetric):
                 " and confirmed customer understanding (0=jargon-heavy/no confirmation,"
                 " 5=plain language with comprehension check)."
             ),
+            llm=llm,
         )
 
     def score(self, score_input: ScoreInput) -> QuantResult:
-        response: ClaritySchema = llm.call(
+        response: ClaritySchema = self.llm.call(
             [
                 {"role": "system", "content": CLARITY_SYSTEM_PROMPT},
                 {
@@ -357,7 +344,7 @@ class DisclosureCompletenessMetric(QualitativeMetric):
     Mapped to FCA/MiFID II disclosure obligations.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, llm: object | None = None) -> None:
         super().__init__(
             name="disclosure_completeness",
             description=(
@@ -370,10 +357,11 @@ class DisclosureCompletenessMetric(QualitativeMetric):
                 "partial": "#f59e0b",  # amber  — some omitted
                 "missing": "#ef4444",  # red    — critical disclosures absent
             },
+            llm=llm,
         )
 
     def evaluate(self, score_input: ScoreInput) -> QualResult:
-        response: DisclosureCompletenessSchema = llm.call(
+        response: DisclosureCompletenessSchema = self.llm.call(
             [
                 {"role": "system", "content": DISCLOSURE_SYSTEM_PROMPT},
                 {
@@ -434,7 +422,7 @@ class ProhibitedStatementsMetric(QualitativeMetric):
     Mapped to SEC/FINRA/FCA prohibited claims rules.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, llm: object | None = None) -> None:
         super().__init__(
             name="prohibited_statements",
             description=(
@@ -446,10 +434,11 @@ class ProhibitedStatementsMetric(QualitativeMetric):
                 "clean": "#22c55e",  # green — no violations
                 "violated": "#ef4444",  # red   — prohibited claim detected
             },
+            llm=llm,
         )
 
     def evaluate(self, score_input: ScoreInput) -> QualResult:
-        response: ProhibitedStatementsSchema = llm.call(
+        response: ProhibitedStatementsSchema = self.llm.call(
             [
                 {"role": "system", "content": PROHIBITED_SYSTEM_PROMPT},
                 {
@@ -512,7 +501,7 @@ class AdviceBoundaryMetric(QualitativeMetric):
     Mapped to RDR, Reg BI, and IDD advice scope rules.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, llm: object | None = None) -> None:
         super().__init__(
             name="advice_boundary",
             description=(
@@ -524,10 +513,11 @@ class AdviceBoundaryMetric(QualitativeMetric):
                 "within_scope": "#22c55e",  # green — stayed within scope
                 "overstepped": "#ef4444",  # red   — gave unauthorised advice
             },
+            llm=llm,
         )
 
     def evaluate(self, score_input: ScoreInput) -> QualResult:
-        response: AdviceBoundarySchema = llm.call(
+        response: AdviceBoundarySchema = self.llm.call(
             [
                 {"role": "system", "content": ADVICE_BOUNDARY_SYSTEM_PROMPT},
                 {
@@ -582,7 +572,7 @@ class EscalationBehaviorMetric(QualitativeMetric):
     Labels: 'appropriate' | 'over_extended' | 'under_served'.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, llm: object | None = None) -> None:
         super().__init__(
             name="escalation_behavior",
             description=(
@@ -596,10 +586,11 @@ class EscalationBehaviorMetric(QualitativeMetric):
                 "over_extended": "#f97316",  # orange — exceeded competence
                 "under_served": "#ef4444",  # red    — failed to escalate
             },
+            llm=llm,
         )
 
     def evaluate(self, score_input: ScoreInput) -> QualResult:
-        response: EscalationBehaviorSchema = llm.call(
+        response: EscalationBehaviorSchema = self.llm.call(
             [
                 {"role": "system", "content": ESCALATION_SYSTEM_PROMPT},
                 {
