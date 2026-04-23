@@ -42,11 +42,16 @@ def _coerce_openai_arguments(raw: object) -> dict[str, Any]:
         try:
             parsed = json.loads(raw)
         except json.JSONDecodeError:
-            logger.debug("Tool call arguments is not valid JSON: %r", raw)
+            logger.debug(
+                "OpenAI tool call arguments failed JSON decode; using empty dict"
+            )
             return {}
         if isinstance(parsed, dict):
             return parsed
-        logger.debug("Tool call arguments JSON did not decode to dict: %r", parsed)
+        logger.debug(
+            "OpenAI tool call arguments JSON decoded to %s, not dict; using empty dict",
+            type(parsed).__name__,
+        )
         return {}
     logger.debug("Tool call arguments has unexpected type %s", type(raw).__name__)
     return {}
@@ -57,7 +62,12 @@ def _extract_openai_tool_calls(msg: dict[str, Any]) -> list[ToolCall]:
 
     Skips entries missing a string ``function.name``. Each captured call
     carries ``source=ToolCallSource.CHAT_COMPLETIONS``. ``result`` is left
-    as ``None`` (not available on this path -- see spec).
+    as ``None`` (not available on this path — see spec).
+
+    The entry-level ``type`` field (e.g. ``"function"``) is intentionally
+    ignored. OpenAI may add new ``type`` values (code interpreter, computer
+    use) in the future; those will be silently skipped until explicitly
+    modeled.
     """
     raw_calls = msg.get("tool_calls") or []
     if not isinstance(raw_calls, list):
@@ -72,12 +82,14 @@ def _extract_openai_tool_calls(msg: dict[str, Any]) -> list[ToolCall]:
         name = fn.get("name")
         if not isinstance(name, str) or not name:
             logger.debug(
-                "Skipping tool call with missing or non-string name: %r", entry
+                "Skipping OpenAI tool call: missing or non-string function.name"
             )
             continue
         call_id = entry.get("id")
         tool_calls.append(
             ToolCall(
+                # Empty string matches A2A convention for missing id. OpenAI spec
+                # requires a string id; we fall back defensively.
                 id=call_id if isinstance(call_id, str) else "",
                 name=name,
                 arguments=_coerce_openai_arguments(fn.get("arguments")),
@@ -117,7 +129,14 @@ def parse_openai(result: dict[str, Any]) -> AgentResponse:
     if not choices:
         raise ValueError("API response has empty 'choices'")
 
-    msg = choices[0].get("message") or choices[0].get("delta") or {}
+    first_choice = choices[0]
+    if not isinstance(first_choice, dict):
+        raise ValueError(
+            "API response 'choices[0]' must be a dict, got "
+            f"{type(first_choice).__name__}"
+        )
+
+    msg = first_choice.get("message") or first_choice.get("delta") or {}
     raw_content = msg.get("content")
     content = raw_content if isinstance(raw_content, str) else ""
 
@@ -132,6 +151,9 @@ def _extract_anthropic_tool_calls(blocks: list[Any]) -> list[ToolCall]:
 
     Skips entries missing a string ``name``. ``input`` is already a dict
     in spec-compliant responses; non-dict values fall back to empty dict.
+
+    Evaluation-irrelevant fields on ``tool_use`` blocks (``cache_control``,
+    extended-thinking metadata) are intentionally not mapped.
     """
     tool_calls: list[ToolCall] = []
     for block in blocks:
@@ -141,13 +163,16 @@ def _extract_anthropic_tool_calls(blocks: list[Any]) -> list[ToolCall]:
             continue
         name = block.get("name")
         if not isinstance(name, str) or not name:
-            logger.debug("Skipping Anthropic tool_use block missing name: %r", block)
+            logger.debug(
+                "Skipping Anthropic tool_use block: missing or non-string name"
+            )
             continue
         raw_input = block.get("input")
         arguments = raw_input if isinstance(raw_input, dict) else {}
         block_id = block.get("id")
         tool_calls.append(
             ToolCall(
+                # Empty string matches A2A convention for missing id.
                 id=block_id if isinstance(block_id, str) else "",
                 name=name,
                 arguments=arguments,
@@ -190,15 +215,24 @@ def _extract_gemini_tool_calls(parts: list[Any]) -> list[ToolCall]:
             continue
         fn = part.get("functionCall")
         if not isinstance(fn, dict):
+            # Debug hint for Gemini features we do not yet model
+            # (executableCode, codeExecutionResult, etc).
+            if any(k in part for k in ("executableCode", "codeExecutionResult")):
+                logger.debug(
+                    "Skipping unmodeled Gemini part type: %s", ",".join(part.keys())
+                )
             continue
         name = fn.get("name")
         if not isinstance(name, str) or not name:
-            logger.debug("Skipping Gemini functionCall part missing name: %r", part)
+            logger.debug(
+                "Skipping Gemini functionCall part: missing or non-string name"
+            )
             continue
         raw_args = fn.get("args")
         arguments = raw_args if isinstance(raw_args, dict) else {}
         tool_calls.append(
             ToolCall(
+                # Gemini has no per-call id; empty string matches A2A convention.
                 id="",
                 name=name,
                 arguments=arguments,

@@ -81,7 +81,7 @@ class TestParseOpenAI:
         assert response.tool_calls[0].name == "search"
         assert response.tool_calls[0].arguments == {"q": "test"}
 
-    def test_arguments_as_dict(self) -> None:
+    def test_dict_arguments_normalized_without_modification(self) -> None:
         """Some OpenAI-compatible routers (LiteLLM, vLLM) return arguments as a dict."""
         result = {
             "choices": [
@@ -105,7 +105,7 @@ class TestParseOpenAI:
         response = parse_openai(result)
         assert response.tool_calls[0].arguments == {"k": "v"}
 
-    def test_arguments_none(self) -> None:
+    def test_none_arguments_yields_empty_dict(self) -> None:
         result = {
             "choices": [
                 {
@@ -125,7 +125,7 @@ class TestParseOpenAI:
         response = parse_openai(result)
         assert response.tool_calls[0].arguments == {}
 
-    def test_arguments_malformed_json(self) -> None:
+    def test_unparseable_arguments_yields_empty_dict(self) -> None:
         """Malformed JSON string falls back to empty dict; call still captured."""
         result = {
             "choices": [
@@ -252,6 +252,13 @@ class TestParseOpenAI:
     def test_empty_choices_raises(self) -> None:
         with pytest.raises(ValueError, match="empty 'choices'"):
             parse_openai({"choices": []})
+
+    def test_non_dict_first_choice_raises(self) -> None:
+        """choices=[None] or choices=[str] must raise ValueError, not AttributeError."""
+        with pytest.raises(ValueError, match="must be a dict"):
+            parse_openai({"choices": [None]})
+        with pytest.raises(ValueError, match="must be a dict"):
+            parse_openai({"choices": ["not-a-dict"]})
 
 
 class TestParseAnthropic:
@@ -518,3 +525,65 @@ class TestParseResponseDispatch:
         }
         response = parse_response(result)
         assert response.content == "from choices"
+
+
+class TestDebugLogsAreSafe:
+    """Debug logs in parsers must never include raw tool arguments.
+
+    arksim.ui.api.state.py attaches a WebSocket log handler to the
+    ``arksim`` logger at DEBUG during UI-driven runs. Raw tool args
+    can contain PII; logging them broadcasts to all connected clients.
+    """
+
+    def test_malformed_json_does_not_log_raw_content(
+        self, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        result = {
+            "choices": [
+                {
+                    "message": {
+                        "content": None,
+                        "tool_calls": [
+                            {
+                                "id": "c",
+                                "type": "function",
+                                "function": {
+                                    "name": "f",
+                                    "arguments": "SECRET_PII_TOKEN_abc123",
+                                },
+                            }
+                        ],
+                    }
+                }
+            ]
+        }
+        with caplog.at_level("DEBUG", logger="arksim"):
+            parse_openai(result)
+        for record in caplog.records:
+            assert "SECRET_PII_TOKEN_abc123" not in record.getMessage()
+
+    def test_missing_name_does_not_log_raw_arguments(
+        self, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        result = {
+            "choices": [
+                {
+                    "message": {
+                        "content": None,
+                        "tool_calls": [
+                            {
+                                "id": "c",
+                                "type": "function",
+                                "function": {
+                                    "arguments": '{"ssn": "SECRET_PII_TOKEN_xyz"}',
+                                },
+                            }
+                        ],
+                    }
+                }
+            ]
+        }
+        with caplog.at_level("DEBUG", logger="arksim"):
+            parse_openai(result)
+        for record in caplog.records:
+            assert "SECRET_PII_TOKEN_xyz" not in record.getMessage()

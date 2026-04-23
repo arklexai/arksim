@@ -21,7 +21,7 @@ If both are active, arksim deduplicates automatically (see [Deduplication](#dedu
 | Connector | Explicit (`AgentResponse`) | Automatic Capture |
 |-----------|--------------------------|-------------------|
 | Python connector | Supported | Supported via `ArksimTracingProcessor` |
-| Chat Completions | Supported (response-parsed, request side only; no tool results) | Not supported for wrapper-internal tool loops; open an issue describing your shape |
+| Chat Completions | Supported (response-parsed, no tool results) | Not supported for wrapper-internal tool loops; see below |
 | A2A | Supported via A2A AgentExtension | Not applicable |
 
 <Info>
@@ -113,6 +113,8 @@ Requires `pip install openai-agents`.
 
 ## Chat Completions Capture
 
+**No config needed.** arksim captures tool calls automatically whenever the Chat Completions endpoint returns them in the response body. Point arksim's `agent_type: chat_completions` at any OpenAI-compatible endpoint that returns tool calls in the standard format.
+
 arksim's Chat Completions connector extracts tool calls directly from the response body when the endpoint returns them in the standard location for each format:
 
 - **OpenAI format:** `choices[0].message.tool_calls`
@@ -122,7 +124,14 @@ arksim's Chat Completions connector extracts tool calls directly from the respon
 Captured tool calls carry `source="chat_completions"`. Tool *results* are not captured on this path. Raw Chat Completions endpoints return results through follow-up `role=tool` messages sent by the client, and arksim does not supply those tool implementations.
 
 <Warning>
-Wrapper servers that handle tool execution internally and return only final text (for example, `examples/bank-insurance/agent_server/chat_completions`) are not covered by response parsing. The wrapper flattens the tool loop into a single text reply, leaving nothing for the parser to read. For these deployments, use the **A2A protocol** (tool calls carried in `Task.artifacts[*].metadata` via the arksim `AgentExtension`) or the **Python connector** (`AgentResponse` with explicit tool calls). If your wrapper shape isn't served by either path, open a GitHub issue describing it: cross-process Chat Completions wrapper capture requires a separate design.
+**Wrapper servers that handle tool execution internally are not captured.** If your wrapper runs the tool loop and returns only final text (like `examples/bank-insurance/agent_server/chat_completions`), response parsing finds nothing — the wrapper has already flattened the loop into a single text reply.
+
+For these deployments:
+
+- **A2A protocol.** Tool calls carried in `Task.artifacts[*].metadata` via the arksim `AgentExtension`.
+- **Python connector.** `AgentResponse` with explicit tool calls.
+
+If neither path fits your wrapper shape, open a GitHub issue describing it. Cross-process Chat Completions wrapper capture requires a separate design.
 </Warning>
 
 ---
