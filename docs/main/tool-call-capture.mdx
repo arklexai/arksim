@@ -124,7 +124,7 @@ arksim's Chat Completions connector extracts tool calls directly from the respon
 Captured tool calls carry `source="chat_completions"`. Tool *results* are not captured on this path. Raw Chat Completions endpoints return results through follow-up `role=tool` messages sent by the client, and arksim does not supply those tool implementations.
 
 <Warning>
-**Wrapper servers that handle tool execution internally are not captured.** If your wrapper runs the tool loop and returns only final text (like `examples/bank-insurance/agent_server/chat_completions`), response parsing finds nothing — the wrapper has already flattened the loop into a single text reply.
+**Wrapper servers that handle tool execution internally are not captured.** If your wrapper runs the tool loop and returns only final text (like `examples/bank-insurance/agent_server/chat_completions`), response parsing finds nothing because the wrapper has already flattened the loop into a single text reply.
 
 For these deployments:
 
@@ -252,7 +252,7 @@ See the [customer-service A2A example](https://github.com/arklexai/arksim/tree/m
 
 Tool call metadata is more sensitive than the agent's text response. Arguments can contain PII (email addresses, customer IDs), verification codes, internal tool names that expose your agent's architecture, and verbatim tool results. A server that emits this data unconditionally exposes strictly more than it would without the extension.
 
-Unlike A2A (where tool call emission is gated by the client's `A2A-Extensions` request header), Chat Completions capture is unconditional: any tool call the endpoint returns in the response body is captured by arksim. If the endpoint is public or shared with non-arksim clients, tool call metadata is already visible in the response — arksim just reads what's already there. Apply endpoint-level auth or a separate evaluation-only deployment if this is a concern.
+Unlike A2A (where tool call emission is gated by the client's `A2A-Extensions` request header), Chat Completions capture is unconditional: any tool call the endpoint returns in the response body is captured by arksim. If the endpoint is public or shared with non-arksim clients, tool call metadata is already visible in the response, and arksim just reads what's already there. Apply endpoint-level auth or a separate evaluation-only deployment if this is a concern.
 
 The arksim example server gates tool call emission on the client's `A2A-Extensions` request header: if the client does not request the extension, the server omits tool call metadata from the artifact. This is the right default, but the request header is not access control; any HTTP client can send it.
 

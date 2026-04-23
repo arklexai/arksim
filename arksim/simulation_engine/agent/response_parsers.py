@@ -62,7 +62,7 @@ def _extract_openai_tool_calls(msg: dict[str, Any]) -> list[ToolCall]:
 
     Skips entries missing a string ``function.name``. Each captured call
     carries ``source=ToolCallSource.CHAT_COMPLETIONS``. ``result`` is left
-    as ``None`` (not available on this path — see spec).
+    as ``None`` (not available on this path; see spec).
 
     The entry-level ``type`` field (e.g. ``"function"``) is intentionally
     ignored. OpenAI may add new ``type`` values (code interpreter, computer
