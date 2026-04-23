@@ -2,10 +2,22 @@
 from __future__ import annotations
 
 import logging
-from contextvars import ContextVar
+import threading
+from contextvars import ContextVar, Token
 from dataclasses import dataclass, field
 
+from pydantic import BaseModel
+from pydantic import Field as PydanticField
+
 logger = logging.getLogger(__name__)
+
+
+class TokenUsage(BaseModel):
+    """Token usage summary from LLM calls."""
+
+    total_input_tokens: int = 0
+    total_output_tokens: int = 0
+    by_model: dict[str, dict[str, int]] = PydanticField(default_factory=dict)
 
 
 @dataclass
@@ -39,6 +51,9 @@ class UsageTracker:
     """
 
     records: list[UsageRecord] = field(default_factory=list)
+    _lock: threading.Lock = field(
+        default_factory=threading.Lock, repr=False, compare=False
+    )
 
     def record(
         self,
@@ -47,14 +62,15 @@ class UsageTracker:
         input_tokens: int,
         output_tokens: int,
     ) -> None:
-        self.records.append(
-            UsageRecord(
-                model=model,
-                provider=provider,
-                input_tokens=input_tokens,
-                output_tokens=output_tokens,
+        with self._lock:
+            self.records.append(
+                UsageRecord(
+                    model=model,
+                    provider=provider,
+                    input_tokens=input_tokens,
+                    output_tokens=output_tokens,
+                )
             )
-        )
 
     @property
     def total_input_tokens(self) -> int:
@@ -65,13 +81,14 @@ class UsageTracker:
         return sum(r.output_tokens for r in self.records)
 
     def summary(self) -> dict[str, dict[str, int]]:
-        """Per-model breakdown: {model: {input_tokens, output_tokens}}."""
+        """Per-model breakdown: {provider/model: {input_tokens, output_tokens}}."""
         breakdown: dict[str, dict[str, int]] = {}
         for r in self.records:
-            if r.model not in breakdown:
-                breakdown[r.model] = {"input_tokens": 0, "output_tokens": 0}
-            breakdown[r.model]["input_tokens"] += r.input_tokens
-            breakdown[r.model]["output_tokens"] += r.output_tokens
+            key = f"{r.provider}/{r.model}"
+            if key not in breakdown:
+                breakdown[key] = {"input_tokens": 0, "output_tokens": 0}
+            breakdown[key]["input_tokens"] += r.input_tokens
+            breakdown[key]["output_tokens"] += r.output_tokens
         return breakdown
 
     def log_summary(self) -> None:
@@ -100,14 +117,14 @@ def get_current_tracker() -> UsageTracker | None:
     return _current_tracker.get()
 
 
-def set_current_tracker(tracker: UsageTracker) -> object:
+def set_current_tracker(tracker: UsageTracker) -> Token[UsageTracker | None]:
     """Set the current tracker. Returns a token for reset_current_tracker."""
     return _current_tracker.set(tracker)
 
 
-def reset_current_tracker(token: object) -> None:
+def reset_current_tracker(token: Token[UsageTracker | None]) -> None:
     """Reset the tracker context variable using the token from set_current_tracker."""
-    _current_tracker.reset(token)  # type: ignore[arg-type]
+    _current_tracker.reset(token)
 
 
 def track_usage(

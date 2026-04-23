@@ -16,6 +16,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, model_validat
 
 from arksim.config.utils import resolve_model_paths
 from arksim.constants import DEFAULT_MODEL, DEFAULT_PROVIDER
+from arksim.llms.chat.base.usage import TokenUsage
 from arksim.utils.concurrency import validate_num_workers
 
 from .base_metric import (
@@ -228,16 +229,6 @@ class ConversationEvaluation(BaseModel):
     turn_scores: list[TurnEvaluation]
 
 
-
-class TokenUsage(BaseModel):
-    """Token usage summary from LLM calls."""
-
-    total_input_tokens: int = 0
-    total_output_tokens: int = 0
-    by_model: dict[str, dict[str, int]] = Field(default_factory=dict)
-
-      
-      
 class ErrorScenarioMapping(BaseModel):
     """Maps a unique error to the scenarios that triggered it."""
 
@@ -247,7 +238,6 @@ class ErrorScenarioMapping(BaseModel):
     severity: str
     scenario_ids: list[str]
 
-      
 
 class Evaluation(BaseModel):
     """Top-level evaluation output file."""

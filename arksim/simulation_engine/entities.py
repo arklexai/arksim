@@ -17,6 +17,7 @@ from pydantic import BaseModel, Field, ValidationInfo, model_validator
 from arksim.config.core.agent import AgentConfig
 from arksim.config.utils import resolve_model_paths
 from arksim.constants import DEFAULT_MODEL, DEFAULT_PROVIDER
+from arksim.llms.chat.base.usage import TokenUsage
 from arksim.simulation_engine.tool_types import ToolCall
 from arksim.tracing.config import TraceReceiverConfig
 from arksim.utils.concurrency import validate_num_workers
@@ -172,14 +173,6 @@ class Conversation(BaseModel):
     scenario_id: str
     conversation_history: list[Message]
     simulated_user_prompt: SimulatedUserPrompt
-
-
-class TokenUsage(BaseModel):
-    """Token usage summary from LLM calls."""
-
-    total_input_tokens: int = 0
-    total_output_tokens: int = 0
-    by_model: dict[str, dict[str, int]] = Field(default_factory=dict)
 
 
 class Simulation(BaseModel):

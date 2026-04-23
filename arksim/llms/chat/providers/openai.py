@@ -50,6 +50,16 @@ class OpenAILLM(BaseLLM):
 
         return params
 
+    def _track_response_usage(self, response: object) -> None:
+        usage = getattr(response, "usage", None)
+        if usage:
+            track_usage(
+                self.model,
+                "openai",
+                usage.input_tokens,
+                usage.output_tokens,
+            )
+
     @overload
     def call(
         self, messages: str | list[LLMMessage], schema: type[T], **kwargs: object
@@ -69,17 +79,9 @@ class OpenAILLM(BaseLLM):
     ) -> T | str:
         params = self._prepare_params(messages, schema=schema)
         response = self.client.responses.parse(**params)
-        if response.usage:
-            track_usage(
-                self.model,
-                "openai",
-                response.usage.input_tokens,
-                response.usage.output_tokens,
-            )
-        # For structured output, return the parsed output
+        self._track_response_usage(response)
         if schema:
             return response.output_parsed
-        # For text output, return the text (default)
         return response.output_text
 
     @overload
@@ -101,15 +103,7 @@ class OpenAILLM(BaseLLM):
     ) -> T | str:
         params = self._prepare_params(messages, schema=schema)
         response = await self.async_client.responses.parse(**params)
-        if response.usage:
-            track_usage(
-                self.model,
-                "openai",
-                response.usage.input_tokens,
-                response.usage.output_tokens,
-            )
-        # For structured output, return the parsed output
+        self._track_response_usage(response)
         if schema:
             return response.output_parsed
-        # For text output, return the text (default)
         return response.output_text
