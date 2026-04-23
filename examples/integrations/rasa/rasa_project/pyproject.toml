@@ -1,0 +1,26 @@
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "arksim-rasa-calm-demo"
+version = "0.1.0"
+description = "Rasa Pro CALM assistant used by the arksim Rasa integration example."
+authors = ["Arklex <support@arklex.ai>"]
+package-mode = false
+
+[[tool.poetry.source]]
+name = "rasa-pro"
+url = "https://europe-west3-python.pkg.dev/rasa-releases/rasa-pro-python/simple"
+priority = "supplemental"
+
+[tool.poetry.dependencies]
+python = ">=3.10.0,<3.14"
+
+[tool.poetry.dependencies.rasa-pro]
+version = "3.14.0"
+allow-prereleases = true
+source = "rasa-pro"
+
+[tool.poetry.group.dev.dependencies]
+toml = "^0.10.2"

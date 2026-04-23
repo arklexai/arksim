@@ -23,15 +23,20 @@ After the run, ArkSim generates an evaluation report (`evaluation/final_report.h
 
 ## Prerequisites
 
-1. Install Rasa Pro (requires Python 3.10+):
+1. Install Rasa Pro (requires Python 3.10+).
+
+   The demo ships a `pyproject.toml` in `rasa_project/` with the Rasa Pro private registry and a pinned version. Poetry is the path Rasa itself recommends:
+
+   ```bash
+   cd rasa_project
+   poetry install
+   ```
+
+   Or install standalone with uv / pip:
 
    ```bash
    uv pip install rasa-pro
-   ```
-
-   Or with pip:
-
-   ```bash
+   # or
    pip install rasa-pro
    ```
 

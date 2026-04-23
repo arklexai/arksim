@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+* **examples:** add `pyproject.toml` to the Rasa Pro demo project for Poetry-based install ([#148](https://github.com/arklexai/arksim/issues/148))
+
 ### Changed
 
 * **a2a:** migrate from a2a-sdk 0.3.x (Pydantic) to 1.0.0 (protobuf) ([#152](https://github.com/arklexai/arksim/pull/152))
