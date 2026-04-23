@@ -232,12 +232,14 @@ class Simulator:
                 # Dedup by ID first, then by (name, arguments) to handle
                 # cases where the trace receiver falls back to spanId while
                 # AgentResponse carries an SDK-assigned tool call ID.
+                # Empty-string ids (Gemini always; A2A when absent) are excluded
+                # from the ID set so they fall through to signature-based dedup.
                 if self.trace_receiver is not None:
                     traced = await self.trace_receiver.wait_for_traces(
                         conversation_id, turn
                     )
                     if traced:
-                        existing_ids = {tc.id for tc in turn_tool_calls}
+                        existing_ids = {tc.id for tc in turn_tool_calls if tc.id}
                         sig_to_idx: dict[tuple[str, str], int] = {}
                         for i, tc in enumerate(turn_tool_calls):
                             sig = (tc.name, json.dumps(tc.arguments, sort_keys=True))
