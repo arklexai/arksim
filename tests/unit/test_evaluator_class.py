@@ -392,3 +392,99 @@ class TestLoadCustomMetricsLLMInjection:
         quant, _ = _load_custom_metrics([path])
         assert len(quant) == 1
         assert quant[0].name == "ConcreteMetric"
+
+
+class TestLoadCustomMetricsScope:
+    """_load_custom_metrics preserves the scope attribute set by custom metrics."""
+
+    def test_default_scope_is_turn(self, temp_dir: str) -> None:
+        """Metrics without an explicit scope default to 'turn'."""
+        code = textwrap.dedent("""\
+            from arksim.evaluator.base_metric import QuantitativeMetric, ScoreInput, QuantResult
+
+            class DefaultScope(QuantitativeMetric):
+                def __init__(self):
+                    super().__init__(name="default_scope")
+
+                def score(self, score_input: ScoreInput) -> QuantResult:
+                    return QuantResult(name=self.name, value=1.0)
+        """)
+        path = os.path.join(temp_dir, "default_scope.py")
+        with open(path, "w") as f:
+            f.write(code)
+
+        quant, _ = _load_custom_metrics([path])
+        if quant:
+            assert quant[0].scope == "turn"
+
+    def test_conversation_scope_preserved(self, temp_dir: str) -> None:
+        """Metrics with scope='conversation' retain it after loading."""
+        code = textwrap.dedent("""\
+            from arksim.evaluator.base_metric import QuantitativeMetric, ScoreInput, QuantResult
+
+            class ConvoMetric(QuantitativeMetric):
+                def __init__(self):
+                    super().__init__(name="convo_metric", scope="conversation")
+
+                def score(self, score_input: ScoreInput) -> QuantResult:
+                    return QuantResult(name=self.name, value=1.0)
+        """)
+        path = os.path.join(temp_dir, "convo_scope.py")
+        with open(path, "w") as f:
+            f.write(code)
+
+        quant, _ = _load_custom_metrics([path])
+        if quant:
+            assert quant[0].scope == "conversation"
+
+    def test_mixed_scopes_loaded(self, temp_dir: str) -> None:
+        """File with both turn and conversation metrics loads both."""
+        code = textwrap.dedent("""\
+            from arksim.evaluator.base_metric import (
+                QuantitativeMetric, QualitativeMetric,
+                ScoreInput, QuantResult, QualResult,
+            )
+
+            class TurnQuant(QuantitativeMetric):
+                def __init__(self):
+                    super().__init__(name="turn_q", scope="turn")
+                def score(self, score_input: ScoreInput) -> QuantResult:
+                    return QuantResult(name=self.name, value=1.0)
+
+            class ConvoQuant(QuantitativeMetric):
+                def __init__(self):
+                    super().__init__(name="convo_q", scope="conversation")
+                def score(self, score_input: ScoreInput) -> QuantResult:
+                    return QuantResult(name=self.name, value=2.0)
+
+            class TurnQual(QualitativeMetric):
+                def __init__(self):
+                    super().__init__(name="turn_ql", scope="turn")
+                def evaluate(self, score_input: ScoreInput) -> QualResult:
+                    return QualResult(name=self.name, value="ok")
+
+            class ConvoQual(QualitativeMetric):
+                def __init__(self):
+                    super().__init__(name="convo_ql", scope="conversation")
+                def evaluate(self, score_input: ScoreInput) -> QualResult:
+                    return QualResult(name=self.name, value="ok")
+        """)
+        path = os.path.join(temp_dir, "mixed_scope.py")
+        with open(path, "w") as f:
+            f.write(code)
+
+        quant, qual = _load_custom_metrics([path])
+        if quant:
+            turn_q = [m for m in quant if m.scope == "turn"]
+            convo_q = [m for m in quant if m.scope == "conversation"]
+            assert len(turn_q) == 1
+            assert turn_q[0].name == "turn_q"
+            assert len(convo_q) == 1
+            assert convo_q[0].name == "convo_q"
+        if qual:
+            turn_ql = [m for m in qual if m.scope == "turn"]
+            convo_ql = [m for m in qual if m.scope == "conversation"]
+            assert len(turn_ql) == 1
+            assert turn_ql[0].name == "turn_ql"
+            assert len(convo_ql) == 1
+            assert convo_ql[0].name == "convo_ql"

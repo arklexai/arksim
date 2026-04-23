@@ -38,7 +38,7 @@ from .entities import (
 )
 from .error_detection import detect_agent_error
 from .evaluate import (
-    evaluate_goal_completion,
+    evaluate_conversation,
     evaluate_turn,
 )
 from .trajectory_matching import match_trajectory
@@ -321,17 +321,21 @@ class Evaluator:
         convo_score_list: list[ConversationEvaluation] = []
 
         gc_max_workers = max(1, min(num_workers, len(processed_entries)))
+        gc_inner_workers = 0 if self.params.num_workers == "auto" else num_workers
         with ThreadPoolExecutor(max_workers=gc_max_workers) as executor:
             gc_futures = {
                 executor.submit(
-                    evaluate_goal_completion,
+                    evaluate_conversation,
                     self.llm,
                     convo_item,
                     sorted(
                         turn_results.get(convo_item.chat_id, []),
                         key=lambda t: t.turn_id,
                     ),
+                    self.params.convo_custom_metrics or None,
+                    self.params.convo_custom_qualitative_metrics or None,
                     self.params.metrics_to_run,
+                    gc_inner_workers,
                 ): convo_item
                 for _, convo_item in processed_entries
             }
@@ -705,6 +709,8 @@ class Evaluator:
                 for score in turn.scores:
                     metric_scores[score.name].append(score.value)
                 failure_counts[turn.turn_behavior_failure] += 1
+            for score in conv.scores:
+                metric_scores[score.name].append(score.value)
 
         averages: dict[str, float] = {
             metric: sum(vals) / len(vals)
@@ -914,15 +920,25 @@ def run_evaluation(
         model=settings.model,
         provider=settings.provider,
     )
-    custom_metrics, custom_qualitative_metrics = _load_custom_metrics(
+    all_quant, all_qual = _load_custom_metrics(
         settings.custom_metrics_file_paths, llm=llm
     )
+
+    # Split custom metrics by scope (turn vs. conversation).
+    turn_quant = [m for m in all_quant if getattr(m, "scope", "turn") == "turn"]
+    convo_quant = [
+        m for m in all_quant if getattr(m, "scope", "turn") == "conversation"
+    ]
+    turn_qual = [m for m in all_qual if getattr(m, "scope", "turn") == "turn"]
+    convo_qual = [m for m in all_qual if getattr(m, "scope", "turn") == "conversation"]
 
     params = EvaluationParams(
         output_dir=settings.output_dir,
         num_workers=settings.num_workers,
-        custom_metrics=custom_metrics,
-        custom_qualitative_metrics=custom_qualitative_metrics,
+        custom_metrics=turn_quant,
+        custom_qualitative_metrics=turn_qual,
+        convo_custom_metrics=convo_quant,
+        convo_custom_qualitative_metrics=convo_qual,
         metrics_to_run=settings.metrics_to_run or None,
     )
 
@@ -944,14 +960,12 @@ def run_evaluation(
         html_output_path = os.path.join(settings.output_dir, "final_report.html")
 
         logger.info("Generating HTML report...")
-        all_custom = list(custom_metrics) + list(custom_qualitative_metrics)
+        all_custom = list(all_quant) + list(all_qual)
         metric_descriptions = {
             m.name: m.description for m in all_custom if m.description
         }
-        metric_ranges = {m.name: tuple(m.score_range) for m in custom_metrics}
-        qual_label_colors = {
-            m.name: m.label_colors for m in custom_qualitative_metrics if m.label_colors
-        }
+        metric_ranges = {m.name: tuple(m.score_range) for m in all_quant}
+        qual_label_colors = {m.name: m.label_colors for m in all_qual if m.label_colors}
         report_params = HtmlReportParams(
             simulation=simulation,
             evaluation=evaluator_output,

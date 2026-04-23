@@ -106,11 +106,14 @@ def evaluate_turn(
             )
         )
         return QuantResult(
-            name=metric.name, value=result.value, reason=result.reason or ""
+            name=metric.name,
+            value=result.value,
+            reason=result.reason or "",
+            scope="turn",
         )
 
     def _run_qual(metric: QualitativeMetric) -> QualResult:
-        return metric.evaluate(
+        result = metric.evaluate(
             ScoreInput(
                 chat_history=score_input.chat_history,
                 current_turn=score_input.current_turn,
@@ -119,6 +122,12 @@ def evaluate_turn(
                 profile=score_input.profile,
                 **getattr(metric, "additional_input", {}),
             )
+        )
+        return QualResult(
+            name=result.name,
+            value=result.value,
+            reason=result.reason,
+            scope="turn",
         )
 
     metric_tasks: list[tuple[str, Callable[[], QuantResult]]] = [
@@ -231,20 +240,33 @@ def evaluate_turn(
     )
 
 
-def evaluate_goal_completion(
+def evaluate_conversation(
     llm: LLM,
     convo_item: ConvoItem,
     turns_details: list[TurnEvaluation],
+    custom_metrics: list[QuantitativeMetric] | None = None,
+    custom_qualitative_metrics: list[QualitativeMetric] | None = None,
     metrics_to_run: list[str] | None = None,
+    num_workers: int = 0,
 ) -> ConversationEvaluation:
-    """Compute goal completion and build ConversationEvaluation.
+    """Compute goal completion, run conversation-level custom metrics, and build ConversationEvaluation.
 
     Args:
         llm: The LLM instance to use for evaluation.
         convo_item: The conversation item with full history and metadata.
         turns_details: Completed TurnEvaluation objects for this conversation.
+        custom_metrics: Optional list of conversation-level quantitative metrics.
+        custom_qualitative_metrics: Optional list of conversation-level qualitative metrics.
         metrics_to_run: Optional list of metric names to run.
+        num_workers: Max concurrent metric LLM calls. 0 means unlimited.
     """
+    score_input = ScoreInput(
+        chat_history=convo_item.chat_history,
+        knowledge=combine_knowledge(convo_item.knowledge or []),
+        user_goal=convo_item.user_goal,
+        profile=convo_item.profile,
+    )
+
     if _should_run("goal_completion", metrics_to_run):
         result = GoalCompletionMetric(llm).score(
             ScoreInput(
@@ -257,6 +279,76 @@ def evaluate_goal_completion(
     else:
         goal_completion_score = SCORE_NOT_COMPUTED
         goal_completion_reason = ""
+
+    # Run conversation-level custom metrics in parallel.
+    scores: list[QuantResult] = []
+    qual_scores: list[QualResult] = []
+
+    def _run(metric: QuantitativeMetric) -> QuantResult:
+        r = metric.score(
+            ScoreInput(
+                chat_history=score_input.chat_history,
+                knowledge=score_input.knowledge,
+                user_goal=score_input.user_goal,
+                profile=score_input.profile,
+                **metric.additional_input,
+            )
+        )
+        return QuantResult(
+            name=metric.name,
+            value=r.value,
+            reason=r.reason or "",
+            scope="conversation",
+        )
+
+    def _run_qual(metric: QualitativeMetric) -> QualResult:
+        r = metric.evaluate(
+            ScoreInput(
+                chat_history=score_input.chat_history,
+                knowledge=score_input.knowledge,
+                user_goal=score_input.user_goal,
+                profile=score_input.profile,
+                **getattr(metric, "additional_input", {}),
+            )
+        )
+        return QualResult(
+            name=r.name,
+            value=r.value,
+            reason=r.reason,
+            scope="conversation",
+        )
+
+    metric_tasks: list[tuple[str, Callable[[], QuantResult]]] = [
+        (m.name, lambda metric=m: _run(metric)) for m in (custom_metrics or [])
+    ]
+    qual_tasks: list[tuple[str, Callable[[], QualResult]]] = [
+        (m.name, lambda metric=m: _run_qual(metric))
+        for m in (custom_qualitative_metrics or [])
+    ]
+    all_tasks = metric_tasks + qual_tasks
+
+    if all_tasks:
+        _max = min(num_workers, len(all_tasks)) if num_workers > 0 else len(all_tasks)
+        with ThreadPoolExecutor(max_workers=_max) as pool:
+            score_futures = {pool.submit(fn): name for name, fn in metric_tasks}
+            qual_futures = {pool.submit(fn): name for name, fn in qual_tasks}
+            all_futures = {**score_futures, **qual_futures}
+
+            for future in as_completed(all_futures):
+                name = all_futures[future]
+                try:
+                    r = future.result()
+                    if future in score_futures:
+                        scores.append(r)
+                    else:
+                        qual_scores.append(r)
+                except Exception as e:
+                    logger.warning(
+                        "Conversation metric '%s' failed for %s: %s",
+                        name,
+                        convo_item.chat_id,
+                        e,
+                    )
 
     behavior_failures = sum(
         1 for t in turns_details if t.turn_behavior_failure not in SKIP_OUTCOMES
@@ -293,4 +385,6 @@ def evaluate_goal_completion(
         overall_agent_score=overall_agent_score,
         evaluation_status=status,
         turn_scores=turns_details,
+        scores=scores,
+        qual_scores=qual_scores,
     )

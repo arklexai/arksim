@@ -104,6 +104,8 @@ class ConvoRow(BaseModel):
     status: str
     knowledge: list[str] = Field(default_factory=list)
     goal_completion_reason: str
+    scores: list[dict[str, Any]] = Field(default_factory=list)
+    qual_scores: list[dict[str, Any]] = Field(default_factory=list)
 
 
 class TurnRow(BaseModel):
@@ -188,12 +190,18 @@ def _build_final_report_data(
     failure_counts: Counter = Counter()
     qual_label_counts: dict[str, Counter] = defaultdict(Counter)
     for conv in evaluation.conversations:
+        # Turn-level metrics
         for turn in conv.turn_scores:
             for score in turn.scores:
                 metric_scores[score.name].append(score.value)
             for qs in turn.qual_scores:
                 qual_label_counts[qs.name][qs.value] += 1
             failure_counts[turn.turn_behavior_failure] += 1
+        # Conversation-level custom metrics
+        for score in conv.scores:
+            metric_scores[score.name].append(score.value)
+        for qs in conv.qual_scores:
+            qual_label_counts[qs.name][qs.value] += 1
 
     def safe_avg(values: list[float]) -> float:
         valid = [v for v in values if v != -1]
@@ -351,6 +359,8 @@ def _build_convo_rows(
                 if scenario and scenario.knowledge
                 else [],
                 goal_completion_reason=conv.goal_completion_reason,
+                scores=[s.model_dump() for s in conv.scores],
+                qual_scores=[q.model_dump() for q in conv.qual_scores],
             )
         )
     return rows

@@ -31,6 +31,7 @@ class QuantResult(BaseModel):
     value: float
     reason: str | None = None
     metadata: dict[str, Any] | None = None
+    scope: str = "turn"
 
 
 class QualResult(BaseModel):
@@ -39,6 +40,7 @@ class QualResult(BaseModel):
     name: str
     value: str
     reason: str | None = None
+    scope: str = "turn"
 
 
 class ScoreInput(BaseModel):
@@ -100,6 +102,9 @@ class QuantitativeMetric(_LLMMixin, abc.ABC):
             metrics). The range is used to normalise the value for the aggregated
             turn score and to derive a per-metric failure threshold
             (60 % of *max*).
+        scope: When the metric runs: ``"turn"`` (default) evaluates every
+            individual turn; ``"conversation"`` evaluates once per conversation
+            alongside goal completion.
         llm: Optional LLM instance injected by the evaluator. Custom metrics that
             need an LLM for scoring should accept ``llm=None`` in their
             ``__init__`` and pass it to ``super().__init__(llm=llm)``, then use
@@ -135,12 +140,14 @@ class QuantitativeMetric(_LLMMixin, abc.ABC):
         additional_input: dict[str, Any] | None = None,
         description: str = "",
         llm: BaseLLM | None = None,
+        scope: str = "turn",
     ) -> None:
         self.name = name if name is not None else self.__class__.__name__
         self.score_range = score_range
         self.additional_input = additional_input or {}
         self.description = description
         self._llm = llm
+        self.scope = scope
 
     @abc.abstractmethod
     def score(self, score_input: ScoreInput) -> QuantResult:
@@ -157,6 +164,9 @@ class QualitativeMetric(_LLMMixin, abc.ABC):
         name: The name of the metric. If not provided, uses the class name as default.
         description: Human-readable description of what the metric measures.
         label_colors: Mapping of label values to hex colour strings for the report UI.
+        scope: When the metric runs: ``"turn"`` (default) evaluates every
+            individual turn; ``"conversation"`` evaluates once per conversation
+            alongside goal completion.
         llm: Optional LLM instance injected by the evaluator. Custom metrics that
             need an LLM for evaluation should accept ``llm=None`` in their
             ``__init__`` and pass it to ``super().__init__(llm=llm)``, then use
@@ -191,11 +201,13 @@ class QualitativeMetric(_LLMMixin, abc.ABC):
         description: str = "",
         label_colors: dict[str, str] | None = None,
         llm: BaseLLM | None = None,
+        scope: str = "turn",
     ) -> None:
         self.name = name if name is not None else self.__class__.__name__
         self.description = description
         self.label_colors: dict[str, str] = label_colors or {}
         self._llm = llm
+        self.scope = scope
 
     @abc.abstractmethod
     def evaluate(self, score_input: ScoreInput) -> QualResult:

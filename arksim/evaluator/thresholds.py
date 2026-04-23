@@ -54,13 +54,22 @@ def check_numeric_thresholds(
                 raw = convo.goal_completion_score
                 score: float | None = raw if raw >= 0 else None
             else:
-                values = [
-                    r.value
-                    for turn in convo.turn_scores
-                    for r in turn.scores
-                    if r.name == metric_name and r.value >= 0
-                ]
-                score = sum(values) / len(values) if values else None
+                # Conversation-level custom metrics live on conv.scores.
+                convo_match = next(
+                    (r for r in convo.scores if r.name == metric_name and r.value >= 0),
+                    None,
+                )
+                if convo_match is not None:
+                    score = convo_match.value
+                else:
+                    # Turn-level metrics: average across turns.
+                    values = [
+                        r.value
+                        for turn in convo.turn_scores
+                        for r in turn.scores
+                        if r.name == metric_name and r.value >= 0
+                    ]
+                    score = sum(values) / len(values) if values else None
 
             if score is None:
                 logger.warning(
@@ -120,7 +129,14 @@ def check_qualitative_failure_labels(
     for metric_name, failure_labels in qualitative_failure_labels.items():
         failed_conversations = []
         for convo in evaluator_output.conversations:
-            failing_turns = []
+            failures: list[dict[str, object]] = []
+
+            # Check conversation-level qual scores.
+            for qs in convo.qual_scores:
+                if qs.name == metric_name and qs.value in failure_labels:
+                    failures.append({"turn_id": "conversation", "label": qs.value})
+
+            # Check turn-level qual scores.
             for turn in convo.turn_scores:
                 if metric_name == "agent_behavior_failure":
                     label = turn.turn_behavior_failure
@@ -135,13 +151,13 @@ def check_qualitative_failure_labels(
                     label = match.value
 
                 if label in failure_labels:
-                    failing_turns.append({"turn_id": turn.turn_id, "label": label})
+                    failures.append({"turn_id": turn.turn_id, "label": label})
 
-            if failing_turns:
+            if failures:
                 failed_conversations.append(
                     {
                         "conversation_id": convo.conversation_id,
-                        "failing_turns": failing_turns,
+                        "failing_turns": failures,
                     }
                 )
 
@@ -159,7 +175,7 @@ def check_qualitative_failure_labels(
                     )
         else:
             logger.info(
-                f"Qualitative gate passed: '{metric_name}' — no failure labels found"
+                f"Qualitative gate passed: '{metric_name}' - no failure labels found"
             )
 
     return all_passed
