@@ -113,10 +113,6 @@ _current_tracker: ContextVar[UsageTracker | None] = ContextVar(
 )
 
 
-def get_current_tracker() -> UsageTracker | None:
-    return _current_tracker.get()
-
-
 def set_current_tracker(tracker: UsageTracker) -> Token[UsageTracker | None]:
     """Set the current tracker. Returns a token for reset_current_tracker."""
     return _current_tracker.set(tracker)

@@ -544,7 +544,6 @@ async def run_simulation(
         )
         tracker.log_summary()
 
-
         await simulator.save()
         return simulation_output
     finally:
