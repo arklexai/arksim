@@ -287,10 +287,9 @@ class Evaluator:
                 # auto → unlimited inner parallelism (0 = unlimited).
                 # explicit int → metrics capped at min(num_workers, num_metrics).
                 inner_workers = 0 if self.params.num_workers == "auto" else num_workers
-                ctx = contextvars.copy_context()
                 turn_futures = {
                     executor.submit(
-                        ctx.run,
+                        contextvars.copy_context().run,
                         evaluate_turn,
                         self.llm,
                         turn_item,
@@ -331,10 +330,9 @@ class Evaluator:
 
         gc_max_workers = max(1, min(num_workers, len(processed_entries)))
         with ThreadPoolExecutor(max_workers=gc_max_workers) as executor:
-            ctx = contextvars.copy_context()
             gc_futures = {
                 executor.submit(
-                    ctx.run,
+                    contextvars.copy_context().run,
                     evaluate_goal_completion,
                     self.llm,
                     convo_item,
