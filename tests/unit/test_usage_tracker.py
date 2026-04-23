@@ -87,12 +87,12 @@ class TestTrackUsageNoOp:
     def test_no_tracker_is_noop(self, usage: types.ModuleType) -> None:
         usage.reset_current_tracker(usage.set_current_tracker(usage.UsageTracker()))
         # Ensure no tracker is set before calling
-        assert usage.get_current_tracker() is None
+        assert usage._current_tracker.get() is None
         usage.track_usage("gpt-4o", "openai", 999, 999)
-        assert usage.get_current_tracker() is None
+        assert usage._current_tracker.get() is None
 
     def test_no_tracker_by_default(self, usage: types.ModuleType) -> None:
-        assert usage.get_current_tracker() is None
+        assert usage._current_tracker.get() is None
 
 
 # ---------------------------------------------------------------------------
@@ -103,7 +103,7 @@ class TestTrackerContextVar:
         tracker = usage.UsageTracker()
         token = usage.set_current_tracker(tracker)
         try:
-            assert usage.get_current_tracker() is tracker
+            assert usage._current_tracker.get() is tracker
         finally:
             usage.reset_current_tracker(token)
 
@@ -111,7 +111,7 @@ class TestTrackerContextVar:
         tracker = usage.UsageTracker()
         token = usage.set_current_tracker(tracker)
         usage.reset_current_tracker(token)
-        assert usage.get_current_tracker() is None
+        assert usage._current_tracker.get() is None
 
     def test_track_usage_records_on_active_tracker(
         self, usage: types.ModuleType
@@ -152,7 +152,7 @@ class TestThreadIsolation:
 
         def worker() -> None:
             # A plain thread starts with a fresh context — no tracker.
-            thread_saw_tracker.append(usage.get_current_tracker() is not None)
+            thread_saw_tracker.append(usage._current_tracker.get() is not None)
             usage.track_usage("m", "p", 100, 50)
 
         t = threading.Thread(target=worker)
@@ -172,7 +172,7 @@ class TestThreadIsolation:
 
         def worker() -> bool:
             usage.track_usage("m", "p", 100, 50)
-            return usage.get_current_tracker() is None
+            return usage._current_tracker.get() is None
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=1) as ex:
             saw_no_tracker = ex.submit(worker).result()
