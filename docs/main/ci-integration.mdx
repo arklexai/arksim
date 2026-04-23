@@ -1,15 +1,15 @@
 ---
 title: "CI Integration"
-description: "Run ArkSim as an automated quality gate in your CI pipeline so every code change is tested against your agent's quality bar before it ships."
+description: "Run arksim as an automated quality gate in your CI pipeline so every code change is tested against your agent's quality bar before it ships."
 ---
 
-## Why run ArkSim in CI?
+## Why run arksim in CI?
 
 Agents break in non-obvious ways. A prompt tweak, a model upgrade, or a dependency change can silently degrade helpfulness, introduce false information, or cause goal failures — without triggering any unit test.
 
-Running ArkSim on every pull request turns quality regression into a CI signal:
+Running arksim on every pull request turns quality regression into a CI signal:
 
-| Without ArkSim in CI | With ArkSim in CI |
+| Without arksim in CI | With arksim in CI |
 |----------------------|-------------------|
 | Regressions found in production | Regressions caught before merge |
 | Manual spot-checking before releases | Automated evaluation on every PR |
@@ -22,7 +22,7 @@ Running ArkSim on every pull request turns quality regression into a CI signal:
 
 | | pytest (custom agent) | HTTP server |
 |---|---|---|
-| **How it works** | ArkSim loads your agent class in-process | ArkSim calls your agent over HTTP |
+| **How it works** | arksim loads your agent class in-process | arksim calls your agent over HTTP |
 | **Agent type** | Python class subclassing `BaseAgent` | Any HTTP server (any language or framework) |
 | **CI complexity** | Simple — just run `pytest` | Requires starting, health-checking, and stopping a server |
 | **Template** | `arksim-pytest.yml` + `test_agent_quality.py` | `arksim.yml` |
@@ -31,7 +31,7 @@ Running ArkSim on every pull request turns quality regression into a CI signal:
 
 ## Approach 1: pytest with a custom agent
 
-Your agent is a Python class that subclasses `BaseAgent`. ArkSim loads it in-process — no HTTP server needed. The pytest test runs simulation and evaluation directly and asserts scores.
+Your agent is a Python class that subclasses `BaseAgent`. arksim loads it in-process — no HTTP server needed. The pytest test runs simulation and evaluation directly and asserts scores.
 
 ### How it works
 
@@ -142,7 +142,7 @@ GitHub Actions runner
 
     | Secret | Purpose |
     |--------|---------|
-    | `OPENAI_API_KEY` | LLM ArkSim uses to evaluate your agent |
+    | `OPENAI_API_KEY` | LLM arksim uses to evaluate your agent |
   </Step>
 
   <Step title="Push">
@@ -154,7 +154,7 @@ GitHub Actions runner
 
 ## Approach 2: HTTP server
 
-Your agent runs as an HTTP server exposing an OpenAI-compatible chat completions endpoint. ArkSim calls it over HTTP during CI — works with any language or framework.
+Your agent runs as an HTTP server exposing an OpenAI-compatible chat completions endpoint. arksim calls it over HTTP during CI — works with any language or framework.
 
 ### How it works
 
@@ -203,7 +203,7 @@ The CLI exits non-zero if any threshold is not met, which fails the job.
     ```
   </Step>
 
-  <Step title="Create your ArkSim config">
+  <Step title="Create your arksim config">
     Create `arksim/config.yaml` in your repo. Point the `endpoint` at the port where your agent server will listen:
 
     ```yaml
@@ -245,7 +245,7 @@ The CLI exits non-zero if any threshold is not met, which fails the job.
     See [Evaluation](./evaluate-conversation) for all configuration options and the full list of available metrics.
 
     <Tip>
-      If your agent's `requirements.txt` conflicts with ArkSim's dependencies, install them in separate virtual environments so they don't interfere:
+      If your agent's `requirements.txt` conflicts with arksim's dependencies, install them in separate virtual environments so they don't interfere:
 
       ```yaml
       - name: Install agent dependencies
@@ -253,7 +253,7 @@ The CLI exits non-zero if any threshold is not met, which fails the job.
           python -m venv .venv-agent
           .venv-agent/bin/pip install -r requirements.txt
 
-      - name: Install ArkSim
+      - name: Install arksim
         run: pip install arksim
 
       - name: Start agent server
@@ -330,7 +330,7 @@ The CLI exits non-zero if any threshold is not met, which fails the job.
 
     | Secret | Purpose |
     |--------|---------|
-    | `OPENAI_API_KEY` | LLM ArkSim uses to evaluate your agent |
+    | `OPENAI_API_KEY` | LLM arksim uses to evaluate your agent |
     | `AGENT_API_KEY` | *(optional)* API key your agent server needs |
   </Step>
 

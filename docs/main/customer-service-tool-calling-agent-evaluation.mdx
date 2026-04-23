@@ -1,11 +1,11 @@
 ---
 title: "Customer Service Tool-Calling Agent"
-description: "End-to-end example of using ArkSim to evaluate a tool-calling customer service agent with trajectory matching against expected tool call sequences."
+description: "End-to-end example of using arksim to evaluate a tool-calling customer service agent with trajectory matching against expected tool call sequences."
 ---
 
 ## Overview
 
-This example walks through running ArkSim against a customer service agent that uses tool calling (OpenAI Agents SDK) backed by a SQLite database. Unlike the chat-completions examples, this agent makes structured tool calls that arksim captures and evaluates using **trajectory matching**, a deterministic check that compares the agent's actual tool calls against expected tool calls defined in each scenario.
+This example walks through running arksim against a customer service agent that uses tool calling (OpenAI Agents SDK) backed by a SQLite database. Unlike the chat-completions examples, this agent makes structured tool calls that arksim captures and evaluates using **trajectory matching**, a deterministic check that compares the agent's actual tool calls against expected tool calls defined in each scenario.
 
 The agent handles customer lookup, order management, product search, and identity verification for a fictional online store.
 
@@ -87,7 +87,7 @@ Trajectory matching runs between turn-level evaluation and goal completion, so f
 ---
 
 <Note>
-  Before following these steps, ensure [ArkSim is installed](./installation) (`pip install arksim`).
+  Before following these steps, ensure [arksim is installed](./installation) (`pip install arksim`).
 </Note>
 
 ## Running the Example

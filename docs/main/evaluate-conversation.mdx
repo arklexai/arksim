@@ -1,6 +1,6 @@
 ---
 title: "Evaluation"
-description: "Use ArkSim to score your agent's responses on helpfulness, coherence, relevance, faithfulness, and goal completion, and surface failure patterns with actionable fixes."
+description: "Use arksim to score your agent's responses on helpfulness, coherence, relevance, faithfulness, and goal completion, and surface failure patterns with actionable fixes."
 ---
 
 ## What is Evaluation?
@@ -230,7 +230,7 @@ If any gate fails, the CLI exits with code `1` and logs which conversations and 
 
 ### Programmatic threshold gates
 
-When running ArkSim programmatically (e.g. with a custom agent class), you can apply the same gates by importing `check_numeric_thresholds` and `check_qualitative_failure_labels` directly from `arksim.evaluator`:
+When running arksim programmatically (e.g. with a custom agent class), you can apply the same gates by importing `check_numeric_thresholds` and `check_qualitative_failure_labels` directly from `arksim.evaluator`:
 
 ```python
 import sys
@@ -276,7 +276,7 @@ for convo in evaluator_output.conversations:
 ## Running Evaluation
 
 <Steps>
-  <Step title="Install ArkSim">
+  <Step title="Install arksim">
     ```bash
     pip install arksim
     ```

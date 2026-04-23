@@ -1,9 +1,9 @@
 ---
 title: "Schema Reference"
-description: "JSON and YAML schemas used by ArkSim for scenarios, simulation output, evaluation output, and run configuration."
+description: "JSON and YAML schemas used by arksim for scenarios, simulation output, evaluation output, and run configuration."
 ---
 
-This page documents the structure of the main artifacts used and produced by ArkSim: scenario files, simulation output, evaluation output, and the run configuration file. Use it when building integrations, writing custom tooling, or debugging pipeline outputs.
+This page documents the structure of the main artifacts used and produced by arksim: scenario files, simulation output, evaluation output, and the run configuration file. Use it when building integrations, writing custom tooling, or debugging pipeline outputs.
 
 <Tip>
   For agent connection details (Chat Completions, A2A, and config), see [Agent configuration](./simulate-conversation#agent-configuration).
@@ -63,7 +63,7 @@ Written by `arksim simulate` or the simulation step of `arksim simulate-evaluate
 </ResponseField>
 
 <ResponseField name="simulator_version" type="string" required>
-  ArkSim package version that produced this file.
+  arksim package version that produced this file.
 </ResponseField>
 
 <ResponseField name="simulation_id" type="string" required>
@@ -115,7 +115,7 @@ Written by `arksim evaluate` or the evaluation step of `arksim simulate-evaluate
 </ResponseField>
 
 <ResponseField name="evaluator_version" type="string" required>
-  ArkSim package version that produced this file.
+  arksim package version that produced this file.
 </ResponseField>
 
 <ResponseField name="evaluation_id" type="string" required>
