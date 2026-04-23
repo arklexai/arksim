@@ -23,22 +23,20 @@ After the run, ArkSim generates an evaluation report (`evaluation/final_report.h
 
 ## Prerequisites
 
-1. Install Rasa Pro (requires Python 3.10+).
+Install ArkSim in its own environment (`pip install arksim` or `pip install -e .` from the repo root). The steps below run Rasa Pro in a separate virtualenv managed by Poetry so the two dependency graphs stay isolated.
 
-   The demo ships a `pyproject.toml` in `rasa_project/` with the Rasa Pro private registry and a pinned version. Poetry is the path Rasa itself recommends:
+1. Install Rasa Pro (Python 3.10-3.13).
+
+   The demo ships a `pyproject.toml` in `rasa_project/` that pulls `rasa-pro` from Rasa's private registry with a pinned version:
 
    ```bash
    cd rasa_project
    poetry install
    ```
 
-   Or install standalone with uv / pip:
+   Rasa Pro is distributed from a private package index, so Poetry needs to authenticate against it on first use. See Rasa's [install guide](https://rasa.com/docs/rasa-pro/installation/python/environment-set-up/) for the canonical auth step.
 
-   ```bash
-   uv pip install rasa-pro
-   # or
-   pip install rasa-pro
-   ```
+   Alternative: standalone install with `uv pip install rasa-pro` or `pip install rasa-pro`, following the same Rasa docs for index-URL / credentials.
 
 2. Set your environment variables:
 
@@ -47,13 +45,15 @@ After the run, ArkSim generates an evaluation report (`evaluation/final_report.h
    export OPENAI_API_KEY="<your-key>"
    ```
 
+   `RASA_LICENSE` is Rasa Pro's runtime license check. `OPENAI_API_KEY` is used by both CALM (via `endpoints.yml`) and ArkSim's simulated user + evaluator.
+
    Get a free Rasa Pro Developer Edition license at [rasa.com](https://rasa.com/rasa-pro-developer-edition-license-key-request).
 
 3. Train the CALM assistant:
 
    ```bash
    cd rasa_project
-   rasa train
+   poetry run rasa train
    cd ..
    ```
 
@@ -63,8 +63,10 @@ Start the Rasa server (from `rasa_project/`). Custom actions run in-process via 
 
 ```bash
 cd rasa_project
-rasa run --enable-api --cors "*"
+poetry run rasa run --enable-api --cors "*"
 ```
+
+`--cors "*"` opens the REST channel to any origin; intended for local development only. Do not expose this server on a public network.
 
 In a separate terminal, run the simulation and evaluation:
 

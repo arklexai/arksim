@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-* **examples:** add `pyproject.toml` to the Rasa Pro demo project for Poetry-based install ([#148](https://github.com/arklexai/arksim/issues/148))
+* **examples:** add `pyproject.toml` and `poetry.lock` to the Rasa Pro demo project for reproducible Poetry-based install, with an explicit `language-data` pin to work around an undeclared transitive import in `rasa-pro 3.14.0` ([#148](https://github.com/arklexai/arksim/issues/148))
 
 ### Changed
 
