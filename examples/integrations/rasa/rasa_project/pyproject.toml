@@ -16,6 +16,8 @@ priority = "supplemental"
 
 [tool.poetry.dependencies]
 python = ">=3.10.0,<3.14"
+# rasa-pro 3.14.0 imports `language_data` during validation but does not declare it; pin explicitly.
+language-data = "*"
 
 [tool.poetry.dependencies.rasa-pro]
 version = "3.14.0"
