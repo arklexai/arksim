@@ -144,12 +144,14 @@ class AgentConfig(BaseModel):
                 config_data = data.get("api_config")
                 if not config_data:
                     raise ValueError("chat_completions agent requires 'api_config'")
-                data["api_config"] = ChatCompletionsConfig(**config_data)
+                if not isinstance(config_data, ChatCompletionsConfig):
+                    data["api_config"] = ChatCompletionsConfig(**config_data)
             elif agent_type == AgentType.A2A.value:
                 config_data = data.get("api_config")
                 if not config_data:
                     raise ValueError("a2a agent requires 'api_config'")
-                data["api_config"] = A2AConfig(**config_data)
+                if not isinstance(config_data, A2AConfig):
+                    data["api_config"] = A2AConfig(**config_data)
             else:
                 raise ValueError(f"Unsupported agent type: {agent_type}")
         else:
