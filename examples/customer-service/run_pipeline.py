@@ -94,8 +94,6 @@ async def main() -> None:
         custom_metrics=[
             VerificationComplianceMetric(),
             ToolUsageEfficiencyMetric(),
-        ],
-        custom_qualitative_metrics=[
             UnauthorizedActionMetric(),
             DataPrivacyMetric(),
         ],

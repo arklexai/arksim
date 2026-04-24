@@ -198,9 +198,9 @@ def _build_final_report_data(
                 qual_label_counts[qs.name][qs.value] += 1
             failure_counts[turn.turn_behavior_failure] += 1
         # Conversation-level custom metrics
-        for score in conv.scores:
+        for score in conv.convo_scores:
             metric_scores[score.name].append(score.value)
-        for qs in conv.qual_scores:
+        for qs in conv.convo_qual_scores:
             qual_label_counts[qs.name][qs.value] += 1
 
     def safe_avg(values: list[float]) -> float:
@@ -359,8 +359,8 @@ def _build_convo_rows(
                 if scenario and scenario.knowledge
                 else [],
                 goal_completion_reason=conv.goal_completion_reason,
-                scores=[s.model_dump() for s in conv.scores],
-                qual_scores=[q.model_dump() for q in conv.qual_scores],
+                scores=[s.model_dump() for s in conv.convo_scores],
+                qual_scores=[q.model_dump() for q in conv.convo_qual_scores],
             )
         )
     return rows

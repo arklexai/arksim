@@ -150,11 +150,11 @@ class TestEvaluateConversation:
             llm,
             _convo_item(turns=1),
             turns,
-            custom_metrics=[StubQuant()],
+            custom_convo_metrics=[StubQuant()],
         )
-        assert len(result.scores) == 1
-        assert result.scores[0].name == "stub_quant"
-        assert result.scores[0].value == 7.0
+        assert len(result.convo_scores) == 1
+        assert result.convo_scores[0].name == "stub_quant"
+        assert result.convo_scores[0].value == 7.0
 
     def test_custom_qual_metrics_run(self) -> None:
         """Custom qualitative metrics are executed and returned in qual_scores."""
@@ -172,11 +172,11 @@ class TestEvaluateConversation:
             llm,
             _convo_item(turns=1),
             turns,
-            custom_qualitative_metrics=[StubQual()],
+            custom_convo_qualitative_metrics=[StubQual()],
         )
-        assert len(result.qual_scores) == 1
-        assert result.qual_scores[0].name == "stub_qual"
-        assert result.qual_scores[0].value == "pass"
+        assert len(result.convo_qual_scores) == 1
+        assert result.convo_qual_scores[0].name == "stub_qual"
+        assert result.convo_qual_scores[0].value == "pass"
 
     def test_custom_metric_failure_logged_not_raised(self) -> None:
         """A failing custom metric is skipped, not propagated."""
@@ -194,17 +194,17 @@ class TestEvaluateConversation:
             llm,
             _convo_item(turns=1),
             turns,
-            custom_metrics=[BrokenMetric()],
+            custom_convo_metrics=[BrokenMetric()],
         )
-        assert result.scores == []
+        assert result.convo_scores == []
 
     def test_no_custom_metrics_returns_empty(self) -> None:
-        """Without custom metrics, scores and qual_scores are empty."""
+        """Without custom metrics, convo_scores and convo_qual_scores are empty."""
         llm = _mock_llm(score=4)
         turns = [_turn_eval(0)]
         result = evaluate_conversation(llm, _convo_item(turns=1), turns)
-        assert result.scores == []
-        assert result.qual_scores == []
+        assert result.convo_scores == []
+        assert result.convo_qual_scores == []
 
     def test_custom_quant_receives_additional_input(self) -> None:
         """additional_input on a quant metric is forwarded into ScoreInput."""
@@ -226,7 +226,7 @@ class TestEvaluateConversation:
             llm,
             _convo_item(turns=1),
             [_turn_eval(0)],
-            custom_metrics=[CapturingMetric()],
+            custom_convo_metrics=[CapturingMetric()],
         )
         assert captured["extra"]["threshold"] == 0.8
 
@@ -248,7 +248,7 @@ class TestEvaluateConversation:
             llm,
             _convo_item(turns=1),
             [_turn_eval(0)],
-            custom_qualitative_metrics=[CapturingQual()],
+            custom_convo_qualitative_metrics=[CapturingQual()],
         )
         assert captured["extra"]["labels"] == ["a", "b"]
 
@@ -286,7 +286,7 @@ class TestEvaluateConversation:
             llm,
             convo,
             [_turn_eval(0), _turn_eval(1)],
-            custom_metrics=[InspectingMetric()],
+            custom_convo_metrics=[InspectingMetric()],
         )
         assert captured["user_goal"] == "solve the issue"
         assert captured["profile"] == "admin"
@@ -322,13 +322,13 @@ class TestEvaluateConversation:
             llm,
             _convo_item(turns=1),
             [_turn_eval(0)],
-            custom_metrics=[Quant1(), Quant2()],
-            custom_qualitative_metrics=[Qual1()],
+            custom_convo_metrics=[Quant1(), Quant2()],
+            custom_convo_qualitative_metrics=[Qual1()],
         )
-        quant_names = {s.name for s in result.scores}
+        quant_names = {s.name for s in result.convo_scores}
         assert quant_names == {"q1", "q2"}
-        assert len(result.qual_scores) == 1
-        assert result.qual_scores[0].name == "ql1"
+        assert len(result.convo_qual_scores) == 1
+        assert result.convo_qual_scores[0].name == "ql1"
 
     def test_broken_qual_metric_skipped(self) -> None:
         """A failing qualitative metric is skipped, not propagated."""
@@ -345,6 +345,6 @@ class TestEvaluateConversation:
             llm,
             _convo_item(turns=1),
             [_turn_eval(0)],
-            custom_qualitative_metrics=[BrokenQual()],
+            custom_convo_qualitative_metrics=[BrokenQual()],
         )
-        assert result.qual_scores == []
+        assert result.convo_qual_scores == []

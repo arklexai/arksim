@@ -54,9 +54,13 @@ def check_numeric_thresholds(
                 raw = convo.goal_completion_score
                 score: float | None = raw if raw >= 0 else None
             else:
-                # Conversation-level custom metrics live on conv.scores.
+                # Conversation-level custom metrics live on conv.convo_scores.
                 convo_match = next(
-                    (r for r in convo.scores if r.name == metric_name and r.value >= 0),
+                    (
+                        r
+                        for r in convo.convo_scores
+                        if r.name == metric_name and r.value >= 0
+                    ),
                     None,
                 )
                 if convo_match is not None:
@@ -132,7 +136,7 @@ def check_qualitative_failure_labels(
             failures: list[dict[str, object]] = []
 
             # Check conversation-level qual scores.
-            for qs in convo.qual_scores:
+            for qs in convo.convo_qual_scores:
                 if qs.name == metric_name and qs.value in failure_labels:
                     failures.append({"turn_id": "conversation", "label": qs.value})
 

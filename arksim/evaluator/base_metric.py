@@ -6,12 +6,14 @@ Provides the abstract base for all evaluation metrics, both built-in and user-de
 from __future__ import annotations
 
 import abc
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
 if TYPE_CHECKING:
     from arksim.llms.chat.base.base_llm import BaseLLM
+
+MetricScope = Literal["turn", "conversation"]
 
 
 class ChatMessage(BaseModel):
@@ -31,7 +33,7 @@ class QuantResult(BaseModel):
     value: float
     reason: str | None = None
     metadata: dict[str, Any] | None = None
-    scope: str = "turn"
+    scope: MetricScope = "turn"
 
 
 class QualResult(BaseModel):
@@ -40,7 +42,7 @@ class QualResult(BaseModel):
     name: str
     value: str
     reason: str | None = None
-    scope: str = "turn"
+    scope: MetricScope = "turn"
 
 
 class ScoreInput(BaseModel):
@@ -140,7 +142,7 @@ class QuantitativeMetric(_LLMMixin, abc.ABC):
         additional_input: dict[str, Any] | None = None,
         description: str = "",
         llm: BaseLLM | None = None,
-        scope: str = "turn",
+        scope: MetricScope = "turn",
     ) -> None:
         self.name = name if name is not None else self.__class__.__name__
         self.score_range = score_range
@@ -201,7 +203,7 @@ class QualitativeMetric(_LLMMixin, abc.ABC):
         description: str = "",
         label_colors: dict[str, str] | None = None,
         llm: BaseLLM | None = None,
-        scope: str = "turn",
+        scope: MetricScope = "turn",
     ) -> None:
         self.name = name if name is not None else self.__class__.__name__
         self.description = description

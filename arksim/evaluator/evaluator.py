@@ -245,7 +245,10 @@ class Evaluator:
 
         logger.info(f"Preprocessing complete: {total_turns} total turns to evaluate")
 
-        # When auto: enough workers for all turns + goal_completion calls at once.
+        # When auto: enough workers for all turns + per-conversation evaluate_conversation
+        # calls at once. Each evaluate_conversation call may itself spawn an inner pool
+        # for convo-scope custom metrics, but that pool is unbounded in auto mode so
+        # additional workers beyond total_turns + len(conversations) are not needed here.
         # When explicit int: use that value as-is.
         if self.params.num_workers == "auto":
             num_workers = total_turns + len(conversations)
@@ -263,6 +266,28 @@ class Evaluator:
             pbar.update(1)
             if on_progress:
                 on_progress(int(pbar.n), total_turns + len(conversations))
+
+        # Route custom metrics to turn- or conversation-level execution by scope.
+        _turn_quant = [
+            m
+            for m in self.params.custom_metrics
+            if isinstance(m, QuantitativeMetric) and m.scope == "turn"
+        ]
+        _turn_qual = [
+            m
+            for m in self.params.custom_metrics
+            if isinstance(m, QualitativeMetric) and m.scope == "turn"
+        ]
+        _convo_quant = [
+            m
+            for m in self.params.custom_metrics
+            if isinstance(m, QuantitativeMetric) and m.scope == "conversation"
+        ]
+        _convo_qual = [
+            m
+            for m in self.params.custom_metrics
+            if isinstance(m, QualitativeMetric) and m.scope == "conversation"
+        ]
 
         # Phase 1: evaluate all turns in parallel across all conversations
         all_turn_tasks = [
@@ -285,8 +310,8 @@ class Evaluator:
                         evaluate_turn,
                         self.llm,
                         turn_item,
-                        self.params.custom_metrics or None,
-                        self.params.custom_qualitative_metrics or None,
+                        _turn_quant or None,
+                        _turn_qual or None,
                         self.params.metrics_to_run,
                         inner_workers,
                     ): turn_item
@@ -317,13 +342,13 @@ class Evaluator:
                 conversations, processed_entries, turn_results
             )
 
-        # Phase 2: goal_completion for each conversation (parallel)
+        # Phase 2: conversation-level evaluation (parallel)
         convo_score_list: list[ConversationEvaluation] = []
 
-        gc_max_workers = max(1, min(num_workers, len(processed_entries)))
-        gc_inner_workers = 0 if self.params.num_workers == "auto" else num_workers
-        with ThreadPoolExecutor(max_workers=gc_max_workers) as executor:
-            gc_futures = {
+        convo_max_workers = max(1, min(num_workers, len(processed_entries)))
+        convo_inner_workers = 0 if self.params.num_workers == "auto" else num_workers
+        with ThreadPoolExecutor(max_workers=convo_max_workers) as executor:
+            convo_futures = {
                 executor.submit(
                     evaluate_conversation,
                     self.llm,
@@ -332,21 +357,21 @@ class Evaluator:
                         turn_results.get(convo_item.chat_id, []),
                         key=lambda t: t.turn_id,
                     ),
-                    self.params.convo_custom_metrics or None,
-                    self.params.convo_custom_qualitative_metrics or None,
+                    _convo_quant or None,
+                    _convo_qual or None,
                     self.params.metrics_to_run,
-                    gc_inner_workers,
+                    convo_inner_workers,
                 ): convo_item
                 for _, convo_item in processed_entries
             }
-            for future in as_completed(gc_futures):
-                convo_item = gc_futures[future]
+            for future in as_completed(convo_futures):
+                convo_item = convo_futures[future]
                 try:
                     convo_eval = future.result()
                     convo_score_list.append(convo_eval)
                 except Exception as e:
                     logger.error(
-                        f"Error computing goal completion for {convo_item.chat_id}: {e}"
+                        f"Error evaluating conversation {convo_item.chat_id}: {e}"
                     )
                 pbar.update(1)
 
@@ -701,21 +726,21 @@ class Evaluator:
             logger.info(f"\n{'=' * 60}")
             return
 
-        # Compute aggregates on-the-fly from Evaluation
-        metric_scores: dict[str, list[float]] = defaultdict(list)
+        # Compute aggregates on-the-fly from Evaluation.
+        # Key by (name, scope) so a turn-scope and convo-scope metric that
+        # share a name are never pooled into the same bucket.
+        metric_scores: dict[tuple[str, str], list[float]] = defaultdict(list)
         failure_counts: Counter = Counter()
         for conv in results.conversations:
             for turn in conv.turn_scores:
                 for score in turn.scores:
-                    metric_scores[score.name].append(score.value)
+                    metric_scores[(score.name, "turn")].append(score.value)
                 failure_counts[turn.turn_behavior_failure] += 1
-            for score in conv.scores:
-                metric_scores[score.name].append(score.value)
+            for score in conv.convo_scores:
+                metric_scores[(score.name, "convo")].append(score.value)
 
-        averages: dict[str, float] = {
-            metric: sum(vals) / len(vals)
-            for metric, vals in metric_scores.items()
-            if vals
+        averages: dict[tuple[str, str], float] = {
+            key: sum(vals) / len(vals) for key, vals in metric_scores.items() if vals
         }
 
         if results.conversations:
@@ -731,9 +756,9 @@ class Evaluator:
             "faithfulness",
         ]
         valid_scores = [
-            averages[m]
+            averages[(m, "turn")]
             for m in builtin_metrics
-            if m in averages and averages[m] != SCORE_NOT_COMPUTED
+            if (m, "turn") in averages and averages[(m, "turn")] != SCORE_NOT_COMPUTED
         ]
 
         if valid_scores:
@@ -744,17 +769,26 @@ class Evaluator:
                 "performance and 5 indicates excellent performance.\n"
             )
             for metric in builtin_metrics:
-                if metric in averages and averages[metric] != SCORE_NOT_COMPUTED:
+                key = (metric, "turn")
+                if key in averages and averages[key] != SCORE_NOT_COMPUTED:
                     logger.info(
                         f"• {metric.title()}: "
-                        f"{self._format_metric_score(averages[metric])}"
+                        f"{self._format_metric_score(averages[key])}"
                     )
 
-            # Custom metrics
-            for name, score in averages.items():
-                if name not in builtin_metrics and score != SCORE_NOT_COMPUTED:
+            # Custom metrics -- label with scope when the same name appears in
+            # both turn and convo scope to avoid ambiguity.
+            builtin_set = set(builtin_metrics)
+            turn_names = {name for name, scope in averages if scope == "turn"}
+            convo_names = {name for name, scope in averages if scope == "convo"}
+            shared_names = turn_names & convo_names
+            for (name, scope), score in averages.items():
+                if name not in builtin_set and score != SCORE_NOT_COMPUTED:
+                    label = name.replace("_", " ").title()
+                    if name in shared_names:
+                        label = f"{label} ({scope})"
                     logger.info(
-                        f"• {name.replace('_', ' ').title()}: "
+                        f"• {label}: "
                         f"{self._format_metric_score(score, use_label=False)}"
                     )
 
@@ -924,21 +958,10 @@ def run_evaluation(
         settings.custom_metrics_file_paths, llm=llm
     )
 
-    # Split custom metrics by scope (turn vs. conversation).
-    turn_quant = [m for m in all_quant if getattr(m, "scope", "turn") == "turn"]
-    convo_quant = [
-        m for m in all_quant if getattr(m, "scope", "turn") == "conversation"
-    ]
-    turn_qual = [m for m in all_qual if getattr(m, "scope", "turn") == "turn"]
-    convo_qual = [m for m in all_qual if getattr(m, "scope", "turn") == "conversation"]
-
     params = EvaluationParams(
         output_dir=settings.output_dir,
         num_workers=settings.num_workers,
-        custom_metrics=turn_quant,
-        custom_qualitative_metrics=turn_qual,
-        convo_custom_metrics=convo_quant,
-        convo_custom_qualitative_metrics=convo_qual,
+        custom_metrics=list(all_quant) + list(all_qual),
         metrics_to_run=settings.metrics_to_run or None,
     )
 

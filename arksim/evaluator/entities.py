@@ -160,10 +160,7 @@ class EvaluationParams(BaseModel):
     code_file_path: str | None = None
     entry_function: str | None = None
     num_workers: int | str = Field(default=50)
-    custom_metrics: list[QuantitativeMetric] = Field(default_factory=list)
-    custom_qualitative_metrics: list[QualitativeMetric] = Field(default_factory=list)
-    convo_custom_metrics: list[QuantitativeMetric] = Field(default_factory=list)
-    convo_custom_qualitative_metrics: list[QualitativeMetric] = Field(
+    custom_metrics: list[QuantitativeMetric | QualitativeMetric] = Field(
         default_factory=list
     )
     metrics_to_run: list[str] | None = None
@@ -230,10 +227,8 @@ class ConversationEvaluation(BaseModel):
     overall_agent_score: float  # 0–1
     evaluation_status: str
     turn_scores: list[TurnEvaluation]
-    scores: list[QuantResult] = Field(default_factory=list)  # convo-level custom quant
-    qual_scores: list[QualResult] = Field(
-        default_factory=list
-    )  # convo-level custom qual
+    convo_scores: list[QuantResult] = Field(default_factory=list)
+    convo_qual_scores: list[QualResult] = Field(default_factory=list)
 
 
 class ErrorScenarioMapping(BaseModel):

@@ -414,8 +414,8 @@ class TestLoadCustomMetricsScope:
             f.write(code)
 
         quant, _ = _load_custom_metrics([path])
-        if quant:
-            assert quant[0].scope == "turn"
+        assert len(quant) == 1
+        assert quant[0].scope == "turn"
 
     def test_conversation_scope_preserved(self, temp_dir: str) -> None:
         """Metrics with scope='conversation' retain it after loading."""
@@ -434,8 +434,8 @@ class TestLoadCustomMetricsScope:
             f.write(code)
 
         quant, _ = _load_custom_metrics([path])
-        if quant:
-            assert quant[0].scope == "conversation"
+        assert len(quant) == 1
+        assert quant[0].scope == "conversation"
 
     def test_mixed_scopes_loaded(self, temp_dir: str) -> None:
         """File with both turn and conversation metrics loads both."""
@@ -474,17 +474,17 @@ class TestLoadCustomMetricsScope:
             f.write(code)
 
         quant, qual = _load_custom_metrics([path])
-        if quant:
-            turn_q = [m for m in quant if m.scope == "turn"]
-            convo_q = [m for m in quant if m.scope == "conversation"]
-            assert len(turn_q) == 1
-            assert turn_q[0].name == "turn_q"
-            assert len(convo_q) == 1
-            assert convo_q[0].name == "convo_q"
-        if qual:
-            turn_ql = [m for m in qual if m.scope == "turn"]
-            convo_ql = [m for m in qual if m.scope == "conversation"]
-            assert len(turn_ql) == 1
-            assert turn_ql[0].name == "turn_ql"
-            assert len(convo_ql) == 1
-            assert convo_ql[0].name == "convo_ql"
+        assert len(quant) == 2
+        assert len(qual) == 2
+        turn_q = [m for m in quant if m.scope == "turn"]
+        convo_q = [m for m in quant if m.scope == "conversation"]
+        assert len(turn_q) == 1
+        assert turn_q[0].name == "turn_q"
+        assert len(convo_q) == 1
+        assert convo_q[0].name == "convo_q"
+        turn_ql = [m for m in qual if m.scope == "turn"]
+        convo_ql = [m for m in qual if m.scope == "conversation"]
+        assert len(turn_ql) == 1
+        assert turn_ql[0].name == "turn_ql"
+        assert len(convo_ql) == 1
+        assert convo_ql[0].name == "convo_ql"
