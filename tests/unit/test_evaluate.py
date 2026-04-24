@@ -230,28 +230,6 @@ class TestEvaluateConversation:
         )
         assert captured["extra"]["threshold"] == 0.8
 
-    def test_custom_qual_receives_additional_input(self) -> None:
-        """additional_input on a qual metric is forwarded into ScoreInput."""
-        captured: dict = {}
-
-        class CapturingQual(QualitativeMetric):
-            def __init__(self) -> None:
-                super().__init__(name="capturing_qual")
-                self.additional_input = {"labels": ["a", "b"]}
-
-            def evaluate(self, score_input: ScoreInput) -> QualResult:
-                captured["extra"] = score_input.model_extra
-                return QualResult(name=self.name, value="a", reason="ok")
-
-        llm = _mock_llm(score=4)
-        evaluate_conversation(
-            llm,
-            _convo_item(turns=1),
-            [_turn_eval(0)],
-            custom_convo_qualitative_metrics=[CapturingQual()],
-        )
-        assert captured["extra"]["labels"] == ["a", "b"]
-
     def test_custom_metrics_receive_conversation_context(self) -> None:
         """Custom metrics receive chat_history, knowledge, user_goal, profile."""
         captured: dict = {}

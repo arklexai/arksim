@@ -4,6 +4,7 @@ from __future__ import annotations
 import logging
 import os
 import sys
+import warnings
 
 from arksim.simulation_engine.tool_types import ToolCall
 
@@ -164,6 +165,23 @@ class EvaluationParams(BaseModel):
         default_factory=list
     )
     metrics_to_run: list[str] | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def _merge_legacy_qualitative_metrics(cls, data: object) -> object:
+        """Merge deprecated custom_qualitative_metrics into custom_metrics."""
+        if isinstance(data, dict) and "custom_qualitative_metrics" in data:
+            warnings.warn(
+                "`custom_qualitative_metrics` is deprecated; pass qualitative "
+                "metrics in `custom_metrics` alongside quantitative ones.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            legacy = data.pop("custom_qualitative_metrics") or []
+            data["custom_metrics"] = list(data.get("custom_metrics") or []) + list(
+                legacy
+            )
+        return data
 
 
 class TurnItem(BaseModel):

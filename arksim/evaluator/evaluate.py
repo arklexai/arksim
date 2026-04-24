@@ -69,27 +69,11 @@ def _run_metrics_parallel(
     Scope is taken from ``metric.scope`` rather than being hardcoded.
     """
 
-    def _run_quant(metric: QuantitativeMetric) -> QuantResult:
-        r = metric.score(
-            score_input.model_copy(update=getattr(metric, "additional_input", {}))
-        )
-        return QuantResult(
-            name=metric.name, value=r.value, reason=r.reason, scope=metric.scope
-        )
-
-    def _run_qual(metric: QualitativeMetric) -> QualResult:
-        r = metric.evaluate(
-            score_input.model_copy(update=getattr(metric, "additional_input", {}))
-        )
-        return QualResult(
-            name=r.name, value=r.value, reason=r.reason, scope=metric.scope
-        )
-
     quant_tasks: list[tuple[str, Callable[[], QuantResult]]] = [
-        (m.name, lambda metric=m: _run_quant(metric)) for m in quant_metrics
+        (m.name, lambda metric=m: metric.run(score_input)) for m in quant_metrics
     ]
     qual_tasks: list[tuple[str, Callable[[], QualResult]]] = [
-        (m.name, lambda metric=m: _run_qual(metric)) for m in qual_metrics
+        (m.name, lambda metric=m: metric.run(score_input)) for m in qual_metrics
     ]
     all_tasks = quant_tasks + qual_tasks
 
@@ -271,27 +255,27 @@ def evaluate_conversation(
         profile=convo_item.profile,
     )
 
+    builtin_convo_metrics: list[QuantitativeMetric] = []
     if _should_run("goal_completion", metrics_to_run):
-        result = GoalCompletionMetric(llm).score(
-            ScoreInput(
-                chat_history=convo_item.chat_history,
-                user_goal=convo_item.user_goal,
-            )
-        )
-        goal_completion_score = result.value
-        goal_completion_reason = result.reason
-    else:
-        goal_completion_score = SCORE_NOT_COMPUTED
-        goal_completion_reason = ""
+        builtin_convo_metrics.append(GoalCompletionMetric(llm))
 
-    # Run conversation-level custom metrics in parallel.
+    # Run built-in and custom conversation-level metrics in parallel.
     scores, qual_scores = _run_metrics_parallel(
-        custom_convo_metrics or [],
+        builtin_convo_metrics + (custom_convo_metrics or []),
         custom_convo_qualitative_metrics or [],
         score_input,
         num_workers,
         convo_item.chat_id,
     )
+
+    gc_result = next((r for r in scores if r.name == "goal_completion"), None)
+    if gc_result is not None:
+        scores = [r for r in scores if r.name != "goal_completion"]
+        goal_completion_score = gc_result.value
+        goal_completion_reason = gc_result.reason
+    else:
+        goal_completion_score = SCORE_NOT_COMPUTED
+        goal_completion_reason = ""
 
     behavior_failures = sum(
         1 for t in turns_details if t.turn_behavior_failure not in SKIP_OUTCOMES

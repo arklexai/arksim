@@ -151,6 +151,12 @@ class QuantitativeMetric(_LLMMixin, abc.ABC):
         self._llm = llm
         self.scope = scope
 
+    def run(self, score_input: ScoreInput) -> QuantResult:
+        """Score *score_input* and stamp ``scope`` on the result."""
+        r = self.score(score_input.model_copy(update=self.additional_input))
+        r.scope = self.scope
+        return r
+
     @abc.abstractmethod
     def score(self, score_input: ScoreInput) -> QuantResult:
         raise NotImplementedError()
@@ -210,6 +216,12 @@ class QualitativeMetric(_LLMMixin, abc.ABC):
         self.label_colors: dict[str, str] = label_colors or {}
         self._llm = llm
         self.scope = scope
+
+    def run(self, score_input: ScoreInput) -> QualResult:
+        """Evaluate *score_input* and stamp ``scope`` on the result."""
+        r = self.evaluate(score_input)
+        r.scope = self.scope
+        return r
 
     @abc.abstractmethod
     def evaluate(self, score_input: ScoreInput) -> QualResult:

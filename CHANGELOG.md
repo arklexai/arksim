@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Deprecated
+
+* **evaluator:** `EvaluationParams.custom_qualitative_metrics` is deprecated; pass qualitative metrics in `custom_metrics` alongside quantitative ones. The field still works but emits a `DeprecationWarning` and will be removed in a future major release.
+
 ### Changed
 
 * **a2a:** migrate from a2a-sdk 0.3.x (Pydantic) to 1.0.0 (protobuf) ([#152](https://github.com/arklexai/arksim/pull/152))

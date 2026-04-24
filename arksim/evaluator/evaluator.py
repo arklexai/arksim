@@ -268,26 +268,14 @@ class Evaluator:
                 on_progress(int(pbar.n), total_turns + len(conversations))
 
         # Route custom metrics to turn- or conversation-level execution by scope.
-        _turn_quant = [
-            m
-            for m in self.params.custom_metrics
-            if isinstance(m, QuantitativeMetric) and m.scope == "turn"
-        ]
-        _turn_qual = [
-            m
-            for m in self.params.custom_metrics
-            if isinstance(m, QualitativeMetric) and m.scope == "turn"
-        ]
-        _convo_quant = [
-            m
-            for m in self.params.custom_metrics
-            if isinstance(m, QuantitativeMetric) and m.scope == "conversation"
-        ]
-        _convo_qual = [
-            m
-            for m in self.params.custom_metrics
-            if isinstance(m, QualitativeMetric) and m.scope == "conversation"
-        ]
+        _buckets: dict[tuple[str, str], list] = defaultdict(list)
+        for _m in self.params.custom_metrics:
+            _kind = "quant" if isinstance(_m, QuantitativeMetric) else "qual"
+            _buckets[(_m.scope, _kind)].append(_m)
+        _turn_quant = _buckets[("turn", "quant")]
+        _turn_qual = _buckets[("turn", "qual")]
+        _convo_quant = _buckets[("conversation", "quant")]
+        _convo_qual = _buckets[("conversation", "qual")]
 
         # Phase 1: evaluate all turns in parallel across all conversations
         all_turn_tasks = [
