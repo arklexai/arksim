@@ -1432,6 +1432,58 @@
         #globalTooltip.visible {
             opacity: 1;
         }
+        .root-cause-section {
+            margin-top: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .root-cause-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+            background: #f8fafc;
+        }
+        .root-cause-card:last-child { margin-bottom: 0; }
+        .root-cause-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 8px;
+        }
+        .root-cause-confidence {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+        .conf-high { background: #fee2e2; color: #991b1b; }
+        .conf-medium { background: #fef3c7; color: #92400e; }
+        .conf-low { background: #e0f2fe; color: #0369a1; }
+        .root-cause-description { color: #475569; font-size: 14px; margin-bottom: 10px; }
+        .root-cause-evidence {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 10px;
+            font-size: 13px;
+            color: #64748b;
+        }
+        .root-cause-evidence li { padding: 2px 0; }
+        .root-cause-evidence li::before { content: "•"; color: #94a3b8; margin-right: 8px; }
+        .root-cause-recommendation {
+            background: #f0fdf4;
+            border-left: 3px solid #22c55e;
+            padding: 8px 12px;
+            border-radius: 0 4px 4px 0;
+            font-size: 13px;
+            color: #166534;
+        }
     </style>
 </head>
 <body>
@@ -1579,6 +1631,22 @@
                 </div>
                 <div id="uniqueErrorsList">
                     <!-- Unique errors will be inserted here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Root Cause Analysis Section -->
+        <div class="root-cause-section" id="rootCauseSection" style="display: none;">
+            <div class="section-title collapsible-header" onclick="toggleRootCause()">
+                <span>Root Causes Summary</span>
+                <span class="arrow-icon material-icons" id="rootCauseArrow">expand_more</span>
+            </div>
+            <div id="rootCauseContent" class="collapsible-content" style="padding: 24px;">
+                <div style="margin-bottom: 20px; color: #64748b; font-size: 14px;">
+                    Inferred hypotheses about why failures occurred, with recommended fixes.
+                </div>
+                <div id="rootCauseList">
+                    <!-- Root cause cards will be inserted here -->
                 </div>
             </div>
         </div>
@@ -1845,6 +1913,33 @@
 
             content.classList.toggle('collapsed');
             arrow.classList.toggle('collapsed');
+        }
+
+        function toggleRootCause() {
+            const content = document.getElementById('rootCauseContent');
+            const arrow = document.getElementById('rootCauseArrow');
+            content.classList.toggle('collapsed');
+            arrow.classList.toggle('collapsed');
+        }
+
+        function renderRootCauseAnalysis() {
+            const insights = EMBEDDED_FINAL_REPORT.root_cause_insights;
+            if (!insights || insights.length === 0) return;
+
+            document.getElementById('rootCauseSection').style.display = 'block';
+
+            const list = document.getElementById('rootCauseList');
+            list.innerHTML = '<ol style="margin:0; padding-left:24px; font-size:14px; line-height:1.7;">' +
+                insights.map(function(h) {
+                    return '<li style="margin-bottom:16px; padding-right:8px;">' +
+                        '<strong style="color:#1e293b;">' + escapeHtml(h.label) + '</strong><br>' +
+                        '<span style="color:#475569;">Problem: ' + escapeHtml(h.problem) + '</span><br>' +
+                        '<span style="display:inline-block; margin-top:6px; padding:6px 10px; background:#f0fdf4; border-radius:4px; color:#166534;">' +
+                            '<strong>Fix:</strong> ' + escapeHtml(h.fix) +
+                        '</span>' +
+                    '</li>';
+                }).join('') +
+            '</ol>';
         }
 
         // Populate the conversations table
@@ -2581,6 +2676,7 @@
             renderEvaluationPipeline();
             populateTable();
             renderUniqueErrors();
+            renderRootCauseAnalysis();
             renderPromptsAppendix();
         };
     </script>

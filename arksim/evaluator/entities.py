@@ -238,6 +238,21 @@ class ErrorScenarioMapping(BaseModel):
     scenario_ids: list[str]
 
 
+class RootCauseHypothesis(BaseModel):
+    """A single inferred root cause for agent failures."""
+
+    label: str  # 2–5 words, e.g. "Hallucination", "Over-brevity causing omissions"
+    problem: str  # one sentence, must cite specific numbers or patterns from the data
+    fix: str  # one concrete sentence on what to change
+
+
+class RootCauseAnalysis(BaseModel):
+    """Post-evaluation root cause analysis output."""
+
+    hypotheses: list[RootCauseHypothesis]
+    generated_at: str  # ISO 8601 UTC
+
+
 class Evaluation(BaseModel):
     """Top-level evaluation output file."""
 
@@ -249,3 +264,4 @@ class Evaluation(BaseModel):
     conversations: list[ConversationEvaluation]
     unique_errors: list[UniqueError]
     error_scenario_mappings: list[ErrorScenarioMapping] = Field(default_factory=list)
+    root_cause_analysis: RootCauseAnalysis | None = None

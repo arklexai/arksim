@@ -21,6 +21,8 @@ from .entities import (
     Evaluation,
     EvaluationInput,
     EvaluationParams,
+    RootCauseAnalysis,
+    RootCauseHypothesis,
 )
 from .error_scenarios import build_error_scenario_data
 from .evaluator import Evaluator, run_evaluation
@@ -40,6 +42,8 @@ __all__ = [
     "Evaluator",
     "EvaluationParams",
     "ErrorScenarioMapping",
+    "RootCauseAnalysis",
+    "RootCauseHypothesis",
     "ScoreInput",
     "QuantResult",
     "build_error_scenario_data",
