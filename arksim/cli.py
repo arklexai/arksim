@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import json
 import logging
 import os
 import shutil
@@ -10,6 +11,7 @@ import sys
 import textwrap
 import time
 from importlib import resources
+from pathlib import Path
 
 import yaml
 from pydantic import ValidationError
@@ -341,6 +343,193 @@ def _run_init(agent_type: str, force: bool = False) -> None:
     logger.info(_INIT_NEXT_STEPS[agent_type])
 
 
+# ============================================================================
+# setup-claude - Install/uninstall Claude Code integration
+# ============================================================================
+
+
+def _build_mcp_server_config() -> dict[str, object]:
+    """Build the MCP server config.
+
+    Uses the ``arksim-mcp`` entry point installed by ``pip install arksim[claude]``.
+    This avoids PATH and PYTHONPATH issues since the entry point is a proper
+    console script installed alongside ``arksim`` itself.
+
+    Exits with ``EXIT_CONFIG_ERROR`` if ``arksim-mcp`` is not found on PATH.
+    """
+    arksim_mcp = shutil.which("arksim-mcp")
+    if arksim_mcp:
+        return {"command": arksim_mcp, "args": []}
+
+    logger.error("arksim-mcp not found. Run: pip install arksim[claude]")
+    sys.exit(EXIT_CONFIG_ERROR)
+
+
+def _find_integration_dir() -> Path:
+    """Locate the integrations/claude_code directory.
+
+    Checks the development layout first (relative to the arksim package),
+    then falls back to importlib.resources for installed packages.
+    """
+    dev_path = Path(__file__).resolve().parent.parent / "integrations" / "claude_code"
+    if dev_path.is_dir():
+        return dev_path
+
+    try:
+        pkg_path = Path(str(resources.files("integrations.claude_code")))
+        if pkg_path.is_dir():
+            return pkg_path
+    except (ModuleNotFoundError, TypeError):
+        pass
+
+    logger.error(
+        "Could not locate integrations/claude_code directory. "
+        "Ensure arksim is installed with the claude-code extra."
+    )
+    sys.exit(EXIT_CONFIG_ERROR)
+
+
+def _run_setup_claude(
+    project_dir: str = ".",
+    force: bool = False,
+    uninstall: bool = False,
+) -> None:
+    """Install or uninstall the Claude Code integration for a project.
+
+    Install mode (default):
+      - Creates/merges .mcp.json with an mcpServers.arksim entry
+        (Claude Code reads MCP servers from .mcp.json, not .claude/settings.json)
+      - Copies skill directories from integrations/claude_code/skills/arksim-*/
+        to .claude/skills/arksim-*/
+
+    Uninstall mode:
+      - Removes arksim from mcpServers in .mcp.json
+      - Removes .claude/skills/arksim-*/ directories
+    """
+    root = Path(project_dir).resolve()
+    claude_dir = root / ".claude"
+    mcp_config_path = root / ".mcp.json"
+    skills_dir = claude_dir / "skills"
+
+    if uninstall:
+        _uninstall_claude(mcp_config_path, skills_dir)
+        return
+
+    integration_dir = _find_integration_dir()
+    _install_claude(integration_dir, claude_dir, mcp_config_path, skills_dir, force)
+
+
+def _uninstall_claude(mcp_config_path: Path, skills_dir: Path) -> None:
+    """Remove arksim MCP config and skills from a project."""
+    if mcp_config_path.exists():
+        try:
+            mcp_config = json.loads(mcp_config_path.read_text())
+        except json.JSONDecodeError:
+            logger.error(
+                f"Invalid JSON in {mcp_config_path}. Fix or delete the file and retry."
+            )
+            sys.exit(EXIT_CONFIG_ERROR)
+        mcp_servers = mcp_config.get("mcpServers")
+        if not isinstance(mcp_servers, dict):
+            mcp_servers = {}
+        mcp_servers.pop("arksim", None)
+        if mcp_servers:
+            mcp_config["mcpServers"] = mcp_servers
+            mcp_config_path.write_text(json.dumps(mcp_config, indent=2) + "\n")
+        else:
+            # Remove .mcp.json entirely if no servers remain
+            mcp_config_path.unlink()
+
+    # Remove all arksim-* skill directories
+    if skills_dir.is_dir():
+        for skill_dir in sorted(skills_dir.glob("arksim-*")):
+            if skill_dir.is_dir():
+                shutil.rmtree(skill_dir)
+
+    logger.info("Removed arksim Claude Code integration.")
+
+
+def _install_claude(
+    integration_dir: Path,
+    claude_dir: Path,
+    mcp_config_path: Path,
+    skills_dir: Path,
+    force: bool,
+) -> None:
+    """Install arksim MCP config and skills into a project."""
+    # Check for existing arksim skills
+    existing_skills = list(skills_dir.glob("arksim-*")) if skills_dir.is_dir() else []
+    if existing_skills and not force:
+        logger.error(
+            "arksim skills already installed. "
+            "Use --force to overwrite, or --uninstall to remove first."
+        )
+        sys.exit(EXIT_CONFIG_ERROR)
+
+    # Build MCP server config before any filesystem mutation so we exit
+    # early if arksim-mcp is not on PATH.
+    server_config = _build_mcp_server_config()
+
+    claude_dir.mkdir(parents=True, exist_ok=True)
+
+    # Copy skills first. If this fails, .mcp.json is not written,
+    # preventing a partial install where Claude Code sees the MCP
+    # server but skills are missing.
+    skills_src = integration_dir / "skills"
+    skills_dir.mkdir(parents=True, exist_ok=True)
+
+    # Remove existing arksim skills if --force
+    for old_skill in skills_dir.glob("arksim-*"):
+        if old_skill.is_dir():
+            shutil.rmtree(old_skill)
+
+    if not skills_src.is_dir():
+        logger.error(f"Skills directory not found: {skills_src}")
+        sys.exit(EXIT_CONFIG_ERROR)
+
+    copied = []
+    for skill_dir in sorted(skills_src.iterdir()):
+        if not skill_dir.is_dir() or not skill_dir.name.startswith("arksim-"):
+            continue
+        skill_md = skill_dir / "SKILL.md"
+        if not skill_md.is_file():
+            continue
+        dest_dir = skills_dir / skill_dir.name
+        dest_dir.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(skill_md, dest_dir / "SKILL.md")
+        copied.append(dest_dir / "SKILL.md")
+
+    if not copied:
+        logger.error(
+            f"No skill directories found in {skills_src}. Installation may be incomplete."
+        )
+        sys.exit(EXIT_CONFIG_ERROR)
+
+    # Write .mcp.json after skills are successfully copied.
+    mcp_config: dict = {}
+    if mcp_config_path.exists():
+        try:
+            mcp_config = json.loads(mcp_config_path.read_text())
+        except json.JSONDecodeError:
+            logger.error(
+                f"Invalid JSON in {mcp_config_path}. Fix or delete the file and retry."
+            )
+            sys.exit(EXIT_CONFIG_ERROR)
+
+    mcp_servers = mcp_config.setdefault("mcpServers", {})
+    if not isinstance(mcp_servers, dict):
+        mcp_servers = {}
+        mcp_config["mcpServers"] = mcp_servers
+    mcp_servers["arksim"] = server_config
+    mcp_config_path.write_text(json.dumps(mcp_config, indent=2) + "\n")
+
+    logger.info("Installed arksim Claude Code integration:")
+    logger.info(f"  MCP config: {mcp_config_path}")
+    for path in copied:
+        logger.info(f"  Skill:    {path}")
+    logger.info('\nStart Claude Code and type "/arksim:test" to begin.')
+
+
 def _add_config_subparser(
     subparsers: argparse._SubParsersAction,
     name: str,
@@ -384,6 +573,7 @@ def build_parser() -> argparse.ArgumentParser:
               arksim examples --list
               arksim examples bank-insurance
               arksim ui --port 9090
+              arksim setup-claude
         """),
     )
 
@@ -479,6 +669,31 @@ def build_parser() -> argparse.ArgumentParser:
         type=int,
         default=8080,
         help="Port to serve on (default: 8080)",
+    )
+
+    # setup-claude
+    sp_setup_claude = sub.add_parser(
+        "setup-claude",
+        help="Install Claude Code integration (MCP server + skills)",
+    )
+    sp_setup_claude.add_argument(
+        "--project-dir",
+        type=str,
+        default=".",
+        dest="project_dir",
+        help="Project root directory (default: current directory)",
+    )
+    sp_setup_claude.add_argument(
+        "--force",
+        action="store_true",
+        default=False,
+        help="Overwrite existing skills",
+    )
+    sp_setup_claude.add_argument(
+        "--uninstall",
+        action="store_true",
+        default=False,
+        help="Remove arksim Claude Code integration",
     )
 
     return parser
@@ -621,6 +836,14 @@ def main() -> None:
         from arksim.ui.app import launch_ui
 
         launch_ui(port=args.port)
+        return
+
+    if args.command == "setup-claude":
+        _run_setup_claude(
+            project_dir=args.project_dir,
+            force=args.force,
+            uninstall=args.uninstall,
+        )
         return
 
     use_config_file = (
