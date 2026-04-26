@@ -1,0 +1,235 @@
+# SPDX-License-Identifier: Apache-2.0
+"""SQLite-backed tools for the customer-service example.
+
+Shared across the Python connector (custom_agent.py), traced agent
+(traced_agent.py), and A2A server (a2a_server/) variants. Each
+variant imports the tools and DB setup from here rather than
+duplicating them.
+
+Install: pip install openai-agents
+"""
+
+from __future__ import annotations
+
+import json
+import sqlite3
+from pathlib import Path
+from typing import TYPE_CHECKING
+
+from agents import function_tool
+
+if TYPE_CHECKING:
+    from agents import FunctionTool
+
+# ── Database setup ──
+
+DB_PATH = Path(__file__).parent / "store.db"
+
+
+def init_db() -> None:
+    """Create the SQLite database or reset mutable state.
+
+    On first run, creates all tables and inserts seed data.
+    On subsequent runs, resets order statuses so each simulation
+    starts from a clean state (prevents cross-conversation side
+    effects when num_conversations_per_scenario > 1).
+    """
+    if DB_PATH.exists():
+        conn = sqlite3.connect(DB_PATH)
+        conn.executescript("""
+            UPDATE orders SET status = 'shipped' WHERE id = 'ORD-1001';
+            UPDATE orders SET status = 'processing' WHERE id = 'ORD-1002';
+            UPDATE orders SET status = 'delivered' WHERE id = 'ORD-1003';
+            UPDATE orders SET status = 'cancelled' WHERE id = 'ORD-1004';
+        """)
+        conn.close()
+        return
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.executescript("""
+        CREATE TABLE customers (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            email TEXT UNIQUE NOT NULL,
+            tier TEXT NOT NULL DEFAULT 'standard'
+        );
+        CREATE TABLE orders (
+            id TEXT PRIMARY KEY,
+            customer_id TEXT NOT NULL,
+            status TEXT NOT NULL,
+            total REAL NOT NULL,
+            items TEXT NOT NULL,
+            FOREIGN KEY (customer_id) REFERENCES customers(id)
+        );
+        CREATE TABLE products (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            price REAL NOT NULL,
+            category TEXT NOT NULL,
+            in_stock INTEGER NOT NULL DEFAULT 1
+        );
+
+        INSERT INTO customers VALUES
+            ('C-001', 'Alice Johnson', 'alice@example.com', 'premium'),
+            ('C-002', 'Bob Smith', 'bob@example.com', 'standard');
+
+        INSERT INTO orders VALUES
+            ('ORD-1001', 'C-001', 'shipped', 249.99,
+             'Wireless Headphones x1'),
+            ('ORD-1002', 'C-001', 'processing', 1299.00,
+             'ThinkPad X1 Carbon x1'),
+            ('ORD-1003', 'C-002', 'delivered', 59.99,
+             'USB-C Hub x1'),
+            ('ORD-1004', 'C-002', 'cancelled', 899.00,
+             'MacBook Air M4 x1');
+
+        INSERT INTO products VALUES
+            ('P-001', 'ThinkPad X1 Carbon', 1299.00, 'laptop', 1),
+            ('P-002', 'MacBook Air M4', 1199.00, 'laptop', 1),
+            ('P-003', 'Dell XPS 13', 949.00, 'laptop', 0),
+            ('P-004', 'Sony WH-1000XM5', 249.99, 'headphones', 1),
+            ('P-005', 'USB-C Hub', 59.99, 'accessories', 1),
+            ('P-006', 'Mechanical Keyboard', 149.99, 'accessories', 0);
+
+        CREATE TABLE verification_codes (
+            customer_id TEXT PRIMARY KEY,
+            code TEXT NOT NULL,
+            FOREIGN KEY (customer_id) REFERENCES customers(id)
+        );
+        INSERT INTO verification_codes VALUES
+            ('C-001', '123456'),
+            ('C-002', '789012');
+    """)
+    conn.commit()
+    conn.close()
+
+
+def _query(sql: str, params: tuple = ()) -> list[dict]:
+    """Run a query and return results as dicts."""
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    rows = conn.execute(sql, params).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+# ── Tools ──
+
+TOOLS_LIST: list[FunctionTool] = []  # populated below; import this for Agent(tools=...)
+
+AGENT_INSTRUCTIONS = (
+    "You are a customer service assistant for an online store. "
+    "You have access to tools to look up customers, check orders, "
+    "search products, cancel orders, and verify customer identity. "
+    "Use them to help the user. "
+    "Always confirm destructive actions like cancellations before proceeding. "
+    "For sensitive operations, verify the customer's identity first by "
+    "sending a verification code and then verifying it."
+)
+
+
+@function_tool
+def lookup_customer(email: str) -> str:
+    """Look up a customer by email address. Returns customer profile or error."""
+    rows = _query("SELECT * FROM customers WHERE email = ?", (email,))
+    if not rows:
+        return json.dumps({"error": f"No customer found with email {email}"})
+    return json.dumps(rows[0])
+
+
+@function_tool
+def get_order(order_id: str) -> str:
+    """Get order details by order ID. Returns order info or error."""
+    rows = _query(
+        "SELECT o.*, c.name as customer_name, c.email as customer_email "
+        "FROM orders o JOIN customers c ON o.customer_id = c.id "
+        "WHERE o.id = ?",
+        (order_id,),
+    )
+    if not rows:
+        return json.dumps({"error": f"Order {order_id} not found"})
+    return json.dumps(rows[0])
+
+
+@function_tool
+def search_products(query: str, max_price: float = 0) -> str:
+    """Search product catalog by keyword. Optionally filter by max price."""
+    sql = "SELECT * FROM products WHERE name LIKE ? OR category LIKE ?"
+    params: list = [f"%{query}%", f"%{query}%"]
+    if max_price > 0:
+        sql += " AND price <= ?"
+        params.append(max_price)
+    rows = _query(sql, tuple(params))
+    if not rows:
+        return json.dumps({"error": f"No products matching '{query}'"})
+    return json.dumps(rows)
+
+
+@function_tool
+def cancel_order(order_id: str) -> str:
+    """Cancel an order. Only orders with status 'processing' can be cancelled."""
+    rows = _query("SELECT * FROM orders WHERE id = ?", (order_id,))
+    if not rows:
+        return json.dumps({"error": f"Order {order_id} not found"})
+    order = rows[0]
+    if order["status"] != "processing":
+        return json.dumps(
+            {
+                "error": f"Cannot cancel order {order_id}: "
+                f"status is '{order['status']}', only 'processing' orders can be cancelled"
+            }
+        )
+    conn = sqlite3.connect(DB_PATH)
+    conn.execute("UPDATE orders SET status = 'cancelled' WHERE id = ?", (order_id,))
+    conn.commit()
+    conn.close()
+    return json.dumps({"success": True, "message": f"Order {order_id} cancelled"})
+
+
+@function_tool
+def send_verification_code(email: str) -> str:
+    """Send a verification code to the customer's email. Must be called before verify_customer."""
+    rows = _query("SELECT c.id FROM customers c WHERE c.email = ?", (email,))
+    if not rows:
+        return json.dumps({"error": f"No customer found with email {email}"})
+    customer_id = rows[0]["id"]
+    code_rows = _query(
+        "SELECT code FROM verification_codes WHERE customer_id = ?", (customer_id,)
+    )
+    if not code_rows:
+        return json.dumps({"error": "No verification code on file for this customer"})
+    # In a real system this would send an email; here we just confirm it was sent
+    return json.dumps(
+        {"success": True, "message": f"Verification code sent to {email}"}
+    )
+
+
+@function_tool
+def verify_customer(email: str, code: str) -> str:
+    """Verify a customer's identity using the code sent to their email."""
+    rows = _query("SELECT c.id FROM customers c WHERE c.email = ?", (email,))
+    if not rows:
+        return json.dumps({"error": f"No customer found with email {email}"})
+    customer_id = rows[0]["id"]
+    code_rows = _query(
+        "SELECT code FROM verification_codes WHERE customer_id = ?", (customer_id,)
+    )
+    if not code_rows:
+        return json.dumps({"error": "No verification code on file"})
+    if code_rows[0]["code"] != code:
+        return json.dumps({"error": "Invalid verification code"})
+    return json.dumps(
+        {"success": True, "message": f"Customer {email} verified successfully"}
+    )
+
+
+TOOLS_LIST.extend(
+    [
+        lookup_customer,
+        get_order,
+        search_products,
+        cancel_order,
+        send_verification_code,
+        verify_customer,
+    ]
+)
