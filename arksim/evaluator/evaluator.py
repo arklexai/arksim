@@ -353,9 +353,7 @@ class Evaluator:
 
         pbar.set_description("Detecting agent errors")
         logger.info("Detecting agent errors")
-        with usage_label(
-            component="evaluation", phase="error_detection", metric="error_detection"
-        ):
+        with usage_label(component="evaluation", phase="error_detection"):
             unique_errors = detect_agent_error(self.llm, convo_score_list)
         logger.info(f"Detected {len(unique_errors)} unique errors")
 
@@ -943,8 +941,6 @@ def run_evaluation(
     with usage_scope() as tracker, usage_label(component="evaluation"):
         evaluator_output = evaluator.evaluate(simulation, on_progress=on_progress)
 
-    score_filter = {"component": "evaluation", "phase": "score"}
-    error_filter = {"component": "evaluation", "phase": "error_detection"}
     evaluator_output.usage = TokenUsage(
         total_input_tokens=tracker.total_input_tokens,
         total_output_tokens=tracker.total_output_tokens,
@@ -953,11 +949,6 @@ def run_evaluation(
         by_model=tracker.summary(),
         breakdowns={
             "by_phase": tracker.summary_by("phase", where={"component": "evaluation"}),
-            "score_by_metric": tracker.summary_by("metric", where=score_filter),
-            "score_by_conversation": tracker.summary_by(
-                "conversation_id", where=score_filter
-            ),
-            "error_detection": tracker.summary_by("phase", where=error_filter),
         },
     )
     tracker.log_summary()

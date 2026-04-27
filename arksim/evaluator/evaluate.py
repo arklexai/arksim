@@ -121,33 +121,31 @@ def _evaluate_turn_inner(
     ] + (custom_metrics or [])
 
     def _run(metric: QuantitativeMetric) -> QuantResult:
-        with usage_label(metric=metric.name):
-            result = metric.score(
-                ScoreInput(
-                    chat_history=score_input.chat_history,
-                    current_turn=score_input.current_turn,
-                    knowledge=score_input.knowledge,
-                    user_goal=score_input.user_goal,
-                    profile=score_input.profile,
-                    **metric.additional_input,
-                )
+        result = metric.score(
+            ScoreInput(
+                chat_history=score_input.chat_history,
+                current_turn=score_input.current_turn,
+                knowledge=score_input.knowledge,
+                user_goal=score_input.user_goal,
+                profile=score_input.profile,
+                **metric.additional_input,
             )
+        )
         return QuantResult(
             name=metric.name, value=result.value, reason=result.reason or ""
         )
 
     def _run_qual(metric: QualitativeMetric) -> QualResult:
-        with usage_label(metric=metric.name):
-            return metric.evaluate(
-                ScoreInput(
-                    chat_history=score_input.chat_history,
-                    current_turn=score_input.current_turn,
-                    knowledge=score_input.knowledge,
-                    user_goal=score_input.user_goal,
-                    profile=score_input.profile,
-                    **getattr(metric, "additional_input", {}),
-                )
+        return metric.evaluate(
+            ScoreInput(
+                chat_history=score_input.chat_history,
+                current_turn=score_input.current_turn,
+                knowledge=score_input.knowledge,
+                user_goal=score_input.user_goal,
+                profile=score_input.profile,
+                **getattr(metric, "additional_input", {}),
             )
+        )
 
     metric_tasks: list[tuple[str, Callable[[], QuantResult]]] = [
         (m.name, lambda metric=m: _run(metric)) for m in all_metrics
@@ -205,8 +203,7 @@ def _evaluate_turn_inner(
     )
 
     if _should_run("agent_behavior_failure", metrics_to_run) and has_threshold_failure:
-        with usage_label(metric="agent_behavior_failure"):
-            qual = AgentBehaviorFailureMetric(llm).evaluate(score_input)
+        qual = AgentBehaviorFailureMetric(llm).evaluate(score_input)
         turn_behavior_failure = qual.value
         turn_behavior_failure_reason = qual.reason or ""
     else:
@@ -226,8 +223,7 @@ def _evaluate_turn_inner(
             profile=score_input.profile,
             tool_calls=turn_item.tool_calls,
         )
-        with usage_label(metric="tool_call_behavior_failure"):
-            tool_qual = ToolCallBehaviorFailureMetric(llm).evaluate(tool_score_input)
+        tool_qual = ToolCallBehaviorFailureMetric(llm).evaluate(tool_score_input)
 
         # Surface tool call failures under agent_behavior_failure so the
         # HTML report and downstream consumers treat them uniformly.
@@ -288,7 +284,6 @@ def evaluate_goal_completion(
             component="evaluation",
             phase="score",
             conversation_id=convo_item.chat_id,
-            metric="goal_completion",
         ):
             result = GoalCompletionMetric(llm).score(
                 ScoreInput(

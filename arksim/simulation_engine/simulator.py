@@ -545,7 +545,6 @@ async def run_simulation(
             by_model=tracker.summary(),
             breakdowns={
                 "by_conversation": tracker.summary_by("conversation_id"),
-                "by_component": tracker.summary_by("component"),
             },
         )
         tracker.log_summary()

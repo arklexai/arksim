@@ -1624,14 +1624,11 @@
 
         <!-- Token Usage Section -->
         <div id="tokenUsageSection" style="display:none; margin-top:40px;">
-            <div class="section-title collapsible-header" onclick="toggleTokenUsage()">
+            <div class="section-title">
                 <span class="material-icons" style="font-size:20px;">data_usage</span>
                 Token Usage
-                <span class="arrow-icon material-icons collapsed" id="tokenUsageArrow">expand_more</span>
             </div>
-            <div id="tokenUsageContent" class="collapsible-content collapsed">
-                <div id="tokenUsageBody" style="padding:16px 0;"></div>
-            </div>
+            <div id="tokenUsageBody" style="padding:16px 0;"></div>
         </div>
 
         <!-- Evaluation Prompts Appendix -->
@@ -2551,14 +2548,6 @@
             arrow.classList.toggle('collapsed');
         }
 
-        // Toggle token usage section collapse
-        function toggleTokenUsage() {
-            const content = document.getElementById('tokenUsageContent');
-            const arrow = document.getElementById('tokenUsageArrow');
-            content.classList.toggle('collapsed');
-            arrow.classList.toggle('collapsed');
-        }
-
         // Toggle a single token usage breakdown table by id
         function toggleTokenUsageBreakdown(id) {
             const content = document.getElementById(id);
@@ -2689,42 +2678,17 @@
             ];
             const tokenKeys = ['calls', 'input_tokens', 'cached_tokens', 'output_tokens', 'reasoning_tokens'];
 
-            function renderUsageGroup(title, groupTotals, subTables) {
+            function renderUsageGroup(title, subTables) {
                 const visibleSubs = subTables.filter(s => s.html);
                 if (visibleSubs.length === 0) return '';
-                const groupId = `tokenUsageGroup-${breakdownIdCounter++}`;
-                const totalsRow = groupTotals ? `
-                    <div style="margin-top:8px; padding:8px 12px; background:#f8fafc; border-radius:6px; font-size:13px; color:#475569; display:flex; gap:16px; flex-wrap:wrap">
-                        <span><strong>Input:</strong> ${groupTotals.input.toLocaleString()}</span>
-                        <span><strong>Cached:</strong> ${groupTotals.cached.toLocaleString()}</span>
-                        <span><strong>Output:</strong> ${groupTotals.output.toLocaleString()}</span>
-                        <span><strong>Reasoning:</strong> ${groupTotals.reasoning.toLocaleString()}</span>
-                        <span><strong>Total:</strong> ${(groupTotals.input + groupTotals.output).toLocaleString()}</span>
-                    </div>` : '';
                 return `<div style="margin-top:24px; padding-top:16px; border-top:1px solid #e8ecef">
-                    <div class="collapsible-header" style="cursor:pointer; display:flex; align-items:center; gap:8px; padding:6px 0;" onclick="toggleTokenUsageBreakdown('${groupId}')">
-                        <h3 style="margin:0; font-size:15px; color:#1e293b">${escapeHtml(title)}</h3>
-                        <span class="arrow-icon material-icons collapsed" id="${groupId}-arrow" style="font-size:20px; color:#64748b;">expand_more</span>
-                    </div>
-                    <div id="${groupId}" class="collapsible-content collapsed">
-                        ${totalsRow}
-                        ${visibleSubs.map(s => s.html).join('')}
-                    </div>
+                    <h3 style="margin:0; font-size:15px; color:#1e293b">${escapeHtml(title)}</h3>
+                    ${visibleSubs.map(s => s.html).join('')}
                 </div>`;
             }
 
-            function usageTotals(usage) {
-                if (!usage) return null;
-                return {
-                    input: usage.total_input_tokens || 0,
-                    output: usage.total_output_tokens || 0,
-                    cached: usage.total_cached_tokens || 0,
-                    reasoning: usage.total_reasoning_tokens || 0,
-                };
-            }
-
             const simBreakdowns = (simUsage && simUsage.breakdowns) || {};
-            const simSubTables = [
+            const simSection = renderUsageGroup('Simulation', [
                 {
                     html: renderBreakdownTable(
                         'By conversation',
@@ -2733,53 +2697,19 @@
                         ['conversation_id', ...tokenKeys],
                     ),
                 },
-                {
-                    html: renderBreakdownTable(
-                        'By component',
-                        [{label: 'Component'}, ...tokenCols],
-                        simBreakdowns.by_component,
-                        ['component', ...tokenKeys],
-                    ),
-                },
-            ];
-            const simSection = renderUsageGroup('Simulation', usageTotals(simUsage), simSubTables);
+            ]);
 
             const evalBreakdowns = (evalUsage && evalUsage.breakdowns) || {};
-            const evalSubTables = [
+            const evalSection = renderUsageGroup('Evaluation', [
                 {
                     html: renderBreakdownTable(
-                        'By phase',
+                        'By phase (score / error detection)',
                         [{label: 'Phase'}, ...tokenCols],
                         evalBreakdowns.by_phase,
                         ['phase', ...tokenKeys],
                     ),
                 },
-                {
-                    html: renderBreakdownTable(
-                        'Scoring by metric',
-                        [{label: 'Metric'}, ...tokenCols],
-                        evalBreakdowns.score_by_metric,
-                        ['metric', ...tokenKeys],
-                    ),
-                },
-                {
-                    html: renderBreakdownTable(
-                        'Scoring by conversation',
-                        [{label: 'Conversation'}, ...tokenCols],
-                        evalBreakdowns.score_by_conversation,
-                        ['conversation_id', ...tokenKeys],
-                    ),
-                },
-                {
-                    html: renderBreakdownTable(
-                        'Error detection',
-                        [{label: 'Phase'}, ...tokenCols],
-                        evalBreakdowns.error_detection,
-                        ['phase', ...tokenKeys],
-                    ),
-                },
-            ];
-            const evalSection = renderUsageGroup('Evaluation', usageTotals(evalUsage), evalSubTables);
+            ]);
 
             body.innerHTML = `<div style="background:white; border-radius:12px; padding:20px; box-shadow:0 2px 8px rgba(0,0,0,0.1)">
                 <table style="width:100%; border-collapse:collapse">
