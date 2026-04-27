@@ -17,6 +17,7 @@ from pydantic import BaseModel, Field, ValidationInfo, model_validator
 from arksim.config.core.agent import AgentConfig
 from arksim.config.utils import resolve_model_paths
 from arksim.constants import DEFAULT_MODEL, DEFAULT_PROVIDER
+from arksim.llms.chat.base.usage import TokenUsage
 from arksim.simulation_engine.tool_types import ToolCall
 from arksim.tracing.config import TraceReceiverConfig
 from arksim.utils.concurrency import validate_num_workers
@@ -186,3 +187,4 @@ class Simulation(BaseModel):
         )
     )
     conversations: list[Conversation]
+    usage: TokenUsage | None = None

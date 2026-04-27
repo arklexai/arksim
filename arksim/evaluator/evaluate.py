@@ -1,11 +1,13 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import contextvars
 import logging
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from arksim.llms.chat import LLM
+from arksim.llms.chat.base.usage import usage_label
 from arksim.simulation_engine import combine_knowledge
 
 from .base_metric import (
@@ -74,6 +76,30 @@ def evaluate_turn(
         num_workers: Max concurrent metric LLM calls. 0 means unlimited
             (all metrics in parallel).
     """
+    with usage_label(
+        component="evaluation",
+        phase="score",
+        conversation_id=turn_item.chat_id,
+        turn_id=str(turn_item.turn_id),
+    ):
+        return _evaluate_turn_inner(
+            llm,
+            turn_item,
+            custom_metrics,
+            custom_qualitative_metrics,
+            metrics_to_run,
+            num_workers,
+        )
+
+
+def _evaluate_turn_inner(
+    llm: LLM,
+    turn_item: TurnItem,
+    custom_metrics: list[QuantitativeMetric] | None,
+    custom_qualitative_metrics: list[QualitativeMetric] | None,
+    metrics_to_run: list[str] | None,
+    num_workers: int,
+) -> TurnEvaluation:
     score_input = ScoreInput(
         chat_history=turn_item.conversation_history,
         current_turn=turn_item.current_turn,
@@ -140,8 +166,16 @@ def evaluate_turn(
         # outer_workers * metrics_per_turn (unbounded in "auto" mode),
         # so large runs may hit rate limits.
         with ThreadPoolExecutor(max_workers=_max) as pool:
-            score_futures = {pool.submit(fn): name for name, fn in metric_tasks}
-            qual_futures = {pool.submit(fn): name for name, fn in qual_tasks}
+            # copy_context propagates the outer usage_label scope into worker
+            # threads so per-metric/per-turn token usage stays attributable.
+            score_futures = {
+                pool.submit(contextvars.copy_context().run, fn): name
+                for name, fn in metric_tasks
+            }
+            qual_futures = {
+                pool.submit(contextvars.copy_context().run, fn): name
+                for name, fn in qual_tasks
+            }
             all_futures = {**score_futures, **qual_futures}
 
             for future in as_completed(all_futures):
@@ -246,12 +280,17 @@ def evaluate_goal_completion(
         metrics_to_run: Optional list of metric names to run.
     """
     if _should_run("goal_completion", metrics_to_run):
-        result = GoalCompletionMetric(llm).score(
-            ScoreInput(
-                chat_history=convo_item.chat_history,
-                user_goal=convo_item.user_goal,
+        with usage_label(
+            component="evaluation",
+            phase="score",
+            conversation_id=convo_item.chat_id,
+        ):
+            result = GoalCompletionMetric(llm).score(
+                ScoreInput(
+                    chat_history=convo_item.chat_history,
+                    user_goal=convo_item.user_goal,
+                )
             )
-        )
         goal_completion_score = result.value
         goal_completion_reason = result.reason
     else:

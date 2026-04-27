@@ -76,6 +76,17 @@ class EvaluationPromptSummary(BaseModel):
     prompts: list[dict[str, str]]
 
 
+class TokenUsageSummary(BaseModel):
+    """Token usage data for the report."""
+
+    total_input_tokens: int = 0
+    total_output_tokens: int = 0
+    total_cached_tokens: int = 0
+    total_reasoning_tokens: int = 0
+    by_model: dict[str, dict[str, int]] = Field(default_factory=dict)
+    breakdowns: dict[str, list[dict[str, str | int]]] = Field(default_factory=dict)
+
+
 class ReportSummary(BaseModel):
     """Top-level summary object embedded as FINAL_REPORT_DATA in the template."""
 
@@ -90,6 +101,8 @@ class ReportSummary(BaseModel):
     evaluation_model: str | None = None
     evaluation_provider: str | None = None
     evaluation_prompts: list[EvaluationPromptSummary] | None = None
+    simulation_token_usage: TokenUsageSummary | None = None
+    evaluation_token_usage: TokenUsageSummary | None = None
 
 
 class ConvoRow(BaseModel):
@@ -164,6 +177,7 @@ class HtmlReportParams(BaseModel):
 
 def _build_final_report_data(
     evaluation: Evaluation,
+    simulation: Simulation | None = None,
     metric_ranges: dict[str, tuple[float, float]] | None = None,
     evaluation_model: str | None = None,
     evaluation_provider: str | None = None,
@@ -172,6 +186,7 @@ def _build_final_report_data(
 
     Args:
         evaluation: Evaluation result object.
+        simulation: Optional Simulation object (for token usage).
         evaluation_model: LLM model used for evaluation.
         evaluation_provider: LLM provider used for evaluation.
 
@@ -297,6 +312,28 @@ def _build_final_report_data(
     except Exception:
         pass
 
+    sim_usage = None
+    if simulation and simulation.usage:
+        sim_usage = TokenUsageSummary(
+            total_input_tokens=simulation.usage.total_input_tokens,
+            total_output_tokens=simulation.usage.total_output_tokens,
+            total_cached_tokens=simulation.usage.total_cached_tokens,
+            total_reasoning_tokens=simulation.usage.total_reasoning_tokens,
+            by_model=simulation.usage.by_model,
+            breakdowns=simulation.usage.breakdowns,
+        )
+
+    eval_usage = None
+    if evaluation.usage:
+        eval_usage = TokenUsageSummary(
+            total_input_tokens=evaluation.usage.total_input_tokens,
+            total_output_tokens=evaluation.usage.total_output_tokens,
+            total_cached_tokens=evaluation.usage.total_cached_tokens,
+            total_reasoning_tokens=evaluation.usage.total_reasoning_tokens,
+            by_model=evaluation.usage.by_model,
+            breakdowns=evaluation.usage.breakdowns,
+        )
+
     return ReportSummary(
         total_conversations=total_conversations,
         total_turns=total_turns,
@@ -307,6 +344,8 @@ def _build_final_report_data(
         evaluation_model=evaluation_model,
         evaluation_provider=evaluation_provider,
         evaluation_prompts=eval_prompts,
+        simulation_token_usage=sim_usage,
+        evaluation_token_usage=eval_usage,
     )
 
 
@@ -499,6 +538,7 @@ def generate_html_report(params: HtmlReportParams) -> Path:
     """
     final_report_data = _build_final_report_data(
         params.evaluation,
+        simulation=params.simulation,
         metric_ranges=params.metric_ranges,
         evaluation_model=params.evaluation_model,
         evaluation_provider=params.evaluation_provider,

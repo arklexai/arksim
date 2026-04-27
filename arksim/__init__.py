@@ -29,11 +29,13 @@ __all__ = [
     "Simulator",
     "SimulationInput",
     "SimulationParams",
+    "TokenUsage",
     "ToolCall",
     "ToolCallSource",
 ]
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
+    "TokenUsage": (".llms.chat.base.usage", "TokenUsage"),
     "A2AConfig": (".config", "A2AConfig"),
     "A2AToolCaptureExtension": (".simulation_engine", "A2AToolCaptureExtension"),
     "AgentConfig": (".config", "AgentConfig"),

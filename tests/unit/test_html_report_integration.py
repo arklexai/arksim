@@ -92,6 +92,20 @@ def html_report_env(_module_mp: MonkeyPatch) -> SimpleNamespace:
     load("arksim.evaluator.utils.enums", "evaluator/utils/enums.py")
     load("arksim.evaluator.base_metric", "evaluator/base_metric.py")
 
+    # 1b. Load usage module directly so simulation_engine/entities.py can
+    #     import TokenUsage without triggering the heavy llms.chat chain.
+    usage_mod = load("arksim.llms.chat.base.usage", "llms/chat/base/usage.py")
+
+    # 1c. Load tool_types directly so evaluator/entities.py can import ToolCall
+    #     without triggering the simulation_engine.__init__ → simulator → a2a chain.
+    tool_types_mod = load(
+        "arksim.simulation_engine.tool_types", "simulation_engine/tool_types.py"
+    )
+    # Expose ToolCall on the package stub so relative package resolution works.
+    sim_pkg_early = types.ModuleType("arksim.simulation_engine")
+    sim_pkg_early.ToolCall = tool_types_mod.ToolCall
+    mp.setitem(sys.modules, "arksim.simulation_engine", sim_pkg_early)
+
     # 2. Entities
     entities_mod = load("arksim.evaluator.entities", "evaluator/entities.py")
 
@@ -107,15 +121,34 @@ def html_report_env(_module_mp: MonkeyPatch) -> SimpleNamespace:
     sim_pkg.combine_knowledge = MagicMock()
     mp.setitem(sys.modules, "arksim.simulation_engine", sim_pkg)
 
-    # 5. Stub arksim.scenario
+    # 5. Stub arksim.scenario (and arksim.scenario.entities needed by evaluator.__init__)
+    scenario_entities_mod = types.ModuleType("arksim.scenario.entities")
+    scenario_entities_mod.AssertionType = MagicMock()
+    scenario_entities_mod.ToolCallsAssertion = MagicMock()
+    scenario_entities_mod.Scenario = _Scenario
+    scenario_entities_mod.Scenarios = _Scenarios
+    mp.setitem(sys.modules, "arksim.scenario.entities", scenario_entities_mod)
+
     scenario_mod = types.ModuleType("arksim.scenario")
     scenario_mod.Scenario = _Scenario
     scenario_mod.Scenarios = _Scenarios
+    scenario_mod.entities = scenario_entities_mod
     mp.setitem(sys.modules, "arksim.scenario", scenario_mod)
 
     # 6. Stub heavy deps
     mp.setitem(sys.modules, "arksim.llms", MagicMock())
     mp.setitem(sys.modules, "arksim.llms.chat", MagicMock())
+
+    # 6b. Stub arksim.evaluator package so generate_html_report.py can import
+    #     submodules without running arksim/evaluator/__init__.py (which pulls
+    #     in the full evaluator + simulator + a2a chain).
+    evaluator_pkg = types.ModuleType("arksim.evaluator")
+    mp.setitem(sys.modules, "arksim.evaluator", evaluator_pkg)
+
+    # Load builtin_metrics directly — it only needs LLM (already a MagicMock),
+    # base_metric (already loaded), and lightweight utils.
+    load("arksim.evaluator.utils.prompts", "evaluator/utils/prompts.py")
+    load("arksim.evaluator.utils.schema", "evaluator/utils/schema.py")
 
     # 7. Load generate_html_report
     gen_report_mod = load(
@@ -134,6 +167,7 @@ def html_report_env(_module_mp: MonkeyPatch) -> SimpleNamespace:
         Simulation=sim_entities_mod.Simulation,
         Message=sim_entities_mod.Message,
         SimulatedUserPrompt=sim_entities_mod.SimulatedUserPrompt,
+        TokenUsage=usage_mod.TokenUsage,
         HtmlReportParams=gen_report_mod.HtmlReportParams,
         generate_html_report=gen_report_mod.generate_html_report,
     )
@@ -444,3 +478,118 @@ class TestHtmlReportIntegration:
         assert "severity-medium" in html
         assert "severity-low" in html
         assert "severityOrder" in html
+
+    def test_token_usage_appears_in_report_data(
+        self, html_report_env: SimpleNamespace
+    ) -> None:
+        """simulation_token_usage and evaluation_token_usage are embedded in FINAL_REPORT_DATA."""
+        convos, eval_results, label_map = _build_test_data(html_report_env)
+
+        convos.usage = html_report_env.TokenUsage(
+            total_input_tokens=1234,
+            total_output_tokens=567,
+            by_model={"openai/gpt-4o": {"input_tokens": 1234, "output_tokens": 567}},
+        )
+        eval_results.usage = html_report_env.TokenUsage(
+            total_input_tokens=890,
+            total_output_tokens=321,
+            by_model={
+                "anthropic/claude-3-5-sonnet": {
+                    "input_tokens": 890,
+                    "output_tokens": 321,
+                }
+            },
+        )
+
+        with tempfile.NamedTemporaryFile(suffix=".html", delete=False) as f:
+            output_path = f.name
+
+        params = html_report_env.HtmlReportParams(
+            simulation=convos,
+            evaluation=eval_results,
+            output_path=output_path,
+            chat_id_to_label=label_map,
+        )
+        result_path = html_report_env.generate_html_report(params)
+        html = Path(result_path).read_text()
+
+        assert "simulation_token_usage" in html
+        assert "evaluation_token_usage" in html
+        assert "1234" in html
+        assert "567" in html
+        assert "890" in html
+        assert "321" in html
+
+    def test_backward_compat_simulation_without_usage(
+        self, html_report_env: SimpleNamespace
+    ) -> None:
+        """Simulation parsed from old JSON (no usage field) defaults usage to None."""
+        old_sim_dict = {
+            "schema_version": "1.0",
+            "simulator_version": "test",
+            "simulation_id": "sim-old-1",
+            "generated_at": "2024-01-01T00:00:00Z",
+            "conversations": [],
+        }
+        sim = html_report_env.Simulation.model_validate(old_sim_dict)
+        assert sim.usage is None
+
+    def test_backward_compat_simulation_null_usage_in_report(
+        self, html_report_env: SimpleNamespace
+    ) -> None:
+        """Report embeds simulation_token_usage: null when simulation has no usage data."""
+        convos, eval_results, label_map = _build_test_data(html_report_env)
+        # usage is None by default — simulates an old simulation file
+        assert convos.usage is None
+
+        with tempfile.NamedTemporaryFile(suffix=".html", delete=False) as f:
+            output_path = f.name
+
+        params = html_report_env.HtmlReportParams(
+            simulation=convos,
+            evaluation=eval_results,
+            output_path=output_path,
+            chat_id_to_label=label_map,
+        )
+        result_path = html_report_env.generate_html_report(params)
+        html = Path(result_path).read_text()
+
+        assert '"simulation_token_usage": null' in html
+
+    def test_backward_compat_evaluation_without_usage(
+        self, html_report_env: SimpleNamespace
+    ) -> None:
+        """Evaluation parsed from old JSON (no usage field) defaults usage to None."""
+        old_eval_dict = {
+            "schema_version": "1.0",
+            "generated_at": "2024-01-01T00:00:00Z",
+            "evaluator_version": "v1",
+            "evaluation_id": "eval-old-1",
+            "simulation_id": "sim-old-1",
+            "conversations": [],
+            "unique_errors": [],
+        }
+        evaluation = html_report_env.Evaluation.model_validate(old_eval_dict)
+        assert evaluation.usage is None
+
+    def test_backward_compat_evaluation_null_usage_in_report(
+        self, html_report_env: SimpleNamespace
+    ) -> None:
+        """Report embeds evaluation_token_usage: null when evaluation has no usage data."""
+        convos, eval_results, label_map = _build_test_data(html_report_env)
+        # usage is None by default — simulates an old evaluation file
+        assert eval_results.usage is None
+
+        with tempfile.NamedTemporaryFile(suffix=".html", delete=False) as f:
+            output_path = f.name
+
+        params = html_report_env.HtmlReportParams(
+            simulation=convos,
+            evaluation=eval_results,
+            output_path=output_path,
+            chat_id_to_label=label_map,
+        )
+        result_path = html_report_env.generate_html_report(params)
+        html = Path(result_path).read_text()
+
+        assert '"evaluation_token_usage": null' in html

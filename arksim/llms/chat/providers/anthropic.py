@@ -8,6 +8,7 @@ from pydantic import BaseModel
 
 from arksim.llms.chat.base.base_llm import BaseLLM
 from arksim.llms.chat.base.types import LLMMessage
+from arksim.llms.chat.base.usage import clean_usage_value, track_usage
 from arksim.llms.chat.utils import retry
 
 T = TypeVar("T", bound=BaseModel)
@@ -72,6 +73,24 @@ class AnthropicLLM(BaseLLM):
             params["output_format"] = schema
         return params
 
+    def _track_response_usage(self, response: object) -> None:
+        usage = getattr(response, "usage", None)
+        if usage is None:
+            return
+        base_input = clean_usage_value(getattr(usage, "input_tokens", 0))
+        cache_read = clean_usage_value(getattr(usage, "cache_read_input_tokens", 0))
+        cache_create = clean_usage_value(
+            getattr(usage, "cache_creation_input_tokens", 0)
+        )
+        output_tokens = clean_usage_value(getattr(usage, "output_tokens", 0))
+        track_usage(
+            self.model,
+            "anthropic",
+            base_input + cache_read + cache_create,
+            output_tokens,
+            cached_tokens=cache_read,
+        )
+
     @overload
     def call(
         self, messages: str | list[LLMMessage], schema: type[T], **kwargs: object
@@ -93,9 +112,11 @@ class AnthropicLLM(BaseLLM):
         # For structured output, return the parsed output
         if schema:
             response = self.client.messages.parse(**params)
+            self._track_response_usage(response)
             return response.parsed_output
         # For text output, return the text (default)
         response = self.client.messages.create(**params)
+        self._track_response_usage(response)
         return response.content[0].text
 
     @overload
@@ -119,7 +140,9 @@ class AnthropicLLM(BaseLLM):
         # For structured output, return the parsed output
         if schema:
             response = await self.async_client.messages.parse(**params)
+            self._track_response_usage(response)
             return response.parsed_output
         # For text output, return the text (default)
         response = await self.async_client.messages.create(**params)
+        self._track_response_usage(response)
         return response.content[0].text

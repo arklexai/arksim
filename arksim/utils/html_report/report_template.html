@@ -1622,6 +1622,15 @@
             </div>
         </div>
 
+        <!-- Token Usage Section -->
+        <div id="tokenUsageSection" style="display:none; margin-top:40px;">
+            <div class="section-title">
+                <span class="material-icons" style="font-size:20px;">data_usage</span>
+                Token Usage
+            </div>
+            <div id="tokenUsageBody" style="padding:16px 0;"></div>
+        </div>
+
         <!-- Evaluation Prompts Appendix -->
         <div id="promptsAppendixSection" style="display:none; margin-top:40px;">
             <div class="section-title collapsible-header" onclick="togglePromptsAppendix()">
@@ -2539,6 +2548,189 @@
             arrow.classList.toggle('collapsed');
         }
 
+        // Toggle a single token usage breakdown table by id
+        function toggleTokenUsageBreakdown(id) {
+            const content = document.getElementById(id);
+            const arrow = document.getElementById(id + '-arrow');
+            if (!content) return;
+            content.classList.toggle('collapsed');
+            if (arrow) arrow.classList.toggle('collapsed');
+        }
+
+        // Render token usage section
+        function renderTokenUsage() {
+            const data = EMBEDDED_FINAL_REPORT;
+            const simUsage = data.simulation_token_usage;
+            const evalUsage = data.evaluation_token_usage;
+            if (!simUsage && !evalUsage) return;
+
+            const section = document.getElementById('tokenUsageSection');
+            const body = document.getElementById('tokenUsageBody');
+            section.style.display = '';
+
+            // Aggregate per-model counts across simulation + evaluation
+            const perModel = {};
+            function accumulate(usage) {
+                if (!usage || !usage.by_model) return;
+                for (const [model, counts] of Object.entries(usage.by_model)) {
+                    if (!perModel[model]) {
+                        perModel[model] = {
+                            input_tokens: 0,
+                            output_tokens: 0,
+                            cached_tokens: 0,
+                            reasoning_tokens: 0,
+                        };
+                    }
+                    perModel[model].input_tokens += counts.input_tokens || 0;
+                    perModel[model].output_tokens += counts.output_tokens || 0;
+                    perModel[model].cached_tokens += counts.cached_tokens || 0;
+                    perModel[model].reasoning_tokens += counts.reasoning_tokens || 0;
+                }
+            }
+            accumulate(simUsage);
+            accumulate(evalUsage);
+
+            function fmtModelRow(model, counts) {
+                const total = counts.input_tokens + counts.output_tokens;
+                return `<tr>
+                    <td style="padding:8px 12px; font-family:ui-monospace,Menlo,monospace; font-size:13px">${escapeHtml(model)}</td>
+                    <td style="padding:8px 12px; text-align:right">${counts.input_tokens.toLocaleString()}</td>
+                    <td style="padding:8px 12px; text-align:right; color:#64748b">${counts.cached_tokens.toLocaleString()}</td>
+                    <td style="padding:8px 12px; text-align:right">${counts.output_tokens.toLocaleString()}</td>
+                    <td style="padding:8px 12px; text-align:right; color:#64748b">${counts.reasoning_tokens.toLocaleString()}</td>
+                    <td style="padding:8px 12px; text-align:right; font-weight:600">${total.toLocaleString()}</td>
+                </tr>`;
+            }
+
+            const sortedModels = Object.entries(perModel).sort((a, b) => {
+                const aTotal = a[1].input_tokens + a[1].output_tokens;
+                const bTotal = b[1].input_tokens + b[1].output_tokens;
+                return bTotal - aTotal;
+            });
+
+            let rows = '';
+            let totalIn = 0, totalOut = 0, totalCached = 0, totalReasoning = 0;
+            for (const [model, counts] of sortedModels) {
+                rows += fmtModelRow(model, counts);
+                totalIn += counts.input_tokens;
+                totalOut += counts.output_tokens;
+                totalCached += counts.cached_tokens;
+                totalReasoning += counts.reasoning_tokens;
+            }
+            if (sortedModels.length > 1) {
+                rows += `<tr style="border-top:2px solid #e8ecef; font-weight:700">
+                    <td style="padding:8px 12px">Total</td>
+                    <td style="padding:8px 12px; text-align:right">${totalIn.toLocaleString()}</td>
+                    <td style="padding:8px 12px; text-align:right; color:#64748b">${totalCached.toLocaleString()}</td>
+                    <td style="padding:8px 12px; text-align:right">${totalOut.toLocaleString()}</td>
+                    <td style="padding:8px 12px; text-align:right; color:#64748b">${totalReasoning.toLocaleString()}</td>
+                    <td style="padding:8px 12px; text-align:right">${(totalIn + totalOut).toLocaleString()}</td>
+                </tr>`;
+            }
+
+            let breakdownIdCounter = 0;
+            function renderBreakdownTable(title, headers, breakdownRows, dataKeys) {
+                if (!breakdownRows || breakdownRows.length === 0) return '';
+                const headRow = headers.map(h =>
+                    `<th style="padding:8px 12px; text-align:${h.align || 'left'}">${escapeHtml(h.label)}</th>`
+                ).join('');
+                const sortedRows = breakdownRows.slice().sort((a, b) => {
+                    const aTotal = (a.input_tokens || 0) + (a.output_tokens || 0);
+                    const bTotal = (b.input_tokens || 0) + (b.output_tokens || 0);
+                    return bTotal - aTotal;
+                });
+                const bodyRows = sortedRows.map(row => {
+                    const cells = dataKeys.map(k => {
+                        const v = row[k];
+                        const isNum = typeof v === 'number';
+                        const text = isNum ? v.toLocaleString() : escapeHtml(String(v ?? ''));
+                        const align = isNum ? 'right' : 'left';
+                        const fontFam = isNum ? '' : 'font-family:ui-monospace,Menlo,monospace; font-size:13px;';
+                        return `<td style="padding:6px 12px; text-align:${align}; ${fontFam}">${text}</td>`;
+                    }).join('');
+                    return `<tr>${cells}</tr>`;
+                }).join('');
+                const id = `tokenUsageBreakdown-${breakdownIdCounter++}`;
+                return `<div style="margin-top:16px">
+                    <div class="collapsible-header" style="cursor:pointer; display:flex; align-items:center; gap:6px; padding:6px 0;" onclick="toggleTokenUsageBreakdown('${id}')">
+                        <h4 style="margin:0; font-size:14px; color:#334155">${escapeHtml(title)}</h4>
+                        <span class="arrow-icon material-icons collapsed" id="${id}-arrow" style="font-size:18px; color:#64748b;">expand_more</span>
+                    </div>
+                    <div id="${id}" class="collapsible-content collapsed">
+                        <table style="width:100%; border-collapse:collapse; margin-top:8px;">
+                            <thead>
+                                <tr style="background:#f8fafc; color:#64748b; font-size:12px; text-transform:uppercase; letter-spacing:0.5px">
+                                    ${headRow}
+                                </tr>
+                            </thead>
+                            <tbody>${bodyRows}</tbody>
+                        </table>
+                    </div>
+                </div>`;
+            }
+
+            const tokenCols = [
+                { label: 'Calls', align: 'right' },
+                { label: 'Input', align: 'right' },
+                { label: 'Cached', align: 'right' },
+                { label: 'Output', align: 'right' },
+                { label: 'Reasoning', align: 'right' },
+            ];
+            const tokenKeys = ['calls', 'input_tokens', 'cached_tokens', 'output_tokens', 'reasoning_tokens'];
+
+            function renderUsageGroup(title, subTables) {
+                const visibleSubs = subTables.filter(s => s.html);
+                if (visibleSubs.length === 0) return '';
+                return `<div style="margin-top:24px; padding-top:16px; border-top:1px solid #e8ecef">
+                    <h3 style="margin:0; font-size:15px; color:#1e293b">${escapeHtml(title)}</h3>
+                    ${visibleSubs.map(s => s.html).join('')}
+                </div>`;
+            }
+
+            const simBreakdowns = (simUsage && simUsage.breakdowns) || {};
+            const simSection = renderUsageGroup('Simulation', [
+                {
+                    html: renderBreakdownTable(
+                        'By conversation',
+                        [{label: 'Conversation'}, ...tokenCols],
+                        simBreakdowns.by_conversation,
+                        ['conversation_id', ...tokenKeys],
+                    ),
+                },
+            ]);
+
+            const evalBreakdowns = (evalUsage && evalUsage.breakdowns) || {};
+            const evalSection = renderUsageGroup('Evaluation', [
+                {
+                    html: renderBreakdownTable(
+                        'By phase (score / error detection)',
+                        [{label: 'Phase'}, ...tokenCols],
+                        evalBreakdowns.by_phase,
+                        ['phase', ...tokenKeys],
+                    ),
+                },
+            ]);
+
+            body.innerHTML = `<div style="background:white; border-radius:12px; padding:20px; box-shadow:0 2px 8px rgba(0,0,0,0.1)">
+                <table style="width:100%; border-collapse:collapse">
+                    <thead>
+                        <tr style="background:#f8fafc; color:#64748b; font-size:13px; text-transform:uppercase; letter-spacing:0.5px">
+                            <th style="padding:8px 12px; text-align:left">Model</th>
+                            <th style="padding:8px 12px; text-align:right">Input</th>
+                            <th style="padding:8px 12px; text-align:right" title="Cached input tokens (subset of input)">Cached</th>
+                            <th style="padding:8px 12px; text-align:right">Output</th>
+                            <th style="padding:8px 12px; text-align:right" title="Reasoning tokens (subset of output)">Reasoning</th>
+                            <th style="padding:8px 12px; text-align:right">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                </table>
+                <div style="margin-top:8px; font-size:12px; color:#64748b">Cached tokens are a subset of input; reasoning tokens are a subset of output. Out-of-process agents (Chat Completions / A2A) report their own usage and are not included.</div>
+                ${simSection}
+                ${evalSection}
+            </div>`;
+        }
+
         // Render evaluation prompts appendix
         function renderPromptsAppendix() {
             const data = EMBEDDED_FINAL_REPORT;
@@ -2581,6 +2773,7 @@
             renderEvaluationPipeline();
             populateTable();
             renderUniqueErrors();
+            renderTokenUsage();
             renderPromptsAppendix();
         };
     </script>

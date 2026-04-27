@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import contextvars
 import inspect
 import logging
 import os
@@ -14,6 +15,7 @@ from typing import TYPE_CHECKING
 from tqdm import tqdm
 
 from arksim.llms.chat import LLM
+from arksim.llms.chat.base.usage import usage_label, usage_scope
 from arksim.scenario import Scenarios
 from arksim.scenario.entities import AssertionType, ExpectedToolCall
 
@@ -32,6 +34,7 @@ from .entities import (
     Evaluation,
     EvaluationInput,
     EvaluationParams,
+    TokenUsage,
     TurnEvaluation,
     TurnItem,
     UniqueError,
@@ -282,6 +285,7 @@ class Evaluator:
                 inner_workers = 0 if self.params.num_workers == "auto" else num_workers
                 turn_futures = {
                     executor.submit(
+                        contextvars.copy_context().run,
                         evaluate_turn,
                         self.llm,
                         turn_item,
@@ -324,6 +328,7 @@ class Evaluator:
         with ThreadPoolExecutor(max_workers=gc_max_workers) as executor:
             gc_futures = {
                 executor.submit(
+                    contextvars.copy_context().run,
                     evaluate_goal_completion,
                     self.llm,
                     convo_item,
@@ -348,7 +353,8 @@ class Evaluator:
 
         pbar.set_description("Detecting agent errors")
         logger.info("Detecting agent errors")
-        unique_errors = detect_agent_error(self.llm, convo_score_list)
+        with usage_label(component="evaluation", phase="error_detection"):
+            unique_errors = detect_agent_error(self.llm, convo_score_list)
         logger.info(f"Detected {len(unique_errors)} unique errors")
 
         # Link unique_error_ids back to TurnEvaluation objects
@@ -931,7 +937,21 @@ def run_evaluation(
         llm=llm,
         scenarios=scenarios,
     )
-    evaluator_output = evaluator.evaluate(simulation, on_progress=on_progress)
+
+    with usage_scope() as tracker, usage_label(component="evaluation"):
+        evaluator_output = evaluator.evaluate(simulation, on_progress=on_progress)
+
+    evaluator_output.usage = TokenUsage(
+        total_input_tokens=tracker.total_input_tokens,
+        total_output_tokens=tracker.total_output_tokens,
+        total_cached_tokens=tracker.total_cached_tokens,
+        total_reasoning_tokens=tracker.total_reasoning_tokens,
+        by_model=tracker.summary(),
+        breakdowns={
+            "by_phase": tracker.summary_by("phase", where={"component": "evaluation"}),
+        },
+    )
+    tracker.log_summary()
     evaluator.save_results()
     evaluator.display_evaluation_summary()
 

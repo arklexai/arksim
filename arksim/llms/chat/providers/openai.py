@@ -8,6 +8,7 @@ from pydantic import BaseModel
 
 from arksim.llms.chat.base.base_llm import BaseLLM
 from arksim.llms.chat.base.types import LLMMessage
+from arksim.llms.chat.base.usage import clean_usage_value, track_usage
 from arksim.llms.chat.utils import retry
 
 T = TypeVar("T", bound=BaseModel)
@@ -49,6 +50,25 @@ class OpenAILLM(BaseLLM):
 
         return params
 
+    def _track_response_usage(self, response: object) -> None:
+        usage = getattr(response, "usage", None)
+        if usage is None:
+            return
+        input_details = getattr(usage, "input_tokens_details", None)
+        output_details = getattr(usage, "output_tokens_details", None)
+        input_tokens = clean_usage_value(getattr(usage, "input_tokens", 0))
+        output_tokens = clean_usage_value(getattr(usage, "output_tokens", 0))
+        cached = clean_usage_value(getattr(input_details, "cached_tokens", 0))
+        reasoning = clean_usage_value(getattr(output_details, "reasoning_tokens", 0))
+        track_usage(
+            self.model,
+            "openai",
+            input_tokens,
+            output_tokens,
+            cached_tokens=cached,
+            reasoning_tokens=reasoning,
+        )
+
     @overload
     def call(
         self, messages: str | list[LLMMessage], schema: type[T], **kwargs: object
@@ -68,10 +88,9 @@ class OpenAILLM(BaseLLM):
     ) -> T | str:
         params = self._prepare_params(messages, schema=schema)
         response = self.client.responses.parse(**params)
-        # For structured output, return the parsed output
+        self._track_response_usage(response)
         if schema:
             return response.output_parsed
-        # For text output, return the text (default)
         return response.output_text
 
     @overload
@@ -93,8 +112,7 @@ class OpenAILLM(BaseLLM):
     ) -> T | str:
         params = self._prepare_params(messages, schema=schema)
         response = await self.async_client.responses.parse(**params)
-        # For structured output, return the parsed output
+        self._track_response_usage(response)
         if schema:
             return response.output_parsed
-        # For text output, return the text (default)
         return response.output_text

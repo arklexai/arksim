@@ -9,6 +9,7 @@ from pydantic import BaseModel
 
 from arksim.llms.chat.base.base_llm import BaseLLM
 from arksim.llms.chat.base.types import LLMMessage
+from arksim.llms.chat.base.usage import clean_usage_value, track_usage
 from arksim.llms.chat.utils import retry
 
 T = TypeVar("T", bound=BaseModel)
@@ -82,6 +83,25 @@ class GoogleLLM(BaseLLM):
 
         return params
 
+    def _track_response_usage(self, response: object) -> None:
+        usage = getattr(response, "usage_metadata", None)
+        if not usage:
+            return
+        prompt = clean_usage_value(getattr(usage, "prompt_token_count", 0))
+        total = clean_usage_value(getattr(usage, "total_token_count", 0))
+        candidates = clean_usage_value(getattr(usage, "candidates_token_count", 0))
+        thoughts = clean_usage_value(getattr(usage, "thoughts_token_count", 0))
+        cached = clean_usage_value(getattr(usage, "cached_content_token_count", 0))
+        output = max(total - prompt, candidates + thoughts, 0)
+        track_usage(
+            self.model,
+            "google",
+            prompt,
+            output,
+            cached_tokens=cached,
+            reasoning_tokens=thoughts,
+        )
+
     @overload
     def call(
         self, messages: str | list[LLMMessage], schema: type[T], **kwargs: object
@@ -101,6 +121,7 @@ class GoogleLLM(BaseLLM):
     ) -> T | str:
         params = self._prepare_params(messages, schema=schema)
         response = self.client.models.generate_content(**params)
+        self._track_response_usage(response)
         if schema:
             return schema.model_validate_json(response.text)
         return response.text
@@ -124,6 +145,7 @@ class GoogleLLM(BaseLLM):
     ) -> T | str:
         params = self._prepare_params(messages, schema=schema)
         response = await self.client.aio.models.generate_content(**params)
+        self._track_response_usage(response)
         if schema:
             return schema.model_validate_json(response.text)
         return response.text
