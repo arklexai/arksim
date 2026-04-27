@@ -8,6 +8,7 @@ from enum import Enum
 from pydantic import BaseModel
 
 from arksim.llms.chat import LLM
+from arksim.llms.chat.base.usage import usage_label
 from arksim.simulation_engine.utils.prompts import USER_INTENT_DECISION_PROMPT
 
 logger = logging.getLogger(__name__)
@@ -91,10 +92,11 @@ async def decide_ask_or_answer(llm: LLM, history: list[dict]) -> str:
         convo_text=convo_text or "(just started)"
     )
     try:
-        parsed = await llm.call_async(  # type: ignore[call-arg]
-            [{"role": "user", "content": prompt}],
-            schema=UserIntent,
-        )
+        with usage_label(component="multi_knowledge"):
+            parsed = await llm.call_async(  # type: ignore[call-arg]
+                [{"role": "user", "content": prompt}],
+                schema=UserIntent,
+            )
 
         intent: UserIntent = parsed
 

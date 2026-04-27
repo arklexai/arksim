@@ -14,11 +14,7 @@ from tqdm import tqdm
 
 from arksim.config import AgentConfig, AgentType
 from arksim.llms.chat import LLM
-from arksim.llms.chat.base.usage import (
-    UsageTracker,
-    reset_current_tracker,
-    set_current_tracker,
-)
+from arksim.llms.chat.base.usage import usage_label, usage_scope
 from arksim.scenario import (
     KnowledgeItem,
     Scenarios,
@@ -190,84 +186,100 @@ class Simulator:
             }
 
             turn_state: dict[str, Any] = {}
-            for turn in range(max_turns):
-                output, turn_state = await self._generate_simulated_user_output(
-                    history,
-                    is_multi_knowledge,
-                    knowledge_content,
-                    turn_state,
-                )
-
-                history.append({"role": "assistant", "content": output})
-                if on_turn_complete:
-                    on_turn_complete()
-
-                if STOP_SIGNAL in output:
-                    logger.info(
-                        f"Conversation {conversation_id} stopped "
-                        f"at turn {turn + 1} (STOP signal)"
+            with usage_label(
+                component="conversation",
+                conversation_id=conversation_id,
+            ):
+                for turn in range(max_turns):
+                    output, turn_state = await self._generate_simulated_user_output(
+                        history,
+                        is_multi_knowledge,
+                        knowledge_content,
+                        turn_state,
                     )
-                    break
 
-                metadata["turn_id"] = turn
+                    history.append({"role": "assistant", "content": output})
+                    if on_turn_complete:
+                        on_turn_complete()
 
-                # Set trace routing context so processors can read it
-                # without the agent passing it explicitly.
-                if self.trace_receiver is not None:
-                    _set_trace_context(conversation_id, turn, self.trace_receiver)
+                    if STOP_SIGNAL in output:
+                        logger.info(
+                            f"Conversation {conversation_id} stopped "
+                            f"at turn {turn + 1} (STOP signal)"
+                        )
+                        break
 
-                try:
-                    result = await agent.execute(
-                        user_query=output,
-                        metadata=metadata,
-                    )
-                finally:
+                    metadata["turn_id"] = turn
+
+                    # Set trace routing context so processors can read it
+                    # without the agent passing it explicitly.
                     if self.trace_receiver is not None:
-                        self.trace_receiver.signal_turn_complete(conversation_id, turn)
-                        _clear_trace_context()
+                        _set_trace_context(conversation_id, turn, self.trace_receiver)
 
-                # Normalize response
-                if isinstance(result, AgentResponse):
-                    answer = result.content
-                    turn_tool_calls = result.tool_calls or []
-                else:
-                    answer = result
-                    turn_tool_calls = []
+                    try:
+                        result = await agent.execute(
+                            user_query=output,
+                            metadata=metadata,
+                        )
+                    finally:
+                        if self.trace_receiver is not None:
+                            self.trace_receiver.signal_turn_complete(
+                                conversation_id, turn
+                            )
+                            _clear_trace_context()
 
-                # Merge tool calls from trace receiver (if active).
-                # Dedup by ID first, then by (name, arguments) to handle
-                # cases where the trace receiver falls back to spanId while
-                # AgentResponse carries an SDK-assigned tool call ID.
-                if self.trace_receiver is not None:
-                    traced = await self.trace_receiver.wait_for_traces(
-                        conversation_id, turn
+                    # Normalize response
+                    if isinstance(result, AgentResponse):
+                        answer = result.content
+                        turn_tool_calls = result.tool_calls or []
+                    else:
+                        answer = result
+                        turn_tool_calls = []
+
+                    # Merge tool calls from trace receiver (if active).
+                    # Dedup by ID first, then by (name, arguments) to handle
+                    # cases where the trace receiver falls back to spanId while
+                    # AgentResponse carries an SDK-assigned tool call ID.
+                    if self.trace_receiver is not None:
+                        traced = await self.trace_receiver.wait_for_traces(
+                            conversation_id, turn
+                        )
+                        if traced:
+                            existing_ids = {tc.id for tc in turn_tool_calls}
+                            sig_to_idx: dict[tuple[str, str], int] = {}
+                            for i, tc in enumerate(turn_tool_calls):
+                                sig = (
+                                    tc.name,
+                                    json.dumps(tc.arguments, sort_keys=True),
+                                )
+                                sig_to_idx[sig] = i
+
+                            for tc in traced:
+                                sig = (
+                                    tc.name,
+                                    json.dumps(tc.arguments, sort_keys=True),
+                                )
+                                if tc.id not in existing_ids and sig not in sig_to_idx:
+                                    turn_tool_calls.append(tc)
+
+                    history.append(
+                        {
+                            "role": "user",
+                            "content": answer,
+                            **(
+                                {
+                                    "tool_calls": [
+                                        tc.model_dump() for tc in turn_tool_calls
+                                    ]
+                                }
+                                if turn_tool_calls
+                                else {}
+                            ),
+                        }
                     )
-                    if traced:
-                        existing_ids = {tc.id for tc in turn_tool_calls}
-                        sig_to_idx: dict[tuple[str, str], int] = {}
-                        for i, tc in enumerate(turn_tool_calls):
-                            sig = (tc.name, json.dumps(tc.arguments, sort_keys=True))
-                            sig_to_idx[sig] = i
 
-                        for tc in traced:
-                            sig = (tc.name, json.dumps(tc.arguments, sort_keys=True))
-                            if tc.id not in existing_ids and sig not in sig_to_idx:
-                                turn_tool_calls.append(tc)
-
-                history.append(
-                    {
-                        "role": "user",
-                        "content": answer,
-                        **(
-                            {"tool_calls": [tc.model_dump() for tc in turn_tool_calls]}
-                            if turn_tool_calls
-                            else {}
-                        ),
-                    }
-                )
-
-                if on_turn_display:
-                    on_turn_display(conversation_id, output, answer, turn + 1)
+                    if on_turn_display:
+                        on_turn_display(conversation_id, output, answer, turn + 1)
 
             logger.info(
                 f"Conversation {conversation_id} completed "
@@ -488,20 +500,6 @@ async def run_simulation(
         simulated_user_prompt_template=settings.simulated_user_prompt_template,
     )
 
-    simulator = Simulator(
-        agent_config=agent_config,
-        simulator_params=simulation_params,
-        llm=llm,
-    )
-
-    tracker = UsageTracker()
-    token = set_current_tracker(tracker)
-    try:
-        simulation_output = await simulator.simulate(
-            scenarios, on_progress=on_progress, verbose=verbose
-        )
-    finally:
-        reset_current_tracker(token)
     # Start trace receiver if configured (lazy import to avoid circular deps)
     trace_cfg = settings.trace_receiver
     trace_receiver: TraceReceiver | None = None
@@ -527,9 +525,11 @@ async def run_simulation(
             llm=llm,
             trace_receiver=trace_receiver,
         )
-        simulation_output = await simulator.simulate(
-            scenarios, on_progress=on_progress, verbose=verbose
-        )
+
+        with usage_scope() as tracker:
+            simulation_output = await simulator.simulate(
+                scenarios, on_progress=on_progress, verbose=verbose
+            )
 
         if not simulation_output.conversations:
             raise RuntimeError(
@@ -540,7 +540,13 @@ async def run_simulation(
         simulation_output.usage = TokenUsage(
             total_input_tokens=tracker.total_input_tokens,
             total_output_tokens=tracker.total_output_tokens,
+            total_cached_tokens=tracker.total_cached_tokens,
+            total_reasoning_tokens=tracker.total_reasoning_tokens,
             by_model=tracker.summary(),
+            breakdowns={
+                "by_conversation": tracker.summary_by("conversation_id"),
+                "by_component": tracker.summary_by("component"),
+            },
         )
         tracker.log_summary()
 

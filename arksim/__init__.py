@@ -29,16 +29,13 @@ __all__ = [
     "Simulator",
     "SimulationInput",
     "SimulationParams",
-    "run_simulation",
-    "UsageTracker",
-    "UsageRecord",
+    "TokenUsage",
     "ToolCall",
     "ToolCallSource",
 ]
 
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
-    "UsageTracker": (".llms.chat.base.usage", "UsageTracker"),
-    "UsageRecord": (".llms.chat.base.usage", "UsageRecord"),
+    "TokenUsage": (".llms.chat.base.usage", "TokenUsage"),
     "A2AConfig": (".config", "A2AConfig"),
     "A2AToolCaptureExtension": (".simulation_engine", "A2AToolCaptureExtension"),
     "AgentConfig": (".config", "AgentConfig"),

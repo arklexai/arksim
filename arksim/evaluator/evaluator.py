@@ -15,11 +15,7 @@ from typing import TYPE_CHECKING
 from tqdm import tqdm
 
 from arksim.llms.chat import LLM
-from arksim.llms.chat.base.usage import (
-    UsageTracker,
-    reset_current_tracker,
-    set_current_tracker,
-)
+from arksim.llms.chat.base.usage import usage_label, usage_scope
 from arksim.scenario import Scenarios
 from arksim.scenario.entities import AssertionType, ExpectedToolCall
 
@@ -357,7 +353,10 @@ class Evaluator:
 
         pbar.set_description("Detecting agent errors")
         logger.info("Detecting agent errors")
-        unique_errors = detect_agent_error(self.llm, convo_score_list)
+        with usage_label(
+            component="evaluation", phase="error_detection", metric="error_detection"
+        ):
+            unique_errors = detect_agent_error(self.llm, convo_score_list)
         logger.info(f"Detected {len(unique_errors)} unique errors")
 
         # Link unique_error_ids back to TurnEvaluation objects
@@ -941,22 +940,27 @@ def run_evaluation(
         scenarios=scenarios,
     )
 
-    tracker = UsageTracker()
-    token = set_current_tracker(tracker)
-    try:
+    with usage_scope() as tracker, usage_label(component="evaluation"):
         evaluator_output = evaluator.evaluate(simulation, on_progress=on_progress)
-    finally:
-        reset_current_tracker(token)
 
+    score_filter = {"component": "evaluation", "phase": "score"}
+    error_filter = {"component": "evaluation", "phase": "error_detection"}
     evaluator_output.usage = TokenUsage(
         total_input_tokens=tracker.total_input_tokens,
         total_output_tokens=tracker.total_output_tokens,
+        total_cached_tokens=tracker.total_cached_tokens,
+        total_reasoning_tokens=tracker.total_reasoning_tokens,
         by_model=tracker.summary(),
+        breakdowns={
+            "by_phase": tracker.summary_by("phase", where={"component": "evaluation"}),
+            "score_by_metric": tracker.summary_by("metric", where=score_filter),
+            "score_by_conversation": tracker.summary_by(
+                "conversation_id", where=score_filter
+            ),
+            "error_detection": tracker.summary_by("phase", where=error_filter),
+        },
     )
     tracker.log_summary()
-
-    evaluator.display_evaluation_summary()
-
     evaluator.save_results()
     evaluator.display_evaluation_summary()
 

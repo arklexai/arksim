@@ -8,7 +8,7 @@ from pydantic import BaseModel
 
 from arksim.llms.chat.base.base_llm import BaseLLM
 from arksim.llms.chat.base.types import LLMMessage
-from arksim.llms.chat.base.usage import track_usage
+from arksim.llms.chat.base.usage import clean_usage_value, track_usage
 from arksim.llms.chat.utils import retry
 
 T = TypeVar("T", bound=BaseModel)
@@ -75,13 +75,21 @@ class AnthropicLLM(BaseLLM):
 
     def _track_response_usage(self, response: object) -> None:
         usage = getattr(response, "usage", None)
-        if usage:
-            track_usage(
-                self.model,
-                "anthropic",
-                usage.input_tokens,
-                usage.output_tokens,
-            )
+        if usage is None:
+            return
+        base_input = clean_usage_value(getattr(usage, "input_tokens", 0))
+        cache_read = clean_usage_value(getattr(usage, "cache_read_input_tokens", 0))
+        cache_create = clean_usage_value(
+            getattr(usage, "cache_creation_input_tokens", 0)
+        )
+        output_tokens = clean_usage_value(getattr(usage, "output_tokens", 0))
+        track_usage(
+            self.model,
+            "anthropic",
+            base_input + cache_read + cache_create,
+            output_tokens,
+            cached_tokens=cache_read,
+        )
 
     @overload
     def call(
