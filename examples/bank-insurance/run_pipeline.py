@@ -96,8 +96,6 @@ async def main() -> None:
             ProductSuitabilityMetric(),
             NeedsAssessmentMetric(),
             ClarityMetric(),
-        ],
-        custom_qualitative_metrics=[
             DisclosureCompletenessMetric(),
             ProhibitedStatementsMetric(),
             AdviceBoundaryMetric(),

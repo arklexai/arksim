@@ -11,16 +11,27 @@ via the ``llm`` keyword argument.
 To create a quantitative metric (numeric score):
   1. Subclass ``QuantitativeMetric``.
   2. Add ``llm=None`` to ``__init__`` and pass it to ``super().__init__(llm=llm)``.
-  3. Implement ``score()`` — receives a ``ScoreInput``, returns a
+  3. Implement ``score()`` -- receives a ``ScoreInput``, returns a
      ``QuantResult`` with ``name``, ``value`` (float), and ``reason``.
      Use ``self.llm`` to call the LLM.
 
 To create a qualitative metric (categorical label):
   1. Subclass ``QualitativeMetric``.
   2. Add ``llm=None`` to ``__init__`` and pass it to ``super().__init__(llm=llm)``.
-  3. Implement ``evaluate()`` — receives a ``ScoreInput``, returns a
+  3. Implement ``evaluate()`` -- receives a ``ScoreInput``, returns a
      ``QualResult`` with ``name``, ``value`` (str label), and ``reason``.
      Use ``self.llm`` to call the LLM.
+
+Scope:
+  Each metric can declare ``scope="turn"`` (default) or
+  ``scope="conversation"`` in ``super().__init__()``.
+
+  - ``"turn"`` metrics run once per turn inside ``evaluate_turn``.
+    They receive ``current_turn`` (the user+assistant pair) and the
+    full ``chat_history`` up to that turn.
+  - ``"conversation"`` metrics run once per conversation inside
+    ``evaluate_conversation``, alongside goal completion. They receive
+    the complete ``chat_history`` for the entire conversation.
 
   4. Add the file path to ``custom_metrics_file_paths`` in config.yaml
      and (optionally) add the metric name to ``metrics_to_run``.
@@ -99,6 +110,7 @@ class ProductSuitabilityMetric(QuantitativeMetric):
                 " customer's stated needs and risk profile (0=poor match, 5=excellent match)."
             ),
             llm=llm,
+            scope="conversation",
         )
 
     def score(self, score_input: ScoreInput) -> QuantResult:
@@ -186,6 +198,7 @@ class NeedsAssessmentMetric(QuantitativeMetric):
                 " 5=comprehensive needs discovery)."
             ),
             llm=llm,
+            scope="conversation",
         )
 
     def score(self, score_input: ScoreInput) -> QuantResult:
@@ -266,6 +279,7 @@ class ClarityMetric(QuantitativeMetric):
                 " 5=plain language with comprehension check)."
             ),
             llm=llm,
+            scope="turn",
         )
 
     def score(self, score_input: ScoreInput) -> QuantResult:
@@ -353,11 +367,12 @@ class DisclosureCompletenessMetric(QualitativeMetric):
                 " missing=critical disclosures absent."
             ),
             label_colors={
-                "complete": "#22c55e",  # green  — all disclosures present
-                "partial": "#f59e0b",  # amber  — some omitted
-                "missing": "#ef4444",  # red    — critical disclosures absent
+                "complete": "#22c55e",  # green  - all disclosures present
+                "partial": "#f59e0b",  # amber  - some omitted
+                "missing": "#ef4444",  # red    - critical disclosures absent
             },
             llm=llm,
+            scope="conversation",
         )
 
     def evaluate(self, score_input: ScoreInput) -> QualResult:
@@ -431,10 +446,11 @@ class ProhibitedStatementsMetric(QualitativeMetric):
                 " violated=prohibited claim detected."
             ),
             label_colors={
-                "clean": "#22c55e",  # green — no violations
-                "violated": "#ef4444",  # red   — prohibited claim detected
+                "clean": "#22c55e",  # green - no violations
+                "violated": "#ef4444",  # red   - prohibited claim detected
             },
             llm=llm,
+            scope="turn",
         )
 
     def evaluate(self, score_input: ScoreInput) -> QualResult:
@@ -510,10 +526,11 @@ class AdviceBoundaryMetric(QualitativeMetric):
                 " overstepped=gave regulated advice without authorisation."
             ),
             label_colors={
-                "within_scope": "#22c55e",  # green — stayed within scope
-                "overstepped": "#ef4444",  # red   — gave unauthorised advice
+                "within_scope": "#22c55e",  # green - stayed within scope
+                "overstepped": "#ef4444",  # red   - gave unauthorised advice
             },
             llm=llm,
+            scope="turn",
         )
 
     def evaluate(self, score_input: ScoreInput) -> QualResult:
@@ -582,11 +599,12 @@ class EscalationBehaviorMetric(QualitativeMetric):
                 " under_served=failed to escalate when needed."
             ),
             label_colors={
-                "appropriate": "#22c55e",  # green  — handled correctly
-                "over_extended": "#f97316",  # orange — exceeded competence
-                "under_served": "#ef4444",  # red    — failed to escalate
+                "appropriate": "#22c55e",  # green  - handled correctly
+                "over_extended": "#f97316",  # orange - exceeded competence
+                "under_served": "#ef4444",  # red    - failed to escalate
             },
             llm=llm,
+            scope="conversation",
         )
 
     def evaluate(self, score_input: ScoreInput) -> QualResult:
