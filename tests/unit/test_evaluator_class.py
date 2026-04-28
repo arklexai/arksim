@@ -5,9 +5,11 @@ from __future__ import annotations
 
 import os
 import textwrap
+import warnings
 
 import pytest
 
+from arksim.evaluator.base_metric import QualitativeMetric, QualResult, ScoreInput
 from arksim.evaluator.entities import (
     ConversationEvaluation,
     EvaluationParams,
@@ -179,6 +181,58 @@ class TestDisplayHelpers:
     def test_display_failure_breakdown_skips_special(self) -> None:
         ev = _make_evaluator()
         ev._display_failure_breakdown({"skipped_good_performance": 5})
+
+
+# ---------------------------------------------------------------------------
+# _load_custom_metrics
+# ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+# EvaluationParams._merge_legacy_qualitative_metrics (deprecation shim)
+# ---------------------------------------------------------------------------
+class _DummyQual(QualitativeMetric):
+    def __init__(self, name: str = "dummy_qual") -> None:
+        super().__init__(name=name)
+
+    def evaluate(self, score_input: ScoreInput) -> QualResult:
+        return QualResult(name=self.name, value="ok")
+
+
+class TestMergeLegacyQualitativeMetrics:
+    def test_deprecation_warning_fires(self) -> None:
+        metric = _DummyQual()
+        with pytest.warns(DeprecationWarning, match="custom_qualitative_metrics"):
+            EvaluationParams(
+                output_dir="/tmp",
+                custom_qualitative_metrics=[metric],
+            )
+
+    def test_legacy_list_merged_into_custom_metrics(self) -> None:
+        metric = _DummyQual()
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", DeprecationWarning)
+            params = EvaluationParams(
+                output_dir="/tmp",
+                custom_qualitative_metrics=[metric],
+            )
+        assert metric in params.custom_metrics
+
+    def test_legacy_merged_with_existing_custom_metrics(self) -> None:
+        legacy = _DummyQual("legacy")
+        existing = _DummyQual("existing")
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", DeprecationWarning)
+            params = EvaluationParams(
+                output_dir="/tmp",
+                custom_metrics=[existing],
+                custom_qualitative_metrics=[legacy],
+            )
+        assert existing in params.custom_metrics
+        assert legacy in params.custom_metrics
+
+    def test_no_warning_without_legacy_kwarg(self) -> None:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", DeprecationWarning)
+            EvaluationParams(output_dir="/tmp")  # must not raise
 
 
 # ---------------------------------------------------------------------------

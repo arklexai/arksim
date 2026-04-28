@@ -210,16 +210,18 @@ class QualitativeMetric(_LLMMixin, abc.ABC):
         label_colors: dict[str, str] | None = None,
         llm: BaseLLM | None = None,
         scope: MetricScope = "turn",
+        additional_input: dict[str, Any] | None = None,
     ) -> None:
         self.name = name if name is not None else self.__class__.__name__
         self.description = description
         self.label_colors: dict[str, str] = label_colors or {}
         self._llm = llm
         self.scope = scope
+        self.additional_input = additional_input or {}
 
     def run(self, score_input: ScoreInput) -> QualResult:
         """Evaluate *score_input* and stamp ``scope`` on the result."""
-        r = self.evaluate(score_input)
+        r = self.evaluate(score_input.model_copy(update=self.additional_input))
         r.scope = self.scope
         return r
 
