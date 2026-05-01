@@ -52,7 +52,7 @@ logger = logging.getLogger(__name__)
 
 
 def _should_run(name: str, metrics_to_run: list[str] | None) -> bool:
-    return metrics_to_run is None or name in metrics_to_run
+    return not metrics_to_run or name in metrics_to_run
 
 
 def _run_metrics_parallel(
