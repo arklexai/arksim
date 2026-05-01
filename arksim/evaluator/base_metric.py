@@ -42,6 +42,7 @@ class QualResult(BaseModel):
     name: str
     value: str
     reason: str | None = None
+    metadata: dict[str, Any] | None = None
     scope: MetricScope = "turn"
 
 
