@@ -61,7 +61,7 @@ class ToolCallBehaviorFailureMetric(AgentBehaviorFailureMetric):
                     "role": "user",
                     "content": tool_call_behavior_failure_user_prompt.format(
                         user_goal=score_input.user_goal,
-                        chat_history=format_chat_history(score_input.current_turn),
+                        chat_history=format_chat_history(score_input.chat_history),
                         knowledge=score_input.knowledge,
                         tool_calls=json.dumps(
                             [
