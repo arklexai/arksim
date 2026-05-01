@@ -5,6 +5,18 @@ All notable changes to ArkSim will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.6](https://github.com/arklexai/arksim/compare/v0.3.5...v0.3.6) (2026-05-01)
+
+
+### Fixed
+
+* **evaluator:** align builtin metric prompt template with format args ([#166](https://github.com/arklexai/arksim/issues/166)) ([6b7f1c9](https://github.com/arklexai/arksim/commit/6b7f1c9cab3727ba2ef9917d50050aad9eb56331))
+
+
+### Documentation
+
+* snapshot v0.3.5 from main ([#165](https://github.com/arklexai/arksim/issues/165)) ([d82fb35](https://github.com/arklexai/arksim/commit/d82fb354fa79621c2eee9d082b193552d164ee39))
+
 ## [0.3.5](https://github.com/arklexai/arksim/compare/v0.3.4...v0.3.5) (2026-04-28)
 
 
