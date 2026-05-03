@@ -50,8 +50,11 @@ google = [
 otel = [
     "opentelemetry-proto>=1.20.0",
 ]
+claude = [
+    "fastmcp>=2.0.0,<4",
+]
 all = [
-    "arksim[azure,anthropic,google,otel]",
+    "arksim[azure,anthropic,google,otel,claude]",
 ]
 dev = [
     "pytest",
@@ -64,6 +67,7 @@ dev = [
 
 [project.scripts]
 arksim = "arksim.cli:main"
+arksim-mcp = "integrations.claude_code.mcp_server.server:main"
 
 [build-system]
 requires = ["hatchling", "hatch-vcs"]
@@ -76,7 +80,7 @@ source = "vcs"
 version-file = "arksim/_version.py"
 
 [tool.hatch.build.targets.wheel]
-packages = ["arksim"]
+packages = ["arksim", "integrations"]
 
 [tool.ruff.lint]
 select = [
@@ -97,10 +101,13 @@ ignore = [
 ]
 
 [tool.coverage.run]
-source = ["arksim"]
+source = ["arksim", "integrations"]
 
 [tool.coverage.report]
 fail_under = 60
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
 
 [tool.bandit]
 exclude_dirs = ["tests"]
