@@ -483,6 +483,16 @@
             color: #1e3a8a;
             box-shadow: 0 1px 3px rgba(37, 99, 235, 0.3);
         }
+        .qual-turn-chip--convo {
+            background-color: #eff6ff;
+            color: #1d4ed8;
+            border-color: #bfdbfe;
+        }
+        .qual-turn-chip--convo:hover {
+            background-color: #dbeafe;
+            color: #1e3a8a;
+            box-shadow: 0 1px 3px rgba(37, 99, 235, 0.3);
+        }
         .qual-turn-details .qual-turn-empty {
             color: #94a3b8;
             font-style: italic;
@@ -758,6 +768,73 @@
             background: #f8fafc;
             border-radius: 6px;
             border-left: 3px solid #667eea;
+        }
+
+        /* Conversation-level scores list in modal */
+        .conv-scores-list {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .conv-score-item {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        .conv-score-item[open] {
+            border-color: #667eea;
+        }
+        .conv-score-summary {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 14px;
+            cursor: pointer;
+            list-style: none;
+            user-select: none;
+            gap: 12px;
+        }
+        .conv-score-summary::-webkit-details-marker { display: none; }
+        .conv-score-summary::after {
+            content: 'expand_more';
+            font-family: 'Material Icons';
+            font-size: 18px;
+            color: #94a3b8;
+            flex-shrink: 0;
+            transition: transform 0.15s ease;
+        }
+        .conv-score-item[open] .conv-score-summary::after {
+            transform: rotate(180deg);
+        }
+        .conv-score-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: #1e293b;
+            flex: 1;
+            text-transform: capitalize;
+        }
+        .conv-score-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: #667eea;
+            flex-shrink: 0;
+        }
+        .conv-qual-badge {
+            font-size: 12px;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+        .conv-qual-badge.positive { color: #16a34a; }
+        .conv-qual-badge.neutral  { color: #d97706; }
+        .conv-qual-badge.negative { color: #dc2626; }
+        .conv-score-reason {
+            padding: 10px 14px;
+            font-size: 13px;
+            color: #475569;
+            border-top: 1px solid #e2e8f0;
+            background: #fff;
+            line-height: 1.6;
         }
 
         .conversation-section {
@@ -2004,16 +2081,54 @@
 
                     <div class="info-section">
                         <div class="info-label">Scores</div>
-                        <div class="info-value">
-                            <strong>Goal Completion Score:</strong> ${parseFloat(convosRow.goal_completion_score).toFixed(2)} |
-                            <strong>Final Score:</strong> ${parseFloat(convosRow.final_score).toFixed(2)} |
-                            <strong>Status:</strong> <span class="status-badge ${modalStatusClass}">${cleanedModalStatus}</span>
+                        <div class="conv-scores-list">
+                            <details class="conv-score-item">
+                                <summary class="conv-score-summary">
+                                    <span class="conv-score-name">Goal Completion</span>
+                                    <span class="conv-score-value">${parseFloat(convosRow.goal_completion_score).toFixed(2)}</span>
+                                </summary>
+                                <div class="conv-score-reason">${escapeHtml(convosRow.goal_completion_reason || 'N/A')}</div>
+                            </details>
+                            <details class="conv-score-item">
+                                <summary class="conv-score-summary">
+                                    <span class="conv-score-name">Final Score</span>
+                                    <span class="conv-score-value">${parseFloat(convosRow.final_score).toFixed(2)}</span>
+                                </summary>
+                                <div class="conv-score-reason">Weighted average of Turn Success Ratio (40%) and Goal Completion Score (60%).</div>
+                            </details>
+                            <details class="conv-score-item">
+                                <summary class="conv-score-summary">
+                                    <span class="conv-score-name">Status</span>
+                                    <span class="status-badge ${modalStatusClass}">${cleanedModalStatus}</span>
+                                </summary>
+                                <div class="conv-score-reason">Done if final score = 1.0; Partial Failure if ≥ 0.6; Failed if &lt; 0.6.</div>
+                            </details>
+                            ${(convosRow.scores || []).map(s => `
+                            <details class="conv-score-item">
+                                <summary class="conv-score-summary">
+                                    <span class="conv-score-name">${escapeHtml(s.name.replace(/_/g, ' '))}</span>
+                                    <span class="conv-score-value">${parseFloat(s.value).toFixed(2)}</span>
+                                </summary>
+                                <div class="conv-score-reason">${escapeHtml(s.reason || 'No reason provided.')}</div>
+                            </details>`).join('')}
+                            ${(convosRow.qual_scores || []).map(q => {
+                                const POSITIVE_LABELS = ['compliant', 'professional', 'pass', 'good', 'complete', 'no failure', 'ok'];
+                                const NEGATIVE_LABELS = ['flagged', 'unprofessional', 'fail', 'error', 'poor', 'missing', 'violated', 'partial'];
+                                const sentiment = POSITIVE_LABELS.includes(q.value.toLowerCase()) ? 'positive'
+                                               : NEGATIVE_LABELS.includes(q.value.toLowerCase()) ? 'negative'
+                                               : 'neutral';
+                                const customColor = (QUAL_LABEL_COLORS[q.name] || {})[q.value];
+                                const styleAttr = customColor ? ` style="color:${customColor};"` : '';
+                                return `
+                            <details class="conv-score-item">
+                                <summary class="conv-score-summary">
+                                    <span class="conv-score-name">${escapeHtml(q.name.replace(/_/g, ' '))}</span>
+                                    <span class="conv-qual-badge ${sentiment}"${styleAttr}>${escapeHtml(q.value)}</span>
+                                </summary>
+                                <div class="conv-score-reason">${escapeHtml(q.reason || 'No reason provided.')}</div>
+                            </details>`;
+                            }).join('')}
                         </div>
-                    </div>
-
-                    <div class="info-section">
-                        <div class="info-label">Goal Completion Reason</div>
-                        <div class="info-value">${convosRow.goal_completion_reason || 'N/A'}</div>
                     </div>
 
                     <details class="info-section" style="margin-bottom:24px">
@@ -2447,24 +2562,48 @@
                         );
                     });
 
-                    if (matchingTurns.length === 0) {
-                        details.innerHTML = '<div class="qual-turn-empty">No matching turns found</div>';
+                    // Find matching conversations (conversation-level metrics)
+                    const matchingConvos = convosData.filter(c =>
+                        (c.qual_scores || []).some(
+                            q => q.name === metricName && q.value === label
+                        )
+                    );
+
+                    if (matchingTurns.length === 0 && matchingConvos.length === 0) {
+                        details.innerHTML = '<div class="qual-turn-empty">No matching results found</div>';
                     } else {
-                        // Group turns by conversation
-                        const grouped = {};
-                        matchingTurns.forEach(t => {
-                            if (!grouped[t.chat_id]) grouped[t.chat_id] = [];
-                            grouped[t.chat_id].push(t.turn_id);
-                        });
-                        details.innerHTML = Object.entries(grouped).map(([chatId, turnIds]) =>
-                            `<div class="qual-turn-group">` +
-                            `<div class="qual-turn-conv-label">${escapeHtml(chatLabel(chatId))}</div>` +
-                            `<div class="qual-turn-chips">` +
-                            turnIds.map(tid =>
-                                `<button class="qual-turn-chip" data-chat-id="${escapeHtml(chatId)}" data-turn-id="${tid}" onclick="openModal(this.getAttribute('data-chat-id'), parseInt(this.getAttribute('data-turn-id')))">Turn ${tid}</button>`
-                            ).join('') +
-                            `</div></div>`
-                        ).join('');
+                        let html = '';
+
+                        // Conversation-level matches — all chips on one row
+                        if (matchingConvos.length > 0) {
+                            html +=
+                                `<div class="qual-turn-group">` +
+                                `<div class="qual-turn-chips">` +
+                                matchingConvos.map(c =>
+                                    `<button class="qual-turn-chip qual-turn-chip--convo" onclick="openModal('${escapeHtml(c.chat_id)}')">${escapeHtml(chatLabel(c.chat_id))}</button>`
+                                ).join('') +
+                                `</div></div>`;
+                        }
+
+                        // Turn-level matches (grouped by conversation)
+                        if (matchingTurns.length > 0) {
+                            const grouped = {};
+                            matchingTurns.forEach(t => {
+                                if (!grouped[t.chat_id]) grouped[t.chat_id] = [];
+                                grouped[t.chat_id].push(t.turn_id);
+                            });
+                            html += Object.entries(grouped).map(([chatId, turnIds]) =>
+                                `<div class="qual-turn-group">` +
+                                `<div class="qual-turn-conv-label">${escapeHtml(chatLabel(chatId))}</div>` +
+                                `<div class="qual-turn-chips">` +
+                                turnIds.map(tid =>
+                                    `<button class="qual-turn-chip" data-chat-id="${escapeHtml(chatId)}" data-turn-id="${tid}" onclick="openModal(this.getAttribute('data-chat-id'), parseInt(this.getAttribute('data-turn-id')))">Turn ${tid}</button>`
+                                ).join('') +
+                                `</div></div>`
+                            ).join('');
+                        }
+
+                        details.innerHTML = html;
                     }
 
                     row.addEventListener('click', () => {

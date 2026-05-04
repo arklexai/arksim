@@ -72,6 +72,7 @@ numeric_thresholds:
   overall_score: 0.6
   goal_completion: 0.6
   clarity: 3.5 # custom metric
+  product_suitability: 4.0
 
 # Qualitative failure labels: fail the run if any evaluated turn returns one of these labels
 # Works with built-in and custom qualitative metrics

@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-import contextvars
 import logging
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -55,6 +54,54 @@ logger = logging.getLogger(__name__)
 
 def _should_run(name: str, metrics_to_run: list[str] | None) -> bool:
     return not metrics_to_run or name in metrics_to_run
+
+
+def _run_metrics_parallel(
+    quant_metrics: list[QuantitativeMetric],
+    qual_metrics: list[QualitativeMetric],
+    score_input: ScoreInput,
+    num_workers: int,
+    log_context: str,
+) -> tuple[list[QuantResult], list[QualResult]]:
+    """Run quant and qual metrics concurrently, returning (scores, qual_scores).
+
+    Each metric's ScoreInput is built by copying *score_input* and merging
+    the metric's ``additional_input`` so callers never reconstruct fields.
+    Scope is taken from ``metric.scope`` rather than being hardcoded.
+    """
+
+    quant_tasks: list[tuple[str, Callable[[], QuantResult]]] = [
+        (m.name, lambda metric=m: metric.run(score_input)) for m in quant_metrics
+    ]
+    qual_tasks: list[tuple[str, Callable[[], QualResult]]] = [
+        (m.name, lambda metric=m: metric.run(score_input)) for m in qual_metrics
+    ]
+    all_tasks = quant_tasks + qual_tasks
+
+    scores: list[QuantResult] = []
+    qual_scores: list[QualResult] = []
+
+    if all_tasks:
+        _max = min(num_workers, len(all_tasks)) if num_workers > 0 else len(all_tasks)
+        with ThreadPoolExecutor(max_workers=_max) as pool:
+            score_futures = {pool.submit(fn): name for name, fn in quant_tasks}
+            qual_futures = {pool.submit(fn): name for name, fn in qual_tasks}
+            all_futures = {**score_futures, **qual_futures}
+
+            for future in as_completed(all_futures):
+                name = all_futures[future]
+                try:
+                    result = future.result()
+                    if future in score_futures:
+                        scores.append(result)
+                    else:
+                        qual_scores.append(result)
+                except Exception as e:
+                    logger.warning(
+                        "Metric '%s' failed for %s: %s", name, log_context, e
+                    )
+
+    return scores, qual_scores
 
 
 def evaluate_turn(
@@ -120,76 +167,17 @@ def _evaluate_turn_inner(
         m for m in builtin if _should_run(m.name, metrics_to_run)
     ] + (custom_metrics or [])
 
-    def _run(metric: QuantitativeMetric) -> QuantResult:
-        result = metric.score(
-            ScoreInput(
-                chat_history=score_input.chat_history,
-                current_turn=score_input.current_turn,
-                knowledge=score_input.knowledge,
-                user_goal=score_input.user_goal,
-                profile=score_input.profile,
-                **metric.additional_input,
-            )
-        )
-        return QuantResult(
-            name=metric.name, value=result.value, reason=result.reason or ""
-        )
-
-    def _run_qual(metric: QualitativeMetric) -> QualResult:
-        return metric.evaluate(
-            ScoreInput(
-                chat_history=score_input.chat_history,
-                current_turn=score_input.current_turn,
-                knowledge=score_input.knowledge,
-                user_goal=score_input.user_goal,
-                profile=score_input.profile,
-                **getattr(metric, "additional_input", {}),
-            )
-        )
-
-    metric_tasks: list[tuple[str, Callable[[], QuantResult]]] = [
-        (m.name, lambda metric=m: _run(metric)) for m in all_metrics
-    ]
-    qual_tasks: list[tuple[str, Callable[[], QualResult]]] = [
-        (m.name, lambda metric=m: _run_qual(metric))
-        for m in (custom_qualitative_metrics or [])
-    ]
-    all_tasks = metric_tasks + qual_tasks
-
-    scores: list[QuantResult] = []
-    qual_scores: list[QualResult] = []
-
-    if all_tasks:
-        _max = min(num_workers, len(all_tasks)) if num_workers > 0 else len(all_tasks)
-        # This inner pool is nested inside the outer per-turn pool in
-        # evaluator.py. Total LLM concurrency is roughly
-        # outer_workers * metrics_per_turn (unbounded in "auto" mode),
-        # so large runs may hit rate limits.
-        with ThreadPoolExecutor(max_workers=_max) as pool:
-            # copy_context propagates the outer usage_label scope into worker
-            # threads so per-metric/per-turn token usage stays attributable.
-            score_futures = {
-                pool.submit(contextvars.copy_context().run, fn): name
-                for name, fn in metric_tasks
-            }
-            qual_futures = {
-                pool.submit(contextvars.copy_context().run, fn): name
-                for name, fn in qual_tasks
-            }
-            all_futures = {**score_futures, **qual_futures}
-
-            for future in as_completed(all_futures):
-                name = all_futures[future]
-                try:
-                    result = future.result()
-                    if future in score_futures:
-                        scores.append(result)
-                    else:
-                        qual_scores.append(result)
-                except Exception as e:
-                    logger.warning(
-                        f"Metric '{name}' failed for turn {turn_item.turn_id}: {e}"
-                    )
+    # This inner pool is nested inside the outer per-turn pool in
+    # evaluator.py. Total LLM concurrency is roughly
+    # outer_workers * metrics_per_turn (unbounded in "auto" mode),
+    # so large runs may hit rate limits.
+    scores, qual_scores = _run_metrics_parallel(
+        all_metrics,
+        custom_qualitative_metrics or [],
+        score_input,
+        num_workers,
+        f"turn {turn_item.turn_id}",
+    )
 
     metric_max = {m.name: m.score_range[1] for m in all_metrics}
     has_threshold_failure = any(
@@ -265,34 +253,51 @@ def _evaluate_turn_inner(
     )
 
 
-def evaluate_goal_completion(
+def evaluate_conversation(
     llm: LLM,
     convo_item: ConvoItem,
     turns_details: list[TurnEvaluation],
+    custom_convo_metrics: list[QuantitativeMetric] | None = None,
+    custom_convo_qualitative_metrics: list[QualitativeMetric] | None = None,
     metrics_to_run: list[str] | None = None,
+    num_workers: int = 0,
 ) -> ConversationEvaluation:
-    """Compute goal completion and build ConversationEvaluation.
+    """Compute goal completion, run conversation-level custom metrics, and build ConversationEvaluation.
 
     Args:
         llm: The LLM instance to use for evaluation.
         convo_item: The conversation item with full history and metadata.
         turns_details: Completed TurnEvaluation objects for this conversation.
+        custom_convo_metrics: Optional list of conversation-level quantitative metrics.
+        custom_convo_qualitative_metrics: Optional list of conversation-level qualitative metrics.
         metrics_to_run: Optional list of metric names to run.
+        num_workers: Max concurrent metric LLM calls. 0 means unlimited.
     """
+    score_input = ScoreInput(
+        chat_history=convo_item.chat_history,
+        knowledge=combine_knowledge(convo_item.knowledge or []),
+        user_goal=convo_item.user_goal,
+        profile=convo_item.profile,
+    )
+
+    builtin_convo_metrics: list[QuantitativeMetric] = []
     if _should_run("goal_completion", metrics_to_run):
-        with usage_label(
-            component="evaluation",
-            phase="score",
-            conversation_id=convo_item.chat_id,
-        ):
-            result = GoalCompletionMetric(llm).score(
-                ScoreInput(
-                    chat_history=convo_item.chat_history,
-                    user_goal=convo_item.user_goal,
-                )
-            )
-        goal_completion_score = result.value
-        goal_completion_reason = result.reason
+        builtin_convo_metrics.append(GoalCompletionMetric(llm))
+
+    # Run built-in and custom conversation-level metrics in parallel.
+    scores, qual_scores = _run_metrics_parallel(
+        builtin_convo_metrics + (custom_convo_metrics or []),
+        custom_convo_qualitative_metrics or [],
+        score_input,
+        num_workers,
+        convo_item.chat_id,
+    )
+
+    gc_result = next((r for r in scores if r.name == "goal_completion"), None)
+    if gc_result is not None:
+        scores = [r for r in scores if r.name != "goal_completion"]
+        goal_completion_score = gc_result.value
+        goal_completion_reason = gc_result.reason
     else:
         goal_completion_score = SCORE_NOT_COMPUTED
         goal_completion_reason = ""
@@ -332,4 +337,6 @@ def evaluate_goal_completion(
         overall_agent_score=overall_agent_score,
         evaluation_status=status,
         turn_scores=turns_details,
+        convo_scores=scores,
+        convo_qual_scores=qual_scores,
     )

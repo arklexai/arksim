@@ -5,7 +5,14 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock
 
-from arksim.evaluator.base_metric import ChatMessage
+from arksim.evaluator.base_metric import (
+    ChatMessage,
+    QualitativeMetric,
+    QualResult,
+    QuantitativeMetric,
+    QuantResult,
+    ScoreInput,
+)
 from arksim.evaluator.entities import TurnItem
 from arksim.evaluator.evaluate import evaluate_turn
 from arksim.evaluator.utils.enums import EvaluationOutcomes
@@ -129,3 +136,57 @@ class TestEvaluateTurn:
 
         assert "previous question" in user_prompt
         assert "previous answer" in user_prompt
+
+    def test_custom_qual_metadata_is_preserved(self) -> None:
+        class StubQual(QualitativeMetric):
+            def __init__(self) -> None:
+                super().__init__(name="stub_qual")
+
+            def evaluate(self, score_input: ScoreInput) -> QualResult:
+                return QualResult(
+                    name=self.name,
+                    value="flagged",
+                    reason="captured metadata",
+                    metadata={"source": "custom-turn-metric", "severity": "high"},
+                )
+
+        llm = _mock_llm(score=4)
+        result = evaluate_turn(
+            llm,
+            _turn_item(),
+            custom_qualitative_metrics=[StubQual()],
+        )
+
+        qual = next(q for q in result.qual_scores if q.name == "stub_qual")
+        assert qual.value == "flagged"
+        assert qual.metadata == {
+            "source": "custom-turn-metric",
+            "severity": "high",
+        }
+
+    def test_custom_quant_metadata_is_preserved(self) -> None:
+        class StubQuant(QuantitativeMetric):
+            def __init__(self) -> None:
+                super().__init__(name="stub_quant")
+
+            def score(self, score_input: ScoreInput) -> QuantResult:
+                return QuantResult(
+                    name=self.name,
+                    value=4.5,
+                    reason="captured metadata",
+                    metadata={"source": "custom-turn-metric", "band": "strong"},
+                )
+
+        llm = _mock_llm(score=4)
+        result = evaluate_turn(
+            llm,
+            _turn_item(),
+            custom_metrics=[StubQuant()],
+        )
+
+        score = next(s for s in result.scores if s.name == "stub_quant")
+        assert score.value == 4.5
+        assert score.metadata == {
+            "source": "custom-turn-metric",
+            "band": "strong",
+        }

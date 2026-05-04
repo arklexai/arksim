@@ -5,7 +5,29 @@ All notable changes to ArkSim will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.5](https://github.com/arklexai/arksim/compare/v0.3.4...v0.3.5) (2026-04-28)
+
+
+### Added
+
+* **a2a:** add tool call capture via DataPart ([#140](https://github.com/arklexai/arksim/issues/140)) ([0f1efc5](https://github.com/arklexai/arksim/commit/0f1efc5cfed0199b8e535d8af780a7648a2a5702))
+* **evaluator:** add scope (turn vs. conversation) to custom metrics ([#162](https://github.com/arklexai/arksim/issues/162)) ([a47268b](https://github.com/arklexai/arksim/commit/a47268b2f3ae038f1aa4d40d516947bc3d44dccb))
+
+
+### Fixed
+
+* skip api_config re-wrapping if already correct type ([#163](https://github.com/arklexai/arksim/issues/163)) ([abbfc20](https://github.com/arklexai/arksim/commit/abbfc208ccdbe1051cd789e65129259e913e8aa3))
+
+
+### Documentation
+
+* snapshot v0.3.4 from main ([#150](https://github.com/arklexai/arksim/issues/150)) ([a85ba1a](https://github.com/arklexai/arksim/commit/a85ba1aeda80d931a5cde0fde85d15564345bcad))
+
 ## [Unreleased]
+
+### Deprecated
+
+* **evaluator:** `EvaluationParams.custom_qualitative_metrics` is deprecated; pass qualitative metrics in `custom_metrics` alongside quantitative ones. The field still works but emits a `DeprecationWarning` and will be removed in a future major release.
 
 ### Changed
 

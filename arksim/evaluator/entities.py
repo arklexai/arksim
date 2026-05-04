@@ -4,6 +4,7 @@ from __future__ import annotations
 import logging
 import os
 import sys
+import warnings
 
 from arksim.simulation_engine.tool_types import ToolCall
 
@@ -161,9 +162,27 @@ class EvaluationParams(BaseModel):
     code_file_path: str | None = None
     entry_function: str | None = None
     num_workers: int | str = Field(default=50)
-    custom_metrics: list[QuantitativeMetric] = Field(default_factory=list)
-    custom_qualitative_metrics: list[QualitativeMetric] = Field(default_factory=list)
+    custom_metrics: list[QuantitativeMetric | QualitativeMetric] = Field(
+        default_factory=list
+    )
     metrics_to_run: list[str] | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def _merge_legacy_qualitative_metrics(cls, data: object) -> object:
+        """Merge deprecated custom_qualitative_metrics into custom_metrics."""
+        if isinstance(data, dict) and "custom_qualitative_metrics" in data:
+            warnings.warn(
+                "`custom_qualitative_metrics` is deprecated; pass qualitative "
+                "metrics in `custom_metrics` alongside quantitative ones.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            legacy = data.pop("custom_qualitative_metrics") or []
+            data["custom_metrics"] = list(data.get("custom_metrics") or []) + list(
+                legacy
+            )
+        return data
 
 
 class TurnItem(BaseModel):
@@ -227,6 +246,8 @@ class ConversationEvaluation(BaseModel):
     overall_agent_score: float  # 0–1
     evaluation_status: str
     turn_scores: list[TurnEvaluation]
+    convo_scores: list[QuantResult] = Field(default_factory=list)
+    convo_qual_scores: list[QualResult] = Field(default_factory=list)
 
 
 class ErrorScenarioMapping(BaseModel):

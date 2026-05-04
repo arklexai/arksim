@@ -33,6 +33,10 @@ from .utils.prompts import (
 from .utils.schema import QualSchema, ScoreSchema
 
 
+# TODO: we can define a shared metric class that inherits from quant and qual
+# metric that has the _llm, _system_prompt, and _user_prompt_template in the
+# class, a score method that calls the llm and formats the user prompt with all
+# the score_input fields instead of hardcoding the format string.
 class HelpfulnessMetric(QuantitativeMetric):
     def __init__(self, llm: LLM) -> None:
         super().__init__(name="helpfulness")
@@ -45,7 +49,7 @@ class HelpfulnessMetric(QuantitativeMetric):
                 {
                     "role": "user",
                     "content": helpfulness_user_prompt.format(
-                        full_conversation=format_chat_history(score_input.chat_history),
+                        chat_history=format_chat_history(score_input.chat_history),
                     ),
                 },
             ],
@@ -66,7 +70,7 @@ class CoherenceMetric(QuantitativeMetric):
                 {
                     "role": "user",
                     "content": coherence_user_prompt.format(
-                        full_conversation=format_chat_history(score_input.chat_history),
+                        chat_history=format_chat_history(score_input.chat_history),
                     ),
                 },
             ],
@@ -87,7 +91,7 @@ class VerbosityMetric(QuantitativeMetric):
                 {
                     "role": "user",
                     "content": verbosity_user_prompt.format(
-                        full_conversation=format_chat_history(score_input.chat_history),
+                        chat_history=format_chat_history(score_input.chat_history),
                     ),
                 },
             ],
@@ -111,7 +115,7 @@ class RelevanceMetric(QuantitativeMetric):
                 {
                     "role": "user",
                     "content": relevance_user_prompt.format(
-                        full_conversation=format_chat_history(score_input.chat_history),
+                        chat_history=format_chat_history(score_input.chat_history),
                     ),
                 },
             ],
@@ -133,7 +137,7 @@ class FaithfulnessMetric(QuantitativeMetric):
                     "role": "user",
                     "content": faithfulness_user_prompt.format(
                         knowledge=score_input.knowledge,
-                        full_conversation=format_chat_history(score_input.chat_history),
+                        chat_history=format_chat_history(score_input.chat_history),
                     ),
                 },
             ],
@@ -154,8 +158,8 @@ class GoalCompletionMetric(QuantitativeMetric):
                 {
                     "role": "user",
                     "content": goal_completion_user_prompt.format(
-                        full_conversation=format_chat_history(score_input.chat_history),
-                        goal=score_input.user_goal,
+                        chat_history=format_chat_history(score_input.chat_history),
+                        user_goal=score_input.user_goal,
                     ),
                 },
             ],
@@ -199,7 +203,7 @@ class AgentBehaviorFailureMetric(QualitativeMetric):
                     "role": "user",
                     "content": agent_behavior_failure_user_prompt.format(
                         user_goal=score_input.user_goal,
-                        conversation=format_chat_history(score_input.chat_history),
+                        chat_history=format_chat_history(score_input.chat_history),
                         knowledge=score_input.knowledge,
                     ),
                 },

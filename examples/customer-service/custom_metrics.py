@@ -11,12 +11,15 @@ argument.
 To create your own metric:
   1. Subclass ``QuantitativeMetric`` or ``QualitativeMetric``.
   2. Add ``llm=None`` to ``__init__`` and pass it to ``super().__init__(llm=llm)``.
-  3. Implement ``score()`` (quantitative) or ``evaluate()`` (qualitative).
+  3. Set ``scope="turn"`` (run once per agent response) or
+     ``scope="conversation"`` (run once after the full conversation ends).
+     Defaults to ``"turn"`` if omitted.
+  4. Implement ``score()`` (quantitative) or ``evaluate()`` (qualitative).
      Both receive a ``ScoreInput`` with ``chat_history``, ``knowledge``,
      ``user_goal``, and ``profile``. Use ``self.llm`` to call the LLM.
-  4. Return a ``QuantResult`` or ``QualResult`` with ``name``, ``value``,
+  5. Return a ``QuantResult`` or ``QualResult`` with ``name``, ``value``,
      and ``reason``.
-  5. Add the file path to ``custom_metrics_file_paths`` in config.yaml
+  6. Add the file path to ``custom_metrics_file_paths`` in config.yaml
      and (optionally) add the metric name to ``metrics_to_run``.
 """
 
@@ -96,6 +99,7 @@ class VerificationComplianceMetric(QuantitativeMetric):
                 " before sensitive actions (0=no verification, 5=full compliance)."
             ),
             llm=llm,
+            scope="conversation",
         )
 
     def score(self, score_input: ScoreInput) -> QuantResult:
@@ -175,6 +179,7 @@ class ToolUsageEfficiencyMetric(QuantitativeMetric):
                 " 5=optimal tool usage)."
             ),
             llm=llm,
+            scope="conversation",
         )
 
     def score(self, score_input: ScoreInput) -> QuantResult:
@@ -259,6 +264,7 @@ class UnauthorizedActionMetric(QualitativeMetric):
                 "violated": "#ef4444",  # red - unauthorized action detected
             },
             llm=llm,
+            scope="conversation",
         )
 
     def evaluate(self, score_input: ScoreInput) -> QualResult:
@@ -333,6 +339,7 @@ class DataPrivacyMetric(QualitativeMetric):
                 "over_collected": "#f97316",  # orange - unnecessary data requested
             },
             llm=llm,
+            scope="conversation",
         )
 
     def evaluate(self, score_input: ScoreInput) -> QualResult:
