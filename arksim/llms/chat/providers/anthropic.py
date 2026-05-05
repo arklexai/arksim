@@ -83,12 +83,15 @@ class AnthropicLLM(BaseLLM):
             getattr(usage, "cache_creation_input_tokens", 0)
         )
         output_tokens = clean_usage_value(getattr(usage, "output_tokens", 0))
+        input_tokens = base_input + cache_read + cache_create
         track_usage(
             self.model,
             "anthropic",
-            base_input + cache_read + cache_create,
+            input_tokens,
             output_tokens,
-            cached_tokens=cache_read,
+            cache_read_tokens=cache_read,
+            cache_creation_tokens=cache_create,
+            total_tokens=input_tokens + output_tokens,
         )
 
     @overload

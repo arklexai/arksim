@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING
 from tqdm import tqdm
 
 from arksim.llms.chat import LLM
-from arksim.llms.chat.base.usage import usage_label, usage_scope
+from arksim.llms.chat.base.usage import usage_run, usage_tags
 from arksim.scenario import Scenarios
 from arksim.scenario.entities import AssertionType, ExpectedToolCall
 
@@ -370,7 +370,7 @@ class Evaluator:
 
         pbar.set_description("Detecting agent errors")
         logger.info("Detecting agent errors")
-        with usage_label(component="evaluation", phase="error_detection"):
+        with usage_tags(component="error_detection"):
             unique_errors = detect_agent_error(self.llm, convo_score_list)
         logger.info(f"Detected {len(unique_errors)} unique errors")
 
@@ -965,17 +965,19 @@ def run_evaluation(
         scenarios=scenarios,
     )
 
-    with usage_scope() as tracker, usage_label(component="evaluation"):
+    with usage_run(module="evaluation") as tracker:
         evaluator_output = evaluator.evaluate(simulation, on_progress=on_progress)
 
     evaluator_output.usage = TokenUsage(
         total_input_tokens=tracker.total_input_tokens,
         total_output_tokens=tracker.total_output_tokens,
-        total_cached_tokens=tracker.total_cached_tokens,
+        total_cache_read_tokens=tracker.total_cache_read_tokens,
+        total_cache_creation_tokens=tracker.total_cache_creation_tokens,
         total_reasoning_tokens=tracker.total_reasoning_tokens,
+        total_tokens=tracker.total_tokens,
         by_model=tracker.summary(),
         breakdowns={
-            "by_phase": tracker.summary_by("phase", where={"component": "evaluation"}),
+            "by_component": tracker.summary_by("component"),
         },
     )
     tracker.log_summary()

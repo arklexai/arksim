@@ -14,7 +14,7 @@ from tqdm import tqdm
 
 from arksim.config import AgentConfig, AgentType
 from arksim.llms.chat import LLM
-from arksim.llms.chat.base.usage import usage_label, usage_scope
+from arksim.llms.chat.base.usage import usage_run, usage_tags
 from arksim.scenario import (
     KnowledgeItem,
     Scenarios,
@@ -186,8 +186,7 @@ class Simulator:
             }
 
             turn_state: dict[str, Any] = {}
-            with usage_label(
-                component="conversation",
+            with usage_tags(
                 conversation_id=conversation_id,
             ):
                 for turn in range(max_turns):
@@ -526,7 +525,7 @@ async def run_simulation(
             trace_receiver=trace_receiver,
         )
 
-        with usage_scope() as tracker:
+        with usage_run(module="simulation") as tracker:
             simulation_output = await simulator.simulate(
                 scenarios, on_progress=on_progress, verbose=verbose
             )
@@ -540,8 +539,10 @@ async def run_simulation(
         simulation_output.usage = TokenUsage(
             total_input_tokens=tracker.total_input_tokens,
             total_output_tokens=tracker.total_output_tokens,
-            total_cached_tokens=tracker.total_cached_tokens,
+            total_cache_read_tokens=tracker.total_cache_read_tokens,
+            total_cache_creation_tokens=tracker.total_cache_creation_tokens,
             total_reasoning_tokens=tracker.total_reasoning_tokens,
+            total_tokens=tracker.total_tokens,
             by_model=tracker.summary(),
             breakdowns={
                 "by_conversation": tracker.summary_by("conversation_id"),

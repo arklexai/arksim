@@ -6,7 +6,7 @@ from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from arksim.llms.chat import LLM
-from arksim.llms.chat.base.usage import usage_label
+from arksim.llms.chat.base.usage import usage_tags
 from arksim.simulation_engine import combine_knowledge
 
 from .base_metric import (
@@ -123,11 +123,10 @@ def evaluate_turn(
         num_workers: Max concurrent metric LLM calls. 0 means unlimited
             (all metrics in parallel).
     """
-    with usage_label(
-        component="evaluation",
-        phase="score",
+    with usage_tags(
+        component="score",
         conversation_id=turn_item.chat_id,
-        turn_id=str(turn_item.turn_id),
+        turn_id=turn_item.turn_id,
     ):
         return _evaluate_turn_inner(
             llm,

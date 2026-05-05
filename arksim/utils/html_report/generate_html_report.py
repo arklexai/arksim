@@ -81,8 +81,10 @@ class TokenUsageSummary(BaseModel):
 
     total_input_tokens: int = 0
     total_output_tokens: int = 0
-    total_cached_tokens: int = 0
+    total_cache_read_tokens: int = 0
+    total_cache_creation_tokens: int = 0
     total_reasoning_tokens: int = 0
+    total_tokens: int = 0
     by_model: dict[str, dict[str, int]] = Field(default_factory=dict)
     breakdowns: dict[str, list[dict[str, str | int]]] = Field(default_factory=dict)
 
@@ -325,8 +327,10 @@ def _build_final_report_data(
         sim_usage = TokenUsageSummary(
             total_input_tokens=simulation.usage.total_input_tokens,
             total_output_tokens=simulation.usage.total_output_tokens,
-            total_cached_tokens=simulation.usage.total_cached_tokens,
+            total_cache_read_tokens=simulation.usage.total_cache_read_tokens,
+            total_cache_creation_tokens=simulation.usage.total_cache_creation_tokens,
             total_reasoning_tokens=simulation.usage.total_reasoning_tokens,
+            total_tokens=simulation.usage.total_tokens,
             by_model=simulation.usage.by_model,
             breakdowns=simulation.usage.breakdowns,
         )
@@ -336,8 +340,10 @@ def _build_final_report_data(
         eval_usage = TokenUsageSummary(
             total_input_tokens=evaluation.usage.total_input_tokens,
             total_output_tokens=evaluation.usage.total_output_tokens,
-            total_cached_tokens=evaluation.usage.total_cached_tokens,
+            total_cache_read_tokens=evaluation.usage.total_cache_read_tokens,
+            total_cache_creation_tokens=evaluation.usage.total_cache_creation_tokens,
             total_reasoning_tokens=evaluation.usage.total_reasoning_tokens,
+            total_tokens=evaluation.usage.total_tokens,
             by_model=evaluation.usage.by_model,
             breakdowns=evaluation.usage.breakdowns,
         )

@@ -37,6 +37,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+* **usage:** add LLM token usage tracking to simulation and evaluation, with typed context dimensions on `UsageRecord` (`module`, `run_id`, `component`, `step`, `conversation_id`, `turn_id`), `cache_creation_tokens` / `total_tokens` fields, and provider-specific token detail passthrough. ([#129](https://github.com/arklexai/arksim/pull/129))
+
 ### Deprecated
 
 * **evaluator:** `EvaluationParams.custom_qualitative_metrics` is deprecated; pass qualitative metrics in `custom_metrics` alongside quantitative ones. The field still works but emits a `DeprecationWarning` and will be removed in a future major release.

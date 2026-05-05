@@ -98,8 +98,9 @@ class GoogleLLM(BaseLLM):
             "google",
             prompt,
             output,
-            cached_tokens=cached,
+            cache_read_tokens=cached,
             reasoning_tokens=thoughts,
+            total_tokens=total or (prompt + output),
         )
 
     @overload

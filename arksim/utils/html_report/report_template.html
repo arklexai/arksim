@@ -2716,25 +2716,30 @@
                         perModel[model] = {
                             input_tokens: 0,
                             output_tokens: 0,
-                            cached_tokens: 0,
+                            cache_read_tokens: 0,
+                            cache_creation_tokens: 0,
                             reasoning_tokens: 0,
+                            total_tokens: 0,
                         };
                     }
                     perModel[model].input_tokens += counts.input_tokens || 0;
                     perModel[model].output_tokens += counts.output_tokens || 0;
-                    perModel[model].cached_tokens += counts.cached_tokens || 0;
+                    perModel[model].cache_read_tokens += counts.cache_read_tokens || 0;
+                    perModel[model].cache_creation_tokens += counts.cache_creation_tokens || 0;
                     perModel[model].reasoning_tokens += counts.reasoning_tokens || 0;
+                    perModel[model].total_tokens += counts.total_tokens || 0;
                 }
             }
             accumulate(simUsage);
             accumulate(evalUsage);
 
             function fmtModelRow(model, counts) {
-                const total = counts.input_tokens + counts.output_tokens;
+                const total = counts.total_tokens || (counts.input_tokens + counts.output_tokens);
                 return `<tr>
                     <td style="padding:8px 12px; font-family:ui-monospace,Menlo,monospace; font-size:13px">${escapeHtml(model)}</td>
                     <td style="padding:8px 12px; text-align:right">${counts.input_tokens.toLocaleString()}</td>
-                    <td style="padding:8px 12px; text-align:right; color:#64748b">${counts.cached_tokens.toLocaleString()}</td>
+                    <td style="padding:8px 12px; text-align:right; color:#64748b">${counts.cache_read_tokens.toLocaleString()}</td>
+                    <td style="padding:8px 12px; text-align:right; color:#64748b">${counts.cache_creation_tokens.toLocaleString()}</td>
                     <td style="padding:8px 12px; text-align:right">${counts.output_tokens.toLocaleString()}</td>
                     <td style="padding:8px 12px; text-align:right; color:#64748b">${counts.reasoning_tokens.toLocaleString()}</td>
                     <td style="padding:8px 12px; text-align:right; font-weight:600">${total.toLocaleString()}</td>
@@ -2742,28 +2747,31 @@
             }
 
             const sortedModels = Object.entries(perModel).sort((a, b) => {
-                const aTotal = a[1].input_tokens + a[1].output_tokens;
-                const bTotal = b[1].input_tokens + b[1].output_tokens;
+                const aTotal = a[1].total_tokens || (a[1].input_tokens + a[1].output_tokens);
+                const bTotal = b[1].total_tokens || (b[1].input_tokens + b[1].output_tokens);
                 return bTotal - aTotal;
             });
 
             let rows = '';
-            let totalIn = 0, totalOut = 0, totalCached = 0, totalReasoning = 0;
+            let totalIn = 0, totalOut = 0, totalCacheRead = 0, totalCacheCreate = 0, totalReasoning = 0, totalAll = 0;
             for (const [model, counts] of sortedModels) {
                 rows += fmtModelRow(model, counts);
                 totalIn += counts.input_tokens;
                 totalOut += counts.output_tokens;
-                totalCached += counts.cached_tokens;
+                totalCacheRead += counts.cache_read_tokens;
+                totalCacheCreate += counts.cache_creation_tokens;
                 totalReasoning += counts.reasoning_tokens;
+                totalAll += counts.total_tokens || (counts.input_tokens + counts.output_tokens);
             }
             if (sortedModels.length > 1) {
                 rows += `<tr style="border-top:2px solid #e8ecef; font-weight:700">
                     <td style="padding:8px 12px">Total</td>
                     <td style="padding:8px 12px; text-align:right">${totalIn.toLocaleString()}</td>
-                    <td style="padding:8px 12px; text-align:right; color:#64748b">${totalCached.toLocaleString()}</td>
+                    <td style="padding:8px 12px; text-align:right; color:#64748b">${totalCacheRead.toLocaleString()}</td>
+                    <td style="padding:8px 12px; text-align:right; color:#64748b">${totalCacheCreate.toLocaleString()}</td>
                     <td style="padding:8px 12px; text-align:right">${totalOut.toLocaleString()}</td>
                     <td style="padding:8px 12px; text-align:right; color:#64748b">${totalReasoning.toLocaleString()}</td>
-                    <td style="padding:8px 12px; text-align:right">${(totalIn + totalOut).toLocaleString()}</td>
+                    <td style="padding:8px 12px; text-align:right">${totalAll.toLocaleString()}</td>
                 </tr>`;
             }
 
@@ -2811,11 +2819,13 @@
             const tokenCols = [
                 { label: 'Calls', align: 'right' },
                 { label: 'Input', align: 'right' },
-                { label: 'Cached', align: 'right' },
+                { label: 'Cache read', align: 'right' },
+                { label: 'Cache create', align: 'right' },
                 { label: 'Output', align: 'right' },
                 { label: 'Reasoning', align: 'right' },
+                { label: 'Total', align: 'right' },
             ];
-            const tokenKeys = ['calls', 'input_tokens', 'cached_tokens', 'output_tokens', 'reasoning_tokens'];
+            const tokenKeys = ['calls', 'input_tokens', 'cache_read_tokens', 'cache_creation_tokens', 'output_tokens', 'reasoning_tokens', 'total_tokens'];
 
             function renderUsageGroup(title, subTables) {
                 const visibleSubs = subTables.filter(s => s.html);
@@ -2856,7 +2866,8 @@
                         <tr style="background:#f8fafc; color:#64748b; font-size:13px; text-transform:uppercase; letter-spacing:0.5px">
                             <th style="padding:8px 12px; text-align:left">Model</th>
                             <th style="padding:8px 12px; text-align:right">Input</th>
-                            <th style="padding:8px 12px; text-align:right" title="Cached input tokens (subset of input)">Cached</th>
+                            <th style="padding:8px 12px; text-align:right" title="Cache read tokens (subset of input)">Cache read</th>
+                            <th style="padding:8px 12px; text-align:right" title="Cache creation tokens (subset of input, Anthropic)">Cache create</th>
                             <th style="padding:8px 12px; text-align:right">Output</th>
                             <th style="padding:8px 12px; text-align:right" title="Reasoning tokens (subset of output)">Reasoning</th>
                             <th style="padding:8px 12px; text-align:right">Total</th>
@@ -2864,7 +2875,7 @@
                     </thead>
                     <tbody>${rows}</tbody>
                 </table>
-                <div style="margin-top:8px; font-size:12px; color:#64748b">Cached tokens are a subset of input; reasoning tokens are a subset of output. Out-of-process agents (Chat Completions / A2A) report their own usage and are not included.</div>
+                <div style="margin-top:8px; font-size:12px; color:#64748b">Cache read/create tokens are subsets of input; reasoning tokens are a subset of output. Out-of-process agents (Chat Completions / A2A) report their own usage and are not included.</div>
                 ${simSection}
                 ${evalSection}
             </div>`;

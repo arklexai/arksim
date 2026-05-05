@@ -58,15 +58,19 @@ class OpenAILLM(BaseLLM):
         output_details = getattr(usage, "output_tokens_details", None)
         input_tokens = clean_usage_value(getattr(usage, "input_tokens", 0))
         output_tokens = clean_usage_value(getattr(usage, "output_tokens", 0))
-        cached = clean_usage_value(getattr(input_details, "cached_tokens", 0))
+        total_tokens = clean_usage_value(
+            getattr(usage, "total_tokens", input_tokens + output_tokens)
+        )
+        cache_read = clean_usage_value(getattr(input_details, "cached_tokens", 0))
         reasoning = clean_usage_value(getattr(output_details, "reasoning_tokens", 0))
         track_usage(
             self.model,
             "openai",
             input_tokens,
             output_tokens,
-            cached_tokens=cached,
+            cache_read_tokens=cache_read,
             reasoning_tokens=reasoning,
+            total_tokens=total_tokens,
         )
 
     @overload
