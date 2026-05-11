@@ -232,8 +232,17 @@ class Simulator:
                 # Dedup by ID first, then by (name, arguments) to handle
                 # cases where the trace receiver falls back to spanId while
                 # AgentResponse carries an SDK-assigned tool call ID.
-                # Empty-string ids (Gemini always; A2A when absent) are excluded
-                # from the ID set so they fall through to signature-based dedup.
+                #
+                # Empty-string ids fall through to signature-based dedup because
+                # Gemini's native response format has no per-call id field, and
+                # the A2A tool-call extension treats id as optional. Both
+                # parsers fall back to "" by convention; the convention is
+                # anchored by ``ToolCall.id: str`` (not nullable), so a missing
+                # id always lands as "" and never as None.
+                #
+                # existing_ids and sig_to_idx are updated as traced calls are
+                # appended so two same-id or same-signature traced calls
+                # dedupe against each other within the loop.
                 if self.trace_receiver is not None:
                     traced = await self.trace_receiver.wait_for_traces(
                         conversation_id, turn
@@ -249,6 +258,9 @@ class Simulator:
                             sig = (tc.name, json.dumps(tc.arguments, sort_keys=True))
                             if tc.id not in existing_ids and sig not in sig_to_idx:
                                 turn_tool_calls.append(tc)
+                                sig_to_idx[sig] = len(turn_tool_calls) - 1
+                                if tc.id:
+                                    existing_ids.add(tc.id)
 
                 history.append(
                     {

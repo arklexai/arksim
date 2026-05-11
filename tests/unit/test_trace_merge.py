@@ -529,3 +529,54 @@ async def test_empty_id_signature_match_still_dedupes() -> None:
     # Signature match: only 1 call, not 2
     assert len(tc_list) == 1
     assert tc_list[0]["name"] == "a"
+
+
+@pytest.mark.asyncio
+async def test_duplicate_empty_id_traced_calls_dedupe_within_traced() -> None:
+    """Two same-signature empty-id traced calls dedupe even when turn_tool_calls is empty.
+
+    Without sig_to_idx updates inside the append loop, both traced calls would
+    pass id-check (empty falls through) and sig-check (sig_to_idx empty from
+    turn_tool_calls=[]), producing a duplicate. The append branch tracks each
+    newly-merged call so subsequent traced entries dedupe against it.
+    """
+    receiver = AsyncMock()
+    receiver.signal_turn_complete = MagicMock()
+    receiver.wait_for_traces = AsyncMock(
+        return_value=[
+            ToolCall(id="", name="foo", arguments={"x": 1}),
+            ToolCall(id="", name="foo", arguments={"x": 1}),
+        ]
+    )
+
+    sim = _make_simulator(trace_receiver=receiver)
+
+    mock_agent = AsyncMock()
+    mock_agent.get_chat_id = AsyncMock(return_value="conv-1")
+    mock_agent.execute = AsyncMock(
+        return_value=AgentResponse(content="result", tool_calls=[])
+    )
+    mock_agent.close = AsyncMock()
+
+    sim.llm.call_async = AsyncMock(side_effect=["hello", "###STOP###"])
+
+    with patch(
+        "arksim.simulation_engine.simulator.create_agent",
+        return_value=mock_agent,
+    ):
+        state = await sim._run_single_conversation(
+            profile="test user",
+            goal="test goal",
+            knowledge=[{"content": "k1"}],
+            agent_context="context",
+            max_turns=3,
+            scenario_id="s1",
+        )
+
+    assert state is not None
+    agent_msgs = [m for m in state.conversation_history if m.get("role") == "user"]
+    assert len(agent_msgs) == 1
+    tc_list = agent_msgs[0].get("tool_calls", [])
+    # Both traced calls share id="" and (name, args); only one survives.
+    assert len(tc_list) == 1
+    assert tc_list[0]["name"] == "foo"
