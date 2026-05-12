@@ -338,3 +338,31 @@ class TestFindIntegrationDirFailure:
             _find_integration_dir()
 
         assert exc_info.value.code == EXIT_CONFIG_ERROR
+
+
+class TestPreflightDryRun:
+    """_preflight_check warns instead of exits when dry_run=True."""
+
+    def test_missing_arksim_mcp_exits_in_install_mode(self, tmp_path: Path) -> None:
+        from arksim.cli import _preflight_check
+
+        with (
+            patch("arksim.cli.shutil.which", return_value=None),
+            pytest.raises(SystemExit) as exc_info,
+        ):
+            _preflight_check(tmp_path)
+
+        assert exc_info.value.code == EXIT_CONFIG_ERROR
+
+    def test_missing_arksim_mcp_warns_in_dry_run(
+        self, tmp_path: Path, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        from arksim.cli import _preflight_check
+
+        with patch("arksim.cli.shutil.which", return_value=None):
+            _preflight_check(tmp_path, dry_run=True)
+
+        assert any(
+            "arksim-mcp not found" in record.message and record.levelname == "WARNING"
+            for record in caplog.records
+        )

@@ -507,8 +507,13 @@ def _read_manifest(skills_dir: Path) -> dict | None:
     return data
 
 
-def _preflight_check(root: Path) -> None:
-    """Print a pre-flight summary and abort if arksim-mcp is missing."""
+def _preflight_check(root: Path, *, dry_run: bool = False) -> None:
+    """Print a pre-flight summary and abort if arksim-mcp is missing.
+
+    In ``dry_run`` mode the missing-binary case is downgraded to a
+    warning so users can still see the install preview before they pip
+    install the [claude] extra.
+    """
     arksim_mcp_path = shutil.which("arksim-mcp")
     is_git_repo = (root / ".git").is_dir()
     keys_present = [
@@ -530,8 +535,12 @@ def _preflight_check(root: Path) -> None:
             "(set OPENAI_API_KEY, ANTHROPIC_API_KEY, or GOOGLE_API_KEY)"
         )
     if not arksim_mcp_path:
-        logger.error("arksim-mcp not found. Run: pip install arksim[claude]")
-        sys.exit(EXIT_CONFIG_ERROR)
+        msg = "arksim-mcp not found. Run: pip install arksim[claude]"
+        if dry_run:
+            logger.warning(msg + " (dry-run: continuing for preview)")
+        else:
+            logger.error(msg)
+            sys.exit(EXIT_CONFIG_ERROR)
 
 
 def _run_setup_claude(
@@ -571,7 +580,7 @@ def _run_setup_claude(
         _uninstall_claude(mcp_config_path, skills_dir, dry_run=dry_run)
         return
 
-    _preflight_check(root)
+    _preflight_check(root, dry_run=dry_run)
     integration_dir = _find_integration_dir()
     _install_claude(
         integration_dir,
@@ -731,7 +740,6 @@ def _install_claude(
     aside_dir.mkdir(parents=True)
 
     copied: list[str] = []
-    moved_aside: list[str] = []
 
     def _restore_from_aside() -> None:
         """Move any aside-d skill directories back into place."""
@@ -753,7 +761,6 @@ def _install_claude(
                 continue
             if old_skill.is_dir():
                 shutil.move(str(old_skill), str(aside_dir / old_skill.name))
-                moved_aside.append(old_skill.name)
 
         try:
             for staged in staging_dir.iterdir():
