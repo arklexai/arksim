@@ -67,7 +67,7 @@ def test_error_path_populates_error_field() -> None:
     assert tc.id == str(run_id)
     assert tc.name == "get_weather"
     assert tc.arguments == {"city": "NYC"}
-    assert tc.error == "nope"
+    assert tc.error == "ValueError: nope"
     assert tc.result is None
     assert tc.source == ToolCallSource.LANGCHAIN
 
@@ -158,3 +158,17 @@ def test_empty_input_str_yields_empty_arguments() -> None:
 
     tc = _only_call(receiver)
     assert tc.arguments == {}
+
+
+def test_sync_overrides_satisfy_async_dispatch_invariant() -> None:
+    """LangChain's async manager picks sync override when iscoroutinefunction is False.
+
+    If a future refactor makes any on_tool_* method async on this class, the
+    invariant breaks and chain.ainvoke() stops routing through our override.
+    """
+    import inspect
+
+    handler = ArksimLangChainHandler()
+    assert not inspect.iscoroutinefunction(handler.on_tool_start)
+    assert not inspect.iscoroutinefunction(handler.on_tool_end)
+    assert not inspect.iscoroutinefunction(handler.on_tool_error)

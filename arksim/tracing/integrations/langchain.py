@@ -29,7 +29,6 @@ thread pool because the work is pure in-memory bookkeeping.
 
 from __future__ import annotations
 
-import json
 import logging
 from typing import Any
 from uuid import UUID
@@ -43,6 +42,7 @@ except ImportError as exc:  # pragma: no cover
     ) from exc
 
 from arksim.simulation_engine.tool_types import ToolCall, ToolCallSource
+from arksim.tracing.integrations._args import parse_tool_arguments
 from arksim.tracing.integrations._base import BaseTracingAdapter
 from arksim.tracing.integrations._pending import PendingToolCalls
 
@@ -75,12 +75,7 @@ class ArksimLangChainHandler(BaseTracingAdapter, AsyncCallbackHandler):
         **kwargs: Any,  # noqa: ANN401  (signature fixed by LangChain protocol)
     ) -> None:
         name = serialized.get("name") or kwargs.get("name") or ""
-        try:
-            arguments: Any = json.loads(input_str) if input_str else {}
-        except (json.JSONDecodeError, TypeError):
-            arguments = {"_value": input_str} if input_str else {}
-        if not isinstance(arguments, dict):
-            arguments = {"_value": arguments}
+        arguments = parse_tool_arguments(input_str)
         self._pending.add(str(run_id), {"name": name, "arguments": arguments})
 
     def on_tool_end(
@@ -120,7 +115,7 @@ class ArksimLangChainHandler(BaseTracingAdapter, AsyncCallbackHandler):
                 id=str(run_id),
                 name=payload["name"],
                 arguments=payload["arguments"],
-                error=str(error),
+                error=f"{type(error).__name__}: {error}",
                 source=ToolCallSource.LANGCHAIN,
             )
         )
