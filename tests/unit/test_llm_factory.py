@@ -48,3 +48,29 @@ class TestGetProvider:
     def test_unknown_provider_raises(self) -> None:
         with pytest.raises(ValueError, match="not supported"):
             LLM._get_provider("unknown")
+
+    def test_responses_provider_resolves_to_openai_llm(self) -> None:
+        cls = LLM._get_provider("responses")
+        assert cls.__name__ == "OpenAILLM"
+
+    def test_open_responses_provider_resolves_to_openai_llm(self) -> None:
+        cls = LLM._get_provider("open_responses")
+        assert cls.__name__ == "OpenAILLM"
+
+    def test_open_responses_provider_emits_info_log(
+        self, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        import logging
+
+        with caplog.at_level(logging.INFO, logger="arksim.llms.chat.llm"):
+            LLM._get_provider("open_responses")
+        assert any("open_responses" in rec.message for rec in caplog.records)
+
+    def test_openai_provider_does_not_emit_info_log(
+        self, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        import logging
+
+        with caplog.at_level(logging.INFO, logger="arksim.llms.chat.llm"):
+            LLM._get_provider("openai")
+        assert not any("open_responses" in rec.message for rec in caplog.records)

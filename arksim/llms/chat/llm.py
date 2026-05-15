@@ -23,7 +23,12 @@ class LLM(BaseLLM):
 
     @classmethod
     def _get_provider(cls, provider: str) -> type:
-        if provider == "openai":
+        if provider in ("openai", "responses", "open_responses"):
+            if provider == "open_responses":
+                logger.info(
+                    "'open_responses' provider alias resolves to the same "
+                    "Responses-API client as 'responses'."
+                )
             from arksim.llms.chat.providers.openai import OpenAILLM
 
             return OpenAILLM
