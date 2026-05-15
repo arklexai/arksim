@@ -486,6 +486,8 @@ async def run_simulation(
     llm = LLM(
         model=settings.model,
         provider=settings.provider,
+        base_url=settings.base_url,
+        api_key=settings.api_key,
     )
 
     simulation_params = SimulationParams(

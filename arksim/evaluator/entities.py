@@ -57,6 +57,23 @@ class EvaluationInput(BaseModel):
     )
     model: str = Field(default=DEFAULT_MODEL, description="LLM model for evaluation")
     provider: str | None = Field(default=DEFAULT_PROVIDER, description="LLM provider")
+    base_url: str | None = Field(
+        default=None,
+        description=(
+            "Optional custom endpoint for the evaluator LLM. Use to point at any "
+            "Open Responses-conforming backend (Ollama, vLLM, NVIDIA NIM, Vercel AI "
+            "Gateway, OpenRouter, etc.). Defaults to the SDK's env var "
+            "(OPENAI_BASE_URL) or the canonical provider endpoint."
+        ),
+    )
+    api_key: str | None = Field(
+        default=None,
+        description=(
+            "Optional API key for the evaluator LLM. Pair with base_url for "
+            "self-hosted or alternate Responses backends. Defaults to the SDK's "
+            "env var (OPENAI_API_KEY)."
+        ),
+    )
     num_workers: int | str = Field(
         default=50,
         description="Number of parallel workers (use 'auto' to default to 4)",

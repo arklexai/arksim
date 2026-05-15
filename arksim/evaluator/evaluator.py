@@ -941,6 +941,8 @@ def run_evaluation(
     llm = LLM(
         model=settings.model,
         provider=settings.provider,
+        base_url=settings.base_url,
+        api_key=settings.api_key,
     )
     all_quant, all_qual = _load_custom_metrics(
         settings.custom_metrics_file_paths, llm=llm

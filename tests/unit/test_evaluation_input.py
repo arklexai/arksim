@@ -1,10 +1,31 @@
 # SPDX-License-Identifier: Apache-2.0
 """Tests for arksim.evaluator.entities.EvaluationInput validator."""
 
+from __future__ import annotations
+
 from pathlib import Path
 from typing import Any
 
 from arksim.evaluator.entities import EvaluationInput
+
+
+class TestEvaluationInputFields:
+    """Tests for newly added optional LLM transport fields."""
+
+    def test_evaluation_input_accepts_base_url_and_api_key(self) -> None:
+        settings = EvaluationInput(
+            model="llama3.1",
+            provider="responses",
+            base_url="http://localhost:11434/v1",
+            api_key="ollama",
+        )
+        assert settings.base_url == "http://localhost:11434/v1"
+        assert settings.api_key == "ollama"
+
+    def test_evaluation_input_defaults_base_url_and_api_key_to_none(self) -> None:
+        settings = EvaluationInput()
+        assert settings.base_url is None
+        assert settings.api_key is None
 
 
 class TestEvaluationInputPathResolution:
