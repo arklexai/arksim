@@ -51,25 +51,25 @@ otel = [
     "opentelemetry-proto>=1.20.0",
 ]
 langchain = [
-    "langchain-core>=0.3.0",
+    "langchain-core>=1.0.0",
 ]
 crewai = [
     "crewai>=0.80.0",
 ]
 claude-agent = [
-    "claude-agent-sdk>=0.1.0",
+    "claude-agent-sdk>=0.1.0,<0.3.0",
 ]
 google-adk = [
-    "google-adk>=0.5.0",
+    "google-adk>=1.0.0",
 ]
 livekit = [
     "livekit-agents>=1.0.0",
 ]
 strands = [
-    "strands-agents>=0.1.0",
+    "strands-agents>=1.0.0",
 ]
 llamaindex = [
-    "llama-index-core>=0.10.0",
+    "llama-index-core>=0.14.0",
 ]
 smolagents = [
     "smolagents>=1.0.0",
