@@ -127,3 +127,18 @@ The SQLite database (`store.db`) is created automatically on first run with samp
 - 4 orders (shipped, processing, delivered, cancelled)
 - 6 products (laptops, headphones, accessories)
 - 2 verification codes (one per customer)
+
+### Running the user simulator on a self-hosted backend
+
+The user-simulator LLM defaults to OpenAI. To swap it for any [Open Responses](https://www.openresponses.org/)-conforming backend (Ollama, vLLM, NVIDIA NIM, Vercel AI Gateway, OpenRouter), replace the `simulator.llm` block in `config.yaml` with:
+
+```yaml
+simulator:
+  llm:
+    provider: responses
+    model: llama3.1
+    base_url: http://localhost:11434/v1
+    api_key: ollama
+```
+
+Then start the local server. For Ollama: `ollama serve` and `ollama pull llama3.1`. See [User simulator on Open Responses](https://docs.arklex.ai/main/user-simulator-on-open-responses) for vLLM, NIM, and other backends.
