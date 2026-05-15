@@ -109,6 +109,7 @@
             "pages": [
               "main/build-scenario",
               "main/simulate-conversation",
+              "main/user-simulator-on-open-responses",
               "main/evaluate-conversation",
               "main/tool-call-capture",
               "main/schema-reference"
