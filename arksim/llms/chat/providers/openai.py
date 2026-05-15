@@ -19,11 +19,22 @@ class OpenAILLM(BaseLLM):
         model: str,
         provider: str | None = None,
         temperature: float | None = None,
+        base_url: str | None = None,
+        api_key: str | None = None,
         **kwargs: object,
     ) -> None:
         super().__init__(model, provider, temperature, **kwargs)
-        self.client = OpenAI()
-        self.async_client = AsyncOpenAI()
+        # Coerce empty strings to omitted: YAML configs commonly produce ""
+        # for unset fields, and an empty base_url or api_key would otherwise
+        # confuse the SDK rather than falling back to OPENAI_BASE_URL /
+        # OPENAI_API_KEY env vars.
+        client_kwargs: dict[str, str] = {}
+        if base_url:
+            client_kwargs["base_url"] = base_url
+        if api_key:
+            client_kwargs["api_key"] = api_key
+        self.client = OpenAI(**client_kwargs)
+        self.async_client = AsyncOpenAI(**client_kwargs)
 
     def _prepare_params(
         self,
