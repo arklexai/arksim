@@ -1,17 +1,17 @@
 ---
-title: 'User simulator on Open Responses'
-description: 'Run the user-simulator LLM against any Open Responses-conforming backend.'
+title: "User simulator on Open Responses"
+description: "Run the user-simulator LLM against any Open Responses-conforming backend."
 ---
 
 ## What is Open Responses
 
-The [Open Responses spec](https://www.openresponses.org/) is a multi-vendor open standard for the `/v1/responses` API shape. It is essentially OpenAI's Responses API formalized as a shared spec, with backing from a consortium that includes OpenAI, NVIDIA, Vercel, Ollama, vLLM, and others. See [openresponses.org](https://www.openresponses.org/) for the current backer list.
+The [Open Responses spec](https://www.openresponses.org/) is a multi-vendor open standard for the `/v1/responses` API shape. It is essentially OpenAI's Responses API formalized as a shared spec, backed by a consortium that includes OpenAI and NVIDIA among others. See [openresponses.org](https://www.openresponses.org/) for the current backer list.
 
 ArkSim's OpenAI provider has run on OpenAI's Responses API endpoint (`client.responses.parse`) since v0.3.0. The new `responses` provider alias lets you point the user-simulator LLM at any conforming backend by setting `base_url` and `api_key` in your config. Explicit `base_url` and `api_key` values in config take precedence over the `OPENAI_BASE_URL` and `OPENAI_API_KEY` environment variables; leave them unset (or empty) to fall back to env.
 
 ## Why it matters
 
-ArkSim's user simulator sends a stable system prompt and scenario context to the LLM on every turn of every scenario. OpenAI's automatic prompt cache hits this stable prefix and discounts the cached portion by 50-75% depending on the model. For typical multi-turn runs, expect roughly 25-40% total cost reduction. The benefit was already active for OpenAI users; this page documents how to extend the same shape to self-hosted or alternate backends.
+ArkSim's user simulator sends a stable system prompt and scenario context to the LLM on every turn of every scenario. OpenAI's automatic prompt cache hits this stable prefix and discounts the cached portion by 50 to 75% depending on the model. Depending on prompt-cache hit rate and the output share of total cost, typical multi-turn runs see roughly 20 to 40% total cost reduction. The benefit was already active for OpenAI users; this page documents how to extend the same shape to self-hosted or alternate backends.
 
 ## Configuration
 
@@ -25,6 +25,8 @@ simulator:
 ```
 
 `api.openai.com` is the default. No `base_url` needed.
+
+Requires `OPENAI_API_KEY` in your environment.
 
 ### Ollama (local)
 
@@ -50,6 +52,8 @@ simulator:
     api_key: ${VLLM_API_KEY}
 ```
 
+Start vLLM with `vllm serve <model> --port 8000`, then point `base_url` at the running host.
+
 ### NVIDIA NIM, Vercel AI Gateway, OpenRouter, LM Studio, Llama Stack
 
 Same shape, different `base_url`. Consult each provider's documentation for the exact endpoint path and authentication header.
@@ -63,9 +67,9 @@ Both names resolve to the same Python class under the hood. The distinction is d
 
 ## Verifying caching is working
 
-For OpenAI-hosted models, the response payload exposes `usage.input_tokens_details.cached_tokens` on every call. ArkSim does not surface this metric into reports yet (planned follow-up). For now, check the [OpenAI usage dashboard](https://platform.openai.com/usage) and look for `cached_input_tokens` on your ArkSim runs. You should see the cached fraction climb across turns of a single scenario.
+For OpenAI-hosted models, the response payload exposes `usage.input_tokens_details.cached_tokens` on every call. ArkSim does not surface this metric into reports yet. For now, check the [OpenAI usage dashboard](https://platform.openai.com/usage) and look for `cached_input_tokens` on your ArkSim runs. You should see the cached fraction climb across turns of a single scenario.
 
-Self-hosted backends do not have OpenAI-equivalent automatic prefix caching out of the box. Ollama maintains a KV cache within a single process but does not persist it across HTTP calls in a way that benefits cross-turn arksim runs. vLLM has prefix caching but it is configuration-gated; consult vLLM's docs to enable it.
+Self-hosted backends do not have OpenAI-equivalent automatic prefix caching out of the box. Ollama maintains a KV cache within a single process but does not persist it across HTTP calls in a way that benefits cross-turn ArkSim runs. vLLM has prefix caching but it is configuration-gated; consult vLLM's docs to enable it.
 
 ## Caveats
 
