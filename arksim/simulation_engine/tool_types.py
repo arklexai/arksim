@@ -29,6 +29,30 @@ class ToolCallSource(str, Enum):
     #: Captured from an OTLP / OpenInference span (via the trace receiver).
     OTEL_TRACE = "otel_trace"
 
+    #: Captured from a LangChain run (via the LangChain tracing adapter).
+    LANGCHAIN = "langchain"
+
+    #: Captured from a CrewAI run (via the CrewAI tracing adapter).
+    CREWAI = "crewai"
+
+    #: Captured from a Claude Agent SDK run (via the Claude Agent SDK tracing adapter).
+    CLAUDE_AGENT_SDK = "claude_agent_sdk"
+
+    #: Captured from a Google ADK run (via the Google ADK tracing adapter).
+    GOOGLE_ADK = "google_adk"
+
+    #: Captured from a LiveKit run (via the LiveKit tracing adapter).
+    LIVEKIT = "livekit"
+
+    #: Captured from a Strands Agents run (via the Strands tracing adapter).
+    STRANDS = "strands"
+
+    #: Captured from a LlamaIndex run (via the LlamaIndex tracing adapter).
+    LLAMAINDEX = "llamaindex"
+
+    #: Captured from a Smolagents run (via the Smolagents tracing adapter).
+    SMOLAGENTS = "smolagents"
+
 
 class A2AToolCaptureExtension:
     """A2A AgentExtension URI for arksim's tool call capture convention.
