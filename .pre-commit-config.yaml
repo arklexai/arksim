@@ -34,13 +34,13 @@ repos:
       - id: detect-secrets
         args: ['--baseline', '.secrets.baseline']
         exclude: |
-          (?x)^(
+          (?x)(^|/)(
             package-lock\.json|
             pnpm-lock\.yaml|
             yarn\.lock|
             poetry\.lock|
             uv\.lock|
             Cargo\.lock|
-            .*/node_modules/.*|
+            node_modules/.*|
             \.secrets\.baseline
           )$
