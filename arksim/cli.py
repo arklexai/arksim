@@ -3,13 +3,17 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import contextlib
+import json
 import logging
 import os
 import shutil
 import sys
+import tempfile
 import textwrap
 import time
 from importlib import resources
+from pathlib import Path
 
 import yaml
 from pydantic import ValidationError
@@ -341,6 +345,468 @@ def _run_init(agent_type: str, force: bool = False) -> None:
     logger.info(_INIT_NEXT_STEPS[agent_type])
 
 
+# ============================================================================
+# setup-claude - Install/uninstall Claude Code integration
+# ============================================================================
+
+
+# Project-marker files used to confirm a directory is a real project root.
+_PROJECT_MARKERS = (
+    ".git",
+    "pyproject.toml",
+    "setup.py",
+    "setup.cfg",
+    "package.json",
+    "Cargo.toml",
+    "go.mod",
+)
+
+_MANIFEST_FILENAME = ".arksim-manifest.json"
+_MANIFEST_VERSION = 1
+
+
+def _build_mcp_server_config(root: Path) -> dict[str, object]:
+    """Build the MCP server config.
+
+    Uses the ``arksim-mcp`` entry point installed by
+    ``pip install arksim[claude]`` and pins ``cwd`` to ``root`` so the
+    server's ``_project_root()`` does not depend on launch-time cwd
+    inheritance from Claude Code.
+
+    Exits with ``EXIT_CONFIG_ERROR`` if ``arksim-mcp`` is not found on PATH.
+    """
+    arksim_mcp = shutil.which("arksim-mcp")
+    if arksim_mcp:
+        return {"command": arksim_mcp, "args": [], "cwd": str(root)}
+
+    logger.error("arksim-mcp not found. Run: pip install arksim[claude]")
+    sys.exit(EXIT_CONFIG_ERROR)
+
+
+def _find_integration_dir() -> Path:
+    """Locate the integrations/claude_code directory.
+
+    Checks the development layout first (relative to the arksim package),
+    then falls back to importlib.resources for installed packages.
+    """
+    dev_path = Path(__file__).resolve().parent.parent / "integrations" / "claude_code"
+    if dev_path.is_dir():
+        return dev_path
+
+    try:
+        pkg_path = Path(str(resources.files("integrations.claude_code")))
+        if pkg_path.is_dir():
+            return pkg_path
+    except (ModuleNotFoundError, TypeError):
+        pass
+
+    logger.error(
+        "Could not locate integrations/claude_code directory. "
+        "Ensure arksim is installed with the claude-code extra."
+    )
+    sys.exit(EXIT_CONFIG_ERROR)
+
+
+def _sanity_check_project_dir(root: Path, force: bool) -> None:
+    """Refuse install into $HOME, /, or non-project directories."""
+    home = Path.home().resolve()
+    resolved = root.resolve()
+    if resolved == Path(resolved.anchor or "/"):
+        logger.error(f"Refusing to install into filesystem root: {resolved}")
+        sys.exit(EXIT_CONFIG_ERROR)
+    if resolved == home:
+        logger.error(
+            f"Refusing to install into the user home directory: {resolved}\n"
+            "Use --project-dir=PATH to point at a specific project."
+        )
+        sys.exit(EXIT_CONFIG_ERROR)
+    if not resolved.is_dir():
+        logger.error(f"Project directory does not exist: {resolved}")
+        sys.exit(EXIT_CONFIG_ERROR)
+    if not any((resolved / marker).exists() for marker in _PROJECT_MARKERS):
+        if not force:
+            markers = " / ".join(_PROJECT_MARKERS[:4])
+            logger.error(
+                f"Directory {resolved} does not look like a project root\n"
+                f"(no {markers} found).\n"
+                "Re-run with --force to install anyway."
+            )
+            sys.exit(EXIT_CONFIG_ERROR)
+        logger.warning(
+            f"Directory {resolved} has no project marker; "
+            "installing because --force was set."
+        )
+
+
+def _atomic_write_text(path: Path, content: str) -> None:
+    """Write text to ``path`` atomically via a temp file and os.replace."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp_path = tempfile.mkstemp(
+        dir=str(path.parent), prefix=path.name + ".", suffix=".tmp"
+    )
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as fh:
+            fh.write(content)
+        os.replace(tmp_path, path)
+    except Exception:
+        with contextlib.suppress(OSError):
+            os.unlink(tmp_path)
+        raise
+
+
+def _atomic_write_json(path: Path, data: object) -> None:
+    """Write JSON to ``path`` atomically."""
+    _atomic_write_text(path, json.dumps(data, indent=2) + "\n")
+
+
+def _read_manifest(skills_dir: Path) -> dict | None:
+    """Read the install manifest if present and well-formed.
+
+    Validates that every entry under ``skills`` is a simple basename
+    (no path separators, no ``..``). Manifest values that fail this
+    check are dropped with a warning so a malicious manifest cannot
+    drive ``shutil.rmtree`` outside ``skills_dir``.
+    """
+    manifest_path = skills_dir / _MANIFEST_FILENAME
+    if not manifest_path.exists():
+        return None
+    try:
+        data = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        logger.warning(
+            f"Manifest at {manifest_path} is unreadable; falling back to glob."
+        )
+        return None
+    if not isinstance(data, dict) or data.get("version") != _MANIFEST_VERSION:
+        logger.warning(
+            f"Manifest at {manifest_path} has unexpected shape; falling back to glob."
+        )
+        return None
+
+    raw_skills = data.get("skills", [])
+    safe_skills: list[str] = []
+    skipped: list[str] = []
+    for entry in raw_skills if isinstance(raw_skills, list) else []:
+        if not isinstance(entry, str):
+            skipped.append(repr(entry))
+            continue
+        if not entry or "/" in entry or "\\" in entry or ".." in entry.split("/"):
+            skipped.append(entry)
+            continue
+        if entry in (".", "..", "") or entry.startswith("."):
+            skipped.append(entry)
+            continue
+        safe_skills.append(entry)
+
+    if skipped:
+        logger.warning(
+            f"Manifest at {manifest_path} dropped suspicious entries: {skipped}"
+        )
+
+    data["skills"] = safe_skills
+    return data
+
+
+def _preflight_check(root: Path, *, dry_run: bool = False) -> None:
+    """Print a pre-flight summary and abort if arksim-mcp is missing.
+
+    In ``dry_run`` mode the missing-binary case is downgraded to a
+    warning so users can still see the install preview before they pip
+    install the [claude] extra.
+    """
+    arksim_mcp_path = shutil.which("arksim-mcp")
+    is_git_repo = (root / ".git").is_dir()
+    keys_present = [
+        name
+        for name in ("OPENAI_API_KEY", "ANTHROPIC_API_KEY", "GOOGLE_API_KEY")
+        if os.environ.get(name)
+    ]
+    logger.info("Pre-flight check:")
+    logger.info(
+        f"  arksim-mcp on PATH:    "
+        f"{'yes (' + arksim_mcp_path + ')' if arksim_mcp_path else 'NO'}"
+    )
+    logger.info(f"  Project is git repo:   {'yes' if is_git_repo else 'no'}")
+    if keys_present:
+        logger.info(f"  LLM API key set:       {', '.join(keys_present)}")
+    else:
+        logger.warning(
+            "  LLM API key set:       NONE "
+            "(set OPENAI_API_KEY, ANTHROPIC_API_KEY, or GOOGLE_API_KEY)"
+        )
+    if not arksim_mcp_path:
+        msg = "arksim-mcp not found. Run: pip install arksim[claude]"
+        if dry_run:
+            logger.warning(msg + " (dry-run: continuing for preview)")
+        else:
+            logger.error(msg)
+            sys.exit(EXIT_CONFIG_ERROR)
+
+
+def _run_setup_claude(
+    project_dir: str = ".",
+    force: bool = False,
+    uninstall: bool = False,
+    dry_run: bool = False,
+) -> None:
+    """Install or uninstall the Claude Code integration for a project.
+
+    Install mode (default):
+      - Verifies the target directory looks like a project root.
+      - Runs a pre-flight check on environment + tooling.
+      - Stages skill directories and atomic-swaps them into place.
+      - Writes a manifest of installed paths so uninstall is precise.
+      - Writes ``.mcp.json`` atomically.
+
+    Uninstall mode:
+      - Reads the manifest and removes only the entries it lists.
+      - Falls back to a glob with a warning if the manifest is missing.
+
+    Both modes accept ``dry_run=True`` to print what would change
+    without touching the filesystem.
+    """
+    root = Path(project_dir).expanduser().resolve()
+    claude_dir = root / ".claude"
+    mcp_config_path = root / ".mcp.json"
+    skills_dir = claude_dir / "skills"
+
+    # Sanity-check the project dir for both install and uninstall.
+    # Uninstall reads .arksim-manifest.json from skills_dir and
+    # deletes paths it lists; running it against $HOME or / would
+    # walk into arbitrary deletion via a malicious manifest.
+    _sanity_check_project_dir(root, force)
+
+    if uninstall:
+        _uninstall_claude(mcp_config_path, skills_dir, dry_run=dry_run)
+        return
+
+    _preflight_check(root, dry_run=dry_run)
+    integration_dir = _find_integration_dir()
+    _install_claude(
+        integration_dir,
+        claude_dir,
+        mcp_config_path,
+        skills_dir,
+        force,
+        dry_run=dry_run,
+    )
+
+
+def _uninstall_claude(
+    mcp_config_path: Path,
+    skills_dir: Path,
+    *,
+    dry_run: bool = False,
+) -> None:
+    """Remove arksim MCP config and skills from a project.
+
+    Uses the install manifest to know exactly what to remove. Falls
+    back to a glob over ``arksim-*`` directories with a warning if the
+    manifest is missing.
+    """
+    manifest = _read_manifest(skills_dir)
+    skills_to_remove: list[Path] = []
+    if manifest is not None:
+        skills_root = skills_dir.resolve()
+        for rel in manifest.get("skills", []):
+            if not isinstance(rel, str) or not rel:
+                continue
+            candidate = skills_dir / rel
+            try:
+                resolved_candidate = candidate.resolve()
+            except (OSError, RuntimeError):
+                continue
+            try:
+                resolved_candidate.relative_to(skills_root)
+            except ValueError:
+                logger.warning(
+                    f"Refusing to remove {resolved_candidate}: escapes skills directory"
+                )
+                continue
+            if candidate.is_symlink():
+                logger.warning(f"Refusing to remove {candidate}: is a symlink")
+                continue
+            if candidate.is_dir():
+                skills_to_remove.append(candidate)
+    elif skills_dir.is_dir():
+        for skill_dir in sorted(skills_dir.glob("arksim-*")):
+            if skill_dir.is_dir():
+                skills_to_remove.append(skill_dir)
+
+    if dry_run:
+        logger.info("Dry run. Would remove:")
+        for p in skills_to_remove:
+            logger.info(f"  Skill dir: {p}")
+        if mcp_config_path.exists():
+            logger.info(f"  arksim entry from {mcp_config_path}")
+        manifest_path = skills_dir / _MANIFEST_FILENAME
+        if manifest_path.exists():
+            logger.info(f"  Manifest:  {manifest_path}")
+        return
+
+    if mcp_config_path.exists():
+        try:
+            mcp_config = json.loads(mcp_config_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            logger.error(
+                f"Invalid JSON in {mcp_config_path}. Fix or delete the file and retry."
+            )
+            sys.exit(EXIT_CONFIG_ERROR)
+        mcp_servers = mcp_config.get("mcpServers")
+        if not isinstance(mcp_servers, dict):
+            mcp_servers = {}
+        mcp_servers.pop("arksim", None)
+        if mcp_servers:
+            mcp_config["mcpServers"] = mcp_servers
+            _atomic_write_json(mcp_config_path, mcp_config)
+        else:
+            mcp_config_path.unlink()
+
+    for skill_dir in skills_to_remove:
+        shutil.rmtree(skill_dir)
+
+    manifest_path = skills_dir / _MANIFEST_FILENAME
+    if manifest_path.exists():
+        manifest_path.unlink()
+
+    logger.info("Removed arksim Claude Code integration.")
+
+
+def _install_claude(
+    integration_dir: Path,
+    claude_dir: Path,
+    mcp_config_path: Path,
+    skills_dir: Path,
+    force: bool,
+    *,
+    dry_run: bool = False,
+) -> None:
+    """Install arksim MCP config and skills into a project (atomic)."""
+    skills_src = integration_dir / "skills"
+    if not skills_src.is_dir():
+        logger.error(f"Skills directory not found: {skills_src}")
+        sys.exit(EXIT_CONFIG_ERROR)
+
+    candidate_skills: list[Path] = []
+    for skill_dir in sorted(skills_src.iterdir()):
+        if not skill_dir.is_dir() or not skill_dir.name.startswith("arksim-"):
+            continue
+        if not (skill_dir / "SKILL.md").is_file():
+            continue
+        candidate_skills.append(skill_dir)
+
+    if not candidate_skills:
+        logger.error(
+            f"No skill directories found in {skills_src}. "
+            "Installation may be incomplete."
+        )
+        sys.exit(EXIT_CONFIG_ERROR)
+
+    existing_skills = list(skills_dir.glob("arksim-*")) if skills_dir.is_dir() else []
+    if existing_skills and not force:
+        logger.error(
+            "arksim skills already installed. "
+            "Use --force to overwrite, or --uninstall to remove first."
+        )
+        sys.exit(EXIT_CONFIG_ERROR)
+
+    # mcp_config_path lives at the project root.
+    server_config = _build_mcp_server_config(mcp_config_path.parent)
+
+    if dry_run:
+        logger.info("Dry run. Would install:")
+        for skill_dir in candidate_skills:
+            logger.info(f"  Skill:    {skills_dir / skill_dir.name}/SKILL.md")
+        logger.info(f"  Manifest: {skills_dir / _MANIFEST_FILENAME}")
+        logger.info(f"  MCP config: {mcp_config_path} (mcpServers.arksim)")
+        return
+
+    claude_dir.mkdir(parents=True, exist_ok=True)
+    skills_dir.mkdir(parents=True, exist_ok=True)
+
+    # Atomic skill swap. Rename existing arksim-* directories aside,
+    # then move staged skills into place, then write the manifest and
+    # .mcp.json, then rmtree the renamed-aside copy. On exception we
+    # restore the renamed-aside copy so the user is never left without
+    # a working skill set.
+    pid = os.getpid()
+    staging_dir = skills_dir.parent / f".skills.staging.{pid}"
+    aside_dir = skills_dir.parent / f".skills.aside.{pid}"
+    if staging_dir.exists():
+        shutil.rmtree(staging_dir)
+    if aside_dir.exists():
+        shutil.rmtree(aside_dir)
+    staging_dir.mkdir(parents=True)
+    aside_dir.mkdir(parents=True)
+
+    copied: list[str] = []
+
+    def _restore_from_aside() -> None:
+        """Move any aside-d skill directories back into place."""
+        for entry in aside_dir.iterdir():
+            target = skills_dir / entry.name
+            if target.exists():
+                shutil.rmtree(target)
+            shutil.move(str(entry), str(target))
+
+    try:
+        for skill_dir in candidate_skills:
+            dest_dir = staging_dir / skill_dir.name
+            shutil.copytree(skill_dir, dest_dir)
+            copied.append(skill_dir.name)
+
+        for old_skill in skills_dir.glob("arksim-*"):
+            if old_skill.is_symlink():
+                logger.warning(f"Skipping symlinked entry during install: {old_skill}")
+                continue
+            if old_skill.is_dir():
+                shutil.move(str(old_skill), str(aside_dir / old_skill.name))
+
+        try:
+            for staged in staging_dir.iterdir():
+                target = skills_dir / staged.name
+                shutil.move(str(staged), str(target))
+        except Exception:
+            _restore_from_aside()
+            raise
+    finally:
+        if staging_dir.exists():
+            shutil.rmtree(staging_dir, ignore_errors=True)
+        if aside_dir.exists():
+            shutil.rmtree(aside_dir, ignore_errors=True)
+
+    manifest = {
+        "version": _MANIFEST_VERSION,
+        "skills": copied,
+        "mcp_server_key": "arksim",
+    }
+    _atomic_write_json(skills_dir / _MANIFEST_FILENAME, manifest)
+
+    mcp_config: dict = {}
+    if mcp_config_path.exists():
+        try:
+            mcp_config = json.loads(mcp_config_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            logger.error(
+                f"Invalid JSON in {mcp_config_path}. Fix or delete the file and retry."
+            )
+            sys.exit(EXIT_CONFIG_ERROR)
+
+    mcp_servers = mcp_config.setdefault("mcpServers", {})
+    if not isinstance(mcp_servers, dict):
+        mcp_servers = {}
+        mcp_config["mcpServers"] = mcp_servers
+    mcp_servers["arksim"] = server_config
+    _atomic_write_json(mcp_config_path, mcp_config)
+
+    logger.info("Installed arksim Claude Code integration:")
+    logger.info(f"  MCP config: {mcp_config_path}")
+    for name in copied:
+        logger.info(f"  Skill:    {skills_dir / name}/SKILL.md")
+    logger.info(f"  Manifest: {skills_dir / _MANIFEST_FILENAME}")
+    logger.info('\nStart Claude Code and type "/arksim-test" to begin.')
+
+
 def _add_config_subparser(
     subparsers: argparse._SubParsersAction,
     name: str,
@@ -384,6 +850,7 @@ def build_parser() -> argparse.ArgumentParser:
               arksim examples --list
               arksim examples bank-insurance
               arksim ui --port 9090
+              arksim setup-claude
         """),
     )
 
@@ -479,6 +946,38 @@ def build_parser() -> argparse.ArgumentParser:
         type=int,
         default=8080,
         help="Port to serve on (default: 8080)",
+    )
+
+    # setup-claude
+    sp_setup_claude = sub.add_parser(
+        "setup-claude",
+        help="Install Claude Code integration (MCP server + skills)",
+    )
+    sp_setup_claude.add_argument(
+        "--project-dir",
+        type=str,
+        default=".",
+        dest="project_dir",
+        help="Project root directory (default: current directory)",
+    )
+    sp_setup_claude.add_argument(
+        "--force",
+        action="store_true",
+        default=False,
+        help="Overwrite existing skills",
+    )
+    sp_setup_claude.add_argument(
+        "--uninstall",
+        action="store_true",
+        default=False,
+        help="Remove arksim Claude Code integration",
+    )
+    sp_setup_claude.add_argument(
+        "--dry-run",
+        action="store_true",
+        default=False,
+        dest="dry_run",
+        help="Preview changes without writing the filesystem",
     )
 
     return parser
@@ -621,6 +1120,15 @@ def main() -> None:
         from arksim.ui.app import launch_ui
 
         launch_ui(port=args.port)
+        return
+
+    if args.command == "setup-claude":
+        _run_setup_claude(
+            project_dir=args.project_dir,
+            force=args.force,
+            uninstall=args.uninstall,
+            dry_run=args.dry_run,
+        )
         return
 
     use_config_file = (
