@@ -5,6 +5,9 @@ from __future__ import annotations
 
 from unittest.mock import patch
 
+import pytest
+from openai import OpenAIError
+
 from arksim.llms.chat.providers.openai import OpenAILLM
 
 
@@ -89,3 +92,48 @@ class TestOpenAILLMConstructor:
             )
             assert llm.temperature == 0.7
             assert llm.model == "gpt-4.1-mini"
+
+    def test_whitespace_base_url_and_api_key_treated_as_omitted(self) -> None:
+        """Whitespace-only values must not reach the SDK; they would be
+        URL-encoded into `%20...` and cause slow connection failures.
+        """
+        with (
+            patch("arksim.llms.chat.providers.openai.OpenAI") as mock_sync,
+            patch("arksim.llms.chat.providers.openai.AsyncOpenAI") as mock_async,
+        ):
+            OpenAILLM(model="gpt-4o-mini", base_url="   ", api_key="\t\n")
+            mock_sync.assert_called_once_with()
+            mock_async.assert_called_once_with()
+
+    def test_base_url_and_api_key_are_stripped(self) -> None:
+        """Leading and trailing whitespace is stripped before passing to SDK."""
+        with (
+            patch("arksim.llms.chat.providers.openai.OpenAI") as mock_sync,
+            patch("arksim.llms.chat.providers.openai.AsyncOpenAI") as mock_async,
+        ):
+            OpenAILLM(
+                model="llama3.1",
+                base_url=" http://localhost:11434/v1 ",
+                api_key=" ollama ",
+            )
+            mock_sync.assert_called_once_with(
+                base_url="http://localhost:11434/v1", api_key="ollama"
+            )
+            mock_async.assert_called_once_with(
+                base_url="http://localhost:11434/v1", api_key="ollama"
+            )
+
+    def test_missing_credentials_raises_actionable_error(self) -> None:
+        """When the OpenAI SDK rejects no-credentials construction, wrap the
+        error with an arksim-specific message pointing at the YAML field
+        and docs URL. The user should not see a bare OpenAIError stack trace.
+        """
+        with (
+            patch("arksim.llms.chat.providers.openai.OpenAI") as mock_sync,
+            patch("arksim.llms.chat.providers.openai.AsyncOpenAI"),
+        ):
+            mock_sync.side_effect = OpenAIError(
+                "The api_key client option must be set..."
+            )
+            with pytest.raises(ValueError, match="OpenAI SDK requires an api_key"):
+                OpenAILLM(model="gpt-4o-mini")

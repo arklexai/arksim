@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import Any, TypeVar, overload
 
-from openai import AsyncOpenAI, OpenAI
+from openai import AsyncOpenAI, OpenAI, OpenAIError
 from pydantic import BaseModel
 
 from arksim.llms.chat.base.base_llm import BaseLLM
@@ -24,17 +24,25 @@ class OpenAILLM(BaseLLM):
         **kwargs: object,
     ) -> None:
         super().__init__(model, provider, temperature, **kwargs)
-        # Coerce empty strings to omitted: YAML configs commonly produce ""
-        # for unset fields, and an empty base_url or api_key would otherwise
-        # confuse the SDK rather than falling back to OPENAI_BASE_URL /
-        # OPENAI_API_KEY env vars.
+        # Coerce empty or whitespace-only strings to omitted, then fall back
+        # to OPENAI_BASE_URL / OPENAI_API_KEY env vars. YAML configs commonly
+        # produce "" for unset fields; whitespace-only values would otherwise
+        # be URL-encoded by the SDK and cause hard-to-diagnose hangs.
         client_kwargs: dict[str, str] = {}
-        if base_url:
-            client_kwargs["base_url"] = base_url
-        if api_key:
-            client_kwargs["api_key"] = api_key
-        self.client = OpenAI(**client_kwargs)
-        self.async_client = AsyncOpenAI(**client_kwargs)
+        if base_url and base_url.strip():
+            client_kwargs["base_url"] = base_url.strip()
+        if api_key and api_key.strip():
+            client_kwargs["api_key"] = api_key.strip()
+        try:
+            self.client = OpenAI(**client_kwargs)
+            self.async_client = AsyncOpenAI(**client_kwargs)
+        except OpenAIError as exc:
+            raise ValueError(
+                "OpenAI SDK requires an api_key. Set 'api_key' in your "
+                "config.yaml (alongside 'model' and 'provider') or set the "
+                "OPENAI_API_KEY environment variable. "
+                "See https://docs.arklex.ai/main/user-simulator-on-open-responses"
+            ) from exc
 
     def _prepare_params(
         self,
