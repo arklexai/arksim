@@ -9,6 +9,8 @@ The [Open Responses spec](https://www.openresponses.org/) is a multi-vendor open
 
 ArkSim's OpenAI provider has run on OpenAI's Responses API endpoint (`client.responses.parse`) since v0.3.0. The new `responses` provider alias lets you point the user-simulator LLM at any conforming backend by setting `base_url` and `api_key` in your config. Explicit `base_url` and `api_key` values in config take precedence over the `OPENAI_BASE_URL` and `OPENAI_API_KEY` environment variables; leave them unset (or empty) to fall back to env.
 
+These keys go at the top level of your `config.yaml`, alongside other simulation settings.
+
 ## Why it matters
 
 ArkSim's user simulator sends a stable system prompt and scenario context to the LLM on every turn of every scenario. OpenAI's automatic prompt cache hits this stable prefix and discounts the cached portion by 50 to 75% depending on the model. Depending on prompt-cache hit rate and the output share of total cost, typical multi-turn runs see roughly 20 to 40% total cost reduction. The benefit was already active for OpenAI users; this page documents how to extend the same shape to self-hosted or alternate backends.
@@ -18,10 +20,8 @@ ArkSim's user simulator sends a stable system prompt and scenario context to the
 ### OpenAI (default)
 
 ```yaml
-simulator:
-  llm:
-    provider: openai
-    model: gpt-4.1-mini
+provider: openai
+model: gpt-4.1-mini
 ```
 
 `api.openai.com` is the default. No `base_url` needed.
@@ -31,12 +31,10 @@ Requires `OPENAI_API_KEY` in your environment.
 ### Ollama (local)
 
 ```yaml
-simulator:
-  llm:
-    provider: responses
-    model: llama3.1
-    base_url: http://localhost:11434/v1
-    api_key: ollama
+provider: responses
+model: llama3.1
+base_url: http://localhost:11434/v1
+api_key: ollama
 ```
 
 Start Ollama (`ollama serve`), pull the model (`ollama pull llama3.1`), then run as usual. The `api_key` value is a placeholder; Ollama ignores it.
@@ -44,12 +42,10 @@ Start Ollama (`ollama serve`), pull the model (`ollama pull llama3.1`), then run
 ### vLLM
 
 ```yaml
-simulator:
-  llm:
-    provider: responses
-    model: meta-llama/Llama-3.1-8B-Instruct
-    base_url: http://my-vllm-host:8000/v1
-    api_key: ${VLLM_API_KEY}
+provider: responses
+model: meta-llama/Llama-3.1-8B-Instruct
+base_url: http://my-vllm-host:8000/v1
+api_key: ${VLLM_API_KEY}
 ```
 
 Start vLLM with `vllm serve <model> --port 8000`, then point `base_url` at the running host.
