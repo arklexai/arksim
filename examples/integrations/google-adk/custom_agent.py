@@ -1,8 +1,15 @@
 # SPDX-License-Identifier: Apache-2.0
-"""Google ADK integration for ArkSim.
+"""Google ADK integration for arksim.
 
-Install: pip install google-adk
-Auth:    export GOOGLE_API_KEY="<your-key>"
+Install:
+    pip install 'arksim[google-adk]'
+Auth:
+    export GOOGLE_API_KEY="<your-key>"
+
+Wires arksim's Google ADK tracing adapter into an ``LlmAgent`` with two
+mock tools (lookup_order, book_table). Running ``arksim simulate-evaluate``
+produces a simulation.json whose ``tool_calls`` field is populated by the
+captured invocations.
 """
 
 from __future__ import annotations
@@ -12,20 +19,40 @@ import uuid
 from google.adk.agents import LlmAgent
 from google.adk.runners import InMemoryRunner
 from google.genai import types
+from tools import book_table, lookup_order
 
 from arksim.config import AgentConfig
 from arksim.simulation_engine.agent.base import BaseAgent
+from arksim.tracing.integrations.google_adk import ArksimADKPlugin
 
 
 class GoogleADKAgent(BaseAgent):
+    """ADK ``LlmAgent`` with conversation history and tool-call tracing.
+
+    ``ArksimADKPlugin`` extends ``BasePlugin`` and overrides
+    ``after_tool_callback`` to emit one ``ToolCall`` per invocation. It is
+    registered on the runner via ``plugins=[...]`` rather than on the agent,
+    so the same instance can cover any sub-agents the ``LlmAgent`` spawns.
+    """
+
     def __init__(self, agent_config: AgentConfig) -> None:
         super().__init__(agent_config)
+        self._plugin = ArksimADKPlugin()
         adk_agent = LlmAgent(
             name="assistant",
             model="gemini-2.5-flash",
-            instruction="You are a helpful assistant.",
+            instruction=(
+                "You are a helpful assistant with access to two tools: "
+                "lookup_order(order_id) and book_table(party_size, time). "
+                "Use them when relevant to answer the user."
+            ),
+            tools=[lookup_order, book_table],
         )
-        self._runner = InMemoryRunner(agent=adk_agent, app_name="arksim")
+        self._runner = InMemoryRunner(
+            agent=adk_agent,
+            app_name="arksim",
+            plugins=[self._plugin],
+        )
         self._user_id = f"arksim_{uuid.uuid4()}"
         self._session_id: str | None = None
 
