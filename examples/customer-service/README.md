@@ -139,4 +139,6 @@ base_url: http://localhost:11434/v1
 api_key: ollama
 ```
 
-Then start the local server. For Ollama: `ollama serve` and `ollama pull llama3.1`. See [User simulator on Open Responses](https://docs.arklex.ai/main/user-simulator-on-open-responses) for vLLM, NIM, and other backends.
+Then start the local server. For Ollama: `ollama serve` and `ollama pull llama3.1` (requires Ollama v0.13.3 or newer).
+
+**Scope note:** these keys also configure the evaluator LLM, which passes structured-output (`text_format`) calls that Ollama does not currently accept. Run simulation against Ollama, then run evaluation separately with `provider: openai` (or set the env var override) until evaluator-side multi-provider support lands. See [User simulator on Open Responses](https://docs.arklex.ai/main/user-simulator-on-open-responses) for vLLM, NIM, and other backends.
