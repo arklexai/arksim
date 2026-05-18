@@ -7,9 +7,106 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+* **integrations:** Claude Code integration with 6 skills (5 framework skills + arksim-simulate alias) and 6 MCP tools for IDE-native agent testing (`integrations/claude_code/`)
+* **cli:** `arksim setup-claude` command for one-command installation of Claude Code integration
+* **cli:** `arksim setup-claude --uninstall` to remove the integration
+* **cli:** add `arksim init` command to scaffold a starter `config.yaml` and `scenarios.json` for quick onboarding
+* **cli:** `-v` / `--version` flag to show arksim version and exit
+* **cli:** `arksim examples` command to download example projects from GitHub without cloning
+* **tracing:** add automatic tool call capture for agents that handle tools internally
+* **tracing:** add `ArksimTracingProcessor` for OpenAI Agents SDK (register once, zero per-turn wrapping)
+* **tracing:** add OTLP/HTTP trace receiver with protobuf and JSON support (`arksim[otel]`)
+* **tracing:** add dual attribute convention support (OTel GenAI semconv and OpenInference)
+* **tracing:** add `ToolCallSource` enum (`a2a_protocol`, `openai_agents`, `otel_trace`) for tool call provenance tracking on `ToolCall.source`
+* **examples:** add Dify chatbot integration example
+* **evaluator:** focus file generation after evaluation for targeted reruns of failing scenarios
+* **evaluator:** scenario IDs shown in CLI error output alongside focus file paths
+* **evaluator:** error-to-scenario mappings included in `evaluation.json` output
+* **evaluator:** shared evaluation constants (`SCORE_NOT_COMPUTED`, `BEHAVIOR_FAILURE_THRESHOLD`)
+* **a2a:** add tool call capture via A2A AgentExtension (`https://arksim.arklex.ai/a2a/tool-call-capture/v1`); agents declare the extension in the AgentCard and surface tool calls in `Task.artifacts[*].metadata`. See [Tool Call Capture docs](https://docs.arklex.ai/main/tool-call-capture)
+* **report:** scenario IDs displayed in HTML report error cards
+* **ui:** version display in web UI sidebar (next to "Arksim" title)
+* **api:** path traversal protection on filesystem and results API endpoints
+* **api:** generic error messages in API endpoints to prevent server path leakage
+* **ci:** Bandit security scanning in CI pipeline
+* **ci:** test coverage threshold (60% minimum) enforced in CI
+* **ci:** `codecov.yml` with patch target of 50% to avoid false-positive CI failures on infra changes
+* **tests:** 26 new unit test files covering evaluator metrics, CLI utilities, LLM factory, concurrency workers, simulation utilities, error detection, API endpoints, and path validation
+* **style:** `from __future__ import annotations` on all source files for consistent typing
+* **style:** ruff `FA100` rule to enforce `from __future__ import annotations` on every Python file
+* **style:** `insert-license` pre-commit hook to enforce `SPDX-License-Identifier: Apache-2.0` headers
+* **docs:** quality gates section in CONTRIBUTING.md documenting coverage ratchet policy
+
 ### Changed
 
 * **a2a:** migrate from a2a-sdk 0.3.x (Pydantic) to 1.0.0 (protobuf) ([#152](https://github.com/arklexai/arksim/pull/152))
+* **docs:** rewrite README as a focused landing page (~180 lines) with two quickstart paths, report screenshot, and "Test Your Own Agent" guide
+* **docs:** move configuration reference, CLI reference, custom metrics examples, and Web UI docs from README to docs site
+* **docs:** evaluation docs and quickstart examples now show direct Python usage of `run_simulation` and `run_evaluation` with in-memory handoff between steps
+* **docs:** expanded SECURITY.md with response process, scope, and disclosure guidelines
+* **simulation:** bump output schema version to v1.1 (additive `tool_calls` field on Message)
+* **evaluator:** bump evaluation output schema version to v1.1 (additive `error_scenario_mappings` field)
+* **evaluator:** `run_evaluation` now accepts optional in-memory `simulation` and `scenarios` inputs, while still supporting file-based loading
+* **evaluator:** `SCORE_NOT_COMPUTED` display label changed from "N/A (Evaluation Failed)" to "N/A (Not computed)"
+* **chat-completions:** refactor to persistent httpx client with `AgentResponse` return type
+* **chat-completions:** drop stale `{chat_id}` placeholder reference from `ChatCompletionsConfig.body` field description
+* **examples:** replace `dify-client` SDK with direct HTTP (httpx) in the Dify integration
+* **brand:** project display name from "Arksim" to "ArkSim" with ⛵️ emoji and slogan across all docs, CLI, and metadata
+* **ui:** auto-load scenarios from config on startup instead of always showing the demo
+* **ui:** file browser shows a hint that browsing is scoped to the launch directory
+* **ci:** coverage badge switched from Codecov-hosted to shields.io for reliability
+* **providers:** Azure OpenAI provider now raises `ValueError` instead of silently returning a raw string when structured output parsing fails
+* **validation:** `validate_num_workers` rejects zero and negative values
+* **cli:** resolve input file paths as config-relative when read from `config.yaml` and as cwd-relative when overridden on the CLI
+
+### Deprecated
+
+* **evaluator:** `EvaluationParams.custom_qualitative_metrics` is deprecated; pass qualitative metrics in `custom_metrics` alongside quantitative ones. The field still works but emits a `DeprecationWarning` and will be removed in a future major release.
+
+### Removed
+
+* **ui:** project root path from the UI sidebar header
+* **cleanup:** dead code (unused error message constants, `METRIC_THRESHOLD`, `UNIQUE_BUGS` enum, `flip_hist_content_only`, `LLMConfig`)
+* **examples:** hidden Unicode characters (U+200C zero-width non-joiner) from e-commerce example data files
+
+### Fixed
+
+* **simulator:** respect `num_conversations_per_scenario`; previously only 1 conversation was generated per scenario
+* **simulator:** fix tool-call dedup incorrectly merging or dropping distinct trace-sourced calls that share empty-string ids (Gemini, A2A without per-call ids) ([#168](https://github.com/arklexai/arksim/issues/168))
+* **chat-completions:** fix crash when endpoint returns `tool_calls` with `content=None`
+* **evaluator:** inject configured LLM into custom metrics instead of requiring metrics to load their own LLM from a hardcoded config file
+
+## [0.3.6](https://github.com/arklexai/arksim/compare/v0.3.5...v0.3.6) (2026-05-01)
+
+
+### Fixed
+
+* **evaluator:** align builtin metric prompt template with format args ([#166](https://github.com/arklexai/arksim/issues/166)) ([6b7f1c9](https://github.com/arklexai/arksim/commit/6b7f1c9cab3727ba2ef9917d50050aad9eb56331))
+
+
+### Documentation
+
+* snapshot v0.3.5 from main ([#165](https://github.com/arklexai/arksim/issues/165)) ([d82fb35](https://github.com/arklexai/arksim/commit/d82fb354fa79621c2eee9d082b193552d164ee39))
+
+## [0.3.5](https://github.com/arklexai/arksim/compare/v0.3.4...v0.3.5) (2026-04-28)
+
+
+### Added
+
+* **a2a:** add tool call capture via DataPart ([#140](https://github.com/arklexai/arksim/issues/140)) ([0f1efc5](https://github.com/arklexai/arksim/commit/0f1efc5cfed0199b8e535d8af780a7648a2a5702))
+* **evaluator:** add scope (turn vs. conversation) to custom metrics ([#162](https://github.com/arklexai/arksim/issues/162)) ([a47268b](https://github.com/arklexai/arksim/commit/a47268b2f3ae038f1aa4d40d516947bc3d44dccb))
+
+
+### Fixed
+
+* skip api_config re-wrapping if already correct type ([#163](https://github.com/arklexai/arksim/issues/163)) ([abbfc20](https://github.com/arklexai/arksim/commit/abbfc208ccdbe1051cd789e65129259e913e8aa3))
+
+
+### Documentation
+
+* snapshot v0.3.4 from main ([#150](https://github.com/arklexai/arksim/issues/150)) ([a85ba1a](https://github.com/arklexai/arksim/commit/a85ba1aeda80d931a5cde0fde85d15564345bcad))
 
 ## [0.3.4](https://github.com/arklexai/arksim/compare/v0.3.3...v0.3.4) (2026-04-13)
 
@@ -44,36 +141,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * replace daily schedule with merge queue and push-to-main triggers ([#133](https://github.com/arklexai/arksim/issues/133)) ([6be8352](https://github.com/arklexai/arksim/commit/6be8352b1d6e23415564a0bed3c23ff36df09bfc))
 * upgrade jinja2 minimum version to 3.1.5 ([#124](https://github.com/arklexai/arksim/issues/124)) ([2681e65](https://github.com/arklexai/arksim/commit/2681e65e65c90742520e15216f9134f1d72b9c20))
 
-## [Unreleased]
-
-### Added
-
-* **cli:** add `arksim init` command to scaffold a starter `config.yaml` and `scenarios.json` for quick onboarding
-* **tracing:** add automatic tool call capture for agents that handle tools internally
-* **tracing:** add `ArksimTracingProcessor` for OpenAI Agents SDK (register once, zero per-turn wrapping)
-* **tracing:** add OTLP/HTTP trace receiver with protobuf and JSON support (`arksim[otel]`)
-* **tracing:** add dual attribute convention support (OTel GenAI semconv and OpenInference)
-* **examples:** add Dify chatbot integration example
-* **evaluator:** focus file generation after evaluation for targeted reruns of failing scenarios
-* **a2a:** add tool call capture via A2A AgentExtension (`https://arksim.arklex.ai/a2a/tool-call-capture/v1`); agents declare the extension in the AgentCard and surface tool calls in `Task.artifacts[*].metadata`. See [Tool Call Capture docs](https://docs.arklex.ai/main/tool-call-capture)
-* **tracing:** add `ToolCallSource` enum (`a2a_protocol`, `openai_agents`, `otel_trace`) for tool call provenance tracking on `ToolCall.source`
-* **evaluator:** scenario IDs shown in CLI error output alongside focus file paths
-* **report:** scenario IDs displayed in HTML report error cards
-* **evaluator:** error-to-scenario mappings included in `evaluation.json` output
-
-### Changed
-
-* **docs:** rewrite README as a focused landing page (~180 lines) with two quickstart paths, report screenshot, and "Test Your Own Agent" guide
-* **docs:** move configuration reference, CLI reference, custom metrics examples, and Web UI docs from README to docs site
-* **simulation:** bump output schema version to v1.1 (additive `tool_calls` field on Message)
-* **evaluator:** bump evaluation output schema version to v1.1 (additive `error_scenario_mappings` field)
-* **chat-completions:** refactor to persistent httpx client with `AgentResponse` return type
-* **examples:** replace `dify-client` SDK with direct HTTP (httpx) in the Dify integration
-
-### Fixed
-
-* **chat-completions:** fix crash when endpoint returns `tool_calls` with `content=None`
-* **evaluator:** inject configured LLM into custom metrics instead of requiring metrics to load their own LLM from a hardcoded config file
 ## [0.3.3](https://github.com/arklexai/arksim/compare/v0.3.2...v0.3.3) (2026-03-27)
 
 
@@ -262,51 +329,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * code quality audit fixes ([#52](https://github.com/arklexai/arksim/issues/52)) ([b7295c2](https://github.com/arklexai/arksim/commit/b7295c218637a4579d8a1f190b4460039259b86c))
 * improve unit test coverage from 44% to 62% ([#51](https://github.com/arklexai/arksim/issues/51)) ([a3f8f42](https://github.com/arklexai/arksim/commit/a3f8f4213637939f0377b963fba632a2cc024f04))
 * trigger CI on release-please branches ([#59](https://github.com/arklexai/arksim/issues/59)) ([71ba01b](https://github.com/arklexai/arksim/commit/71ba01b1c6611dc5763093ff69c2c958b385e5a8))
-
-## [Unreleased]
-
-### Fixed
-
-- Simulator now respects `num_conversations_per_scenario`, previously only 1 conversation was generated per scenario
-
-### Added
-
-- `-v` / `--version` CLI flag to show arksim version and exit
-- Version display in web UI sidebar (next to "Arksim" title)
-- `arksim examples` CLI command to download example projects from GitHub without cloning
-- Bandit security scanning in CI pipeline
-- Test coverage threshold (60% minimum) enforced in CI
-- 26 new unit test files covering evaluator metrics, CLI utilities, LLM factory, concurrency workers, simulation utilities, error detection, API endpoints, and path validation
-- `from __future__ import annotations` to all source files for consistent typing
-- Ruff `FA100` rule to enforce `from __future__ import annotations` on every Python file
-- `insert-license` pre-commit hook to enforce `SPDX-License-Identifier: Apache-2.0` headers
-- Path traversal protection on filesystem and results API endpoints
-- Generic error messages in API endpoints to prevent server path leakage
-- Shared evaluation constants (`SCORE_NOT_COMPUTED`, `BEHAVIOR_FAILURE_THRESHOLD`)
-- Quality gates section in CONTRIBUTING.md documenting coverage ratchet policy
-- `codecov.yml` with patch target of 50% to avoid false-positive CI failures on infra changes
-
-### Changed
-
-- Project display name from "Arksim" to "ArkSim" with ⛵️ emoji and slogan across all docs, CLI, and metadata
-- `SCORE_NOT_COMPUTED` display label changed from "N/A (Evaluation Failed)" to "N/A (Not computed)"
-- Removed stale `{chat_id}` placeholder reference from `ChatCompletionsConfig.body` field description
-
-- UI auto-loads scenarios from config on startup instead of always showing the demo
-- File browser shows a hint that browsing is scoped to the launch directory
-- Coverage badge switched from Codecov-hosted to shields.io for reliability
-- Expanded SECURITY.md with response process, scope, and disclosure guidelines
-- Azure OpenAI provider now raises `ValueError` instead of silently returning a raw string when structured output parsing fails
-- `validate_num_workers` rejects zero and negative values
-- `run_evaluation` now accepts optional in-memory `simulation` and `scenarios` inputs, while still supporting file-based loading
-- Evaluation docs and quickstart examples now show direct Python usage of `run_simulation` and `run_evaluation` with in-memory handoff between steps
-- Resolve input file paths to config-relative if read from config.yaml and resolve as cwd-relative if cli overriden.
-
-### Removed
-
-- Project root path from the UI sidebar header
-- Dead code: unused error message constants, `METRIC_THRESHOLD`, `UNIQUE_BUGS` enum, `flip_hist_content_only`, `LLMConfig`
-- Hidden Unicode characters (U+200C zero-width non-joiner) from e-commerce example data files
 
 ## [0.0.4] - 2026-03-03
 

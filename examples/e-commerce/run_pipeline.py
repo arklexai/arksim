@@ -91,8 +91,6 @@ async def main() -> None:
         custom_metrics=[
             ConversionMetric(),
             ProductRecommendationMetric(),
-        ],
-        custom_qualitative_metrics=[
             UpsellBehaviorMetric(),
         ],
     )
