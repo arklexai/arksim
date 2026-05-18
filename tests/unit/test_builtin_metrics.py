@@ -5,6 +5,8 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock
 
+import pytest
+
 from arksim.evaluator.base_metric import ChatMessage, ScoreInput
 from arksim.evaluator.builtin_metrics import (
     AgentBehaviorFailureMetric,
@@ -61,6 +63,109 @@ class TestHelpfulnessMetric:
         llm.call.assert_called_once()
 
 
+@pytest.mark.parametrize(
+    ("factory", "method_name", "expected_fragments"),
+    [
+        (
+            HelpfulnessMetric,
+            "score",
+            [
+                "Here is the conversation between user and AI assistant:",
+                "user: Need help\nassistant: Happy to help\n",
+                "Evaluation Form:",
+            ],
+        ),
+        (
+            CoherenceMetric,
+            "score",
+            [
+                "Here is the conversation between user and AI assistant:",
+                "user: Need help\nassistant: Happy to help\n",
+                "Evaluation Form:",
+            ],
+        ),
+        (
+            VerbosityMetric,
+            "score",
+            [
+                "Here is the conversation between user and AI assistant:",
+                "user: Need help\nassistant: Happy to help\n",
+                "Evaluation Form:",
+            ],
+        ),
+        (
+            RelevanceMetric,
+            "score",
+            [
+                "Here is the conversation between user and AI assistant:",
+                "user: Need help\nassistant: Happy to help\n",
+                "Evaluation Form:",
+            ],
+        ),
+        (
+            FaithfulnessMetric,
+            "score",
+            [
+                "policy knowledge",
+                "user: Need help\nassistant: Happy to help\n",
+                "Evaluation Form:",
+            ],
+        ),
+        (
+            GoalCompletionMetric,
+            "score",
+            [
+                "Here is user's goal: resolve billing issue",
+                "user: Need help\nassistant: Happy to help\n",
+                "Evaluation Form:",
+            ],
+        ),
+        (
+            AgentBehaviorFailureMetric,
+            "evaluate",
+            [
+                "resolve billing issue",
+                "policy knowledge",
+                "user: Need help\nassistant: Happy to help\n",
+            ],
+        ),
+    ],
+)
+def test_builtin_metrics_format_generic_score_input_context(
+    factory: type[
+        HelpfulnessMetric
+        | CoherenceMetric
+        | VerbosityMetric
+        | RelevanceMetric
+        | FaithfulnessMetric
+        | GoalCompletionMetric
+        | AgentBehaviorFailureMetric
+    ],
+    method_name: str,
+    expected_fragments: list[str],
+) -> None:
+    llm = _mock_llm() if method_name == "score" else _mock_llm_qual()
+    score_input = _score_input(
+        chat_history=[
+            ChatMessage(role="user", content="Need help"),
+            ChatMessage(role="assistant", content="Happy to help"),
+        ],
+        current_turn=[
+            ChatMessage(role="user", content="Current question"),
+            ChatMessage(role="assistant", content="Current answer"),
+        ],
+        knowledge="policy knowledge",
+        user_goal="resolve billing issue",
+        profile="frustrated premium customer",
+    )
+
+    getattr(factory(llm), method_name)(score_input)
+
+    user_msg = llm.call.call_args.args[0][1]["content"]
+    for fragment in expected_fragments:
+        assert fragment in user_msg
+
+
 class TestCoherenceMetric:
     def test_name(self) -> None:
         assert CoherenceMetric(_mock_llm()).name == "coherence"
@@ -114,6 +219,23 @@ class TestFaithfulnessMetric:
         user_msg = call_args[1]["content"]
         assert "important fact" in user_msg
 
+    def test_score_includes_formatted_chat_history(self) -> None:
+        llm = _mock_llm(score=4)
+        FaithfulnessMetric(llm).score(
+            _score_input(
+                knowledge="policy knowledge",
+                chat_history=[
+                    ChatMessage(role="user", content="What is covered?"),
+                    ChatMessage(role="assistant", content="Water damage is covered."),
+                ],
+            )
+        )
+        user_msg = llm.call.call_args.args[0][1]["content"]
+        assert "policy knowledge" in user_msg
+        assert (
+            "user: What is covered?\nassistant: Water damage is covered.\n" in user_msg
+        )
+
 
 class TestGoalCompletionMetric:
     def test_name(self) -> None:
@@ -126,6 +248,7 @@ class TestGoalCompletionMetric:
         call_args = llm.call.call_args[0][0]
         user_msg = call_args[1]["content"]
         assert "book a flight" in user_msg
+        assert "user: hi\n" in user_msg
 
 
 class TestAgentBehaviorFailureMetric:
@@ -138,3 +261,27 @@ class TestAgentBehaviorFailureMetric:
         result = AgentBehaviorFailureMetric(llm).evaluate(_score_input())
         assert result.value == "repetition"
         assert result.reason == "said same thing"
+
+    def test_evaluate_includes_goal_knowledge_and_chat_history(self) -> None:
+        llm = _mock_llm_qual(label="no failure", reason="fine")
+        AgentBehaviorFailureMetric(llm).evaluate(
+            _score_input(
+                user_goal="update my address",
+                knowledge="Address changes require account verification.",
+                chat_history=[
+                    ChatMessage(role="user", content="Please update my address"),
+                    ChatMessage(
+                        role="assistant",
+                        content="I can help with that after verification.",
+                    ),
+                ],
+            )
+        )
+
+        user_msg = llm.call.call_args.args[0][1]["content"]
+        assert "update my address" in user_msg
+        assert "Address changes require account verification." in user_msg
+        assert (
+            "user: Please update my address\n"
+            "assistant: I can help with that after verification.\n"
+        ) in user_msg

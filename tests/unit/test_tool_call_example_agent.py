@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-"""Tests for the customer-service example agent's _extract_tool_calls logic.
+"""Tests for extract_tool_calls from arksim.tracing.openai.
 
 Requires: pip install openai-agents
 Skipped automatically when the SDK is not installed.
@@ -7,8 +7,6 @@ Skipped automatically when the SDK is not installed.
 
 from __future__ import annotations
 
-import importlib.util
-from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
@@ -19,17 +17,7 @@ from agents import Agent  # noqa: E402
 from agents.items import ToolCallItem, ToolCallOutputItem  # noqa: E402
 from openai.types.responses import ResponseFunctionToolCall  # noqa: E402
 
-# Load the example module dynamically (directory name has a hyphen)
-_EXAMPLE_PATH = (
-    Path(__file__).resolve().parents[2]
-    / "examples"
-    / "customer-service"
-    / "custom_agent.py"
-)
-_spec = importlib.util.spec_from_file_location("tool_calls_example", _EXAMPLE_PATH)
-_mod = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(_mod)
-ToolCallExampleAgent = _mod.ToolCallExampleAgent
+from arksim.tracing.openai import extract_tool_calls  # noqa: E402
 
 # Convenience: stub Agent for constructing SDK item dataclasses
 _STUB_AGENT = Agent(name="stub", instructions="stub")
@@ -62,7 +50,7 @@ class TestExtractToolCalls:
             _make_function_output("c1", '{"status": "shipped", "total": 249.99}'),
         ]
 
-        tool_calls = ToolCallExampleAgent._extract_tool_calls(result)
+        tool_calls = extract_tool_calls(result)
         assert len(tool_calls) == 1
         assert tool_calls[0].id == "c1"
         assert tool_calls[0].name == "get_order"
@@ -80,7 +68,7 @@ class TestExtractToolCalls:
             _make_function_output("c2", '{"status": "shipped"}'),
         ]
 
-        tool_calls = ToolCallExampleAgent._extract_tool_calls(result)
+        tool_calls = extract_tool_calls(result)
         assert len(tool_calls) == 2
         assert tool_calls[0].name == "lookup_customer"
         assert tool_calls[1].name == "get_order"
@@ -92,7 +80,7 @@ class TestExtractToolCalls:
             _make_function_call("c1", "get_order", '{"order_id": "ORD-1001"}'),
         ]
 
-        tool_calls = ToolCallExampleAgent._extract_tool_calls(result)
+        tool_calls = extract_tool_calls(result)
         assert len(tool_calls) == 1
         assert tool_calls[0].result is None
 
@@ -103,7 +91,7 @@ class TestExtractToolCalls:
             _make_function_output("c1", "ok"),
         ]
 
-        tool_calls = ToolCallExampleAgent._extract_tool_calls(result)
+        tool_calls = extract_tool_calls(result)
         assert len(tool_calls) == 1
         assert tool_calls[0].arguments == {}
 
@@ -111,7 +99,7 @@ class TestExtractToolCalls:
         result = MagicMock()
         result.new_items = []
 
-        tool_calls = ToolCallExampleAgent._extract_tool_calls(result)
+        tool_calls = extract_tool_calls(result)
         assert tool_calls == []
 
     def test_non_function_items_skipped(self) -> None:
@@ -123,7 +111,7 @@ class TestExtractToolCalls:
         )
         result.new_items = [non_function_item]
 
-        tool_calls = ToolCallExampleAgent._extract_tool_calls(result)
+        tool_calls = extract_tool_calls(result)
         assert tool_calls == []
 
     def test_output_with_list_value(self) -> None:
@@ -143,6 +131,6 @@ class TestExtractToolCalls:
             ),
         ]
 
-        tool_calls = ToolCallExampleAgent._extract_tool_calls(result)
+        tool_calls = extract_tool_calls(result)
         assert len(tool_calls) == 1
         assert tool_calls[0].result == '[{"name": "item1"}, {"name": "item2"}]'

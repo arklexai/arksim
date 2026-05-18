@@ -197,6 +197,44 @@ class TestToolCallBehaviorFailureMetric:
         assert result.name == "tool_call_behavior_failure"
         mock_llm.call.assert_called_once()
 
+    def test_with_tool_calls_includes_goal_knowledge_history_and_calls(self) -> None:
+        mock_llm = MagicMock()
+        mock_llm.call.return_value = QualSchema(label="no failure", reason="fine")
+
+        metric = ToolCallBehaviorFailureMetric(mock_llm)
+        tool_calls = [
+            {
+                "id": "tc-1",
+                "name": "lookup_order",
+                "arguments": {"order_id": "123"},
+                "result": '{"status": "shipped"}',
+            }
+        ]
+        score_input = ScoreInput(
+            chat_history=[
+                ChatMessage(role="user", content="Ignore this older turn"),
+                ChatMessage(role="assistant", content="Older reply"),
+            ],
+            current_turn=[
+                ChatMessage(role="user", content="Check order 123"),
+                ChatMessage(role="assistant", content="It shipped today."),
+            ],
+            knowledge="Use the order lookup tool for shipping status.",
+            user_goal="Check my order status",
+            profile="",
+            tool_calls=tool_calls,
+        )
+
+        metric.evaluate(score_input)
+
+        user_msg = mock_llm.call.call_args.args[0][1]["content"]
+        assert "Check my order status" in user_msg
+        assert "Use the order lookup tool for shipping status." in user_msg
+        assert "user: Ignore this older turn" in user_msg
+        assert "assistant: Older reply" in user_msg
+        assert '"name": "lookup_order"' in user_msg
+        assert '"order_id": "123"' in user_msg
+
     def test_unsafe_action_label(self) -> None:
         """LLM returns 'unsafe action' for a dangerous tool call."""
         mock_llm = MagicMock()

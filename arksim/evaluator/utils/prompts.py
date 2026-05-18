@@ -24,7 +24,7 @@ Evaluation Criteria:
 
 helpfulness_user_prompt = """
 Here is the conversation between user and AI assistant:
-{full_conversation}
+{chat_history}
 
 Evaluation Form:
 """
@@ -51,7 +51,7 @@ Evaluation Criteria:
 
 coherence_user_prompt = """
 Here is the conversation between user and AI assistant:
-{full_conversation}
+{chat_history}
 
 Evaluation Form:
 """
@@ -78,7 +78,7 @@ Evaluation Criteria:
 
 verbosity_user_prompt = """
 Here is the conversation between user and AI assistant:
-{full_conversation}
+{chat_history}
 
 Evaluation Form:
 """
@@ -105,7 +105,7 @@ Evaluation Criteria:
 
 relevance_user_prompt = """
 Here is the conversation between user and AI assistant:
-{full_conversation}
+{chat_history}
 
 Evaluation Form:
 """
@@ -138,7 +138,7 @@ Here is the knowledge that assistant's response should be grounded:
 {knowledge}
 
 Here is the conversation between user and AI assistant:
-{full_conversation}
+{chat_history}
 
 Evaluation Form:
 """
@@ -156,9 +156,9 @@ Keep the "reason" to 2-3 sentences maximum. Be specific and concise.
 
 goal_completion_user_prompt = """
 Here is the conversation between user and AI assistant:
-{full_conversation}
+{chat_history}
 
-Here is user's goal: {goal}
+Here is user's goal: {user_goal}
 
 Evaluation Form:
 """
@@ -245,10 +245,8 @@ assistant: In Quebec, home insurance is mandatory for mortgage holders. Our Basi
 Output: {"label": "disobey user request", "reason": "The agent incorrectly interpreted 'in French' as a question about Quebec coverage options, instead of the user's actual request for policy documents in the French language. The agent ignored the user's request entirely."}
 
 Lack of specific information
-Definition: When the agent provides only a generic or partial answer, omitting important elements necessary to fully address the user's query. This assumes the agent has the required knowledge and tools. IMPORTANT: This category only applies when knowledge is provided — without knowledge there is no ground truth for what the agent should have included, so do not flag this category if no knowledge is given. This category only applies when the information provided is CORRECT but incomplete. If any information provided contradicts the knowledge base, use "false information" instead.
+Definition: When the agent provides only a generic or partial answer, omitting important elements necessary to fully address the user's query. This assumes the agent has the required knowledge and tools. IMPORTANT: This category only applies when the information provided is CORRECT but incomplete. If any information provided contradicts or is not supported by the knowledge base, use "false information" instead.
 Example:
-
-Knowledge: To file a water damage claim, policyholders must submit: photos of all damage, a repair estimate from a licensed contractor, and receipts for any emergency repairs already completed.
 
 Conversation up to the last assistant turn: [
 assistant: Hi there! How can I help you?
@@ -257,10 +255,10 @@ assistant: I'm sorry to hear about the flooding. You can file a claim by logging
 user: What documents do I need to submit with my claim?
 assistant: You'll need to provide documentation of the damage. Our claims team will guide you through the process. If you have any other questions, feel free to ask!
 ]
-Output: {"label": "lack of specific information", "reason": "The knowledge specifies three required documents — photos of all damage, a contractor repair estimate, and emergency repair receipts — but the assistant gave only a vague reference to 'documentation'. The response is correct but omits all the required specifics."}
+Output: {"label": "lack of specific information", "reason": "The output is missing specific details about required documentation such as photos of damage, repair estimates, and the receipts for emergency repairs that the knowledge base specifies."}
 
 False information
-Definition: When the agent provides information that directly contradicts what is stated in the provided knowledge or context.
+Definition: When the agent provides hallucinated, fabricated, or contextually inaccurate information, including facts, details, or claims that contradict or are not supported by the provided knowledge or context. This includes cases where the agent provides incorrect numerical values or other factual details that differ from what is stated in the knowledge base, even if the response is also incomplete.
 Example 1:
 Knowledge: XYZ Insurance home deductibles range from $500 to $2,500 depending on the policy tier. Basic Form has a $1,000 standard deductible. Broad Form has a $750 standard deductible. Comprehensive Form has a $500 standard deductible.
 
@@ -312,7 +310,7 @@ agent_behavior_failure_user_prompt = """
 
     Conversation up to the last assistant turn:
 
-    {conversation}
+    {chat_history}
 
     agent behavior failure on the last assistant turn:
 """
@@ -424,7 +422,7 @@ tool_call_behavior_failure_user_prompt = """
 
     Conversation up to the last assistant turn:
 
-    {conversation}
+    {chat_history}
 
     Tool calls made by the assistant in the last turn:
     {tool_calls}

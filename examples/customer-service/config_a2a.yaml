@@ -1,0 +1,47 @@
+# A2A Connector Configuration
+# Connects to the customer-service agent via the A2A protocol.
+# The agent surfaces tool calls via the arksim A2A tool capture extension
+# (https://arksim.arklex.ai/a2a/tool-call-capture/v1). arksim reads tool
+# calls from Task.artifacts[*].metadata and evaluates tool usage against
+# the assertions in scenarios.json.
+#
+# Usage:
+#   cd examples/customer-service
+#   python -m a2a_server.server &
+#   arksim simulate-evaluate config_a2a.yaml
+
+# ── AGENT CONFIGURATION ────────────────────────────────────────────────────
+
+agent_config:
+  agent_type: a2a
+  agent_name: customer-service-a2a
+  api_config:
+    endpoint: http://localhost:9998
+
+# ── SIMULATION SETTINGS ──────────────────────────────────────────────────────
+
+scenario_file_path: ./scenarios.json
+num_conversations_per_scenario: 1
+max_turns: 5
+output_file_path: ./results/simulation/simulation_a2a.json
+simulated_user_prompt_template: null
+
+# ── EVALUATION SETTINGS ──────────────────────────────────────────────────────
+
+output_dir: ./results/evaluation
+
+custom_metrics_file_paths:
+  - ./custom_metrics.py
+
+metrics_to_run:
+  - helpfulness
+  - agent_behavior_failure
+  - tool_call_behavior_failure
+
+generate_html_report: true
+
+# ── SHARED SETTINGS ──────────────────────────────────────────────────────────
+
+model: gpt-4.1-mini
+provider: openai
+num_workers: 1

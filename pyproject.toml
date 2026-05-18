@@ -23,7 +23,7 @@ dependencies = [
     "pydantic>=2.0",
     "tqdm",
     "pyyaml>=6.0",
-    "a2a-sdk>=0.3.20",
+    "a2a-sdk>=1.0.0,<2.0.0",
     "jinja2>=3.1.5",
     "openai>=2.0.0",
     "fastapi>=0.115.0",
@@ -50,8 +50,13 @@ google = [
 otel = [
     "opentelemetry-proto>=1.20.0",
 ]
+claude = [
+    # The MCP server uses `mcp.server.fastmcp.FastMCP` from the official
+    # `mcp` SDK, not the standalone `fastmcp` PyPI package.
+    "mcp[cli]>=1.0,<2.0",
+]
 all = [
-    "arksim[azure,anthropic,google,otel]",
+    "arksim[azure,anthropic,google,otel,claude]",
 ]
 dev = [
     "pytest",
@@ -64,6 +69,7 @@ dev = [
 
 [project.scripts]
 arksim = "arksim.cli:main"
+arksim-mcp = "integrations.claude_code.mcp_server.server:main"
 
 [build-system]
 requires = ["hatchling", "hatch-vcs"]
@@ -76,7 +82,7 @@ source = "vcs"
 version-file = "arksim/_version.py"
 
 [tool.hatch.build.targets.wheel]
-packages = ["arksim"]
+packages = ["arksim", "integrations"]
 
 [tool.ruff.lint]
 select = [
@@ -97,10 +103,13 @@ ignore = [
 ]
 
 [tool.coverage.run]
-source = ["arksim"]
+source = ["arksim", "integrations"]
 
 [tool.coverage.report]
 fail_under = 60
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
 
 [tool.bandit]
 exclude_dirs = ["tests"]

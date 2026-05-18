@@ -9,6 +9,7 @@ from arksim.scenario.entities import AssertionType, ToolCallsAssertion
 
 from .base_metric import (
     ChatMessage,
+    MetricScope,
     QualitativeMetric,
     QualResult,
     QuantitativeMetric,
@@ -34,6 +35,7 @@ __all__ = [
     "ChatMessage",
     "Evaluation",
     "EvaluationInput",
+    "MetricScope",
     "QuantitativeMetric",
     "QualitativeMetric",
     "QualResult",

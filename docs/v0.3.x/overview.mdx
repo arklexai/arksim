@@ -1,6 +1,6 @@
 ---
 title: "Overview"
-description: "Validate, simulate, and harden your agent systems with ArkSim."
+description: "ArkSim is an open-source agent testing framework that simulates realistic multi-turn conversations with your AI agent and evaluates performance across built-in and custom metrics."
 ---
 
 ## What is ArkSim?
@@ -54,6 +54,26 @@ Simulation turns scenarios into live, multi-turn conversations with your agent. 
 ### Evaluation
 
 Evaluation scores your agent on those conversations. You get quantitative and qualitative metrics (e.g. helpfulness, faithfulness) and agent behavior failures that you can prioritize and fix.
+
+## Frequently Asked Questions
+
+<AccordionGroup>
+  <Accordion title="What does ArkSim do?">
+    ArkSim generates realistic multi-turn conversations between LLM-powered synthetic users and your agent, then evaluates every turn. Each synthetic user has a distinct profile, goal, and knowledge level. This reveals failures that only emerge across multiple conversation turns, like losing context, calling the wrong tool, or contradicting earlier responses.
+  </Accordion>
+  <Accordion title="How do I get started?">
+    Install with `pip install arksim`, run `arksim init` to scaffold a starter config and agent file, then run `arksim simulate-evaluate config.yaml`. See the [quickstart guide](./quickstart) for a full walkthrough.
+  </Accordion>
+  <Accordion title="What agents and frameworks are supported?">
+    ArkSim works with any AI agent, whether it is built with LangChain, CrewAI, OpenAI Agents SDK, or your own custom code. Connect through a Chat Completions HTTP endpoint, the A2A protocol, or load a Python agent class directly with no server needed. See the full list of [supported integrations](./integrations).
+  </Accordion>
+  <Accordion title="Can I run this in CI/CD?">
+    Yes. ArkSim runs as a CLI command that exits non-zero when quality thresholds are not met. Add it to any CI pipeline as a quality gate on every pull request. See the [CI integration guide](./ci-integration).
+  </Accordion>
+  <Accordion title="What metrics are available?">
+    Built-in metrics include helpfulness, coherence, relevance, faithfulness, verbosity, goal completion, and agent behavior failure detection. You can also define custom quantitative and qualitative metrics with full access to the conversation context. See the [evaluation guide](./evaluate-conversation).
+  </Accordion>
+</AccordionGroup>
 
 ## Ready to start?
 

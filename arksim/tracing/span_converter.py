@@ -12,7 +12,7 @@ import json
 import logging
 from typing import Any
 
-from arksim.simulation_engine.tool_types import ToolCall
+from arksim.simulation_engine.tool_types import ToolCall, ToolCallSource
 from arksim.tracing._attrs import first_attr
 
 logger = logging.getLogger(__name__)
@@ -88,6 +88,7 @@ def span_to_tool_call(span: dict[str, Any]) -> ToolCall | None:
         arguments=arguments,
         result=result,
         error=error,
+        source=ToolCallSource.OTEL_TRACE,
     )
 
 

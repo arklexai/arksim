@@ -9,6 +9,7 @@ from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
 from jinja2.sandbox import SandboxedEnvironment
+from pydantic import ValidationError
 from tqdm import tqdm
 
 from arksim.config import AgentConfig, AgentType
@@ -36,7 +37,7 @@ from .entities import (
     SimulationInput,
     SimulationParams,
 )
-from .tool_types import AgentResponse, ToolCall
+from .tool_types import AgentResponse, ToolCall, ToolCallSource
 from .utils.prompts import DEFAULT_SIMULATED_USER_PROMPT_TEMPLATE
 from .utils.utils import flip_hist
 
@@ -49,6 +50,37 @@ SIMULATOR_VERSION = "v1"
 
 
 STOP_SIGNAL = "###STOP###"
+
+
+_KNOWN_TOOL_CALL_SOURCES = {s.value for s in ToolCallSource}
+
+
+def _tool_call_from_dict(tc: dict[str, Any]) -> ToolCall | None:
+    """Build a ToolCall from a serialized dict, tolerating schema drift.
+
+    Old simulation snapshots may carry ``source`` values that are no longer
+    in ``ToolCallSource`` (dropped to None with a warning), or be missing
+    required fields like ``name`` (returns None with a warning so the rest
+    of the snapshot still loads).
+
+    Extra fields on the dict are silently ignored by Pydantic per the
+    ``extra="ignore"`` config on ``ToolCall``.
+    """
+    source = tc.get("source")
+    if source is not None and source not in _KNOWN_TOOL_CALL_SOURCES:
+        logger.warning(
+            "Ignoring unknown tool_call source %r when loading snapshot", source
+        )
+        tc = {**tc, "source": None}
+    try:
+        return ToolCall(**tc)
+    except ValidationError as e:
+        logger.warning(
+            "Skipping malformed tool call in snapshot (id=%r): %s",
+            tc.get("id"),
+            e,
+        )
+        return None
 
 
 class Simulator:
@@ -200,12 +232,23 @@ class Simulator:
                 # Dedup by ID first, then by (name, arguments) to handle
                 # cases where the trace receiver falls back to spanId while
                 # AgentResponse carries an SDK-assigned tool call ID.
+                #
+                # Empty-string ids fall through to signature-based dedup because
+                # Gemini's native response format has no per-call id field, and
+                # the A2A tool-call extension treats id as optional. Both
+                # parsers fall back to "" by convention; the convention is
+                # anchored by ``ToolCall.id: str`` (not nullable), so a missing
+                # id always lands as "" and never as None.
+                #
+                # existing_ids and sig_to_idx are updated as traced calls are
+                # appended so two same-id or same-signature traced calls
+                # dedupe against each other within the loop.
                 if self.trace_receiver is not None:
                     traced = await self.trace_receiver.wait_for_traces(
                         conversation_id, turn
                     )
                     if traced:
-                        existing_ids = {tc.id for tc in turn_tool_calls}
+                        existing_ids = {tc.id for tc in turn_tool_calls if tc.id}
                         sig_to_idx: dict[tuple[str, str], int] = {}
                         for i, tc in enumerate(turn_tool_calls):
                             sig = (tc.name, json.dumps(tc.arguments, sort_keys=True))
@@ -215,6 +258,9 @@ class Simulator:
                             sig = (tc.name, json.dumps(tc.arguments, sort_keys=True))
                             if tc.id not in existing_ids and sig not in sig_to_idx:
                                 turn_tool_calls.append(tc)
+                                sig_to_idx[sig] = len(turn_tool_calls) - 1
+                                if tc.id:
+                                    existing_ids.add(tc.id)
 
                 history.append(
                     {
@@ -270,7 +316,11 @@ class Simulator:
                 )
             elif role == "assistant":
                 raw_tcs = msg.get("tool_calls")
-                tool_calls = [ToolCall(**tc) for tc in raw_tcs] if raw_tcs else None
+                if raw_tcs:
+                    parsed = [_tool_call_from_dict(tc) for tc in raw_tcs]
+                    tool_calls = [tc for tc in parsed if tc is not None] or None
+                else:
+                    tool_calls = None
                 messages.append(
                     Message(
                         turn_id=turn_id,

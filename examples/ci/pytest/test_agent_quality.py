@@ -132,10 +132,8 @@ async def test_agent_quality() -> None:
         output_dir=evaluation_output_dir,
         num_workers=10,
         # custom_metrics=[
-        #     MyNumericMetric(),  # TODO: replace with your numeric metric instances
-        # ],
-        # custom_qualitative_metrics=[
-        #     MyQualitativeMetric(),  # TODO: replace with your qualitative metric instances
+        #     MyNumericMetric(),     # TODO: replace with QuantitativeMetric instances
+        #     MyQualitativeMetric(), # TODO: replace with QualitativeMetric instances
         # ],
     )
 

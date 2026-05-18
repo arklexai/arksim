@@ -1,9 +1,24 @@
 # SPDX-License-Identifier: Apache-2.0
-"""OpenAI Agents SDK integration for arksim's trace receiver.
+"""OpenAI Agents SDK integration for arksim.
 
-Provides ``ArksimTracingProcessor``, a ``TracingProcessor`` implementation
-that captures tool calls from the OpenAI Agents SDK and injects them into
-arksim's trace receiver.
+This module provides two complementary ways to surface tool calls made
+by agents built on the OpenAI Agents SDK:
+
+* ``ArksimTracingProcessor`` - a ``TracingProcessor`` that captures tool
+  calls via SDK tracing hooks and injects them into arksim's trace
+  receiver (zero per-turn wrapping).
+* ``extract_tool_calls`` - a helper for explicit capture from a
+  ``RunResult``, used when your agent returns ``AgentResponse`` directly.
+
+Both require ``pip install openai-agents``.
+
+---
+
+``ArksimTracingProcessor``
+--------------------------
+
+A ``TracingProcessor`` implementation that captures tool calls from the
+OpenAI Agents SDK and injects them into arksim's trace receiver.
 
 When used with ``arksim simulate``, the simulator sets routing context
 via ``contextvars`` automatically. The agent registers the processor once
@@ -38,7 +53,7 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from arksim.tracing.receiver import TraceReceiver
 
-from arksim.simulation_engine.tool_types import ToolCall
+from arksim.simulation_engine.tool_types import ToolCall, ToolCallSource
 from arksim.tracing.context import (
     trace_conversation_id,
     trace_receiver_ref,
@@ -175,6 +190,7 @@ class ArksimTracingProcessor(_Base):  # type: ignore[misc]
             arguments=arguments,
             result=result,
             error=error,
+            source=ToolCallSource.OPENAI_AGENTS,
         )
 
         # In-process: inject directly into receiver buffer
@@ -192,3 +208,71 @@ class ArksimTracingProcessor(_Base):  # type: ignore[misc]
 
     def force_flush(self) -> None:
         pass
+
+
+def extract_tool_calls(result: object) -> list[ToolCall]:
+    """Extract tool calls from an OpenAI Agents SDK RunResult.
+
+    Pairs ``ToolCallItem`` entries with their ``ToolCallOutputItem`` outputs,
+    returning arksim ``ToolCall`` objects in invocation order.
+
+    Use this in custom agents that call ``Runner.run()`` and need to return
+    tool calls via ``AgentResponse``::
+
+        from arksim.tracing.openai import extract_tool_calls
+
+        result = await Runner.run(agent, input=messages)
+        return AgentResponse(
+            content=result.final_output,
+            tool_calls=extract_tool_calls(result),
+        )
+
+    Requires: ``pip install openai-agents``
+
+    Args:
+        result: A ``RunResult`` from ``Runner.run()``. Typed as ``object``
+            to avoid a hard dependency on the ``openai-agents`` package.
+
+    Returns:
+        A list of ToolCall objects extracted from the result.
+    """
+    from agents.items import ToolCallItem, ToolCallOutputItem
+    from openai.types.responses import ResponseFunctionToolCall
+
+    # First pass: collect outputs keyed by call_id.
+    outputs: dict[str, str] = {}
+    for item in result.new_items:  # type: ignore[attr-defined]
+        if isinstance(item, ToolCallOutputItem):
+            # raw_item is a dict in older SDK versions and a typed object
+            # in newer ones; handle both for forward compatibility.
+            raw = item.raw_item
+            if isinstance(raw, dict):
+                call_id = raw.get("call_id", "")
+                output = raw.get("output", "")
+            else:
+                call_id = getattr(raw, "call_id", "")  # noqa: B009
+                output = getattr(raw, "output", "")  # noqa: B009
+            if isinstance(output, list):
+                output = json.dumps(output)
+            outputs[call_id] = str(output)
+
+    # Second pass: build tool calls in invocation order.
+    tool_calls: list[ToolCall] = []
+    for item in result.new_items:  # type: ignore[attr-defined]
+        if not isinstance(item, ToolCallItem):
+            continue
+        raw = item.raw_item
+        if not isinstance(raw, ResponseFunctionToolCall):
+            continue
+        call_id = raw.call_id
+        tool_calls.append(
+            ToolCall(
+                id=call_id,
+                name=raw.name,
+                arguments=json.loads(raw.arguments) if raw.arguments else {},
+                result=outputs.get(call_id),
+                source=ToolCallSource.OPENAI_AGENTS,
+            )
+        )
+
+    return tool_calls
