@@ -1,8 +1,15 @@
 # SPDX-License-Identifier: Apache-2.0
-"""CrewAI integration for ArkSim.
+"""CrewAI integration for arksim.
 
-Install: pip install crewai
-Auth:    export OPENAI_API_KEY="<your-key>"
+Install:
+    pip install 'arksim[crewai]'
+Auth:
+    export OPENAI_API_KEY="<your-key>"
+
+Wires arksim's CrewAI tracing adapter into a single-agent ``Crew`` with
+two mock tools (lookup_order, book_table). Running
+``arksim simulate-evaluate`` produces a simulation.json whose
+``tool_calls`` field is populated by the captured invocations.
 """
 
 from __future__ import annotations
@@ -11,19 +18,38 @@ import uuid
 
 from crewai import Agent as CrewAgent
 from crewai import Crew, Task
+from tools import book_table, lookup_order
 
 from arksim.config import AgentConfig
 from arksim.simulation_engine.agent.base import BaseAgent
+from arksim.tracing.integrations.crewai import ArksimCrewEventListener
 
 
 class CrewAIAgent(BaseAgent):
+    """CrewAI agent with conversation history and tool-call tracing.
+
+    CrewAI is task-oriented, so the agent threads prior turns into each
+    new ``Task`` description to preserve conversational memory.
+    Instantiating ``ArksimCrewEventListener`` registers its handlers on
+    the global ``crewai_event_bus`` eagerly; no explicit ``Crew``
+    constructor argument is required.
+    """
+
     def __init__(self, agent_config: AgentConfig) -> None:
         super().__init__(agent_config)
         self._chat_id = str(uuid.uuid4())
+        # Instantiating registers the listener on the global event bus.
+        self._listener = ArksimCrewEventListener()
         self._agent = CrewAgent(
-            role="Assistant",
-            goal="Answer user questions helpfully",
-            backstory="You are a helpful assistant.",
+            role="Customer service assistant",
+            goal="Help customers with their orders and bookings.",
+            backstory=(
+                "An efficient customer service assistant for an online "
+                "retailer that also takes restaurant reservations."
+            ),
+            tools=[lookup_order, book_table],
+            allow_delegation=False,
+            verbose=False,
             llm="gpt-5.1",
         )
         self._history: list[dict[str, str]] = []
@@ -41,7 +67,7 @@ class CrewAIAgent(BaseAgent):
         )
         task = Task(
             description=description,
-            expected_output="A clear, helpful answer",
+            expected_output="A short, helpful response.",
             agent=self._agent,
         )
         crew = Crew(agents=[self._agent], tasks=[task], verbose=False)
