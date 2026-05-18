@@ -5,6 +5,25 @@ All notable changes to ArkSim will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.7](https://github.com/arklexai/arksim/compare/v0.3.6...v0.3.7) (2026-05-18)
+
+
+### Added
+
+* **claude-code:** add skills and MCP server for agent simulation ([#141](https://github.com/arklexai/arksim/issues/141)) ([508659a](https://github.com/arklexai/arksim/commit/508659a5d4a4cf5d66700f025d439ba6bca3e370))
+
+
+### Fixed
+
+* **simulator:** skip empty ids in tool-call dedup ([#168](https://github.com/arklexai/arksim/issues/168)) ([37d4d20](https://github.com/arklexai/arksim/commit/37d4d203829a72764a34cf28e2688a9997426156))
+
+
+### Changed
+
+* bump actions/github-script from 8 to 9 ([#145](https://github.com/arklexai/arksim/issues/145)) ([b019a74](https://github.com/arklexai/arksim/commit/b019a7488699a6c4ae1e470331cf3c6aaa2f4662))
+* bump googleapis/release-please-action from 4 to 5 ([#164](https://github.com/arklexai/arksim/issues/164)) ([85af4af](https://github.com/arklexai/arksim/commit/85af4afc5a58302088eb9a0160239de941fc4473))
+* bump softprops/action-gh-release from 2 to 3 ([#144](https://github.com/arklexai/arksim/issues/144)) ([1fc8338](https://github.com/arklexai/arksim/commit/1fc83381cb85fba1be6837ffcba479a02547da47))
+
 ## [Unreleased]
 
 ### Added
