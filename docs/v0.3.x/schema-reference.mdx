@@ -107,7 +107,7 @@ Written by `arksim evaluate` or the evaluation step of `arksim simulate-evaluate
 ### Schema
 
 <ResponseField name="schema_version" type="string" required>
-  Output schema version (e.g. `"v1"`).
+  Output schema version (e.g. `"v1.1"`).
 </ResponseField>
 
 <ResponseField name="generated_at" type="string" required>
@@ -177,6 +177,44 @@ Written by `arksim evaluate` or the evaluation step of `arksim simulate-evaluate
     </ResponseField>
   </Expandable>
 </ResponseField>
+
+<ResponseField name="error_scenario_mappings" type="list[ErrorScenarioMapping]">
+  Maps each unique error to the scenarios that triggered it. Empty when no errors are detected or no scenario file was provided. Added in schema version `v1.1`.
+
+  <Expandable title="ErrorScenarioMapping fields">
+    <ResponseField name="error_index" type="integer" required>
+      Position in the list, ordered by severity (1 = most severe) then by occurrence count.
+    </ResponseField>
+    <ResponseField name="unique_error_id" type="string" required>
+      Links to the matching entry in `unique_errors`.
+    </ResponseField>
+    <ResponseField name="error_description" type="string" required>
+      Human-readable description of the error.
+    </ResponseField>
+    <ResponseField name="severity" type="string" required>
+      `critical`, `high`, `medium`, or `low`.
+    </ResponseField>
+    <ResponseField name="scenario_ids" type="list[string]" required>
+      IDs of scenarios that triggered this error, sorted alphabetically.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+---
+
+## Focus files (`focus/error_N.json`, `focus/all_failures.json`)
+
+Written to `{output_dir}/focus/` when unique errors are detected and a scenario file is provided. Each file uses the standard [Scenario input](#scenarios-scenariosjson) schema.
+
+<ResponseField name="schema_version" type="string" required>
+  Copied from the original scenario file (e.g. `"v1"`).
+</ResponseField>
+
+<ResponseField name="scenarios" type="list[Scenario]" required>
+  Filtered subset of the original scenarios. For `error_N.json`, only scenarios that triggered error group N. For `all_failures.json`, the union of all failing scenarios (deduplicated).
+</ResponseField>
+
+Files are numbered by severity (1 = highest) then by occurrence count. See [Focus Files](./evaluate-conversation#focus-files) for usage.
 
 ---
 

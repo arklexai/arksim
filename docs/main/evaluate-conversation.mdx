@@ -122,6 +122,17 @@ In addition to the built-in metrics (helpfulness, coherence, relevance, verbosit
   Names of built-in metrics to run. If empty, all built-in metrics run. Use this to restrict evaluation to a subset of built-ins while still running all custom metrics from `custom_metrics_file_paths`.
 </ParamField>
 
+### Scope
+
+Every custom metric has a **scope** that controls when it runs:
+
+| Scope | Runs | Receives |
+| --- | --- | --- |
+| `"turn"` (default) | Once per agent response | The current turn + conversation history up to that point |
+| `"conversation"` | Once per full conversation | The complete conversation history |
+
+Use `"turn"` for response-quality checks (clarity, tone, compliance statements). Use `"conversation"` for end-to-end assessments that only make sense after the whole conversation (goal completion, needs assessment, product suitability).
+
 ### Metric Types
 
 <Tabs>
@@ -141,15 +152,26 @@ In addition to the built-in metrics (helpfulness, coherence, relevance, verbosit
         ScoreInput,
     )
 
+    # Turn-level: scored on every agent response
     class ClarityScore(QuantitativeMetric):
         def __init__(self, llm=None):
-            super().__init__(name="clarity", score_range=(0, 5), llm=llm)
+            super().__init__(name="clarity", score_range=(0, 5), llm=llm, scope="turn")
 
         def score(self, score_input: ScoreInput) -> QuantResult:
             # self.llm is the evaluator's configured LLM, injected automatically.
-            # score_input.chat_history, .user_goal, .knowledge, etc.
+            # score_input.chat_history, .current_turn, .user_goal, .knowledge, etc.
             value = ...  # your scoring logic using self.llm or any other logic
             return QuantResult(name="clarity", value=value, reason="...")
+
+    # Conversation-level: scored once after the full conversation
+    class ProductSuitabilityScore(QuantitativeMetric):
+        def __init__(self, llm=None):
+            super().__init__(name="product_suitability", score_range=(0, 5), llm=llm, scope="conversation")
+
+        def score(self, score_input: ScoreInput) -> QuantResult:
+            # score_input.chat_history contains the full conversation.
+            value = ...
+            return QuantResult(name="product_suitability", value=value, reason="...")
     ```
   </Tab>
   <Tab title="Qualitative">
@@ -168,13 +190,24 @@ In addition to the built-in metrics (helpfulness, coherence, relevance, verbosit
         ScoreInput,
     )
 
-    class NeedsAssessment(QualitativeMetric):
+    # Turn-level: checked on every agent response
+    class ProhibitedStatements(QualitativeMetric):
         def __init__(self, llm=None):
-            super().__init__(name="needs_assessment", llm=llm)
+            super().__init__(name="prohibited_statements", llm=llm, scope="turn")
 
         def evaluate(self, score_input: ScoreInput) -> QualResult:
             # self.llm is the evaluator's configured LLM, injected automatically.
-            # score_input.chat_history, .user_goal, .knowledge, etc.
+            # score_input.chat_history, .current_turn, .user_goal, .knowledge, etc.
+            label = ...  # "ok" | "violated"
+            return QualResult(name="prohibited_statements", value=label, reason="...")
+
+    # Conversation-level: checked once after the full conversation
+    class NeedsAssessment(QualitativeMetric):
+        def __init__(self, llm=None):
+            super().__init__(name="needs_assessment", llm=llm, scope="conversation")
+
+        def evaluate(self, score_input: ScoreInput) -> QualResult:
+            # score_input.chat_history contains the full conversation.
             label = ...  # "complete" | "partial" | "missing"
             return QualResult(name="needs_assessment", value=label, reason="...")
     ```
@@ -206,7 +239,8 @@ Per-metric minimum scores on each metric's native scale. The mean score across a
 | `overall_score` | 0–1 | Per-conversation `overall_agent_score` compared directly |
 | `faithfulness`, `helpfulness`, `coherence`, `verbosity`, `relevance` | 1–5 | Mean of per-turn scores |
 | `goal_completion` | 0–1 | Per-conversation score compared directly |
-| Custom quantitative metrics | Your scale | Mean of per-turn scores |
+| Custom quantitative metrics (`scope="turn"`) | Your scale | Mean of per-turn scores |
+| Custom quantitative metrics (`scope="conversation"`) | Your scale | Per-conversation score compared directly |
 
 ```yaml
 numeric_thresholds:

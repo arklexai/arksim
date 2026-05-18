@@ -115,6 +115,8 @@ agent_config:
     endpoint: http://localhost:9999/agent
 ```
 
+A2A agents can also surface tool calls for evaluation via the arksim [tool call capture extension](https://docs.arklex.ai/main/tool-call-capture). See `examples/customer-service/a2a_server/` for a runnable reference server.
+
 Write scenarios that match your agent's domain. See the [Scenarios documentation](https://docs.arklex.ai/main/build-scenario) for how to define goals, user profiles, and knowledge.
 
 ## Why ArkSim?
@@ -124,6 +126,30 @@ Write scenarios that match your agent's domain. See the [Scenarios documentation
 - **Any agent, any framework.** Works with [14+ frameworks](#integrations) through Chat Completions, A2A, or direct Python import.
 - **Runs in CI.** Add it as a quality gate on every PR. Exits non-zero when your agent drops below threshold.
 - **Fully open source.** Runs on your infrastructure. Your data never leaves.
+
+## Test in Claude Code
+
+ArkSim ships with a native Claude Code skill pack and MCP server. Generate scenarios from your agent code, run simulations, and debug failures inline.
+
+```bash
+pip install "arksim[claude]"
+arksim setup-claude          # writes .mcp.json and .claude/skills/arksim-*/
+```
+
+Restart Claude Code (or run `/mcp` to reload) so the new skills and MCP server load. Then ask Claude to run any of the skills, by name or by what you want to do:
+
+| Skill (auto-invoked by Claude when relevant) | What it does |
+|---|---|
+| `arksim-simulate` | Run multi-turn simulated conversations against your agent. Same flow as `arksim-test`, simulation-first name. |
+| `arksim-test` | First time: guided setup. After: run simulation + evaluation. Same flow as `arksim-simulate`. |
+| `arksim-evaluate` | Re-evaluate a previous run with different metrics or thresholds. |
+| `arksim-scenarios` | Generate or edit scenarios from your agent's code. |
+| `arksim-results` | Drill into failures turn by turn, compare runs. |
+| `arksim-ui` | Open the web dashboard for browsing results. |
+
+`arksim setup-claude --dry-run` previews changes without touching the filesystem. `--uninstall` removes only what `setup-claude` installed (it reads from a manifest, so third-party `arksim-*` skills are not affected).
+
+See the [integration README](integrations/claude_code/README.md) for the install guide and the trust model.
 
 ## Integrations
 
