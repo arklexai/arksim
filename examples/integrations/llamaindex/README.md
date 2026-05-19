@@ -36,13 +36,13 @@ After running the example, each turn that invoked a tool contains entries like t
 ```json
 "tool_calls": [
   {
-    "name": "_lookup_order",
+    "name": "lookup_order",
     "arguments": {"order_id": "ORD-1001"},
     "result": "Order ORD-1001: shipped, arrives Tuesday.",
     "source": "llamaindex"
   },
   {
-    "name": "_book_table",
+    "name": "book_table",
     "arguments": {"party_size": 4, "time": "7pm"},
     "result": "Booked table for 4 at 7pm.",
     "source": "llamaindex"

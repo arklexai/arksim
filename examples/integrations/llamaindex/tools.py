@@ -21,5 +21,5 @@ def _book_table(party_size: int, time: str) -> str:
     return f"Booked table for {party_size} at {time}."
 
 
-lookup_order = FunctionTool.from_defaults(_lookup_order)
-book_table = FunctionTool.from_defaults(_book_table)
+lookup_order = FunctionTool.from_defaults(_lookup_order, name="lookup_order")
+book_table = FunctionTool.from_defaults(_book_table, name="book_table")
