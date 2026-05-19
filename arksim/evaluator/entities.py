@@ -30,19 +30,38 @@ from .base_metric import (
 _entities_logger = logging.getLogger(__name__)
 
 
+# Invisible Unicode characters that copy-paste from web UIs (Notion, Slack,
+# Google Docs) can silently introduce: zero-width space (U+200B), zero-width
+# non-joiner (U+200C), zero-width joiner (U+200D), word joiner (U+2060), and
+# BOM / zero-width no-break space (U+FEFF). Python's ``str.strip()`` already
+# handles regular ASCII whitespace and ``U+00A0`` non-breaking space, but it
+# does not touch these zero-width characters.
+_INVISIBLE_CHARS = "​‌‍⁠﻿"
+
+
 def _norm_endpoint_value(value: str | None) -> str | None:
     """Normalize an endpoint field for comparison.
 
     Returns the stripped value when non-empty after stripping; otherwise
-    ``None``. This treats ``None``, ``""``, and ``"   "`` as equivalent
-    ("unset"), matching the whitespace-stripping behavior of the OpenAI
-    provider so users do not silently trigger endpoint-split semantics by
-    typing trailing whitespace.
+    ``None``. This treats ``None``, ``""``, ``"   "``, and copy-paste
+    artifacts like a leading zero-width space as equivalent ("unset"),
+    matching the whitespace-stripping behavior of the OpenAI provider so
+    users do not silently trigger endpoint-split semantics by typing
+    trailing whitespace or pasting from a rich-text editor.
     """
     if value is None:
         return None
-    stripped = value.strip()
+    stripped = value.strip().strip(_INVISIBLE_CHARS).strip()
     return stripped if stripped else None
+
+
+# Canonical LLM kwarg names returned by ``EvaluationInput.evaluator_llm_kwargs``.
+# Adding a new field here requires also adding a matching ``evaluator_<field>``
+# attribute to ``EvaluationInput``; the same-endpoint branch of the helper
+# iterates this tuple so it picks the new field up automatically. The
+# endpoint-differs branch is intentionally explicit because ``base_url`` and
+# ``api_key`` have special "do not cross-inherit" credential semantics.
+_LLM_KWARG_FIELDS: tuple[str, ...] = ("model", "provider", "base_url", "api_key")
 
 
 _DEFAULT_METRICS_TO_RUN = [
@@ -255,6 +274,10 @@ class EvaluationInput(BaseModel):
         - Whitespace-only override values are treated as unset.
         """
         if self._evaluator_endpoint_differs():
+            # Endpoint split: ``model`` and ``provider`` can fall back to the
+            # shared values (neither is credential-bearing), but ``base_url``
+            # and ``api_key`` must NOT cross-inherit. Leave them as-is so the
+            # SDK env-var fallback (e.g. ``OPENAI_API_KEY``) applies.
             return {
                 "model": self.evaluator_model or self.model,
                 "provider": self.evaluator_provider or self.provider,
@@ -262,11 +285,15 @@ class EvaluationInput(BaseModel):
                 "api_key": self.evaluator_api_key,
             }
 
+        # Same endpoint: every field inherits from the shared key when the
+        # matching ``evaluator_<field>`` is unset (None, empty, or
+        # whitespace-only / invisible-only after normalization). Iterating
+        # ``_LLM_KWARG_FIELDS`` keeps this branch in sync with future kwarg
+        # additions automatically.
         return {
-            "model": self.evaluator_model or self.model,
-            "provider": self.provider,
-            "base_url": self.base_url,
-            "api_key": self.api_key,
+            field: _norm_endpoint_value(getattr(self, f"evaluator_{field}"))
+            or getattr(self, field)
+            for field in _LLM_KWARG_FIELDS
         }
 
     @model_validator(mode="after")

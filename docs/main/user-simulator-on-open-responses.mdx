@@ -15,8 +15,6 @@ These keys go at the top level of your `config.yaml`, alongside other simulation
 
 ArkSim's user simulator sends a stable system prompt and scenario context to the LLM on every turn of every scenario. OpenAI's automatic prompt cache hits this stable prefix and discounts the cached portion by 50 to 75% depending on the model. Depending on prompt-cache hit rate and the output share of total cost, typical multi-turn runs see roughly 20 to 40% total cost reduction. The benefit was already active for OpenAI users; this page documents how to extend the same shape to self-hosted or alternate backends.
 
-ArkSim uses Responses in stateless mode: it replays the full conversation history each turn rather than threading via `previous_response_id`. Stateful threading is a planned follow-up that would further improve cache utilization.
-
 ## Splitting simulator and evaluator LLMs
 
 The evaluator passes `text_format` (OpenAI structured output) on every metric call. Self-hosted backends like Ollama do not currently accept `text_format`; vLLM accepts it only with `--guided-decoding-backend` enabled.
@@ -36,6 +34,8 @@ evaluator_model: gpt-4o-mini
 ```
 
 Because the evaluator endpoint differs from the simulator endpoint (`evaluator_provider` is set), arksim does not forward the shared `api_key: ollama` to the evaluator. The evaluator's OpenAI SDK falls back to `OPENAI_API_KEY` in your environment. Set `OPENAI_API_KEY` before running, or specify `evaluator_api_key: <your-openai-key>` explicitly.
+
+Make sure Ollama is running (`ollama serve`) and the model is pulled (`ollama pull llama3.1`). Requires Ollama v0.13.3 or newer for `/v1/responses` support; see the Ollama section below for details.
 
 For full explicit control without relying on env vars:
 
@@ -116,6 +116,7 @@ Self-hosted backends do not have OpenAI-equivalent automatic prefix caching out 
 - The OpenAI prompt cache requires prompts of at least 1024 tokens to activate. Toy scenarios with tiny user profiles and no knowledge base will not hit it.
 - Cache TTL is roughly 5 to 10 minutes. ArkSim runs fast enough that this is rarely a constraint, but a paused or debugged run can lose its cached prefix.
 - ArkSim does not stream Responses API output today; the user simulator uses non-streaming `responses.parse()`.
+- ArkSim uses Responses in stateless mode: it replays the full conversation history each turn rather than threading via `previous_response_id`. Stateful threading is a planned follow-up that would further improve cache utilization.
 
 ## Limitations
 

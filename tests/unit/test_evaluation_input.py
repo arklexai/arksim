@@ -105,6 +105,34 @@ class TestEvaluationInputEvaluatorOverrides:
         kwargs = settings.evaluator_llm_kwargs()
         assert kwargs["api_key"] == "sk-shared"
 
+    def test_endpoint_norm_strips_zero_width_characters(self) -> None:
+        """Zero-width characters from copy-paste (e.g. Notion, Slack) must
+        not bypass the endpoint-differs check or otherwise reach the SDK.
+        """
+        # Zero-width space prepended to evaluator_provider
+        settings = EvaluationInput(
+            model="gpt-4o-mini",
+            provider="openai",
+            api_key="sk-shared",
+            evaluator_provider="​openai",  # ZWSP + "openai"
+        )
+        # After normalization, evaluator_provider == "openai" == provider,
+        # so endpoint does NOT differ; shared api_key flows through.
+        kwargs = settings.evaluator_llm_kwargs()
+        assert kwargs["api_key"] == "sk-shared"
+        assert kwargs["provider"] == "openai"
+
+    def test_endpoint_norm_strips_bom_and_word_joiner(self) -> None:
+        """BOM (U+FEFF) and word joiner (U+2060) also handled."""
+        settings = EvaluationInput(
+            model="gpt-4o-mini",
+            provider="openai",
+            evaluator_provider="﻿⁠",  # all-invisible string
+        )
+        # Treated as unset after normalization; falls through to shared.
+        kwargs = settings.evaluator_llm_kwargs()
+        assert kwargs["provider"] == "openai"
+
     def test_endpoint_does_not_differ_when_evaluator_provider_matches_shared(
         self,
     ) -> None:
