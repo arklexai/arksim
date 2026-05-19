@@ -16,6 +16,9 @@ agent_config:
     body:
       model: gpt-4o
       messages: []
+      # Forward chat_id and turn_id to the Mastra server so it can stamp
+      # arksim.conversation_id and arksim.turn_id on emitted OTel spans.
+      enable_metadata: true
 
 # ── SIMULATION SETTINGS ──────────────────────────────────────────────────────
 
@@ -44,3 +47,9 @@ provider: openai
 
 # Workers for parallel processing
 num_workers: 50
+
+# ── TRACE RECEIVER ───────────────────────────────────────────────────────────
+# Receives OTel spans emitted by the Mastra server's tool wrappers.
+trace_receiver:
+  enabled: true
+  wait_timeout: 5

@@ -8,8 +8,14 @@
   "dependencies": {
     "@mastra/core": "^1.0",
     "@ai-sdk/openai": "^1.0",
+    "@opentelemetry/api": "^1.9",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.55",
+    "@opentelemetry/resources": "^1.30",
+    "@opentelemetry/sdk-node": "^0.55",
+    "@opentelemetry/sdk-trace-base": "^1.30",
     "hono": "^4.0",
     "@hono/node-server": "^1.0",
-    "tsx": "^4.0"
+    "tsx": "^4.0",
+    "zod": "^3.23"
   }
 }
