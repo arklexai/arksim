@@ -30,28 +30,18 @@ from .base_metric import (
 _entities_logger = logging.getLogger(__name__)
 
 
-# Invisible Unicode characters that copy-paste from web UIs (Notion, Slack,
-# Google Docs) can silently introduce: zero-width space (U+200B), zero-width
-# non-joiner (U+200C), zero-width joiner (U+200D), word joiner (U+2060), and
-# BOM / zero-width no-break space (U+FEFF). Python's ``str.strip()`` already
-# handles regular ASCII whitespace and ``U+00A0`` non-breaking space, but it
-# does not touch these zero-width characters.
-_INVISIBLE_CHARS = "​‌‍⁠﻿"
-
-
 def _norm_endpoint_value(value: str | None) -> str | None:
     """Normalize an endpoint field for comparison.
 
     Returns the stripped value when non-empty after stripping; otherwise
-    ``None``. This treats ``None``, ``""``, ``"   "``, and copy-paste
-    artifacts like a leading zero-width space as equivalent ("unset"),
-    matching the whitespace-stripping behavior of the OpenAI provider so
-    users do not silently trigger endpoint-split semantics by typing
-    trailing whitespace or pasting from a rich-text editor.
+    ``None``. This treats ``None``, ``""``, and whitespace-only as
+    equivalent ("unset"), matching the whitespace-stripping behavior of
+    the OpenAI provider so users do not silently trigger endpoint-split
+    semantics by typing trailing whitespace.
     """
     if value is None:
         return None
-    stripped = value.strip().strip(_INVISIBLE_CHARS).strip()
+    stripped = value.strip()
     return stripped if stripped else None
 
 
