@@ -86,3 +86,57 @@ class TestResponsesYamlPlumbing:
             # the SDK falls back to OPENAI_BASE_URL / OPENAI_API_KEY env vars.
             mock_sync.assert_called_once_with()
             mock_async.assert_called_once_with()
+
+    def test_evaluator_overrides_reach_llm_constructor(self) -> None:
+        """When evaluator_* fields are set, they must override the shared
+        fields when the evaluator constructs its LLM. The simulator-side
+        `LLM(...)` call must NOT see the override values.
+        """
+        settings = EvaluationInput(
+            model="llama3.1",
+            provider="responses",
+            base_url="http://localhost:11434/v1",
+            api_key="ollama",
+            evaluator_model="gpt-4o-mini",
+            evaluator_provider="openai",
+            evaluator_base_url="https://api.openai.com/v1",
+            evaluator_api_key="sk-test",
+        )
+        with (
+            patch("arksim.llms.chat.providers.openai.OpenAI") as mock_sync,
+            patch("arksim.llms.chat.providers.openai.AsyncOpenAI"),
+        ):
+            # Simulate the evaluator's LLM construction path
+            LLM(
+                model=settings.evaluator_model or settings.model,
+                provider=settings.evaluator_provider or settings.provider,
+                base_url=settings.evaluator_base_url or settings.base_url,
+                api_key=settings.evaluator_api_key or settings.api_key,
+            )
+            mock_sync.assert_called_once_with(
+                base_url="https://api.openai.com/v1", api_key="sk-test"
+            )
+
+    def test_evaluator_falls_back_to_shared_when_override_unset(self) -> None:
+        """When evaluator_* fields are unset, the evaluator's LLM uses the
+        shared model/provider/base_url/api_key.
+        """
+        settings = EvaluationInput(
+            model="gpt-4o-mini",
+            provider="openai",
+            base_url="https://api.openai.com/v1",
+            api_key="sk-test",
+        )
+        with (
+            patch("arksim.llms.chat.providers.openai.OpenAI") as mock_sync,
+            patch("arksim.llms.chat.providers.openai.AsyncOpenAI"),
+        ):
+            LLM(
+                model=settings.evaluator_model or settings.model,
+                provider=settings.evaluator_provider or settings.provider,
+                base_url=settings.evaluator_base_url or settings.base_url,
+                api_key=settings.evaluator_api_key or settings.api_key,
+            )
+            mock_sync.assert_called_once_with(
+                base_url="https://api.openai.com/v1", api_key="sk-test"
+            )

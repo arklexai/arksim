@@ -28,6 +28,47 @@ class TestEvaluationInputFields:
         assert settings.api_key is None
 
 
+class TestEvaluationInputEvaluatorOverrides:
+    """Tests for the evaluator_* LLM override fields."""
+
+    def test_evaluator_overrides_default_to_none(self) -> None:
+        settings = EvaluationInput()
+        assert settings.evaluator_model is None
+        assert settings.evaluator_provider is None
+        assert settings.evaluator_base_url is None
+        assert settings.evaluator_api_key is None
+
+    def test_evaluator_overrides_accept_values(self) -> None:
+        settings = EvaluationInput(
+            model="llama3.1",
+            provider="responses",
+            base_url="http://localhost:11434/v1",
+            api_key="ollama",
+            evaluator_model="gpt-4o-mini",
+            evaluator_provider="openai",
+            evaluator_base_url="https://api.openai.com/v1",
+            evaluator_api_key="sk-test",
+        )
+        assert settings.evaluator_model == "gpt-4o-mini"
+        assert settings.evaluator_provider == "openai"
+        assert settings.evaluator_base_url == "https://api.openai.com/v1"
+        assert settings.evaluator_api_key == "sk-test"
+
+    def test_evaluator_overrides_can_be_partial(self) -> None:
+        """A user can override just provider/base_url and keep shared
+        model/api_key, or any other partial pattern.
+        """
+        settings = EvaluationInput(
+            provider="responses",
+            base_url="http://localhost:11434/v1",
+            evaluator_provider="openai",
+        )
+        assert settings.provider == "responses"
+        assert settings.evaluator_provider == "openai"
+        assert settings.evaluator_base_url is None
+        assert settings.evaluator_api_key is None
+
+
 class TestEvaluationInputPathResolution:
     """Tests for config-relative path resolution in EvaluationInput."""
 

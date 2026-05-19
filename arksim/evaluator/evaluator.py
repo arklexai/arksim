@@ -939,10 +939,10 @@ def run_evaluation(
             )
 
     llm = LLM(
-        model=settings.model,
-        provider=settings.provider,
-        base_url=settings.base_url,
-        api_key=settings.api_key,
+        model=settings.evaluator_model or settings.model,
+        provider=settings.evaluator_provider or settings.provider,
+        base_url=settings.evaluator_base_url or settings.base_url,
+        api_key=settings.evaluator_api_key or settings.api_key,
     )
     all_quant, all_qual = _load_custom_metrics(
         settings.custom_metrics_file_paths, llm=llm

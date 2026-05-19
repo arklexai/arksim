@@ -74,6 +74,36 @@ class EvaluationInput(BaseModel):
             "env var (OPENAI_API_KEY)."
         ),
     )
+    evaluator_model: str | None = Field(
+        default=None,
+        description=(
+            "Optional override for the evaluator's LLM model. When unset, "
+            "falls back to `model`."
+        ),
+    )
+    evaluator_provider: str | None = Field(
+        default=None,
+        description=(
+            "Optional override for the evaluator's LLM provider. Useful when "
+            "the simulator runs on a self-hosted backend (e.g. Ollama) that "
+            "does not support structured output, while the evaluator needs "
+            "OpenAI-compatible `text_format` support."
+        ),
+    )
+    evaluator_base_url: str | None = Field(
+        default=None,
+        description=(
+            "Optional override for the evaluator LLM's custom endpoint. "
+            "When unset, falls back to `base_url`."
+        ),
+    )
+    evaluator_api_key: str | None = Field(
+        default=None,
+        description=(
+            "Optional override for the evaluator LLM's API key. When unset, "
+            "falls back to `api_key`."
+        ),
+    )
     num_workers: int | str = Field(
         default=50,
         description="Number of parallel workers (use 'auto' to default to 4)",

@@ -130,15 +130,24 @@ The SQLite database (`store.db`) is created automatically on first run with samp
 
 ### Running the user simulator on a self-hosted backend
 
-The user-simulator LLM defaults to OpenAI. To swap it for any [Open Responses](https://www.openresponses.org/)-conforming backend (Ollama, vLLM, NVIDIA NIM, Vercel AI Gateway, OpenRouter), replace the LLM configuration in `config.yaml` (the `model` and `provider` keys near the top) with:
+The user-simulator LLM defaults to OpenAI. To run the simulator on any [Open Responses](https://www.openresponses.org/)-conforming backend (Ollama, vLLM, NVIDIA NIM, Vercel AI Gateway, OpenRouter) while keeping the evaluator on OpenAI, replace the LLM configuration in `config.yaml`:
 
 ```yaml
+# Simulator on Ollama
 provider: responses
 model: llama3.1
 base_url: http://localhost:11434/v1
 api_key: ollama
+
+# Evaluator stays on OpenAI for structured-output support
+evaluator_provider: openai
+evaluator_model: gpt-4o-mini
 ```
 
-Then start the local server. For Ollama: `ollama serve` and `ollama pull llama3.1` (requires Ollama v0.13.3 or newer).
+Then start the local server. For Ollama: `ollama serve` and `ollama pull llama3.1` (requires Ollama v0.13.3 or newer). Set `OPENAI_API_KEY` in your environment for the evaluator. Run as usual:
 
-**Scope note:** these keys also configure the evaluator LLM, which passes structured-output (`text_format`) calls that Ollama does not currently accept. Run simulation against Ollama, then run evaluation separately with `provider: openai` (or set the env var override) until evaluator-side multi-provider support lands. See [User simulator on Open Responses](https://docs.arklex.ai/main/user-simulator-on-open-responses) for vLLM, NIM, and other backends.
+```bash
+arksim simulate-evaluate config.yaml
+```
+
+See [User simulator on Open Responses](https://docs.arklex.ai/main/user-simulator-on-open-responses) for vLLM, NIM, and other backends.
