@@ -16,3 +16,9 @@ def test_tool_call_source_has_new_sdk_adapter_variants() -> None:
     assert ToolCallSource.STRANDS.value == "strands"
     assert ToolCallSource.LLAMAINDEX.value == "llamaindex"
     assert ToolCallSource.SMOLAGENTS.value == "smolagents"
+
+
+def test_tool_call_source_has_doesnt_fit_example_variants() -> None:
+    """2 variants for HTTP-wrapper examples that capture outside the adapter path."""
+    assert ToolCallSource.DIFY.value == "dify"
+    assert ToolCallSource.RASA.value == "rasa"

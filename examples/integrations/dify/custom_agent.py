@@ -1,24 +1,110 @@
 # SPDX-License-Identifier: Apache-2.0
-"""Dify integration for ArkSim.
+"""Dify integration for arksim.
 
-Connects to a Dify Chatbot app via the Chat API using httpx.
-Uses Dify's non-streaming (blocking) response mode.
+Connects to a Dify Agent app via the Chat API using httpx and surfaces any
+tool invocations the Dify-side agent emits as ``ToolCall`` instances on
+the returned ``AgentResponse``.
+
+Dify's blocking-mode response for Agent apps includes an
+``agent_thoughts`` list. Each thought records a tool name, the JSON
+arguments the agent passed, and the observation returned by the tool.
+This wrapper parses that list into arksim's ``ToolCall`` shape so
+``simulation.json`` gets populated tool-call data without any tracing.
 
 Auth: export DIFY_API_KEY="<your-app-api-key>"
 """
 
 from __future__ import annotations
 
+import json
+import logging
 import os
 import uuid
+from typing import Any
 
 import httpx
 
 from arksim.config import AgentConfig
 from arksim.simulation_engine.agent.base import BaseAgent
+from arksim.simulation_engine.tool_types import (
+    AgentResponse,
+    ToolCall,
+    ToolCallSource,
+)
+
+logger = logging.getLogger(__name__)
 
 _DEFAULT_BASE_URL = "https://api.dify.ai/v1"
 _REQUEST_TIMEOUT = httpx.Timeout(120.0)
+
+
+def _parse_arguments(raw: object) -> dict[str, Any]:
+    """Coerce Dify's ``tool_input`` (string or dict) into a JSON dict.
+
+    Dify returns ``tool_input`` as either a JSON-encoded string or a
+    pre-parsed object depending on the tool and the Dify version.
+    """
+    if isinstance(raw, dict):
+        return raw
+    if isinstance(raw, str) and raw:
+        try:
+            parsed = json.loads(raw)
+        except json.JSONDecodeError:
+            return {"raw": raw}
+        if isinstance(parsed, dict):
+            return parsed
+        return {"value": parsed}
+    return {}
+
+
+def _extract_tool_calls(payload: dict[str, Any]) -> list[ToolCall]:
+    """Build ``ToolCall`` instances from a Dify Chat API response.
+
+    Looks for ``agent_thoughts`` (Agent app blocking-mode shape). Each
+    thought may bundle multiple tools in a single ``tool`` field
+    (comma-separated) with a parallel ``tool_input`` dict, so we expand
+    those into one ``ToolCall`` per tool.
+    """
+    thoughts = payload.get("agent_thoughts") or []
+    if not isinstance(thoughts, list):
+        return []
+
+    tool_calls: list[ToolCall] = []
+    for thought in thoughts:
+        if not isinstance(thought, dict):
+            continue
+        tool_field = thought.get("tool")
+        if not tool_field:
+            continue
+        tool_input = thought.get("tool_input")
+        observation = thought.get("observation")
+
+        # Dify joins multiple tools in one thought with commas; the
+        # tool_input dict is keyed by tool name in that case.
+        names = [n.strip() for n in str(tool_field).split(",") if n.strip()]
+        for name in names:
+            if isinstance(tool_input, dict) and name in tool_input:
+                arguments = _parse_arguments(tool_input[name])
+            else:
+                arguments = _parse_arguments(tool_input)
+
+            if isinstance(observation, dict) and name in observation:
+                result: str | None = str(observation[name])
+            elif observation is None:
+                result = None
+            else:
+                result = str(observation)
+
+            tool_calls.append(
+                ToolCall(
+                    id=str(thought.get("id") or uuid.uuid4()),
+                    name=name,
+                    arguments=arguments,
+                    result=result,
+                    source=ToolCallSource.DIFY,
+                )
+            )
+    return tool_calls
 
 
 class DifyAgent(BaseAgent):
@@ -43,7 +129,7 @@ class DifyAgent(BaseAgent):
     async def get_chat_id(self) -> str:
         return self._chat_id
 
-    async def execute(self, user_query: str, **kwargs: object) -> str:
+    async def execute(self, user_query: str, **kwargs: object) -> AgentResponse:
         body: dict[str, object] = {
             "inputs": {},
             "query": user_query,
@@ -86,7 +172,17 @@ class DifyAgent(BaseAgent):
             raise RuntimeError(
                 f"Dify response missing 'answer' field. Response: {data}"
             )
-        return answer
+
+        tool_calls = _extract_tool_calls(data)
+        if not tool_calls:
+            # Chatbot apps (vs Agent apps) never emit agent_thoughts. Log
+            # once at debug so the user can spot the mismatch without
+            # noise on every turn.
+            logger.debug(
+                "No agent_thoughts in Dify response; ensure you are running "
+                "an Agent app with tools configured to capture tool calls."
+            )
+        return AgentResponse(content=answer, tool_calls=tool_calls)
 
     async def close(self) -> None:
         await self._client.aclose()

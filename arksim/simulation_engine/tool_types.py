@@ -53,6 +53,14 @@ class ToolCallSource(str, Enum):
     #: Captured from a Smolagents run (via the Smolagents tracing adapter).
     SMOLAGENTS = "smolagents"
 
+    #: Captured from a Dify app response (extracted from ``agent_thoughts``
+    #: in the Dify Chat API blocking-mode payload).
+    DIFY = "dify"
+
+    #: Captured from a Rasa conversation tracker (extracted from custom
+    #: action events on ``/conversations/{sender_id}/tracker``).
+    RASA = "rasa"
+
 
 class A2AToolCaptureExtension:
     """A2A AgentExtension URI for arksim's tool call capture convention.
