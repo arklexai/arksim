@@ -144,13 +144,20 @@ evaluator_provider: openai
 evaluator_model: gpt-4o-mini
 ```
 
-The evaluator endpoint differs from the simulator endpoint, so arksim does not forward `api_key: ollama` to OpenAI. The evaluator falls back to `OPENAI_API_KEY` in your environment. Set it before running:
+The evaluator endpoint differs from the simulator endpoint, so arksim does not forward `api_key: ollama` to OpenAI. The evaluator falls back to `OPENAI_API_KEY` in your environment.
+
+Before running, start the local server and set the evaluator key. For Ollama:
 
 ```bash
+ollama serve
+ollama pull llama3.1   # requires Ollama v0.13.3 or newer
 export OPENAI_API_KEY=sk-...
-arksim simulate-evaluate config.yaml
 ```
 
-Then start the local server. For Ollama: `ollama serve` and `ollama pull llama3.1` (requires Ollama v0.13.3 or newer).
+Then run:
+
+```bash
+arksim simulate-evaluate config.yaml
+```
 
 See [User simulator on Open Responses](https://docs.arklex.ai/main/user-simulator-on-open-responses) for vLLM, NIM, and other backends.

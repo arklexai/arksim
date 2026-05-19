@@ -989,8 +989,8 @@ def run_evaluation(
             metric_descriptions=metric_descriptions,
             metric_ranges=metric_ranges,
             qual_label_colors=qual_label_colors,
-            evaluation_model=evaluator_kwargs["model"] or settings.model,
-            evaluation_provider=evaluator_kwargs["provider"] or settings.provider,
+            evaluation_model=evaluator_kwargs["model"],
+            evaluation_provider=evaluator_kwargs["provider"],
         )
         generate_html_report(report_params)
 
