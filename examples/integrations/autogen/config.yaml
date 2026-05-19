@@ -36,3 +36,9 @@ provider: openai
 
 # Workers for parallel processing
 num_workers: 50
+
+# ── TRACE RECEIVER ───────────────────────────────────────────────────────────
+# Receives OTel spans emitted by the AutoGen agent's tool wrappers.
+trace_receiver:
+  enabled: true
+  wait_timeout: 5
