@@ -60,3 +60,14 @@ jobs:
           files: coverage.xml
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: false
+
+  multi-extra-resolver:
+    name: Multi-extra resolver check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - name: Resolve all SDK adapter extras together
+        run: python -m pip install -e ".[langchain,crewai,llamaindex,claude-agent,google-adk,livekit,strands,smolagents]" --dry-run
