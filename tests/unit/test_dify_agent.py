@@ -64,7 +64,7 @@ class TestDifyAgentExecute:
         return _load_dify_agent_class()(_make_agent_config())
 
     async def test_returns_answer(self, agent: BaseAgent) -> None:
-        """Successful response returns the answer string."""
+        """Chatbot-app response (no agent_thoughts) returns content with empty tool_calls."""
         mock_response = httpx.Response(
             200,
             json=_dify_response(answer="I can help with that."),
@@ -73,7 +73,35 @@ class TestDifyAgentExecute:
         agent._client = AsyncMock()
         agent._client.post = AsyncMock(return_value=mock_response)
         result = await agent.execute("How do I return an item?")
-        assert result == "I can help with that."
+        assert result.content == "I can help with that."
+        assert result.tool_calls == []
+
+    async def test_agent_thoughts_become_tool_calls(self, agent: BaseAgent) -> None:
+        """Agent-app response with agent_thoughts surfaces ToolCall entries."""
+        payload = _dify_response(answer="Order ORD-1001 ships Tuesday.")
+        payload["agent_thoughts"] = [
+            {
+                "id": "thought-1",
+                "tool": "lookup_order",
+                "tool_input": '{"order_id": "ORD-1001"}',
+                "observation": "Order ORD-1001: shipped, arrives Tuesday.",
+            }
+        ]
+        mock_response = httpx.Response(
+            200,
+            json=payload,
+            request=httpx.Request("POST", "https://api.dify.ai/v1/chat-messages"),
+        )
+        agent._client = AsyncMock()
+        agent._client.post = AsyncMock(return_value=mock_response)
+        result = await agent.execute("Where is ORD-1001?")
+        assert len(result.tool_calls) == 1
+        call = result.tool_calls[0]
+        assert call.name == "lookup_order"
+        assert call.arguments == {"order_id": "ORD-1001"}
+        assert call.result == "Order ORD-1001: shipped, arrives Tuesday."
+        assert call.source is not None
+        assert call.source.value == "dify"
 
     async def test_conversation_id_persists(self, agent: BaseAgent) -> None:
         """Second call sends conversation_id from first response."""
