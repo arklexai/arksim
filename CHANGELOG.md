@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+* **tracing:** add per-SDK tracing adapters for LangChain (covers LangGraph), CrewAI, Claude Agent SDK, Google ADK, LiveKit Agents, Strands Agents, LlamaIndex, and Smolagents. Each adapter ships as an optional extra (`pip install 'arksim[<sdk>]'`) and registers through the framework's native callback or hook interface. Tool calls captured through these adapters carry `source=ToolCallSource.<SDK>` for downstream metric filtering.
+* **tracing:** add `arksim/tracing/integrations/` package with `BaseTracingAdapter` (contextvars-based submission), `PendingToolCalls` (split-event correlation for LangChain and LlamaIndex), and `parse_tool_arguments` (shared argument normalization across adapters).
+* **tracing:** add `ToolCallSource` enum variants for LangChain, CrewAI, Claude Agent SDK, Google ADK, LiveKit, Strands, LlamaIndex, Smolagents, Dify, and Rasa.
+* **examples:** add LiveKit and Strands integration example projects under `examples/integrations/`. Update the existing 13 integration examples (langchain, langgraph, crewai, claude-agent-sdk, google-adk, llamaindex, smolagents, autogen, pydantic-ai, mastra, dify, rasa, vercel-ai-sdk) to fire mock `lookup_order` and `book_table` tools and capture them via the appropriate path (per-SDK adapter, native OTel, or HTTP wrapper).
+* **ci:** add multi-extra resolver check that installs all SDK adapter extras together to catch dependency-resolution conflicts.
+
 ### Fixed
 
 * **simulator:** fix tool-call dedup incorrectly merging or dropping distinct trace-sourced calls that share empty-string ids (Gemini, A2A without per-call ids) ([#168](https://github.com/arklexai/arksim/issues/168))
