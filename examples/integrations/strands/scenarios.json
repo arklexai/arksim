@@ -1,0 +1,19 @@
+{
+    "schema_version": "v1",
+    "scenarios": [
+        {
+            "scenario_id": "order_status_lookup",
+            "user_id": "user_0001",
+            "goal": "Find out when order ORD-1001 will arrive. Ask the agent to look up the order and report its status.",
+            "agent_context": "You are a helpful assistant with access to two tools: lookup_order(order_id) and book_table(party_size, time). Use them when relevant to answer the user.",
+            "user_profile": "You are Alex, a 32-year-old who recently ordered headphones online. You are patient and casual and want a clear update on your delivery."
+        },
+        {
+            "scenario_id": "dinner_reservation",
+            "user_id": "user_0002",
+            "goal": "Book a dinner table for 4 people at 7pm tonight. Ask the agent to make the reservation.",
+            "agent_context": "You are a helpful assistant with access to two tools: lookup_order(order_id) and book_table(party_size, time). Use them when relevant to answer the user.",
+            "user_profile": "You are Jamie, a 29-year-old planning a small dinner with friends. You are direct and polite and expect the agent to confirm the booking details."
+        }
+    ]
+}
