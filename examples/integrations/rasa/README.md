@@ -2,7 +2,7 @@
 
 This example shows how to simulate and evaluate a [Rasa Pro](https://rasa.com/) assistant built with [CALM](https://rasa.com/docs/pro/), Rasa's LLM-powered dialogue engine. CALM replaces traditional NLU pipelines with flow-based conversation management, where an LLM routes user messages to the right flow based on natural language descriptions.
 
-The integration connects to Rasa via its REST webhook channel. Point ArkSim at a running Rasa server, define your scenarios, and get a full evaluation report.
+The integration connects to Rasa via its REST webhook channel. Point arksim at a running Rasa server, define your scenarios, and get a full evaluation report. Each turn also pulls the Rasa conversation tracker so that custom action invocations surface in `simulation.json` as `ToolCall` instances.
 
 ## What This Example Covers
 
@@ -68,6 +68,25 @@ arksim simulate-evaluate config.yaml
 ```
 
 By default the agent connects to `http://localhost:5005/webhooks/rest/webhook`. Override with the `RASA_ENDPOINT` environment variable if your server runs elsewhere.
+
+## How it works
+
+Rasa's REST channel returns only bot replies, not the actions that ran behind the scenes. To capture custom actions as `ToolCall` instances, the wrapper in `custom_agent.py` does two HTTP calls per turn: first it POSTs the user message to `/webhooks/rest/webhook` and collects the bot replies, then it GETs `/conversations/{sender_id}/tracker` and walks the events list. Each `action` event whose name is not in the built-in set (`action_listen`, `action_session_start`, and friends) becomes a `ToolCall` tagged `source="rasa"`. The wrapper pairs each action with the slot events that fire before the next action; those slot sets are how Rasa custom actions surface their results, so we capture them as the tool's `arguments` (and `result`, if a slot name contains "status" or "result"). A monotonic cutoff timestamp ensures each turn only emits events freshly produced during that turn.
+
+## Expected output
+
+For the order status flow, a turn that runs `action_check_order_status` lands in `simulation.json` as:
+
+```json
+"tool_calls": [
+  {
+    "name": "action_check_order_status",
+    "arguments": {"order_id": "ORD-001", "order_status": "Shipped - in transit, arriving in 2-3 business days"},
+    "result": "Shipped - in transit, arriving in 2-3 business days",
+    "source": "rasa"
+  }
+]
+```
 
 ## Files
 
