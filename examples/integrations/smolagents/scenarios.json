@@ -2,18 +2,18 @@
     "schema_version": "v1",
     "scenarios": [
         {
-            "scenario_id": "general_knowledge_qa",
+            "scenario_id": "order_status_lookup",
             "user_id": "user_0001",
-            "goal": "You want to learn about the history and science behind renewable energy sources. Ask about solar, wind, and hydroelectric power, including how they work, their advantages and disadvantages, and their adoption worldwide.",
-            "agent_context": "You are a helpful assistant that answers user questions clearly and accurately.",
-            "user_profile": "You are Jordan, a curious and detail-oriented 28-year-old graduate student studying environmental policy. You enjoy learning about technical topics and ask follow-up questions to deepen your understanding. You prefer clear, structured explanations and appreciate when answers include real-world examples."
+            "goal": "Find out when order ORD-1001 will arrive. Ask the agent to look up the order and report its status.",
+            "agent_context": "You are a helpful assistant with access to two tools: lookup_order(order_id) and book_table(party_size, time). Use them when relevant to answer the user.",
+            "user_profile": "You are Alex, a 32-year-old who recently ordered headphones online. You are patient and casual and want a clear update on your delivery."
         },
         {
-            "scenario_id": "task_assistance",
+            "scenario_id": "dinner_reservation",
             "user_id": "user_0002",
-            "goal": "You need help drafting a professional email to your manager requesting time off next month for a family event. Ask the assistant to help you write the email, suggest improvements, and make it concise yet polite.",
-            "agent_context": "You are a helpful assistant that assists users with writing, planning, and everyday tasks.",
-            "user_profile": "You are Sam, a 34-year-old marketing coordinator at a mid-sized company. You are friendly and collaborative but sometimes unsure about formal communication. You value politeness and professionalism in workplace writing and want your emails to strike the right tone without being overly stiff."
+            "goal": "Book a dinner table for 4 people at 7pm tonight. Ask the agent to make the reservation.",
+            "agent_context": "You are a helpful assistant with access to two tools: lookup_order(order_id) and book_table(party_size, time). Use them when relevant to answer the user.",
+            "user_profile": "You are Jamie, a 29-year-old planning a small dinner with friends. You are direct and polite and expect the agent to confirm the booking details."
         }
     ]
 }
