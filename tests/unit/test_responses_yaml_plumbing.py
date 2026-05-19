@@ -87,10 +87,89 @@ class TestResponsesYamlPlumbing:
             mock_sync.assert_called_once_with()
             mock_async.assert_called_once_with()
 
-    def test_evaluator_overrides_reach_llm_constructor(self) -> None:
-        """When evaluator_* fields are set, they must override the shared
-        fields when the evaluator constructs its LLM. The simulator-side
-        `LLM(...)` call must NOT see the override values.
+    def test_evaluator_kwargs_inherit_when_no_overrides(self) -> None:
+        """When no evaluator_* fields are set, evaluator inherits all
+        simulator-side LLM keys.
+        """
+        settings = EvaluationInput(
+            model="gpt-4o-mini",
+            provider="openai",
+            base_url=None,
+            api_key="sk-shared",
+        )
+        kwargs = settings.evaluator_llm_kwargs()
+        assert kwargs == {
+            "model": "gpt-4o-mini",
+            "provider": "openai",
+            "base_url": None,
+            "api_key": "sk-shared",
+        }
+
+    def test_evaluator_kwargs_model_only_override_keeps_shared_endpoint(
+        self,
+    ) -> None:
+        """evaluator_model alone overrides only the model; other shared
+        keys still apply because the endpoint did not change.
+        """
+        settings = EvaluationInput(
+            model="gpt-4o-mini",
+            provider="openai",
+            api_key="sk-shared",
+            evaluator_model="gpt-4o",
+        )
+        kwargs = settings.evaluator_llm_kwargs()
+        assert kwargs["model"] == "gpt-4o"
+        assert kwargs["provider"] == "openai"
+        assert kwargs["api_key"] == "sk-shared"
+
+    def test_evaluator_kwargs_provider_split_does_not_inherit_credentials(
+        self,
+    ) -> None:
+        """When evaluator_provider differs from provider, the shared
+        api_key and base_url MUST NOT be forwarded. This is the bug fix
+        for the cross-endpoint credential leak.
+        """
+        settings = EvaluationInput(
+            model="llama3.1",
+            provider="responses",
+            base_url="http://localhost:11434/v1",
+            api_key="ollama",
+            evaluator_provider="openai",
+            evaluator_model="gpt-4o-mini",
+        )
+        kwargs = settings.evaluator_llm_kwargs()
+        assert kwargs["model"] == "gpt-4o-mini"
+        assert kwargs["provider"] == "openai"
+        assert kwargs["base_url"] is None, (
+            "Shared base_url must not leak into evaluator when provider differs"
+        )
+        assert kwargs["api_key"] is None, (
+            "Shared api_key must not leak into evaluator when provider differs"
+        )
+
+    def test_evaluator_kwargs_base_url_split_does_not_inherit_credentials(
+        self,
+    ) -> None:
+        """When evaluator_base_url differs from base_url (endpoint split),
+        api_key must NOT inherit from shared. Catches the credential-leak
+        scenario where a live OpenAI key would otherwise be sent to a
+        self-hosted endpoint.
+        """
+        settings = EvaluationInput(
+            model="gpt-4o-mini",
+            provider="openai",
+            api_key="sk-LIVE-OPENAI-KEY",
+            evaluator_base_url="http://localhost:11434/v1",
+        )
+        kwargs = settings.evaluator_llm_kwargs()
+        assert kwargs["api_key"] is None, (
+            "Live api_key must not be forwarded to a different base_url"
+        )
+        assert kwargs["base_url"] == "http://localhost:11434/v1"
+
+    def test_evaluator_kwargs_explicit_overrides_used_verbatim(self) -> None:
+        """When evaluator_* fields are fully specified, they pass through
+        verbatim and shared keys are ignored.
         """
         settings = EvaluationInput(
             model="llama3.1",
@@ -100,43 +179,37 @@ class TestResponsesYamlPlumbing:
             evaluator_model="gpt-4o-mini",
             evaluator_provider="openai",
             evaluator_base_url="https://api.openai.com/v1",
-            evaluator_api_key="sk-test",
+            evaluator_api_key="sk-eval-explicit",
         )
-        with (
-            patch("arksim.llms.chat.providers.openai.OpenAI") as mock_sync,
-            patch("arksim.llms.chat.providers.openai.AsyncOpenAI"),
-        ):
-            # Simulate the evaluator's LLM construction path
-            LLM(
-                model=settings.evaluator_model or settings.model,
-                provider=settings.evaluator_provider or settings.provider,
-                base_url=settings.evaluator_base_url or settings.base_url,
-                api_key=settings.evaluator_api_key or settings.api_key,
-            )
-            mock_sync.assert_called_once_with(
-                base_url="https://api.openai.com/v1", api_key="sk-test"
-            )
+        kwargs = settings.evaluator_llm_kwargs()
+        assert kwargs == {
+            "model": "gpt-4o-mini",
+            "provider": "openai",
+            "base_url": "https://api.openai.com/v1",
+            "api_key": "sk-eval-explicit",
+        }
 
-    def test_evaluator_falls_back_to_shared_when_override_unset(self) -> None:
-        """When evaluator_* fields are unset, the evaluator's LLM uses the
-        shared model/provider/base_url/api_key.
+    def test_evaluator_split_reaches_openai_sdk_without_shared_credentials(
+        self,
+    ) -> None:
+        """End-to-end: simulator on Ollama, evaluator on OpenAI. The OpenAI
+        SDK constructor must not see Ollama's base_url or api_key.
         """
         settings = EvaluationInput(
-            model="gpt-4o-mini",
-            provider="openai",
-            base_url="https://api.openai.com/v1",
-            api_key="sk-test",
+            model="llama3.1",
+            provider="responses",
+            base_url="http://localhost:11434/v1",
+            api_key="ollama",
+            evaluator_provider="openai",
+            evaluator_model="gpt-4o-mini",
         )
+
         with (
             patch("arksim.llms.chat.providers.openai.OpenAI") as mock_sync,
-            patch("arksim.llms.chat.providers.openai.AsyncOpenAI"),
+            patch("arksim.llms.chat.providers.openai.AsyncOpenAI") as mock_async,
         ):
-            LLM(
-                model=settings.evaluator_model or settings.model,
-                provider=settings.evaluator_provider or settings.provider,
-                base_url=settings.evaluator_base_url or settings.base_url,
-                api_key=settings.evaluator_api_key or settings.api_key,
-            )
-            mock_sync.assert_called_once_with(
-                base_url="https://api.openai.com/v1", api_key="sk-test"
-            )
+            LLM(**settings.evaluator_llm_kwargs())
+            # Critical: NO base_url, NO api_key kwargs. SDK must fall back
+            # to OPENAI_BASE_URL / OPENAI_API_KEY env vars.
+            mock_sync.assert_called_once_with()
+            mock_async.assert_called_once_with()

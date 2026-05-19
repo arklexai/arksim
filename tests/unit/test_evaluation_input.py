@@ -68,6 +68,40 @@ class TestEvaluationInputEvaluatorOverrides:
         assert settings.evaluator_base_url is None
         assert settings.evaluator_api_key is None
 
+    def test_evaluator_kwargs_treats_whitespace_evaluator_provider_as_unset(
+        self,
+    ) -> None:
+        """Whitespace-only evaluator_provider should not trigger endpoint-
+        split semantics. The helper strips whitespace before deciding
+        whether the endpoint differs; this matches the existing whitespace-
+        stripping behavior in the OpenAI provider. The shared api_key
+        therefore flows through to the evaluator.
+        """
+        settings = EvaluationInput(
+            model="gpt-4o-mini",
+            provider="openai",
+            api_key="sk-shared",
+            evaluator_provider="   ",
+        )
+        kwargs = settings.evaluator_llm_kwargs()
+        assert kwargs["api_key"] == "sk-shared"
+        assert kwargs["provider"] == "openai"
+
+    def test_evaluator_kwargs_treats_whitespace_evaluator_base_url_as_unset(
+        self,
+    ) -> None:
+        """Whitespace-only evaluator_base_url should not trigger endpoint-
+        split semantics; the shared api_key still flows through.
+        """
+        settings = EvaluationInput(
+            model="gpt-4o-mini",
+            provider="openai",
+            api_key="sk-shared",
+            evaluator_base_url="   ",
+        )
+        kwargs = settings.evaluator_llm_kwargs()
+        assert kwargs["api_key"] == "sk-shared"
+
 
 class TestEvaluationInputPathResolution:
     """Tests for config-relative path resolution in EvaluationInput."""

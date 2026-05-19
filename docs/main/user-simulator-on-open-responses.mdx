@@ -15,6 +15,8 @@ These keys go at the top level of your `config.yaml`, alongside other simulation
 
 ArkSim's user simulator sends a stable system prompt and scenario context to the LLM on every turn of every scenario. OpenAI's automatic prompt cache hits this stable prefix and discounts the cached portion by 50 to 75% depending on the model. Depending on prompt-cache hit rate and the output share of total cost, typical multi-turn runs see roughly 20 to 40% total cost reduction. The benefit was already active for OpenAI users; this page documents how to extend the same shape to self-hosted or alternate backends.
 
+ArkSim uses Responses in stateless mode: it replays the full conversation history each turn rather than threading via `previous_response_id`. Stateful threading is a planned follow-up that would further improve cache utilization.
+
 ## Splitting simulator and evaluator LLMs
 
 The evaluator passes `text_format` (OpenAI structured output) on every metric call. Self-hosted backends like Ollama do not currently accept `text_format`; vLLM accepts it only with `--guided-decoding-backend` enabled.
@@ -33,6 +35,24 @@ evaluator_provider: openai
 evaluator_model: gpt-4o-mini
 ```
 
+Because the evaluator endpoint differs from the simulator endpoint (`evaluator_provider` is set), arksim does not forward the shared `api_key: ollama` to the evaluator. The evaluator's OpenAI SDK falls back to `OPENAI_API_KEY` in your environment. Set `OPENAI_API_KEY` before running, or specify `evaluator_api_key: <your-openai-key>` explicitly.
+
+For full explicit control without relying on env vars:
+
+```yaml
+# Simulator on Ollama
+provider: responses
+model: llama3.1
+base_url: http://localhost:11434/v1
+api_key: ollama
+
+# Evaluator fully specified
+evaluator_provider: openai
+evaluator_model: gpt-4o-mini
+evaluator_base_url: https://api.openai.com/v1
+evaluator_api_key: <paste-your-openai-key>
+```
+
 If you omit the `evaluator_*` keys, the evaluator uses the same backend as the simulator. Available override fields: `evaluator_model`, `evaluator_provider`, `evaluator_base_url`, `evaluator_api_key`.
 
 ## Configuration
@@ -41,7 +61,7 @@ If you omit the `evaluator_*` keys, the evaluator uses the same backend as the s
 
 ```yaml
 provider: openai
-model: gpt-4.1-mini
+model: gpt-4o-mini
 ```
 
 `api.openai.com` is the default. No `base_url` needed.

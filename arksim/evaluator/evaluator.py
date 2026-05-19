@@ -938,12 +938,13 @@ def run_evaluation(
                 "scenario context will be unavailable"
             )
 
-    llm = LLM(
-        model=settings.evaluator_model or settings.model,
-        provider=settings.evaluator_provider or settings.provider,
-        base_url=settings.evaluator_base_url or settings.base_url,
-        api_key=settings.evaluator_api_key or settings.api_key,
-    )
+    # See EvaluationInput.evaluator_llm_kwargs() for the per-group fallback
+    # rule. When evaluator endpoint differs from simulator, base_url and
+    # api_key do not cross-inherit from shared keys; they must be set
+    # explicitly or fall back to SDK env vars. This prevents credential
+    # leaks across endpoints.
+    evaluator_kwargs = settings.evaluator_llm_kwargs()
+    llm = LLM(**evaluator_kwargs)
     all_quant, all_qual = _load_custom_metrics(
         settings.custom_metrics_file_paths, llm=llm
     )
@@ -988,8 +989,8 @@ def run_evaluation(
             metric_descriptions=metric_descriptions,
             metric_ranges=metric_ranges,
             qual_label_colors=qual_label_colors,
-            evaluation_model=settings.model,
-            evaluation_provider=settings.provider,
+            evaluation_model=evaluator_kwargs["model"] or settings.model,
+            evaluation_provider=evaluator_kwargs["provider"] or settings.provider,
         )
         generate_html_report(report_params)
 

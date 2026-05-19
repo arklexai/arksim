@@ -85,9 +85,12 @@ class EvaluationInput(BaseModel):
         default=None,
         description=(
             "Optional override for the evaluator's LLM provider. Useful when "
-            "the simulator runs on a self-hosted backend (e.g. Ollama) that "
-            "does not support structured output, while the evaluator needs "
-            "OpenAI-compatible `text_format` support."
+            "the simulator runs on a backend that does not support structured "
+            "output, while the evaluator needs OpenAI-compatible `text_format` "
+            "support. When set with a value that differs from `provider`, the "
+            "shared `base_url` and `api_key` are NOT forwarded; specify "
+            "`evaluator_base_url` / `evaluator_api_key` explicitly or rely on "
+            "SDK env-var fallback."
         ),
     )
     evaluator_base_url: str | None = Field(
@@ -196,6 +199,73 @@ class EvaluationInput(BaseModel):
                 or set(),
             )
 
+        return self
+
+    def _evaluator_endpoint_differs(self) -> bool:
+        """Return True when the evaluator's endpoint differs from the
+        simulator's. Whitespace-only override values are treated as unset to
+        match the whitespace-stripping behavior of the OpenAI provider.
+        """
+        provider = (
+            self.evaluator_provider.strip()
+            if self.evaluator_provider is not None
+            else None
+        )
+        base_url = (
+            self.evaluator_base_url.strip()
+            if self.evaluator_base_url is not None
+            else None
+        )
+        return bool(provider) or bool(base_url)
+
+    def evaluator_llm_kwargs(self) -> dict[str, str | None]:
+        """Resolve LLM kwargs for the evaluator, with safe fallback semantics.
+
+        - `evaluator_model` individually overrides `model` when set; otherwise
+          the evaluator uses the shared `model`.
+        - When the evaluator endpoint differs from the simulator endpoint
+          (`evaluator_provider` set OR `evaluator_base_url` set), the
+          credentials and base_url DO NOT cross-inherit from the shared
+          keys. They must be set explicitly via `evaluator_base_url` /
+          `evaluator_api_key`, or fall through to the SDK's env-var
+          defaults (`OPENAI_BASE_URL` / `OPENAI_API_KEY`).
+        - This prevents accidentally sending a credential intended for one
+          endpoint to another (e.g. forwarding a live OpenAI key to a
+          self-hosted Ollama endpoint).
+        - Whitespace-only override values are treated as unset.
+        """
+        if self._evaluator_endpoint_differs():
+            return {
+                "model": self.evaluator_model or self.model,
+                "provider": self.evaluator_provider or self.provider,
+                "base_url": self.evaluator_base_url,
+                "api_key": self.evaluator_api_key,
+            }
+
+        return {
+            "model": self.evaluator_model or self.model,
+            "provider": self.provider,
+            "base_url": self.base_url,
+            "api_key": self.api_key,
+        }
+
+    @model_validator(mode="after")
+    def _log_evaluator_endpoint_split(self) -> Self:
+        """Emit an info log when the evaluator endpoint differs from the
+        simulator endpoint but no evaluator_api_key is set. This warns the
+        user that the shared api_key will NOT be forwarded; the evaluator
+        relies on SDK env-var defaults instead.
+        """
+        if self._evaluator_endpoint_differs() and self.evaluator_api_key is None:
+            _entities_logger.info(
+                "Evaluator endpoint differs from simulator "
+                "(evaluator_provider=%s, evaluator_base_url=%s). "
+                "evaluator_api_key is unset; falling back to SDK env-var "
+                "defaults (e.g. OPENAI_API_KEY). The shared `api_key` will "
+                "NOT be forwarded to the evaluator endpoint.",
+                self.evaluator_provider,
+                self.evaluator_base_url,
+            )
         return self
 
 
