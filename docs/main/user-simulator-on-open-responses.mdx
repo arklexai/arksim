@@ -107,7 +107,13 @@ Both names resolve to the same Python class under the hood. The distinction is d
 
 ## Verifying caching is working
 
-For OpenAI-hosted models, the response payload exposes `usage.input_tokens_details.cached_tokens` on every call. ArkSim does not surface this metric into reports yet. For now, check the [OpenAI usage dashboard](https://platform.openai.com/usage) and look for `cached_input_tokens` on your ArkSim runs. You should see the cached fraction climb across turns of a single scenario.
+For OpenAI-hosted models, the response payload exposes `usage.input_tokens_details.cached_tokens` on every call. ArkSim logs cache-hit statistics at the end of each simulation and evaluation run at INFO level. Look for lines like:
+
+```
+simulation LLM cache stats: 12 calls, 18420 input tokens, 9210 cached (50.0% hit rate), 1840 output tokens
+```
+
+For deeper detail, the [OpenAI usage dashboard](https://platform.openai.com/usage) exposes `cached_input_tokens` per request.
 
 Self-hosted backends do not have OpenAI-equivalent automatic prefix caching out of the box. Ollama maintains a KV cache within a single process but does not persist it across HTTP calls in a way that benefits cross-turn ArkSim runs. vLLM enables prefix caching by default on the V1 engine (the default since v0.8.1, April 2025). Older deployments still on V0 must opt in with `--enable-prefix-caching`.
 

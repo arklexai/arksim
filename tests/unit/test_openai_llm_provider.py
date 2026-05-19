@@ -137,3 +137,81 @@ class TestOpenAILLMConstructor:
             )
             with pytest.raises(ValueError, match="OpenAI SDK requires an api_key"):
                 OpenAILLM(model="gpt-4o-mini")
+
+
+class TestOpenAILLMCacheStats:
+    def test_cache_stats_starts_at_zero(self) -> None:
+        with (
+            patch("arksim.llms.chat.providers.openai.OpenAI"),
+            patch("arksim.llms.chat.providers.openai.AsyncOpenAI"),
+        ):
+            llm = OpenAILLM(model="gpt-4o-mini")
+        stats = llm.cache_stats()
+        assert stats == {
+            "call_count": 0,
+            "input_tokens": 0,
+            "cached_input_tokens": 0,
+            "output_tokens": 0,
+            "cache_hit_rate": 0.0,
+        }
+
+    def test_record_usage_accumulates(self) -> None:
+        from types import SimpleNamespace
+
+        with (
+            patch("arksim.llms.chat.providers.openai.OpenAI"),
+            patch("arksim.llms.chat.providers.openai.AsyncOpenAI"),
+        ):
+            llm = OpenAILLM(model="gpt-4o-mini")
+
+        # First call: no cache hits
+        response1 = SimpleNamespace(
+            usage=SimpleNamespace(
+                input_tokens=1024,
+                output_tokens=50,
+                input_tokens_details=SimpleNamespace(cached_tokens=0),
+            )
+        )
+        llm._record_usage(response1)
+
+        # Second call: prefix hits cache
+        response2 = SimpleNamespace(
+            usage=SimpleNamespace(
+                input_tokens=1100,
+                output_tokens=60,
+                input_tokens_details=SimpleNamespace(cached_tokens=900),
+            )
+        )
+        llm._record_usage(response2)
+
+        stats = llm.cache_stats()
+        assert stats["call_count"] == 2
+        assert stats["input_tokens"] == 2124
+        assert stats["cached_input_tokens"] == 900
+        assert stats["output_tokens"] == 110
+        assert stats["cache_hit_rate"] == 900 / 2124
+
+    def test_record_usage_tolerates_missing_usage_field(self) -> None:
+        """Self-hosted backends (Ollama, vLLM) may omit usage entirely.
+        Telemetry must never raise.
+        """
+        from types import SimpleNamespace
+
+        with (
+            patch("arksim.llms.chat.providers.openai.OpenAI"),
+            patch("arksim.llms.chat.providers.openai.AsyncOpenAI"),
+        ):
+            llm = OpenAILLM(model="llama3.1")
+
+        # Response without usage attribute at all
+        response = SimpleNamespace()
+        llm._record_usage(response)
+        assert llm.cache_stats()["call_count"] == 0
+
+        # Response with usage but no input_tokens_details (e.g. older SDK)
+        response = SimpleNamespace(
+            usage=SimpleNamespace(input_tokens=500, output_tokens=20)
+        )
+        llm._record_usage(response)
+        assert llm.cache_stats()["call_count"] == 1
+        assert llm.cache_stats()["cached_input_tokens"] == 0

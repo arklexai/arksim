@@ -44,6 +44,56 @@ class OpenAILLM(BaseLLM):
                 "See https://docs.arklex.ai/main/user-simulator-on-open-responses"
             ) from exc
 
+        # Per-instance cumulative usage counters. Read via `cache_stats()`.
+        # Surfaces OpenAI's automatic prompt-cache hits so users can verify
+        # the cost-reduction story without leaving arksim.
+        self._cumulative_input_tokens: int = 0
+        self._cumulative_cached_input_tokens: int = 0
+        self._cumulative_output_tokens: int = 0
+        self._call_count: int = 0
+
+    def _record_usage(self, response: object) -> None:
+        """Accumulate token-usage counters from a Responses API response.
+
+        Tolerates missing fields: older SDK versions or non-OpenAI backends
+        (Ollama, vLLM) may omit `cached_tokens` or even the full `usage`
+        object. We never raise from telemetry.
+        """
+        usage = getattr(response, "usage", None)
+        if usage is None:
+            return
+        self._call_count += 1
+        self._cumulative_input_tokens += getattr(usage, "input_tokens", 0) or 0
+        self._cumulative_output_tokens += getattr(usage, "output_tokens", 0) or 0
+        details = getattr(usage, "input_tokens_details", None)
+        if details is not None:
+            self._cumulative_cached_input_tokens += (
+                getattr(details, "cached_tokens", 0) or 0
+            )
+
+    def cache_stats(self) -> dict[str, int | float]:
+        """Return cumulative cache-hit statistics across all calls.
+
+        Keys:
+        - ``call_count``: total responses.parse calls observed
+        - ``input_tokens``: total input tokens billed
+        - ``cached_input_tokens``: subset of input_tokens that hit cache
+        - ``output_tokens``: total output tokens
+        - ``cache_hit_rate``: cached_input_tokens / input_tokens (0.0 if no calls)
+        """
+        rate = (
+            self._cumulative_cached_input_tokens / self._cumulative_input_tokens
+            if self._cumulative_input_tokens > 0
+            else 0.0
+        )
+        return {
+            "call_count": self._call_count,
+            "input_tokens": self._cumulative_input_tokens,
+            "cached_input_tokens": self._cumulative_cached_input_tokens,
+            "output_tokens": self._cumulative_output_tokens,
+            "cache_hit_rate": rate,
+        }
+
     def _prepare_params(
         self,
         messages: str | list[LLMMessage],
@@ -87,6 +137,7 @@ class OpenAILLM(BaseLLM):
     ) -> T | str:
         params = self._prepare_params(messages, schema=schema)
         response = self.client.responses.parse(**params)
+        self._record_usage(response)
         # For structured output, return the parsed output
         if schema:
             return response.output_parsed
@@ -112,6 +163,7 @@ class OpenAILLM(BaseLLM):
     ) -> T | str:
         params = self._prepare_params(messages, schema=schema)
         response = await self.async_client.responses.parse(**params)
+        self._record_usage(response)
         # For structured output, return the parsed output
         if schema:
             return response.output_parsed

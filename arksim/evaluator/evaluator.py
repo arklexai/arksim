@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING
 from tqdm import tqdm
 
 from arksim.llms.chat import LLM
+from arksim.llms.chat.utils import log_cache_stats
 from arksim.scenario import Scenarios
 from arksim.scenario.entities import AssertionType, ExpectedToolCall
 
@@ -964,6 +965,8 @@ def run_evaluation(
     evaluator_output = evaluator.evaluate(simulation, on_progress=on_progress)
     evaluator.save_results()
     evaluator.display_evaluation_summary()
+    # Surface cache-hit telemetry from the evaluator LLM.
+    log_cache_stats(llm, phase="evaluation")
 
     if settings.generate_html_report:
         from arksim.utils.html_report.generate_html_report import (
