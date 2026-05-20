@@ -286,3 +286,207 @@ def test_adapter_produces_tool_call_with_correct_source(factory: Factory) -> Non
     assert len(tool_calls) == 1
     assert isinstance(tool_calls[0], ToolCall)
     assert tool_calls[0].source == expected_source
+
+
+@pytest.mark.parametrize("factory", _FACTORIES)
+def test_adapter_no_routing_context_drops(factory: Factory) -> None:
+    """With no trace context set, no adapter must call the receiver.
+
+    Routing context is the only signal that arksim is observing; without
+    it the adapter is being invoked outside a simulation and must stay
+    silent. This is the cross-cutting drop-on-no-context contract.
+    """
+    receiver = MagicMock()
+    # Deliberately do NOT call _set_trace_context.
+
+    fire, _expected_source = factory()
+    fire()
+
+    receiver.submit_tool_calls.assert_not_called()
+
+
+# --- Error-path factories ---------------------------------------------------
+
+
+def _make_langchain_error() -> tuple[Callable[[], None], ToolCallSource]:
+    from arksim.tracing.integrations.langchain import ArksimLangChainHandler
+
+    handler = ArksimLangChainHandler()
+    run_id = uuid4()
+
+    def fire() -> None:
+        handler.on_tool_start({"name": "get_weather"}, '{"city": "NYC"}', run_id=run_id)
+        handler.on_tool_error(ValueError("nope"), run_id=run_id)
+
+    return fire, ToolCallSource.LANGCHAIN
+
+
+def _make_crewai_error() -> tuple[Callable[[], None], ToolCallSource]:
+    from crewai.events import ToolUsageErrorEvent, crewai_event_bus
+
+    from arksim.tracing.integrations.crewai import ArksimCrewEventListener
+
+    scope = crewai_event_bus.scoped_handlers()
+    scope.__enter__()
+    ArksimCrewEventListener()
+    now = datetime.now(timezone.utc)
+    event = ToolUsageErrorEvent(
+        timestamp=now,
+        tool_name="get_weather",
+        tool_args={"city": "NYC"},
+        error=ValueError("nope"),
+    )
+
+    def fire() -> None:
+        try:
+            future = crewai_event_bus.emit(source=object(), event=event)
+            if future is not None:
+                future.result(timeout=5.0)
+        finally:
+            scope.__exit__(None, None, None)
+
+    return fire, ToolCallSource.CREWAI
+
+
+def _make_livekit_error() -> tuple[Callable[[], None], ToolCallSource]:
+    from livekit.agents.llm.chat_context import FunctionCall, FunctionCallOutput
+    from livekit.agents.voice.events import FunctionToolsExecutedEvent
+
+    from arksim.tracing.integrations.livekit import ArksimLiveKitHandler
+
+    handler = ArksimLiveKitHandler()
+    event = FunctionToolsExecutedEvent(
+        function_calls=[
+            FunctionCall(
+                call_id="call_1", arguments='{"city": "NYC"}', name="get_weather"
+            )
+        ],
+        function_call_outputs=[
+            FunctionCallOutput(
+                call_id="call_1",
+                name="get_weather",
+                output="ValueError: nope",
+                is_error=True,
+            )
+        ],
+    )
+
+    def fire() -> None:
+        handler.on_function_tools_executed(event)
+
+    return fire, ToolCallSource.LIVEKIT
+
+
+def _make_strands_error() -> tuple[Callable[[], None], ToolCallSource]:
+    from strands.hooks import AfterToolCallEvent, HookRegistry
+    from strands.types.tools import ToolResult, ToolUse
+
+    from arksim.tracing.integrations.strands import ArksimStrandsHookProvider
+
+    registry = HookRegistry()
+    ArksimStrandsHookProvider().register_hooks(registry)
+    tool_use = cast(
+        "ToolUse",
+        {"name": "get_weather", "toolUseId": "u1", "input": {"city": "NYC"}},
+    )
+    result = cast(
+        "ToolResult",
+        {
+            "toolUseId": "u1",
+            "status": "error",
+            "content": [{"text": "boom"}],
+        },
+    )
+    event = AfterToolCallEvent(
+        agent=cast("Any", MagicMock()),
+        selected_tool=None,
+        tool_use=tool_use,
+        invocation_state={},
+        result=result,
+        exception=ValueError("nope"),
+    )
+
+    def fire() -> None:
+        registry.invoke_callbacks(event)
+
+    return fire, ToolCallSource.STRANDS
+
+
+def _make_llamaindex_error() -> tuple[Callable[[], None], ToolCallSource]:
+    from llama_index.core.agent.workflow import ToolCall as LIToolCall
+    from llama_index.core.agent.workflow import ToolCallResult as LIToolCallResult
+    from llama_index.core.tools.types import ToolOutput
+
+    from arksim.tracing.integrations.llamaindex import ArksimLlamaIndexObserver
+
+    observer = ArksimLlamaIndexObserver()
+    args = {"city": "NYC"}
+    start = LIToolCall(tool_name="get_weather", tool_kwargs=args, tool_id="t1")
+    tool_output = ToolOutput(
+        tool_name="get_weather",
+        content="",
+        raw_input=args,
+        raw_output=None,
+        is_error=True,
+        exception=ValueError("nope"),
+    )
+    result = LIToolCallResult(
+        tool_name="get_weather",
+        tool_kwargs=args,
+        tool_id="t1",
+        tool_output=tool_output,
+        return_direct=False,
+    )
+
+    def fire() -> None:
+        observer.observe(start)
+        observer.observe(result)
+
+    return fire, ToolCallSource.LLAMAINDEX
+
+
+_ERROR_FACTORIES: list[Any] = [
+    pytest.param(_make_langchain_error, id="langchain"),
+    pytest.param(_make_crewai_error, id="crewai"),
+    pytest.param(_make_livekit_error, id="livekit"),
+    pytest.param(_make_strands_error, id="strands"),
+    pytest.param(_make_llamaindex_error, id="llamaindex"),
+    pytest.param(
+        None,
+        id="claude_agent_sdk",
+        marks=pytest.mark.skip(reason="SDK has no separate error event"),
+    ),
+    pytest.param(
+        None,
+        id="google_adk",
+        marks=pytest.mark.skip(reason="SDK has no separate error event"),
+    ),
+    pytest.param(
+        None,
+        id="smolagents",
+        marks=pytest.mark.skip(reason="SDK has no separate error event"),
+    ),
+]
+
+
+@pytest.mark.parametrize("factory", _ERROR_FACTORIES)
+def test_adapter_error_path_populates_error_field(factory: Factory) -> None:
+    """Adapters that expose a distinct error event must surface it on
+    ToolCall.error rather than ToolCall.result. Skipped for SDKs whose
+    callbacks carry only the success/result shape (Claude Agent SDK,
+    Google ADK, Smolagents).
+    """
+    receiver = MagicMock()
+    _set_trace_context("conv-1", 0, receiver=receiver)
+
+    fire, expected_source = factory()
+    fire()
+
+    receiver.submit_tool_calls.assert_called_once()
+    args, _ = receiver.submit_tool_calls.call_args
+    _, _, tool_calls = args
+    assert len(tool_calls) == 1
+    tc = tool_calls[0]
+    assert tc.source == expected_source
+    assert tc.error is not None and tc.error != ""
+    assert tc.result is None
