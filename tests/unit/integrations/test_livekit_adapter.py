@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import Any
 from unittest.mock import MagicMock
 
@@ -12,6 +13,8 @@ from livekit.agents.voice.events import FunctionToolsExecutedEvent
 from arksim.simulation_engine.tool_types import ToolCall, ToolCallSource
 from arksim.tracing.context import _set_trace_context
 from arksim.tracing.integrations.livekit import ArksimLiveKitHandler
+
+OnlyCall = Callable[[MagicMock], ToolCall]
 
 
 def _call(
@@ -68,16 +71,14 @@ def _calls_received(receiver: MagicMock) -> list[ToolCall]:
     return collected
 
 
-def test_happy_path_single_call_submits_tool_call() -> None:
+def test_happy_path_single_call_submits_tool_call(only_call: OnlyCall) -> None:
     receiver = MagicMock()
     _set_trace_context("conv-1", 0, receiver=receiver)
     handler = ArksimLiveKitHandler()
 
     handler.on_function_tools_executed(_event())
 
-    calls = _calls_received(receiver)
-    assert len(calls) == 1
-    tc = calls[0]
+    tc = only_call(receiver)
     assert tc.id == "call_1"
     assert tc.name == "get_weather"
     assert tc.arguments == {"city": "NYC"}
@@ -86,7 +87,7 @@ def test_happy_path_single_call_submits_tool_call() -> None:
     assert tc.source == ToolCallSource.LIVEKIT
 
 
-def test_is_error_output_populates_error_field() -> None:
+def test_is_error_output_populates_error_field(only_call: OnlyCall) -> None:
     receiver = MagicMock()
     _set_trace_context("conv-1", 0, receiver=receiver)
     handler = ArksimLiveKitHandler()
@@ -98,9 +99,7 @@ def test_is_error_output_populates_error_field() -> None:
         )
     )
 
-    calls = _calls_received(receiver)
-    assert len(calls) == 1
-    tc = calls[0]
+    tc = only_call(receiver)
     assert tc.name == "get_weather"
     assert tc.error == "ValueError: nope"
     assert tc.result is None
@@ -166,7 +165,7 @@ def test_batch_event_with_multiple_parallel_calls() -> None:
     assert calls[1].result == "r2"
 
 
-def test_none_output_leaves_result_and_error_unset() -> None:
+def test_none_output_leaves_result_and_error_unset(only_call: OnlyCall) -> None:
     """LiveKit sets output to None when a tool raises StopResponse."""
     receiver = MagicMock()
     _set_trace_context("conv-1", 0, receiver=receiver)
@@ -179,16 +178,14 @@ def test_none_output_leaves_result_and_error_unset() -> None:
         )
     )
 
-    calls = _calls_received(receiver)
-    assert len(calls) == 1
-    tc = calls[0]
+    tc = only_call(receiver)
     assert tc.name == "get_weather"
     assert tc.result is None
     assert tc.error is None
     assert tc.source == ToolCallSource.LIVEKIT
 
 
-def test_non_json_arguments_wrapped_in_value() -> None:
+def test_non_json_arguments_wrapped_in_value(only_call: OnlyCall) -> None:
     receiver = MagicMock()
     _set_trace_context("conv-1", 0, receiver=receiver)
     handler = ArksimLiveKitHandler()
@@ -200,12 +197,11 @@ def test_non_json_arguments_wrapped_in_value() -> None:
         )
     )
 
-    calls = _calls_received(receiver)
-    assert len(calls) == 1
-    assert calls[0].arguments == {"_value": "raw-string-not-json"}
+    tc = only_call(receiver)
+    assert tc.arguments == {"_value": "raw-string-not-json"}
 
 
-def test_non_string_output_coerced_to_str() -> None:
+def test_non_string_output_coerced_to_str(only_call: OnlyCall) -> None:
     """Defensive coercion: if LiveKit ever emits a non-string error/result
     object, the adapter must stringify rather than raise ``ValidationError``
     inside the event loop. LiveKit's current model types ``output`` as
@@ -229,9 +225,7 @@ def test_non_string_output_coerced_to_str() -> None:
 
     handler.on_function_tools_executed(event)
 
-    calls = _calls_received(receiver)
-    assert len(calls) == 1
-    tc = calls[0]
+    tc = only_call(receiver)
     assert tc.error == str(structured)
     assert tc.result is None
 

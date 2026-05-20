@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from unittest.mock import MagicMock
 
 from smolagents.memory import ActionStep, PlanningStep
@@ -10,9 +11,11 @@ from smolagents.memory import ToolCall as SmolToolCall
 from smolagents.models import ChatMessage, MessageRole
 from smolagents.monitoring import Timing
 
-from arksim.simulation_engine.tool_types import ToolCallSource
+from arksim.simulation_engine.tool_types import ToolCall, ToolCallSource
 from arksim.tracing.context import _set_trace_context
 from arksim.tracing.integrations.smolagents import ArksimSmolagentsCallback
+
+OnlyCall = Callable[[MagicMock], ToolCall]
 
 
 def _action_step(
@@ -43,7 +46,7 @@ def _planning_step() -> PlanningStep:
     )
 
 
-def test_happy_path_action_step_submits_tool_call() -> None:
+def test_happy_path_action_step_submits_tool_call(only_call: OnlyCall) -> None:
     receiver = MagicMock()
     _set_trace_context("conv-1", 0, receiver=receiver)
     observer = ArksimSmolagentsCallback()
@@ -61,13 +64,7 @@ def test_happy_path_action_step_submits_tool_call() -> None:
         )
     )
 
-    assert receiver.submit_tool_calls.call_count == 1
-    args, _ = receiver.submit_tool_calls.call_args
-    conv, turn, tool_calls = args
-    assert conv == "conv-1"
-    assert turn == 0
-    assert len(tool_calls) == 1
-    tc = tool_calls[0]
+    tc = only_call(receiver)
     assert tc.id == "call_1"
     assert tc.name == "get_weather"
     assert tc.arguments == {"city": "NYC"}
@@ -153,7 +150,7 @@ def test_multiple_tool_calls_in_one_step_each_submitted() -> None:
     assert second.result == "shared result"
 
 
-def test_none_arguments_yields_empty_dict() -> None:
+def test_none_arguments_yields_empty_dict(only_call: OnlyCall) -> None:
     receiver = MagicMock()
     _set_trace_context("conv-1", 0, receiver=receiver)
     observer = ArksimSmolagentsCallback()
@@ -165,12 +162,11 @@ def test_none_arguments_yields_empty_dict() -> None:
         )
     )
 
-    args, _ = receiver.submit_tool_calls.call_args
-    tc = args[2][0]
+    tc = only_call(receiver)
     assert tc.arguments == {}
 
 
-def test_non_dict_arguments_wrapped_in_value() -> None:
+def test_non_dict_arguments_wrapped_in_value(only_call: OnlyCall) -> None:
     receiver = MagicMock()
     _set_trace_context("conv-1", 0, receiver=receiver)
     observer = ArksimSmolagentsCallback()
@@ -182,12 +178,11 @@ def test_non_dict_arguments_wrapped_in_value() -> None:
         )
     )
 
-    args, _ = receiver.submit_tool_calls.call_args
-    tc = args[2][0]
+    tc = only_call(receiver)
     assert tc.arguments == {"_value": "raw"}
 
 
-def test_empty_observation_preserved_as_empty_string() -> None:
+def test_empty_observation_preserved_as_empty_string(only_call: OnlyCall) -> None:
     """observations='' should round-trip as result='', distinguishable from None."""
     receiver = MagicMock()
     _set_trace_context("conv-1", 0, receiver=receiver)
@@ -200,6 +195,5 @@ def test_empty_observation_preserved_as_empty_string() -> None:
         )
     )
 
-    args, _ = receiver.submit_tool_calls.call_args
-    tc = args[2][0]
+    tc = only_call(receiver)
     assert tc.result == ""
