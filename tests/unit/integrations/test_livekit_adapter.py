@@ -214,6 +214,37 @@ def test_non_json_arguments_wrapped_in_value() -> None:
     assert calls[0].arguments == {"_value": "raw-string-not-json"}
 
 
+def test_non_string_output_coerced_to_str() -> None:
+    """Defensive coercion: if LiveKit ever emits a non-string error/result
+    object, the adapter must stringify rather than raise ``ValidationError``
+    inside the event loop. LiveKit's current model types ``output`` as
+    ``str``; ``model_construct`` bypasses that to exercise the coercion.
+    """
+    receiver = MagicMock()
+    _set_trace_context("conv-1", 0, receiver=receiver)
+    handler = ArksimLiveKitHandler()
+
+    structured = {"code": 500, "msg": "boom"}
+    bad_output = FunctionCallOutput.model_construct(
+        call_id="call_1",
+        name="get_weather",
+        output=structured,  # type: ignore[arg-type]
+        is_error=True,
+    )
+    event = FunctionToolsExecutedEvent(
+        function_calls=[_call()],
+        function_call_outputs=[bad_output],
+    )
+
+    handler.on_function_tools_executed(event)
+
+    calls = _calls_received(receiver)
+    assert len(calls) == 1
+    tc = calls[0]
+    assert tc.error == str(structured)
+    assert tc.result is None
+
+
 def test_attach_to_session_subscribes_event() -> None:
     """attach_to must call session.on with the verified event name."""
     handler = ArksimLiveKitHandler()

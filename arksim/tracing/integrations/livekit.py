@@ -79,13 +79,14 @@ class ArksimLiveKitHandler(BaseTracingAdapter):
                 )
                 continue
 
+            output = fn_output.output
             if fn_output.is_error:
                 self._submit(
                     ToolCall(
                         id=call_id,
                         name=name,
                         arguments=arguments,
-                        error=fn_output.output,
+                        error=str(output) if output is not None else None,
                         source=ToolCallSource.LIVEKIT,
                     )
                 )
@@ -96,7 +97,7 @@ class ArksimLiveKitHandler(BaseTracingAdapter):
                     id=call_id,
                     name=name,
                     arguments=arguments,
-                    result=fn_output.output,
+                    result=str(output) if output is not None else None,
                     source=ToolCallSource.LIVEKIT,
                 )
             )
