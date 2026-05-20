@@ -3,21 +3,13 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterator
 from unittest.mock import MagicMock
 
 import pytest
 
 from arksim.simulation_engine.tool_types import ToolCall, ToolCallSource
-from arksim.tracing.context import _clear_trace_context, _set_trace_context
+from arksim.tracing.context import _set_trace_context
 from arksim.tracing.integrations._base import BaseTracingAdapter
-
-
-@pytest.fixture(autouse=True)
-def _clean_context() -> Iterator[None]:
-    _clear_trace_context()
-    yield
-    _clear_trace_context()
 
 
 def _tool_call(name: str = "f") -> ToolCall:

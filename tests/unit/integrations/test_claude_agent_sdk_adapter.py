@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterator
+from collections.abc import Callable
 from typing import Any, cast
 from unittest.mock import MagicMock
 
@@ -11,25 +11,10 @@ import pytest
 from claude_agent_sdk import HookMatcher
 
 from arksim.simulation_engine.tool_types import ToolCall, ToolCallSource
-from arksim.tracing.context import _clear_trace_context, _set_trace_context
+from arksim.tracing.context import _set_trace_context
 from arksim.tracing.integrations.claude_agent_sdk import ArksimClaudeHooks
 
-
-@pytest.fixture(autouse=True)
-def _clean_context() -> Iterator[None]:
-    _clear_trace_context()
-    yield
-    _clear_trace_context()
-
-
-def _only_call(receiver: MagicMock) -> ToolCall:
-    assert receiver.submit_tool_calls.call_count == 1
-    args, _ = receiver.submit_tool_calls.call_args
-    conv, turn, tool_calls = args
-    assert conv == "conv-1"
-    assert turn == 0
-    assert len(tool_calls) == 1
-    return tool_calls[0]
+OnlyCall = Callable[[MagicMock], ToolCall]
 
 
 def _input(
@@ -49,7 +34,9 @@ def _input(
 
 
 @pytest.mark.asyncio
-async def test_happy_path_post_tool_use_submits_tool_call() -> None:
+async def test_happy_path_post_tool_use_submits_tool_call(
+    only_call: OnlyCall,
+) -> None:
     receiver = MagicMock()
     _set_trace_context("conv-1", 0, receiver=receiver)
     hooks = ArksimClaudeHooks()
@@ -65,7 +52,7 @@ async def test_happy_path_post_tool_use_submits_tool_call() -> None:
     )
 
     assert result == {}
-    tc = _only_call(receiver)
+    tc = only_call(receiver)
     assert tc.id == "t1"
     assert tc.name == "lookup_order"
     assert tc.arguments == {"order_id": "12345"}
@@ -101,7 +88,9 @@ async def test_no_trace_context_silently_drops() -> None:
 
 
 @pytest.mark.asyncio
-async def test_missing_tool_input_yields_empty_arguments() -> None:
+async def test_missing_tool_input_yields_empty_arguments(
+    only_call: OnlyCall,
+) -> None:
     receiver = MagicMock()
     _set_trace_context("conv-1", 0, receiver=receiver)
     hooks = ArksimClaudeHooks()
@@ -113,12 +102,12 @@ async def test_missing_tool_input_yields_empty_arguments() -> None:
         cast("Any", {}),
     )
 
-    tc = _only_call(receiver)
+    tc = only_call(receiver)
     assert tc.arguments == {}
 
 
 @pytest.mark.asyncio
-async def test_non_dict_tool_input_wrapped_in_value() -> None:
+async def test_non_dict_tool_input_wrapped_in_value(only_call: OnlyCall) -> None:
     receiver = MagicMock()
     _set_trace_context("conv-1", 0, receiver=receiver)
     hooks = ArksimClaudeHooks()
@@ -129,12 +118,14 @@ async def test_non_dict_tool_input_wrapped_in_value() -> None:
         cast("Any", {}),
     )
 
-    tc = _only_call(receiver)
+    tc = only_call(receiver)
     assert tc.arguments == {"_value": "raw"}
 
 
 @pytest.mark.asyncio
-async def test_dict_tool_response_serialized_to_string() -> None:
+async def test_dict_tool_response_serialized_to_string(
+    only_call: OnlyCall,
+) -> None:
     receiver = MagicMock()
     _set_trace_context("conv-1", 0, receiver=receiver)
     hooks = ArksimClaudeHooks()
@@ -148,7 +139,7 @@ async def test_dict_tool_response_serialized_to_string() -> None:
         cast("Any", {}),
     )
 
-    tc = _only_call(receiver)
+    tc = only_call(receiver)
     assert tc.result == str({"status": "ok"})
 
 

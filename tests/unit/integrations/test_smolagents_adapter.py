@@ -3,25 +3,16 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterator
 from unittest.mock import MagicMock
 
-import pytest
 from smolagents.memory import ActionStep, PlanningStep
 from smolagents.memory import ToolCall as SmolToolCall
 from smolagents.models import ChatMessage, MessageRole
 from smolagents.monitoring import Timing
 
 from arksim.simulation_engine.tool_types import ToolCallSource
-from arksim.tracing.context import _clear_trace_context, _set_trace_context
+from arksim.tracing.context import _set_trace_context
 from arksim.tracing.integrations.smolagents import ArksimSmolagentsCallback
-
-
-@pytest.fixture(autouse=True)
-def _clean_context() -> Iterator[None]:
-    _clear_trace_context()
-    yield
-    _clear_trace_context()
 
 
 def _action_step(

@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterator
+from collections.abc import Callable
 from unittest.mock import MagicMock
 
 import pytest
@@ -12,15 +12,10 @@ from llama_index.core.agent.workflow import ToolCallResult as LIToolCallResult
 from llama_index.core.tools.types import ToolOutput
 
 from arksim.simulation_engine.tool_types import ToolCall, ToolCallSource
-from arksim.tracing.context import _clear_trace_context, _set_trace_context
+from arksim.tracing.context import _set_trace_context
 from arksim.tracing.integrations.llamaindex import ArksimLlamaIndexObserver
 
-
-@pytest.fixture(autouse=True)
-def _clean_context() -> Iterator[None]:
-    _clear_trace_context()
-    yield
-    _clear_trace_context()
+OnlyCall = Callable[[MagicMock], ToolCall]
 
 
 def _start(
@@ -62,17 +57,9 @@ def _result(
     )
 
 
-def _only_call(receiver: MagicMock) -> ToolCall:
-    assert receiver.submit_tool_calls.call_count == 1
-    args, _ = receiver.submit_tool_calls.call_args
-    conv, turn, tool_calls = args
-    assert conv == "conv-1"
-    assert turn == 0
-    assert len(tool_calls) == 1
-    return tool_calls[0]
-
-
-def test_happy_path_split_events_produce_single_tool_call() -> None:
+def test_happy_path_split_events_produce_single_tool_call(
+    only_call: OnlyCall,
+) -> None:
     receiver = MagicMock()
     _set_trace_context("conv-1", 0, receiver=receiver)
     observer = ArksimLlamaIndexObserver()
@@ -80,7 +67,7 @@ def test_happy_path_split_events_produce_single_tool_call() -> None:
     observer.observe(_start())
     observer.observe(_result())
 
-    tc = _only_call(receiver)
+    tc = only_call(receiver)
     assert tc.id == "t1"
     assert tc.name == "get_weather"
     assert tc.arguments == {"city": "NYC"}
@@ -89,7 +76,9 @@ def test_happy_path_split_events_produce_single_tool_call() -> None:
     assert tc.source == ToolCallSource.LLAMAINDEX
 
 
-def test_error_path_with_exception_formats_type_and_message() -> None:
+def test_error_path_with_exception_formats_type_and_message(
+    only_call: OnlyCall,
+) -> None:
     receiver = MagicMock()
     _set_trace_context("conv-1", 0, receiver=receiver)
     observer = ArksimLlamaIndexObserver()
@@ -103,7 +92,7 @@ def test_error_path_with_exception_formats_type_and_message() -> None:
         )
     )
 
-    tc = _only_call(receiver)
+    tc = only_call(receiver)
     assert tc.name == "get_weather"
     assert tc.arguments == {"city": "NYC"}
     assert tc.error == "ValueError: nope"
@@ -111,7 +100,9 @@ def test_error_path_with_exception_formats_type_and_message() -> None:
     assert tc.source == ToolCallSource.LLAMAINDEX
 
 
-def test_is_error_without_exception_falls_back_to_content() -> None:
+def test_is_error_without_exception_falls_back_to_content(
+    only_call: OnlyCall,
+) -> None:
     """is_error=True with no exception means error message is in content."""
     receiver = MagicMock()
     _set_trace_context("conv-1", 0, receiver=receiver)
@@ -126,7 +117,7 @@ def test_is_error_without_exception_falls_back_to_content() -> None:
         )
     )
 
-    tc = _only_call(receiver)
+    tc = only_call(receiver)
     assert tc.error == "Tool get_weather not found."
     assert tc.result is None
     assert tc.source == ToolCallSource.LLAMAINDEX
@@ -207,7 +198,7 @@ def test_multiple_concurrent_tool_calls_correlate_by_tool_id() -> None:
     assert second.result == "r1"
 
 
-def test_empty_tool_kwargs_yields_empty_arguments() -> None:
+def test_empty_tool_kwargs_yields_empty_arguments(only_call: OnlyCall) -> None:
     """LlamaIndex always types tool_kwargs as dict, so {} is the no-arg case."""
     receiver = MagicMock()
     _set_trace_context("conv-1", 0, receiver=receiver)
@@ -216,7 +207,7 @@ def test_empty_tool_kwargs_yields_empty_arguments() -> None:
     observer.observe(_start(tool_kwargs={}))
     observer.observe(_result(tool_kwargs={}))
 
-    tc = _only_call(receiver)
+    tc = only_call(receiver)
     assert tc.arguments == {}
 
 
@@ -232,7 +223,7 @@ def test_non_tool_event_ignored() -> None:
     receiver.submit_tool_calls.assert_not_called()
 
 
-def test_non_string_content_coerced_to_str() -> None:
+def test_non_string_content_coerced_to_str(only_call: OnlyCall) -> None:
     """Defensive coercion: if a custom ToolOutput returns a non-string
     content, the adapter must stringify rather than raise ValidationError
     when constructing ToolCall.result.
@@ -267,6 +258,6 @@ def test_non_string_content_coerced_to_str() -> None:
     observer.observe(_start())
     observer.observe(result)
 
-    tc = _only_call(receiver)
+    tc = only_call(receiver)
     assert tc.result == str(structured)
     assert tc.error is None

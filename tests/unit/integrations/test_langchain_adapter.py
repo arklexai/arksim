@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterator
+from collections.abc import Callable
 from unittest.mock import MagicMock
 from uuid import UUID, uuid4
 
@@ -11,32 +11,17 @@ import pytest
 from langchain_core.callbacks import AsyncCallbackHandler, BaseCallbackHandler
 
 from arksim.simulation_engine.tool_types import ToolCall, ToolCallSource
-from arksim.tracing.context import _clear_trace_context, _set_trace_context
+from arksim.tracing.context import _set_trace_context
 from arksim.tracing.integrations.langchain import ArksimLangChainHandler
 
-
-@pytest.fixture(autouse=True)
-def _clean_context() -> Iterator[None]:
-    _clear_trace_context()
-    yield
-    _clear_trace_context()
+OnlyCall = Callable[[MagicMock], ToolCall]
 
 
 def _serialized(name: str = "get_weather") -> dict[str, object]:
     return {"name": name}
 
 
-def _only_call(receiver: MagicMock) -> ToolCall:
-    assert receiver.submit_tool_calls.call_count == 1
-    args, _ = receiver.submit_tool_calls.call_args
-    conv, turn, tool_calls = args
-    assert conv == "conv-1"
-    assert turn == 0
-    assert len(tool_calls) == 1
-    return tool_calls[0]
-
-
-def test_happy_path_sync_produces_single_tool_call() -> None:
+def test_happy_path_sync_produces_single_tool_call(only_call: OnlyCall) -> None:
     receiver = MagicMock()
     _set_trace_context("conv-1", 0, receiver=receiver)
     handler = ArksimLangChainHandler()
@@ -45,7 +30,7 @@ def test_happy_path_sync_produces_single_tool_call() -> None:
     handler.on_tool_start(_serialized("get_weather"), '{"city": "NYC"}', run_id=run_id)
     handler.on_tool_end("sunny 75F", run_id=run_id)
 
-    tc = _only_call(receiver)
+    tc = only_call(receiver)
     assert tc.id == str(run_id)
     assert tc.name == "get_weather"
     assert tc.arguments == {"city": "NYC"}
@@ -54,7 +39,7 @@ def test_happy_path_sync_produces_single_tool_call() -> None:
     assert tc.source == ToolCallSource.LANGCHAIN
 
 
-def test_error_path_populates_error_field() -> None:
+def test_error_path_populates_error_field(only_call: OnlyCall) -> None:
     receiver = MagicMock()
     _set_trace_context("conv-1", 0, receiver=receiver)
     handler = ArksimLangChainHandler()
@@ -63,7 +48,7 @@ def test_error_path_populates_error_field() -> None:
     handler.on_tool_start(_serialized("get_weather"), '{"city": "NYC"}', run_id=run_id)
     handler.on_tool_error(ValueError("nope"), run_id=run_id)
 
-    tc = _only_call(receiver)
+    tc = only_call(receiver)
     assert tc.id == str(run_id)
     assert tc.name == "get_weather"
     assert tc.arguments == {"city": "NYC"}
@@ -134,7 +119,7 @@ def test_multiple_overlapping_calls_correlate_correctly() -> None:
     assert second.result == "res_b"
 
 
-def test_non_json_input_str_wrapped_in_value() -> None:
+def test_non_json_input_str_wrapped_in_value(only_call: OnlyCall) -> None:
     receiver = MagicMock()
     _set_trace_context("conv-1", 0, receiver=receiver)
     handler = ArksimLangChainHandler()
@@ -143,11 +128,11 @@ def test_non_json_input_str_wrapped_in_value() -> None:
     handler.on_tool_start(_serialized("t"), "not-json", run_id=run_id)
     handler.on_tool_end("ok", run_id=run_id)
 
-    tc = _only_call(receiver)
+    tc = only_call(receiver)
     assert tc.arguments == {"_value": "not-json"}
 
 
-def test_empty_input_str_yields_empty_arguments() -> None:
+def test_empty_input_str_yields_empty_arguments(only_call: OnlyCall) -> None:
     receiver = MagicMock()
     _set_trace_context("conv-1", 0, receiver=receiver)
     handler = ArksimLangChainHandler()
@@ -156,7 +141,7 @@ def test_empty_input_str_yields_empty_arguments() -> None:
     handler.on_tool_start(_serialized("t"), "", run_id=run_id)
     handler.on_tool_end("ok", run_id=run_id)
 
-    tc = _only_call(receiver)
+    tc = only_call(receiver)
     assert tc.arguments == {}
 
 

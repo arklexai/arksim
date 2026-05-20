@@ -3,24 +3,18 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterator
+from collections.abc import Callable
 from typing import Any, cast
 from unittest.mock import MagicMock
 
-import pytest
 from strands.hooks import AfterToolCallEvent, HookRegistry
 from strands.types.tools import AgentTool, ToolResult, ToolUse
 
 from arksim.simulation_engine.tool_types import ToolCall, ToolCallSource
-from arksim.tracing.context import _clear_trace_context, _set_trace_context
+from arksim.tracing.context import _set_trace_context
 from arksim.tracing.integrations.strands import ArksimStrandsHookProvider
 
-
-@pytest.fixture(autouse=True)
-def _clean_context() -> Iterator[None]:
-    _clear_trace_context()
-    yield
-    _clear_trace_context()
+OnlyCall = Callable[[MagicMock], ToolCall]
 
 
 def _tool_use(
@@ -76,17 +70,7 @@ def _fire(registry: HookRegistry, event: AfterToolCallEvent) -> None:
     registry.invoke_callbacks(event)
 
 
-def _only_call(receiver: MagicMock) -> ToolCall:
-    assert receiver.submit_tool_calls.call_count == 1
-    args, _ = receiver.submit_tool_calls.call_args
-    conv, turn, tool_calls = args
-    assert conv == "conv-1"
-    assert turn == 0
-    assert len(tool_calls) == 1
-    return tool_calls[0]
-
-
-def test_happy_path_after_tool_call_submits_tool_call() -> None:
+def test_happy_path_after_tool_call_submits_tool_call(only_call: OnlyCall) -> None:
     receiver = MagicMock()
     _set_trace_context("conv-1", 0, receiver=receiver)
     registry = _register(ArksimStrandsHookProvider())
@@ -101,7 +85,7 @@ def test_happy_path_after_tool_call_submits_tool_call() -> None:
         ),
     )
 
-    tc = _only_call(receiver)
+    tc = only_call(receiver)
     assert tc.id == "u1"
     assert tc.name == "get_weather"
     assert tc.arguments == {"city": "NYC"}
@@ -111,7 +95,7 @@ def test_happy_path_after_tool_call_submits_tool_call() -> None:
     assert tc.source == ToolCallSource.STRANDS
 
 
-def test_exception_populates_error_field() -> None:
+def test_exception_populates_error_field(only_call: OnlyCall) -> None:
     receiver = MagicMock()
     _set_trace_context("conv-1", 0, receiver=receiver)
     registry = _register(ArksimStrandsHookProvider())
@@ -124,7 +108,7 @@ def test_exception_populates_error_field() -> None:
         ),
     )
 
-    tc = _only_call(receiver)
+    tc = only_call(receiver)
     assert tc.name == "get_weather"
     assert tc.arguments == {"city": "NYC"}
     assert tc.error == "ValueError: nope"
@@ -156,25 +140,25 @@ def test_no_trace_context_silently_drops() -> None:
     receiver.submit_tool_calls.assert_not_called()
 
 
-def test_missing_tool_use_input_yields_empty_arguments() -> None:
+def test_missing_tool_use_input_yields_empty_arguments(only_call: OnlyCall) -> None:
     receiver = MagicMock()
     _set_trace_context("conv-1", 0, receiver=receiver)
     registry = _register(ArksimStrandsHookProvider())
 
     _fire(registry, _make_event(tool_use=_tool_use(tool_input=None)))
 
-    tc = _only_call(receiver)
+    tc = only_call(receiver)
     assert tc.arguments == {}
 
 
-def test_non_dict_tool_use_input_wrapped_in_value() -> None:
+def test_non_dict_tool_use_input_wrapped_in_value(only_call: OnlyCall) -> None:
     receiver = MagicMock()
     _set_trace_context("conv-1", 0, receiver=receiver)
     registry = _register(ArksimStrandsHookProvider())
 
     _fire(registry, _make_event(tool_use=_tool_use(tool_input="raw")))
 
-    tc = _only_call(receiver)
+    tc = only_call(receiver)
     assert tc.arguments == {"_value": "raw"}
 
 

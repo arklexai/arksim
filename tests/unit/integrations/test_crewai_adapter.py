@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from datetime import datetime, timezone
 from unittest.mock import MagicMock
 
@@ -15,15 +15,10 @@ from crewai.events import (
 )
 
 from arksim.simulation_engine.tool_types import ToolCall, ToolCallSource
-from arksim.tracing.context import _clear_trace_context, _set_trace_context
+from arksim.tracing.context import _set_trace_context
 from arksim.tracing.integrations.crewai import ArksimCrewEventListener
 
-
-@pytest.fixture(autouse=True)
-def _clean_context() -> Iterator[None]:
-    _clear_trace_context()
-    yield
-    _clear_trace_context()
+OnlyCall = Callable[[MagicMock], ToolCall]
 
 
 @pytest.fixture(autouse=True)
@@ -76,17 +71,7 @@ def _error_event(
     )
 
 
-def _only_call(receiver: MagicMock) -> ToolCall:
-    assert receiver.submit_tool_calls.call_count == 1
-    args, _ = receiver.submit_tool_calls.call_args
-    conv, turn, tool_calls = args
-    assert conv == "conv-1"
-    assert turn == 0
-    assert len(tool_calls) == 1
-    return tool_calls[0]
-
-
-def test_happy_path_finished_event_submits_tool_call() -> None:
+def test_happy_path_finished_event_submits_tool_call(only_call: OnlyCall) -> None:
     receiver = MagicMock()
     _set_trace_context("conv-1", 0, receiver=receiver)
     ArksimCrewEventListener()
@@ -99,7 +84,7 @@ def test_happy_path_finished_event_submits_tool_call() -> None:
         )
     )
 
-    tc = _only_call(receiver)
+    tc = only_call(receiver)
     assert tc.name == "get_weather"
     assert tc.arguments == {"city": "NYC"}
     assert tc.result == "sunny 75F"
@@ -107,7 +92,7 @@ def test_happy_path_finished_event_submits_tool_call() -> None:
     assert tc.source == ToolCallSource.CREWAI
 
 
-def test_error_event_populates_error_field() -> None:
+def test_error_event_populates_error_field(only_call: OnlyCall) -> None:
     receiver = MagicMock()
     _set_trace_context("conv-1", 0, receiver=receiver)
     ArksimCrewEventListener()
@@ -120,7 +105,7 @@ def test_error_event_populates_error_field() -> None:
         )
     )
 
-    tc = _only_call(receiver)
+    tc = only_call(receiver)
     assert tc.name == "get_weather"
     assert tc.arguments == {"city": "NYC"}
     assert tc.error == "ValueError: nope"
@@ -138,7 +123,7 @@ def test_no_trace_context_silently_drops() -> None:
     receiver.submit_tool_calls.assert_not_called()
 
 
-def test_missing_tool_args_yields_empty_arguments() -> None:
+def test_missing_tool_args_yields_empty_arguments(only_call: OnlyCall) -> None:
     receiver = MagicMock()
     _set_trace_context("conv-1", 0, receiver=receiver)
     ArksimCrewEventListener()
@@ -147,18 +132,18 @@ def test_missing_tool_args_yields_empty_arguments() -> None:
     # "missing" case for required-field events.
     _emit_and_wait(_finished_event(tool_args={}, output="ok"))
 
-    tc = _only_call(receiver)
+    tc = only_call(receiver)
     assert tc.arguments == {}
 
 
-def test_non_dict_tool_args_wrapped_in_value() -> None:
+def test_non_dict_tool_args_wrapped_in_value(only_call: OnlyCall) -> None:
     receiver = MagicMock()
     _set_trace_context("conv-1", 0, receiver=receiver)
     ArksimCrewEventListener()
 
     _emit_and_wait(_finished_event(tool_args="raw-string", output="ok"))
 
-    tc = _only_call(receiver)
+    tc = only_call(receiver)
     assert tc.arguments == {"_value": "raw-string"}
 
 
