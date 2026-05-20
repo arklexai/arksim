@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 * **build:** rename the `livekit` pip extra to `livekit-agents` for naming consistency with the underlying package (`livekit-agents`); users with `arksim[livekit]` in their environment must reinstall with `arksim[livekit-agents]`.
-* **examples:** every integration example's agent now honors the `OPENAI_MODEL` environment variable; set it to override the example's default model without editing `config.yaml`.
+* **examples:** the OpenAI-based integration example agents (autogen, crewai, langchain, langgraph, livekit, llamaindex, mastra, openai-agents-sdk, strands, vercel-ai-sdk) now honor the `OPENAI_MODEL` environment variable; set it to override the example's default model without editing `config.yaml`. Examples using non-OpenAI providers (claude-agent-sdk, google-adk, pydantic-ai, dify, rasa, smolagents) are unaffected.
 
 ### Fixed
 
