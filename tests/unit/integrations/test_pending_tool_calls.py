@@ -3,6 +3,9 @@
 
 from __future__ import annotations
 
+import threading
+from uuid import uuid4
+
 import pytest
 
 from arksim.tracing.integrations import _pending
@@ -52,3 +55,38 @@ def test_pop_consumes_entry() -> None:
     pending.add("r1", payload)
     assert pending.pop("r1") == payload
     assert pending.pop("r1") is None
+
+
+def test_concurrent_add_pop_thread_safety() -> None:
+    """Concurrent add/pop from 10 threads must not raise or corrupt state.
+
+    LangChain dispatches sync ``BaseCallbackHandler`` methods on a thread
+    pool when tools block, so ``PendingToolCalls`` is reachable from
+    multiple threads. Without the internal lock, ``dict`` iteration during
+    sweep can race with mutation and raise ``RuntimeError: dictionary
+    changed size during iteration``.
+    """
+    pending = PendingToolCalls()
+    iterations = 100
+    errors: list[BaseException] = []
+    barrier = threading.Barrier(10)
+
+    def worker() -> None:
+        barrier.wait()
+        try:
+            for _ in range(iterations):
+                rid = uuid4().hex
+                pending.add(rid, {"k": rid})
+                pending.pop(rid)
+        except BaseException as exc:  # noqa: BLE001
+            errors.append(exc)
+
+    threads = [threading.Thread(target=worker) for _ in range(10)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+
+    assert errors == []
+    # Each worker pops what it adds, so the map ends empty.
+    assert pending.pop("anything") is None
