@@ -24,6 +24,8 @@ A [Vercel AI SDK](https://github.com/vercel/ai) agent running as a Node.js servi
    export OPENAI_API_KEY="<your-key>"
    ```
 
+If `gpt-5.1` isn't available in your account, set `OPENAI_MODEL=<your-model>` and re-run, or edit `config.yaml` directly.
+
 ## Run
 
 Start the Vercel AI SDK agent server in one terminal:

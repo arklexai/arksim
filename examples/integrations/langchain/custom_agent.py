@@ -15,6 +15,7 @@ with two mock tools (lookup_order, book_table). Running
 
 from __future__ import annotations
 
+import os
 import uuid
 
 from langchain_core.messages import HumanMessage
@@ -27,6 +28,8 @@ from arksim.config import AgentConfig
 from arksim.simulation_engine.agent.base import BaseAgent
 from arksim.tracing.integrations.langchain import ArksimLangChainHandler
 
+_MODEL = os.environ.get("OPENAI_MODEL", "gpt-5.1")
+
 
 class LangChainAgent(BaseAgent):
     def __init__(self, agent_config: AgentConfig) -> None:
@@ -34,7 +37,7 @@ class LangChainAgent(BaseAgent):
         self._chat_id = str(uuid.uuid4())
         self._handler = ArksimLangChainHandler()
         self._graph = create_react_agent(
-            ChatOpenAI(model="gpt-5.1"),
+            ChatOpenAI(model=_MODEL),
             tools=[lookup_order, book_table],
             checkpointer=InMemorySaver(),
         )

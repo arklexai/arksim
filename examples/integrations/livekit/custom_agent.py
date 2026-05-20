@@ -21,6 +21,7 @@ the session without a ``room`` argument so no RTC plumbing is needed.
 
 from __future__ import annotations
 
+import os
 import uuid
 
 from livekit.agents.inference import LLM as InferenceLLM
@@ -31,6 +32,8 @@ from arksim.config import AgentConfig
 from arksim.simulation_engine.agent.base import BaseAgent
 from arksim.tracing.integrations.livekit import ArksimLiveKitHandler
 
+_MODEL = os.environ.get("OPENAI_MODEL", "gpt-5.1")
+
 
 class LiveKitAgent(BaseAgent):
     def __init__(self, agent_config: AgentConfig) -> None:
@@ -40,7 +43,7 @@ class LiveKitAgent(BaseAgent):
         self._agent = Agent(
             instructions="You are a helpful assistant.",
             tools=[lookup_order, book_table],
-            llm=InferenceLLM(model="openai/gpt-5.1"),
+            llm=InferenceLLM(model=f"openai/{_MODEL}"),
         )
         self._session = AgentSession()
         self._handler.attach_to(self._session)

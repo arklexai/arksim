@@ -19,6 +19,7 @@ integration examples (single ``OPENAI_API_KEY`` env var).
 
 from __future__ import annotations
 
+import os
 import uuid
 
 from strands import Agent
@@ -29,13 +30,15 @@ from arksim.config import AgentConfig
 from arksim.simulation_engine.agent.base import BaseAgent
 from arksim.tracing.integrations.strands import ArksimStrandsHookProvider
 
+_MODEL = os.environ.get("OPENAI_MODEL", "gpt-5.1")
+
 
 class StrandsAgent(BaseAgent):
     def __init__(self, agent_config: AgentConfig) -> None:
         super().__init__(agent_config)
         self._chat_id = str(uuid.uuid4())
         self._agent = Agent(
-            model=OpenAIModel(model_id="gpt-5.1"),
+            model=OpenAIModel(model_id=_MODEL),
             tools=[lookup_order, book_table],
             system_prompt="You are a helpful assistant.",
             hooks=[ArksimStrandsHookProvider()],

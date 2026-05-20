@@ -14,6 +14,7 @@ two mock tools (lookup_order, book_table). Running
 
 from __future__ import annotations
 
+import os
 import uuid
 
 from crewai import Agent as CrewAgent
@@ -23,6 +24,8 @@ from tools import book_table, lookup_order
 from arksim.config import AgentConfig
 from arksim.simulation_engine.agent.base import BaseAgent
 from arksim.tracing.integrations.crewai import ArksimCrewEventListener
+
+_MODEL = os.environ.get("OPENAI_MODEL", "gpt-5.1")
 
 
 class CrewAIAgent(BaseAgent):
@@ -50,7 +53,7 @@ class CrewAIAgent(BaseAgent):
             tools=[lookup_order, book_table],
             allow_delegation=False,
             verbose=False,
-            llm="gpt-5.1",
+            llm=_MODEL,
         )
         self._history: list[dict[str, str]] = []
 

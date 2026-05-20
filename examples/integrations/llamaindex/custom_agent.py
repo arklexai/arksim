@@ -19,6 +19,7 @@ invocations.
 
 from __future__ import annotations
 
+import os
 import uuid
 
 from llama_index.core.agent.workflow import FunctionAgent
@@ -29,6 +30,8 @@ from arksim.config import AgentConfig
 from arksim.simulation_engine.agent.base import BaseAgent
 from arksim.tracing.integrations.llamaindex import ArksimLlamaIndexObserver
 
+_MODEL = os.environ.get("OPENAI_MODEL", "gpt-5.1")
+
 
 class LlamaIndexAgent(BaseAgent):
     def __init__(self, agent_config: AgentConfig) -> None:
@@ -37,7 +40,7 @@ class LlamaIndexAgent(BaseAgent):
         self._observer = ArksimLlamaIndexObserver()
         self._workflow = FunctionAgent(
             tools=[lookup_order, book_table],
-            llm=OpenAI(model="gpt-5.1"),
+            llm=OpenAI(model=_MODEL),
             system_prompt=(
                 "You are a helpful assistant with access to two tools: "
                 "lookup_order(order_id) and book_table(party_size, time). "

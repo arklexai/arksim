@@ -17,6 +17,8 @@ A [LlamaIndex](https://github.com/run-llama/llama_index) `FunctionAgent` with tw
    export OPENAI_API_KEY="<your-key>"
    ```
 
+If `gpt-5.1` isn't available in your account, set `OPENAI_MODEL=<your-model>` and re-run, or edit `config.yaml` directly.
+
 ## Run
 
 From this example directory:

@@ -17,6 +17,8 @@ A hand-built [LangGraph](https://github.com/langchain-ai/langgraph) `StateGraph`
    export OPENAI_API_KEY="<your-key>"
    ```
 
+If `gpt-5.1` isn't available in your account, set `OPENAI_MODEL=<your-model>` and re-run, or edit `config.yaml` directly.
+
 ## Run
 
 From this example directory:

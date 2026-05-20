@@ -16,6 +16,7 @@ Wires arksim's LangChain tracing adapter into a hand-built LangGraph
 
 from __future__ import annotations
 
+import os
 import uuid
 from typing import Annotated
 
@@ -31,6 +32,8 @@ from typing_extensions import TypedDict
 from arksim.config import AgentConfig
 from arksim.simulation_engine.agent.base import BaseAgent
 from arksim.tracing.integrations.langchain import ArksimLangChainHandler
+
+_MODEL = os.environ.get("OPENAI_MODEL", "gpt-5.1")
 
 
 class State(TypedDict):
@@ -52,7 +55,7 @@ class LangGraphAgent(BaseAgent):
         self._thread_id = str(uuid.uuid4())
         self._handler = ArksimLangChainHandler()
         tools = [lookup_order, book_table]
-        llm = ChatOpenAI(model="gpt-5.1").bind_tools(tools)
+        llm = ChatOpenAI(model=_MODEL).bind_tools(tools)
 
         def chatbot(state: State) -> State:
             return {"messages": [llm.invoke(state["messages"])]}

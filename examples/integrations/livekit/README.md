@@ -20,6 +20,8 @@ A LiveKit Agents text-mode session with two mock tools (`lookup_order`, `book_ta
 
    The LiveKit credentials are required by `livekit.agents.inference.LLM`, which proxies LLM calls through LiveKit Cloud. Free credentials are available at <https://cloud.livekit.io>.
 
+If `gpt-5.1` isn't available in your account, set `OPENAI_MODEL=<your-model>` and re-run, or edit `config.yaml` directly.
+
 ## Run
 
 From this example directory:
