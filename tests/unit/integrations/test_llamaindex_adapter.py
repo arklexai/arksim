@@ -230,3 +230,43 @@ def test_non_tool_event_ignored() -> None:
     observer.observe(object())
 
     receiver.submit_tool_calls.assert_not_called()
+
+
+def test_non_string_content_coerced_to_str() -> None:
+    """Defensive coercion: if a custom ToolOutput returns a non-string
+    content, the adapter must stringify rather than raise ValidationError
+    when constructing ToolCall.result.
+    """
+    receiver = MagicMock()
+    _set_trace_context("conv-1", 0, receiver=receiver)
+    observer = ArksimLlamaIndexObserver()
+
+    structured = {"status": "ok", "rows": 3}
+
+    class _StructuredToolOutput(ToolOutput):
+        @property
+        def content(self) -> object:  # type: ignore[override]
+            return structured
+
+    custom = _StructuredToolOutput(
+        tool_name="get_weather",
+        content="placeholder",
+        raw_input={"city": "NYC"},
+        raw_output=structured,
+        is_error=False,
+        exception=None,
+    )
+    result = LIToolCallResult(
+        tool_name="get_weather",
+        tool_kwargs={"city": "NYC"},
+        tool_id="t1",
+        tool_output=custom,
+        return_direct=False,
+    )
+
+    observer.observe(_start())
+    observer.observe(result)
+
+    tc = _only_call(receiver)
+    assert tc.result == str(structured)
+    assert tc.error is None

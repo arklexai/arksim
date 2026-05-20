@@ -125,12 +125,13 @@ class ArksimLlamaIndexObserver(BaseTracingAdapter):
             return
 
         tool_output = event.tool_output
+        content = tool_output.content
         if tool_output.is_error:
             exception = tool_output.exception
             if exception is not None:
-                error_str = f"{type(exception).__name__}: {exception}"
+                error_str: str | None = f"{type(exception).__name__}: {exception}"
             else:
-                error_str = tool_output.content
+                error_str = str(content) if content is not None else None
             self._submit(
                 ToolCall(
                     id=event.tool_id,
@@ -147,7 +148,7 @@ class ArksimLlamaIndexObserver(BaseTracingAdapter):
                 id=event.tool_id,
                 name=payload["name"],
                 arguments=payload["arguments"],
-                result=tool_output.content,
+                result=str(content) if content is not None else None,
                 source=ToolCallSource.LLAMAINDEX,
             )
         )
