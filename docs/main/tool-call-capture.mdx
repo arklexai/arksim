@@ -70,6 +70,10 @@ These keys are always present for Python connector agents regardless of which ca
 
 ## Automatic Capture (Python Connector)
 
+<Info>
+**Per-SDK adapter vs OTel path.** When an SDK exposes both a native callback path and OTel emission, the per-SDK adapter is canonical because it captures fields the OTel semconv doesn't standardize (e.g. LangChain's `run_id`-keyed split events). Use the OTel path when the SDK doesn't ship a Python-side adapter (Mastra, Vercel AI SDK JS, AutoGen direct invocation).
+</Info>
+
 For agents using the OpenAI Agents SDK with the Python connector, add two things:
 
 **1. Register the processor at module level in your agent file:**
