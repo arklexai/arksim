@@ -42,8 +42,8 @@ try:
     from livekit.agents.voice.events import FunctionToolsExecutedEvent
 except ImportError as exc:  # pragma: no cover
     raise ImportError(
-        "ArksimLiveKitHandler requires the 'livekit' extra. "
-        "Install with: pip install 'arksim[livekit]'"
+        "ArksimLiveKitHandler requires the 'livekit-agents' extra. "
+        "Install with: pip install 'arksim[livekit-agents]'"
     ) from exc
 
 from arksim.simulation_engine.tool_types import ToolCall, ToolCallSource
