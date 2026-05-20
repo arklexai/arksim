@@ -83,7 +83,7 @@ class ArksimLangChainHandler(BaseTracingAdapter, AsyncCallbackHandler):
         output: Any,  # noqa: ANN401  (signature fixed by LangChain protocol)
         *,
         run_id: UUID,
-        **kwargs: Any,  # noqa: ANN401
+        **kwargs: Any,  # noqa: ANN401  (signature fixed by LangChain protocol)
     ) -> None:
         payload = self._pending.pop(str(run_id))
         if payload is None:

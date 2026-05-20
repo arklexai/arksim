@@ -21,6 +21,9 @@ class PendingToolCalls:
     cannot race. The lock scope covers only in-memory dict operations.
     """
 
+    # 60s default covers typical tool-call durations (LLM-side
+    # generation + tool execution + network round trip). Bump via the
+    # constructor for long-running RAG queries or external API tools.
     def __init__(self, max_age_seconds: float = 60.0) -> None:
         self._pending: dict[str, tuple[dict[str, Any], float]] = {}
         self._max_age = max_age_seconds
