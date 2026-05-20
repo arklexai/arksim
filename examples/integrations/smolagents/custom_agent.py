@@ -27,6 +27,8 @@ from arksim.config import AgentConfig
 from arksim.simulation_engine.agent.base import BaseAgent
 from arksim.tracing.integrations.smolagents import ArksimSmolagentsCallback
 
+_MODEL = os.environ.get("OPENAI_MODEL", "gpt-5.1")
+
 
 class SmolagentsAgent(BaseAgent):
     """Smolagents agent wrapper.
@@ -40,7 +42,7 @@ class SmolagentsAgent(BaseAgent):
         self._chat_id = str(uuid.uuid4())
         self._callback = ArksimSmolagentsCallback()
         model = OpenAIServerModel(
-            model_id="gpt-4o",
+            model_id=_MODEL,
             api_base="https://api.openai.com/v1",
             api_key=os.environ["OPENAI_API_KEY"],
         )

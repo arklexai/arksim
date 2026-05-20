@@ -17,6 +17,7 @@ receiver can route tool calls to the right turn.
 
 from __future__ import annotations
 
+import os
 import uuid
 
 from opentelemetry.context import Context
@@ -33,6 +34,7 @@ from arksim.simulation_engine.agent.base import BaseAgent
 from arksim.tracing.context import trace_turn_id
 
 _OTLP_ENDPOINT = "http://127.0.0.1:4318/v1/traces"
+_MODEL = os.environ.get("OPENAI_MODEL", "gpt-5.1")
 
 
 class _ArksimRoutingProcessor(SpanProcessor):
@@ -77,7 +79,7 @@ class PydanticAIAgent(BaseAgent):
         )
 
         self._agent = Agent(
-            "openai:gpt-4o",
+            f"openai:{_MODEL}",
             system_prompt=(
                 "You are a helpful assistant with access to two tools: "
                 "lookup_order(order_id) and book_table(party_size, time). "
