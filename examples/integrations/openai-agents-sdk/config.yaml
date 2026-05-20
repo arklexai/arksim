@@ -36,3 +36,10 @@ provider: openai
 
 # Workers for parallel processing
 num_workers: 50
+
+# ── TRACE RECEIVER ───────────────────────────────────────────────────────────
+# Activates the in-process trace receiver so ArksimTracingProcessor can land
+# OpenAI Agents SDK function spans on the active turn.
+trace_receiver:
+  enabled: true
+  wait_timeout: 5

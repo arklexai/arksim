@@ -1,8 +1,16 @@
 # SPDX-License-Identifier: Apache-2.0
-"""OpenAI Agents SDK integration for ArkSim.
+"""OpenAI Agents SDK integration for arksim.
 
-Install: pip install openai-agents
-Auth:    export OPENAI_API_KEY="<your-key>"
+Install:
+    pip install 'arksim[otel]'
+    pip install openai-agents
+Auth:
+    export OPENAI_API_KEY="<your-key>"
+
+Wires two mock tools (``lookup_order``, ``book_table``) into an OpenAI
+Agents SDK ``Agent`` and registers ``ArksimTracingProcessor`` so every
+``FunctionSpanData`` the SDK emits lands as a ``ToolCall`` on the right
+turn in ``results/simulation/simulation.json``.
 """
 
 from __future__ import annotations
@@ -10,9 +18,16 @@ from __future__ import annotations
 import uuid
 
 from agents import Agent, Runner, RunResult
+from agents.tracing import add_trace_processor
+from tools import book_table, lookup_order
 
 from arksim.config import AgentConfig
 from arksim.simulation_engine.agent.base import BaseAgent
+from arksim.tracing.openai import ArksimTracingProcessor
+
+# Register once at module load; the simulator caches modules by file path
+# so this runs exactly once regardless of how many conversations start.
+add_trace_processor(ArksimTracingProcessor())
 
 
 class OpenAIAgentsSDKAgent(BaseAgent):
@@ -21,7 +36,12 @@ class OpenAIAgentsSDKAgent(BaseAgent):
         self._chat_id = str(uuid.uuid4())
         self._agent = Agent(
             name="assistant",
-            instructions="You are a helpful assistant.",
+            instructions=(
+                "You are a helpful assistant with access to two tools: "
+                "lookup_order(order_id) and book_table(party_size, time). "
+                "Call them when relevant to answer the user."
+            ),
+            tools=[lookup_order, book_table],
         )
         self._last_result: RunResult | None = None
 
