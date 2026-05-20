@@ -15,6 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * **examples:** add LiveKit and Strands integration example projects under `examples/integrations/`. Update the existing 13 integration examples (langchain, langgraph, crewai, claude-agent-sdk, google-adk, llamaindex, smolagents, autogen, pydantic-ai, mastra, dify, rasa, vercel-ai-sdk) to fire mock `lookup_order` and `book_table` tools and capture them via the appropriate path (per-SDK adapter, native OTel, or HTTP wrapper).
 * **ci:** add multi-extra resolver check that installs all SDK adapter extras together to catch dependency-resolution conflicts.
 
+### Changed
+
+* **build:** rename the `livekit` pip extra to `livekit-agents` for naming consistency with the underlying package (`livekit-agents`); users with `arksim[livekit]` in their environment must reinstall with `arksim[livekit-agents]`.
+* **examples:** every integration example's agent now honors the `OPENAI_MODEL` environment variable; set it to override the example's default model without editing `config.yaml`.
+
 ### Fixed
 
 * **simulator:** fix tool-call dedup incorrectly merging or dropping distinct trace-sourced calls that share empty-string ids (Gemini, A2A without per-call ids) ([#168](https://github.com/arklexai/arksim/issues/168))
