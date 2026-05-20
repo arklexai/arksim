@@ -7,7 +7,7 @@ A LiveKit Agents text-mode session with two mock tools (`lookup_order`, `book_ta
 1. Install arksim with the LiveKit extra:
 
    ```bash
-   pip install 'arksim[livekit]'
+   pip install 'arksim[livekit-agents]'
    ```
 
 2. Set your credentials:

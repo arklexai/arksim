@@ -67,7 +67,7 @@ claude-agent = [
 google-adk = [
     "google-adk>=1.0.0",
 ]
-livekit = [
+livekit-agents = [
     "livekit-agents>=1.0.0",
 ]
 strands = [

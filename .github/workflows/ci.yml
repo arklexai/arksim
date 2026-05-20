@@ -70,4 +70,4 @@ jobs:
         with:
           python-version: "3.13"
       - name: Resolve all SDK adapter extras together
-        run: python -m pip install -e ".[langchain,crewai,llamaindex,claude-agent,google-adk,livekit,strands,smolagents]" --dry-run
+        run: python -m pip install -e ".[langchain,crewai,llamaindex,claude-agent,google-adk,livekit-agents,strands,smolagents]" --dry-run

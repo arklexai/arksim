@@ -2,7 +2,7 @@
 """LiveKit Agents integration for arksim.
 
 Install:
-    pip install 'arksim[livekit]'
+    pip install 'arksim[livekit-agents]'
 Auth:
     export OPENAI_API_KEY="<your-key>"          # required by LiveKit Cloud inference
     export LIVEKIT_API_KEY="<your-livekit-key>"
