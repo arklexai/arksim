@@ -12,12 +12,15 @@ This example connects a [Dify](https://dify.ai) Agent app to arksim. The Python 
 
 2. Create an **Agent** app in Dify (Cloud or self-hosted). Agent apps emit `agent_thoughts` in their blocking-mode responses, which is the payload this wrapper parses. A Chatbot app returns plain text only and will produce empty `tool_calls`.
 
-3. In Dify Studio, open the Agent app and attach two tools matching the scenarios:
+3. In Dify Studio, create the Agent app and attach two tools matching the scenarios. Dify's docs are the source of truth for the current UI:
 
-   - `lookup_order(order_id: string) -> string` returning a status string.
-   - `book_table(party_size: integer, time: string) -> string` returning a confirmation string.
+   - Create the Agent app following [Build an Agent application](https://docs.dify.ai/en/use-dify/build/agent). Use any model you have credits for; the wrapper only reads `agent_thoughts` from the response.
+   - Add the two tools following [Build a tool plugin](https://docs.dify.ai/develop-plugin/dev-guides-and-walkthroughs/tool-plugin). Each tool returns a deterministic string so the simulation is reproducible:
+     - `lookup_order(order_id: string) -> string` returning a status string (e.g. `"Order ORD-1001: shipped, arrives Tuesday."`).
+     - `book_table(party_size: integer, time: string) -> string` returning a confirmation string (e.g. `"Booked table for 4 at 7pm."`).
+   - In the Agent app's **Tools** panel, attach both tools and authorize them so the agent can call them.
 
-   Use any tool surface Dify supports (custom tool, workflow tool, or built-in). The wrapper does not care how the tools are implemented; it only reads what Dify reports back in `agent_thoughts`.
+   The wrapper does not care how the tools are implemented (custom tool, workflow tool, or built-in); it only reads what Dify reports back in `agent_thoughts`.
 
 4. Publish the app and copy the API key from **API Access** in the dashboard:
 
