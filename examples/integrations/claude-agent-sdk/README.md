@@ -1,6 +1,6 @@
 # Claude Agent SDK Integration
 
-A [Claude Agent SDK](https://github.com/anthropics/claude-agent-sdk) client with two mock tools (`lookup_order`, `book_table`), wired to arksim through `ArksimClaudeHooks` so every tool call is captured in `simulation.json`. The Claude Agent SDK uses Anthropic models, so this example runs against `claude-sonnet-4-6` rather than an OpenAI model.
+A [Claude Agent SDK](https://github.com/anthropics/claude-agent-sdk) client with two mock tools (`lookup_order`, `book_table`), wired to arksim through `ArksimClaudeHooks` so every tool call is captured in `simulation.json`. The Claude Agent SDK uses Anthropic models, so this example uses Anthropic's `claude-sonnet-4-6` model by default; change in `config.yaml` if your account uses a different model name.
 
 ## Setup
 

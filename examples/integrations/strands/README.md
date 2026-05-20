@@ -11,7 +11,7 @@ A Strands `Agent` with two mock tools (`lookup_order`, `book_table`), wired to a
    pip install 'strands-agents[openai]'
    ```
 
-   Strands defaults to AWS Bedrock. This example uses `OpenAIModel` so the wiring matches the rest of the integration examples (single `OPENAI_API_KEY` env var).
+   Strands defaults to AWS Bedrock. This example uses `OpenAIModel` so the wiring matches the rest of the integration examples (single `OPENAI_API_KEY` env var). Note: the quotes around `'strands-agents[openai]'` are required on zsh; the brackets are shell glob characters.
 
 2. Set your API key:
 

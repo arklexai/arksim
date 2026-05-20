@@ -18,7 +18,7 @@ A LiveKit Agents text-mode session with two mock tools (`lookup_order`, `book_ta
    export LIVEKIT_API_SECRET="<your-livekit-secret>"
    ```
 
-   The LiveKit credentials are required by `livekit.agents.inference.LLM`, which proxies LLM calls through LiveKit Cloud. Free credentials are available at <https://cloud.livekit.io>.
+   The LiveKit credentials are required by `livekit.agents.inference.LLM`, which proxies LLM calls through LiveKit Cloud. Free credentials are available at <https://cloud.livekit.io>. LiveKit Cloud routes the LLM call through to OpenAI, but the inference cost is billed against your `OPENAI_API_KEY`, not your LiveKit credits.
 
 If `gpt-5.1` isn't available in your account, set `OPENAI_MODEL=<your-model>` and re-run, or edit `config.yaml` directly.
 
