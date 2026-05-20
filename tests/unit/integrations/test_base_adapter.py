@@ -24,11 +24,43 @@ def _tool_call(name: str = "f") -> ToolCall:
     return ToolCall(id="t1", name=name, arguments={}, source=ToolCallSource.LANGCHAIN)
 
 
-def test_submit_no_op_when_no_routing_context() -> None:
+def test_submit_no_op_when_no_routing_context(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
     receiver = MagicMock()
     adapter = BaseTracingAdapter()
-    adapter._submit(_tool_call())
+    with caplog.at_level("DEBUG", logger="arksim.tracing.integrations._base"):
+        adapter._submit(_tool_call(name="missing"))
     receiver.submit_tool_calls.assert_not_called()
+    assert any(
+        "no routing context" in r.getMessage() and "missing" in r.getMessage()
+        for r in caplog.records
+    )
+
+
+def test_submit_swallows_receiver_exception(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """Observability must never break the observed.
+
+    If the receiver raises, ``_submit`` logs and absorbs the error rather
+    than propagating it back into the SDK callback that invoked the adapter.
+    """
+    receiver = MagicMock()
+    receiver.submit_tool_calls.side_effect = RuntimeError("boom")
+    _set_trace_context("conv-1", 0, receiver=receiver)
+    adapter = BaseTracingAdapter()
+
+    with caplog.at_level("ERROR", logger="arksim.tracing.integrations._base"):
+        adapter._submit(_tool_call(name="oops"))  # must not raise
+
+    receiver.submit_tool_calls.assert_called_once()
+    assert any(
+        "receiver raised" in r.getMessage()
+        and "oops" in r.getMessage()
+        and "conv-1" in r.getMessage()
+        for r in caplog.records
+    )
 
 
 def test_submit_debug_logs_when_ids_set_but_no_receiver(
