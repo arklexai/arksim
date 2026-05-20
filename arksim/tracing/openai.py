@@ -12,6 +12,12 @@ by agents built on the OpenAI Agents SDK:
 
 Both require ``pip install openai-agents``.
 
+Note on package layout: this module predates the ``arksim.tracing.integrations``
+subpackage where the 8 SDK-specific tracing adapters (LangChain, CrewAI, Claude
+Agent SDK, Google ADK, LiveKit, Strands, LlamaIndex, Smolagents) now live. The
+OpenAI Agents SDK adapter is kept at this path for import stability; new SDK
+adapters added to arksim should live under ``arksim.tracing.integrations.<sdk>``.
+
 ---
 
 ``ArksimTracingProcessor``
