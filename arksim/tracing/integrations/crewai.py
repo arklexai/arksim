@@ -53,6 +53,17 @@ class ArksimCrewEventListener(BaseTracingAdapter, BaseEventListener):
     """
 
     def setup_listeners(self, crewai_event_bus: CrewAIEventsBus) -> None:
+        # Note: CrewAI's event bus dispatches handlers via
+        # ``ThreadPoolExecutor.submit(ctx.run, ...)`` after
+        # ``contextvars.copy_context()``, which preserves arksim's routing
+        # context (trace_conversation_id, trace_turn_id,
+        # trace_receiver_ref) across the thread boundary. The adapter's
+        # correctness depends on that copy. If CrewAI ever drops the
+        # ``copy_context()`` step (or switches to a non-context-preserving
+        # dispatch path), every CrewAI tool call will start dropping
+        # silently because the contextvars will read as None on the worker
+        # thread. The cross-adapter contract test would catch that
+        # regression.
         @crewai_event_bus.on(ToolUsageFinishedEvent)
         def _on_tool_finished(
             source: Any,  # noqa: ANN401, ARG001  (signature fixed by crewai bus)
