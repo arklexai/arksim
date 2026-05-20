@@ -87,7 +87,7 @@ class AutoGenAgent(BaseAgent):
         trace.set_tracer_provider(self._provider)
 
         model_client = OpenAIChatCompletionClient(
-            model=os.environ.get("OPENAI_MODEL", "gpt-4o")
+            model=os.environ.get("OPENAI_MODEL", "gpt-5.1")
         )
         self._agent = AssistantAgent(
             name="assistant",

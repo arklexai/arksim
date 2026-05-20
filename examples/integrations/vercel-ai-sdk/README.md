@@ -24,7 +24,7 @@ A [Vercel AI SDK](https://github.com/vercel/ai) agent running as a Node.js servi
    export OPENAI_API_KEY="<your-key>"
    ```
 
-If `gpt-4o` isn't available in your account, set `OPENAI_MODEL=<your-model>` before starting the server to override the agent's model. The simulator's own model (used for the simulated user and evaluation) is set separately by the top-level `model:` field in `config.yaml`.
+If `gpt-5.1` isn't available in your account, set `OPENAI_MODEL=<your-model>` before starting the server to override the agent's model. The simulator's own model (used for the simulated user and evaluation) is set separately by the top-level `model:` field in `config.yaml`.
 
 ## Run
 

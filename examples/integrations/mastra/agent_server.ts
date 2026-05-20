@@ -131,7 +131,7 @@ const agent = new Agent({
     "You are a helpful assistant with access to two tools: " +
     "lookup_order(order_id) and book_table(party_size, time). " +
     "Call them when relevant to answer the user.",
-  model: openai(process.env.OPENAI_MODEL ?? "gpt-4o"),
+  model: openai(process.env.OPENAI_MODEL ?? "gpt-5.1"),
   tools: { lookup_order, book_table },
 });
 
