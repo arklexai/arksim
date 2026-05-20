@@ -4,14 +4,20 @@ A [Microsoft AutoGen](https://github.com/microsoft/autogen) `AssistantAgent` wit
 
 ## Setup
 
-1. Install AutoGen and the OTel exporter:
+1. Install arksim with the OTel extra (required for the trace receiver this example uses):
+
+   ```bash
+   pip install 'arksim[otel]'
+   ```
+
+2. Install AutoGen and the OTel exporter:
 
    ```bash
    pip install autogen-agentchat autogen-ext[openai]
    pip install opentelemetry-sdk opentelemetry-exporter-otlp-proto-http
    ```
 
-2. Set your API key:
+3. Set your API key:
 
    ```bash
    export OPENAI_API_KEY="<your-key>"

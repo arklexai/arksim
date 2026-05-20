@@ -4,7 +4,13 @@ A [Mastra](https://github.com/mastra-ai/mastra) agent running as a Node.js servi
 
 ## Setup
 
-1. Install Node dependencies:
+1. Install arksim with the OTel extra (required for the trace receiver this example uses):
+
+   ```bash
+   pip install 'arksim[otel]'
+   ```
+
+2. Install Node dependencies:
 
    ```bash
    npm install
@@ -12,7 +18,7 @@ A [Mastra](https://github.com/mastra-ai/mastra) agent running as a Node.js servi
 
    This installs `@mastra/core`, `@ai-sdk/openai`, `hono`, the OpenTelemetry SDK and OTLP exporter, and `zod`.
 
-2. Set your API key:
+3. Set your API key:
 
    ```bash
    export OPENAI_API_KEY="<your-key>"
