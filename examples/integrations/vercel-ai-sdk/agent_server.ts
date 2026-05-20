@@ -148,7 +148,7 @@ app.post("/v1/chat/completions", async (c) => {
 
   return routingStore.run({ chatId, turnId }, async () => {
     const result = await generateText({
-      model: openai("gpt-4o"),
+      model: openai(process.env.OPENAI_MODEL ?? "gpt-4o"),
       messages: sessions[chatId],
       tools: { lookup_order, book_table },
       stopWhen: stepCountIs(5),

@@ -16,6 +16,7 @@ on every span so the receiver can route tool calls to the right turn.
 
 from __future__ import annotations
 
+import os
 import uuid
 
 from autogen_agentchat.agents import AssistantAgent
@@ -85,7 +86,9 @@ class AutoGenAgent(BaseAgent):
         # Set as global so tools.py picks it up via trace.get_tracer().
         trace.set_tracer_provider(self._provider)
 
-        model_client = OpenAIChatCompletionClient(model="gpt-4o")
+        model_client = OpenAIChatCompletionClient(
+            model=os.environ.get("OPENAI_MODEL", "gpt-4o")
+        )
         self._agent = AssistantAgent(
             name="assistant",
             system_message=(

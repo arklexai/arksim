@@ -15,6 +15,7 @@ turn in ``results/simulation/simulation.json``.
 
 from __future__ import annotations
 
+import os
 import uuid
 
 from agents import Agent, Runner, RunResult
@@ -41,6 +42,7 @@ class OpenAIAgentsSDKAgent(BaseAgent):
                 "lookup_order(order_id) and book_table(party_size, time). "
                 "Call them when relevant to answer the user."
             ),
+            model=os.environ.get("OPENAI_MODEL", "gpt-5.1"),
             tools=[lookup_order, book_table],
         )
         self._last_result: RunResult | None = None
