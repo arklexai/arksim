@@ -185,3 +185,21 @@ def test_non_dict_arguments_wrapped_in_value() -> None:
     args, _ = receiver.submit_tool_calls.call_args
     tc = args[2][0]
     assert tc.arguments == {"_value": "raw"}
+
+
+def test_empty_observation_preserved_as_empty_string() -> None:
+    """observations='' should round-trip as result='', distinguishable from None."""
+    receiver = MagicMock()
+    _set_trace_context("conv-1", 0, receiver=receiver)
+    observer = ArksimSmolagentsCallback()
+
+    observer(
+        _action_step(
+            tool_calls=[_smol_tool_call(arguments={"x": 1})],
+            observations="",
+        )
+    )
+
+    args, _ = receiver.submit_tool_calls.call_args
+    tc = args[2][0]
+    assert tc.result == ""

@@ -54,7 +54,7 @@ class ArksimSmolagentsCallback(BaseTracingAdapter):
             return
         tool_calls = memory_step.tool_calls or []
         observations = memory_step.observations
-        result = observations if observations else None
+        result = str(observations) if observations is not None else None
         for tc in tool_calls:
             self._submit(
                 ToolCall(
