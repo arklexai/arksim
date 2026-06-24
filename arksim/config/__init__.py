@@ -3,13 +3,23 @@
 
 from __future__ import annotations
 
-from .core.agent import A2AConfig, AgentConfig, ChatCompletionsConfig, CustomConfig
-from .types import AgentType
+from .core.agent import (
+    A2AConfig,
+    AgentConfig,
+    ChatCompletionsConfig,
+    CustomConfig,
+    SpeechProviderConfig,
+    VoiceConfig,
+)
+from .types import AgentType, VoiceFramework
 
 __all__ = [
     "AgentConfig",
     "ChatCompletionsConfig",
     "A2AConfig",
     "CustomConfig",
+    "SpeechProviderConfig",
+    "VoiceConfig",
     "AgentType",
+    "VoiceFramework",
 ]
