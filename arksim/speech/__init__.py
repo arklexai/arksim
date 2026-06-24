@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+# Import built-in providers for their registration side effects.
+from arksim.speech import providers as _providers  # noqa: E402, F401
 from arksim.speech.base import STTProvider, TTSProvider
 from arksim.speech.registry import (
     create_stt,
