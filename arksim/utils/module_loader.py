@@ -18,7 +18,9 @@ import logging
 import sys
 import types
 import uuid
+from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -85,3 +87,27 @@ def load_module_from_file(file_path: str) -> types.ModuleType:
 
     _module_cache[cache_key] = module
     return module
+
+
+def load_callable(spec: str) -> Callable[..., Any]:
+    """Resolve a ``"module_or_path:attribute"`` pointer to a callable.
+
+    The left side is a dotted module path or a ``.py`` file path; the right
+    side is the attribute name to fetch from it. A Windows drive letter
+    (``C:\\...``) also contains a colon, so the split is on the last colon.
+    """
+    if ":" not in spec:
+        raise ValueError(
+            f"Factory pointer must be 'module_or_path:attribute', got: {spec!r}"
+        )
+    target, _, attr = spec.rpartition(":")
+    if target.endswith(".py") or "/" in target or "\\" in target:
+        module = load_module_from_file(target)
+    else:
+        module = importlib.import_module(target)
+    if not hasattr(module, attr):
+        raise AttributeError(f"Module '{target}' has no attribute '{attr}'")
+    fn = getattr(module, attr)
+    if not callable(fn):
+        raise TypeError(f"'{spec}' is not callable")
+    return fn
