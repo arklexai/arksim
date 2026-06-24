@@ -60,6 +60,17 @@ langfuse = [
     # (v4). Works against self-hosted instances; no hosted-only connector.
     "langfuse>=4,<5",
 ]
+pipecat = [
+    "pipecat-ai>=1.4",
+]
+speech = [
+    "numpy",
+    "faster-whisper>=1.2",
+    "kokoro>=0.9",
+]
+voice = [
+    "arksim[pipecat,speech]",
+]
 all = [
     "arksim[azure,anthropic,google,otel,claude]",
 ]
@@ -70,6 +81,7 @@ dev = [
     "pytest-timeout",
     "pre-commit",
     "ruff",
+    "numpy",
 ]
 
 [project.scripts]
