@@ -1,0 +1,4 @@
+# For reproducible production images, pin arksim to an exact version or install
+# from a compiled lockfile (e.g. pip-compile) instead of the floor below.
+arksim>=0.3.7
+eval-hub-sdk[adapter]==0.4.0

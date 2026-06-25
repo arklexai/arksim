@@ -1,0 +1,27 @@
+# EvalHub provider registration for arksim.
+#
+# Register for a local server run with:
+#   evalhub providers create --file provider.yaml
+#
+# NOTE: this is an illustrative template. Confirm field names against your
+# EvalHub version's provider schema before relying on it in CI.
+id: arksim
+name: arksim
+description: Multi-turn agent simulation and evaluation (github.com/arklexai/arksim).
+
+runtime:
+  local:
+    command: "python main.py"
+  # k8s:
+  #   image: <your-registry>/arksim-evalhub:latest
+
+benchmarks:
+  - id: customer-service-smoke
+    description: Smoke suite of customer-service scenarios.
+    metrics:
+      - overall_agent_score
+      - goal_completion_score
+      - turn_success_ratio
+      - num_conversations
+    primary_score: overall_agent_score
+    pass_criteria: "overall_agent_score >= 0.6"

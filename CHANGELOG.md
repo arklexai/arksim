@@ -40,6 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * **tracing:** add dual attribute convention support (OTel GenAI semconv and OpenInference)
 * **tracing:** add `ToolCallSource` enum (`a2a_protocol`, `openai_agents`, `otel_trace`) for tool call provenance tracking on `ToolCall.source`
 * **examples:** add Dify chatbot integration example
+* **examples:** add EvalHub adapter integration to run arksim as an EvalHub benchmark provider (`examples/integrations/evalhub/`)
 * **evaluator:** focus file generation after evaluation for targeted reruns of failing scenarios
 * **evaluator:** scenario IDs shown in CLI error output alongside focus file paths
 * **evaluator:** error-to-scenario mappings included in `evaluation.json` output

@@ -1,0 +1,40 @@
+{
+  "id": "arksim-local-001",
+  "provider_id": "arksim",
+  "benchmark_id": "customer-service-smoke",
+  "benchmark_index": 0,
+  "callback_url": "http://localhost:8080",
+  "experiment_name": "arksim-eval",
+  "model": {
+    "url": "https://api.openai.com/v1/chat/completions",
+    "name": "gpt-4.1-mini"
+  },
+  "parameters": {
+    "protocol": "chat_completions",
+    "target_agent_name": "support-bot",
+    "target_api_key_env": "OPENAI_API_KEY",
+    "simulator_model": "gpt-4.1-mini",
+    "simulator_provider": "openai",
+    "evaluator_model": "gpt-4.1-mini",
+    "evaluator_provider": "openai",
+    "num_conversations_per_scenario": 1,
+    "max_turns": 3,
+    "metrics_to_run": ["helpfulness", "goal_completion", "agent_behavior_failure"],
+    "scenarios": [
+      {
+        "scenario_id": "order-status",
+        "user_id": "u1",
+        "goal": "Find out the delivery date for order #12345.",
+        "agent_context": "You are a customer support assistant for an online store.",
+        "user_profile": "A busy customer who is mildly impatient and wants a quick answer."
+      },
+      {
+        "scenario_id": "refund-request",
+        "user_id": "u2",
+        "goal": "Request a refund for a damaged item from order #67890.",
+        "agent_context": "You are a customer support assistant for an online store.",
+        "user_profile": "A polite customer who provides order details when asked."
+      }
+    ]
+  }
+}
