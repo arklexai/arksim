@@ -24,16 +24,16 @@
       {
         "scenario_id": "order-status",
         "user_id": "u1",
-        "goal": "Find out the delivery date for order #12345.",
+        "goal": "You placed order #12345 a few days ago and want to know exactly when it will arrive. Ask the support agent for the delivery date, and push for a specific date if the first answer is vague.",
         "agent_context": "You are a customer support assistant for an online store.",
-        "user_profile": "A busy customer who is mildly impatient and wants a quick answer."
+        "user_profile": "You are Priya, a 31-year-old nurse working long shifts. You are mildly impatient, value quick and direct answers, and get frustrated by generic responses that don't address your specific question."
       },
       {
         "scenario_id": "refund-request",
         "user_id": "u2",
-        "goal": "Request a refund for a damaged item from order #67890.",
+        "goal": "Your order #67890 arrived with a damaged item and you want a refund. Explain the problem, provide order details when the agent asks, and confirm the refund amount and timeline before ending the conversation.",
         "agent_context": "You are a customer support assistant for an online store.",
-        "user_profile": "A polite customer who provides order details when asked."
+        "user_profile": "You are Marcus, a 45-year-old small-business owner. You are polite and cooperative and provide details promptly when asked, but you expect clear confirmation and follow-through."
       }
     ]
   }

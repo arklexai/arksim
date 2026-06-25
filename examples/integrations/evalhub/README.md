@@ -21,18 +21,19 @@ Three distinct models are in play: the **target agent** (`JobSpec.model`), the
 **simulator** LLM that plays the user (`parameters.simulator_model`), and the
 **judge** LLM that scores transcripts (`parameters.evaluator_model`).
 
-## Layout
+## Files
 
-```
-arksim_evalhub/
-  mapping.py   # pure EvalHub <-> arksim transforms (no I/O), unit-tested
-  adapter.py   # FrameworkAdapter, credential resolution, the run + main()
-main.py        # container entrypoint: python main.py
-run_local.py   # run locally without k8s/Docker
-job.example.json
-provider.yaml  # provider registration template for eval-hub-server --local
-Containerfile
-```
+| File | Description |
+|------|-------------|
+| `arksim_evalhub/mapping.py` | Pure EvalHub<->arksim transforms (no I/O), unit-tested |
+| `arksim_evalhub/adapter.py` | `FrameworkAdapter`, credential resolution, the run, and `main()` |
+| `main.py` | Container entrypoint (`python main.py`) |
+| `run_local.py` | Run locally without Kubernetes or Docker |
+| `job.example.json` | Sample EvalHub JobSpec |
+| `provider.yaml` | Provider registration template for `eval-hub-server --local` |
+| `Containerfile` | Container image build |
+| `requirements.txt` | `arksim` + `eval-hub-sdk[adapter]` |
+| `tests/` | Mapping + adapter wiring tests (no LLM calls) |
 
 ## Run locally (no Kubernetes)
 
