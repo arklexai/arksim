@@ -61,7 +61,9 @@ langfuse = [
     "langfuse>=4,<5",
 ]
 pipecat = [
-    "pipecat-ai>=1.4",
+    # <2.0: the PipelineRunner driver API used by the voice driver is removed
+    # in pipecat 2.0; revisit the driver before widening this pin.
+    "pipecat-ai>=1.4,<2.0",
 ]
 speech = [
     "numpy",
