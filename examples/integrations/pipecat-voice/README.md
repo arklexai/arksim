@@ -35,7 +35,7 @@ pipecat extras install the agent's own STT/LLM/TTS services used in `agent.py`.
 ## Run
 
 ```bash
-arksim simulate-evaluate --config ./config.yaml
+arksim simulate-evaluate ./config.yaml
 ```
 
 ## Try it without an API key
