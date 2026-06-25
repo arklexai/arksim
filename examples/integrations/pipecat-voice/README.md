@@ -38,6 +38,16 @@ pipecat extras install the agent's own STT/LLM/TTS services used in `agent.py`.
 arksim simulate-evaluate --config ./config.yaml
 ```
 
+## Try it without an API key
+
+`smoke_local.py` runs the full audio loop with real local ASR + TTS and a
+deterministic brain (no LLM key, no `OPENAI_API_KEY`):
+
+```bash
+pip install 'arksim[voice]'
+python smoke_local.py
+```
+
 ## Files
 
 - `agent.py` - your Pipecat voice pipeline behind a zero-arg `build()`.
