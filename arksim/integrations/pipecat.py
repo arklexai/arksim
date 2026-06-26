@@ -6,6 +6,8 @@ import uuid
 from collections.abc import Callable
 from typing import Any
 
+import numpy as np
+
 from arksim.simulation_engine.tool_types import (
     AgentResponse,
     ToolCall,
@@ -24,6 +26,10 @@ try:
         TTSAudioRawFrame,
         TTSStartedFrame,
         TTSStoppedFrame,
+        UserStartedSpeakingFrame,
+        UserStoppedSpeakingFrame,
+        VADUserStartedSpeakingFrame,
+        VADUserStoppedSpeakingFrame,
     )
     from pipecat.pipeline.pipeline import Pipeline
     from pipecat.pipeline.runner import PipelineRunner
@@ -37,6 +43,23 @@ except ImportError as exc:  # pragma: no cover - exercised only without extras
 # Seconds to wait for one agent turn (STT -> LLM -> TTS) to produce audio.
 _TURN_TIMEOUT_S = 120.0
 _DEFAULT_SAMPLE_RATE = 24000
+# Pipecat's default audio_in_sample_rate; segmented STT writes its buffer as a
+# WAV at this rate without resampling, so injected audio must match it.
+_PIPELINE_INPUT_RATE = 16000
+
+
+def _resample(audio: AudioBuffer, target_rate: int) -> AudioBuffer:
+    """Nearest-neighbor resample a mono ``AudioBuffer`` to ``target_rate``."""
+    if audio.sample_rate == target_rate:
+        return audio
+    samples = np.asarray(audio.samples, dtype=np.float32)
+    ratio = target_rate / audio.sample_rate
+    idx = np.round(np.arange(0, len(samples) * ratio) / ratio).astype(int)
+    return AudioBuffer(
+        samples=samples[idx[idx < len(samples)]],
+        sample_rate=target_rate,
+        num_channels=1,
+    )
 
 
 class _CaptureProcessor(FrameProcessor):
@@ -135,13 +158,23 @@ class PipecatVoiceDriver:
         assert self._capture is not None
         self._capture.reset()
         audio = self._perturb(await self._tts.synthesize(user_query))
+        # The agent's segmented STT writes its buffered audio as a WAV at its
+        # own input sample rate (no resampling), so match that rate; and it
+        # segments on VAD speaking frames. Bracket the audio with both VAD and
+        # plain speaking frames so the STT transcribes and the user-context
+        # aggregator advances the turn.
+        audio = _resample(audio, _PIPELINE_INPUT_RATE)
         await self._task.queue_frames(
             [
+                VADUserStartedSpeakingFrame(),
+                UserStartedSpeakingFrame(),
                 InputAudioRawFrame(
                     audio=pcm16_bytes(audio),
-                    sample_rate=audio.sample_rate,
-                    num_channels=audio.num_channels,
-                )
+                    sample_rate=_PIPELINE_INPUT_RATE,
+                    num_channels=1,
+                ),
+                UserStoppedSpeakingFrame(),
+                VADUserStoppedSpeakingFrame(),
             ]
         )
         try:

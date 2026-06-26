@@ -43,3 +43,15 @@ async def test_driver_runs_one_turn_with_tool_call() -> None:
         assert resp2.content == "agent reply"
     finally:
         await driver.close()
+
+
+def test_resample_downsamples_to_target_rate() -> None:
+    pytest.importorskip("pipecat")
+    import numpy as np
+
+    from arksim.integrations.pipecat import _resample
+    from arksim.speech.types import AudioBuffer
+
+    out = _resample(AudioBuffer(np.zeros(2400, dtype=np.float32), 24000), 16000)
+    assert out.sample_rate == 16000
+    assert abs(len(out.samples) - 1600) <= 1
