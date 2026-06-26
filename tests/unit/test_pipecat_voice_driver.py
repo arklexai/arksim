@@ -45,6 +45,70 @@ async def test_driver_runs_one_turn_with_tool_call() -> None:
         await driver.close()
 
 
+async def test_driver_drives_vad_gated_stt() -> None:
+    """The driver must emit VAD speaking frames so a segmented STT transcribes.
+
+    Guards against regressions where the VAD bracket is dropped: a real pipecat
+    SegmentedSTTService only runs on VADUserStoppedSpeakingFrame, so without it
+    the turn would time out. No models needed.
+    """
+    pytest.importorskip("pipecat")
+    import numpy as np
+    from pipecat.frames.frames import (
+        Frame,
+        InputAudioRawFrame,
+        TTSAudioRawFrame,
+        TTSStartedFrame,
+        TTSStoppedFrame,
+        VADUserStoppedSpeakingFrame,
+    )
+    from pipecat.processors.frame_processor import FrameDirection, FrameProcessor
+
+    from arksim.integrations.pipecat import PipecatVoiceDriver
+    from arksim.speech.types import AudioBuffer
+
+    class VadGatedStt(FrameProcessor):
+        def __init__(self) -> None:
+            super().__init__()
+            self._got_audio = False
+
+        async def process_frame(self, frame: Frame, direction: FrameDirection) -> None:
+            await super().process_frame(frame, direction)
+            if isinstance(frame, InputAudioRawFrame):
+                self._got_audio = True
+                await self.push_frame(frame, direction)
+            elif isinstance(frame, VADUserStoppedSpeakingFrame) and self._got_audio:
+                self._got_audio = False
+                await self.push_frame(TTSStartedFrame(), FrameDirection.DOWNSTREAM)
+                await self.push_frame(
+                    TTSAudioRawFrame(
+                        audio=b"\x00\x00" * 800, sample_rate=16000, num_channels=1
+                    ),
+                    FrameDirection.DOWNSTREAM,
+                )
+                await self.push_frame(TTSStoppedFrame(), FrameDirection.DOWNSTREAM)
+                await self.push_frame(frame, direction)
+            else:
+                await self.push_frame(frame, direction)
+
+    class FakeTTS:
+        async def synthesize(self, text: str) -> AudioBuffer:
+            return AudioBuffer(np.zeros(2400, dtype=np.float32), 24000)
+
+    class FakeSTT:
+        async def transcribe(self, audio: AudioBuffer) -> str:
+            return "vad reply"
+
+    driver = PipecatVoiceDriver(
+        lambda: (None, [VadGatedStt()]), tts=FakeTTS(), stt=FakeSTT()
+    )
+    try:
+        resp = await driver.run_turn("hi")
+        assert resp.content == "vad reply"
+    finally:
+        await driver.close()
+
+
 def test_resample_downsamples_to_target_rate() -> None:
     pytest.importorskip("pipecat")
     import numpy as np
