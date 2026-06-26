@@ -111,6 +111,29 @@ class SimulationInput(BaseModel):
                     resolved = os.path.normpath(os.path.join(config_dir, module_path))
                 object.__setattr__(custom_cfg, "module_path", resolved)
 
+            # Resolve the file-path component of a voice agent_factory the same
+            # way. The spec is "<path-or-module>:<attr>"; only a file path
+            # (not a dotted module) is rebased.
+            voice_cfg = (
+                getattr(self.agent_config, "voice_config", None)
+                if self.agent_config
+                else None
+            )
+            factory = getattr(voice_cfg, "agent_factory", None) if voice_cfg else None
+            if factory and ":" in factory:
+                target, _, attr = factory.rpartition(":")
+                is_file = target.endswith(".py") or "/" in target or "\\" in target
+                if is_file and not os.path.isabs(target):
+                    if "agent_factory" in cli_overrides:
+                        resolved_target = os.path.abspath(target)
+                    else:
+                        resolved_target = os.path.normpath(
+                            os.path.join(config_dir, target)
+                        )
+                    object.__setattr__(
+                        voice_cfg, "agent_factory", f"{resolved_target}:{attr}"
+                    )
+
         if not self.agent_config and not self.agent_config_file_path:
             raise ValueError(
                 "Either inline agent_config or agent_config_file_path must be provided."

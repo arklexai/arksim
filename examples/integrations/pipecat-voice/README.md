@@ -25,12 +25,16 @@ volume perturbation are a planned follow-on; this example uses a clean voice.
 ## Setup
 
 ```bash
-pip install 'arksim[voice]' 'pipecat-ai[openai,whisper,silero]'
+# Apple Silicon (Whisper uses the MLX backend):
+pip install 'arksim[voice]' 'pipecat-ai[openai,mlx-whisper,silero]'
+# Linux / CUDA / CPU: use 'pipecat-ai[openai,whisper,silero]' instead.
 export OPENAI_API_KEY=...
 ```
 
 `arksim[voice]` installs the arksim-side TTS/STT (Kokoro + faster-whisper). The
-pipecat extras install the agent's own STT/LLM/TTS services used in `agent.py`.
+pipecat extras install the agent's own STT/LLM/TTS services used in `agent.py`;
+the Whisper backend is platform-specific (MLX on Apple Silicon). If you just
+want to see the loop run without keys or a backend, use `smoke_local.py` above.
 
 ## Run
 
