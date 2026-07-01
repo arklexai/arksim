@@ -41,12 +41,6 @@ async def test_voice_agent_delegates_to_driver(monkeypatch: pytest.MonkeyPatch) 
     await agent.close()
 
 
-async def test_livekit_not_implemented_in_v1() -> None:
-    agent = VoiceAgent(_cfg(framework="livekit"))
-    with pytest.raises(NotImplementedError, match="LiveKit"):
-        await agent.execute("hi")
-
-
 def test_factory_builds_voice_agent() -> None:
     from arksim.simulation_engine.agent.factory import create_agent
 

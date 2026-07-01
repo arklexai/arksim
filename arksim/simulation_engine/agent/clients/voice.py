@@ -35,7 +35,7 @@ def _build_driver_for(agent_config: AgentConfig) -> VoiceDriver:
         return PipecatVoiceDriver(
             factory, tts=create_tts(vc.tts), stt=create_stt(vc.stt)
         )
-    raise NotImplementedError("LiveKit voice support lands in v2.")
+    raise ValueError(f"Unsupported voice framework: {vc.framework}")
 
 
 class VoiceAgent(BaseAgent):

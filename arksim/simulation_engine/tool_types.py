@@ -32,9 +32,6 @@ class ToolCallSource(str, Enum):
     #: Captured from a Pipecat voice agent's function-call frames.
     PIPECAT = "pipecat"
 
-    #: Captured from a LiveKit voice agent (v2).
-    LIVEKIT = "livekit"
-
 
 class A2AToolCaptureExtension:
     """A2A AgentExtension URI for arksim's tool call capture convention.
