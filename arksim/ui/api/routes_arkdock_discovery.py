@@ -80,7 +80,22 @@ def dispatch_discovery(body: DispatchRequest) -> dict:
     """
     task_id = str(uuid.uuid4())
 
+    logger.info(
+        "POST /arkdock/attribute-discovery/run received: run_id=%s org=%s file_key=%s config=%s",
+        body.run_id,
+        body.arkdock_organization_id,
+        body.file_key,
+        body.discovery_config,
+    )
+
     cfg = ArkdockDiscoveryConfig.model_validate(body.discovery_config)
+    logger.info(
+        "discovery config parsed: method=llm_light clustering=%s k_range=(2,%d) min_support=%d model=%s",
+        cfg.clustering_method,
+        cfg.approved_top_k,
+        cfg.min_support,
+        cfg.llm_model,
+    )
 
     entry: dict = {"run_id": body.run_id, "cancelled": False, "thread": None}
     with _jobs_lock:
@@ -95,10 +110,9 @@ def dispatch_discovery(body: DispatchRequest) -> dict:
     thread.start()
 
     logger.info(
-        "arkdock discovery dispatched: run_id=%s task_id=%s file_key=%s",
+        "arkdock discovery dispatched: run_id=%s task_id=%s",
         body.run_id,
         task_id,
-        body.file_key,
     )
     return {"status": True, "task_id": task_id}
 
@@ -165,11 +179,20 @@ def _run_discovery(
 
         # Step 2: run LLM-light discovery
         pipeline = cfg.to_llm_light()
+        logger.info(
+            "LLM-light pipeline starting: run_id=%s conversations=%d embedding=%s/%s clustering=%s",
+            run_id,
+            len(conversations),
+            pipeline.embedding_provider,
+            pipeline.embedding_model or "default",
+            pipeline.clustering_method,
+        )
         result = pipeline.discover(conversations)
         logger.info(
-            "arkdock discovery found %d goals: run_id=%s",
-            len(result.goals),
+            "LLM-light pipeline complete: run_id=%s goals=%d method=%s",
             run_id,
+            len(result.goals),
+            result.method,
         )
 
         # Step 3: format and persist artifacts

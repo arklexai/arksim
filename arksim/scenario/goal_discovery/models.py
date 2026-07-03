@@ -10,29 +10,6 @@ GoalSource = Literal["clustering", "provided_intent", "llm_extraction"]
 
 
 @dataclass
-class ExtractionFact:
-    """A single structured fact extracted from one conversation by the LLM.
-
-    Fields mirror the 3a spec: attribute, value, confidence, provenance_span,
-    and source_id (which conversation this came from).
-    """
-
-    attribute: str
-    value: str
-    confidence: float
-    provenance_span: str
-    source_id: str
-
-
-@dataclass
-class ConversationExtractionResult:
-    """All facts extracted from a single conversation."""
-
-    source_id: str
-    facts: list[ExtractionFact]
-
-
-@dataclass
 class GoalCluster:
     """A discovered user goal category."""
 
