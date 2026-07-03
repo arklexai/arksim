@@ -55,8 +55,14 @@ claude = [
     # `mcp` SDK, not the standalone `fastmcp` PyPI package.
     "mcp[cli]>=1.0,<2.0",
 ]
+arkdock = [
+    # S3 download for conversations.json (ARKDOCK_S3_BUCKET env var)
+    "boto3>=1.26",
+    # Direct DB write-back to attribute_discovery_run (ARKDOCK_DB_* env vars)
+    "pymysql>=1.0",
+]
 all = [
-    "arksim[azure,anthropic,google,otel,claude]",
+    "arksim[azure,anthropic,google,otel,claude,arkdock]",
 ]
 dev = [
     "pytest",

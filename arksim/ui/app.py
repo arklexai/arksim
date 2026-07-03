@@ -16,6 +16,7 @@ from fastapi import APIRouter, FastAPI
 from fastapi.responses import FileResponse
 
 from arksim import __version__
+from arksim.ui.api.routes_arkdock_discovery import router as arkdock_discovery_router
 from arksim.ui.api.routes_evaluate import router as _oss_evaluate_router
 from arksim.ui.api.routes_filesystem import router as fs_router
 from arksim.ui.api.routes_results import router as results_router
@@ -52,6 +53,8 @@ def create_app(evaluate_router: APIRouter | None = None) -> FastAPI:
     app.include_router(fs_router, prefix="/api")
     app.include_router(ws_router, prefix="/api")
     app.include_router(version_router)
+    # Arkdock backend integration routes (prefix matches spec §14.1)
+    app.include_router(arkdock_discovery_router, prefix="/arkdock")
 
     # Serve frontend files explicitly (avoids catch-all
     # mount that intercepts WebSocket routes)
