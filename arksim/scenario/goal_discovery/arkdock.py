@@ -133,7 +133,7 @@ def to_arkdock_artifacts(result: GoalDiscoveryResult) -> dict[str, Any]:
 
     return {
         "approved_attributes": approved_attributes,
-        "failure_topics": failure_topics,
+        "failure_topics": {"knowledge_topics": failure_topics},
         "dialogue_rules": [],
         "discovery_summary": discovery_summary,
     }

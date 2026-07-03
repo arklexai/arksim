@@ -28,6 +28,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* **goal-discovery:** LLM-light goal discovery pipeline (embed → cluster → LLM name → optional merge) via `arksim.scenario.goal_discovery.LLMLightGoalDiscovery`; O(k) LLM calls instead of O(n)
+* **goal-discovery:** Arkdock backend integration via `to_arkdock_artifacts()` and `ArkdockDiscoveryConfig`; produces `approved_attributes`, `failure_topics`, `dialogue_rules`, and `discovery_summary` artifacts
+* **goal-discovery:** `ConversationInput.from_conversations_record()` and `from_maa_record()` for flexible input parsing
 * **integrations:** Claude Code integration with 6 skills (5 framework skills + arksim-simulate alias) and 6 MCP tools for IDE-native agent testing (`integrations/claude_code/`)
 * **cli:** `arksim setup-claude` command for one-command installation of Claude Code integration
 * **cli:** `arksim setup-claude --uninstall` to remove the integration
@@ -86,12 +89,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+* **goal-discovery:** LLM-heavy pipeline (`LLMHeavyGoalDiscovery`, `ConversationExtractor`, `extractor.py`, `llm_heavy.py`); LLM-light is the only discovery path going forward
 * **ui:** project root path from the UI sidebar header
 * **cleanup:** dead code (unused error message constants, `METRIC_THRESHOLD`, `UNIQUE_BUGS` enum, `flip_hist_content_only`, `LLMConfig`)
 * **examples:** hidden Unicode characters (U+200C zero-width non-joiner) from e-commerce example data files
 
 ### Fixed
 
+* **goal-discovery:** `to_arkdock_artifacts()` now wraps `failure_topics` as `{"knowledge_topics": [...]}` so `parallel_topic_queries_from_artifact()` can parse it correctly; previously returned a flat list that caused the goals endpoint to return no topic-driven goals
 * **simulator:** respect `num_conversations_per_scenario`; previously only 1 conversation was generated per scenario
 * **simulator:** fix tool-call dedup incorrectly merging or dropping distinct trace-sourced calls that share empty-string ids (Gemini, A2A without per-call ids) ([#168](https://github.com/arklexai/arksim/issues/168))
 * **chat-completions:** fix crash when endpoint returns `tool_calls` with `content=None`

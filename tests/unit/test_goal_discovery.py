@@ -692,7 +692,10 @@ class TestArkdockArtifacts:
         from arksim.scenario.goal_discovery.arkdock import to_arkdock_artifacts
 
         artifacts = to_arkdock_artifacts(self._make_result())
-        topics = artifacts["failure_topics"]
+        ft = artifacts["failure_topics"]
+        # failure_topics is wrapped as {"knowledge_topics": [...]} for arkdock-python
+        assert isinstance(ft, dict)
+        topics = ft["knowledge_topics"]
         # Both clusters have negative_emotion_count > 0
         assert len(topics) == 2
         names = {t["concept_label"] for t in topics}
