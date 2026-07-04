@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
-from arksim.scenario.goal_discovery.llm_light import LLMLightGoalDiscovery
 from arksim.scenario.goal_discovery.models import (
     ConversationInput,
     GoalCluster,
     GoalDiscoveryResult,
 )
+from arksim.scenario.goal_discovery.pipeline import GoalDiscoveryPipeline
 from arksim.scenario.goal_discovery.preprocessing import (
     clean_text,
     contains_profanity,
@@ -19,7 +19,7 @@ __all__ = [
     "ConversationInput",
     "GoalCluster",
     "GoalDiscoveryResult",
-    "LLMLightGoalDiscovery",
+    "GoalDiscoveryPipeline",
     "clean_text",
     "contains_profanity",
     "extract_first_turns",

@@ -130,7 +130,7 @@ def main() -> None:
     try:
         from arksim.scenario.goal_discovery import (
             ConversationInput,
-            LLMLightGoalDiscovery,
+            GoalDiscoveryPipeline,
             sample_conversations,
         )
         from arksim.scenario.goal_discovery.preprocessing import extract_first_turns
@@ -177,7 +177,7 @@ def main() -> None:
     print()
 
     # 5. Build and run the pipeline
-    pipeline = LLMLightGoalDiscovery(
+    pipeline = GoalDiscoveryPipeline(
         embedding_provider=args.embedding_provider,
         clustering_method=args.clustering,
         min_cluster_size=args.min_cluster_size,
@@ -190,7 +190,7 @@ def main() -> None:
         max_input=args.max_input or None,
     )
 
-    print(f"Running LLMLightGoalDiscovery (clustering={args.clustering}) ...")
+    print(f"Running GoalDiscoveryPipeline (clustering={args.clustering}) ...")
     result = pipeline.discover(conversations)
 
     print_results(result)

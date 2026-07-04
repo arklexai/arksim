@@ -3,7 +3,7 @@
 
 Converts a GoalDiscoveryResult into the artifact shape that
 attribute_discovery_run.artifacts expects (spec §17.9), and maps the
-discovery_config object from the Go dispatch request to LLMLightGoalDiscovery
+discovery_config object from the Go dispatch request to GoalDiscoveryPipeline
 constructor arguments.
 """
 
@@ -13,13 +13,13 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from arksim.scenario.goal_discovery.llm_light import LLMLightGoalDiscovery
 from arksim.scenario.goal_discovery.models import GoalDiscoveryResult
+from arksim.scenario.goal_discovery.pipeline import GoalDiscoveryPipeline
 from arksim.scenario.goal_discovery.preprocessing import is_negative_emotion
 
 
 class ArkdockDiscoveryConfig(BaseModel):
-    """Subset of LLMLightGoalDiscovery knobs exposed via discovery_config.
+    """Subset of GoalDiscoveryPipeline knobs exposed via discovery_config.
 
     Field names mirror the arkdock-python SDK's DiscoverAttributesInput so the
     Go backend can pass discovery_config through unchanged.
@@ -62,9 +62,9 @@ class ArkdockDiscoveryConfig(BaseModel):
         description="Embedding model override. None picks the provider default.",
     )
 
-    def to_llm_light(self) -> LLMLightGoalDiscovery:
-        """Build a LLMLightGoalDiscovery instance from this config."""
-        return LLMLightGoalDiscovery(
+    def to_pipeline(self) -> GoalDiscoveryPipeline:
+        """Build a GoalDiscoveryPipeline instance from this config."""
+        return GoalDiscoveryPipeline(
             embedding_provider=self.embedding_provider,
             embedding_model=self.embedding_model,
             clustering_method=self.clustering_method,

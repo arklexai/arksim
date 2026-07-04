@@ -51,7 +51,7 @@ class _MergeGroups(BaseModel):
     groups: list[list[int]]
 
 
-class LLMLightGoalDiscovery:
+class GoalDiscoveryPipeline:
     """Discover user goals via embedding clustering and LLM cluster naming.
 
     Pipeline:
@@ -123,7 +123,7 @@ class LLMLightGoalDiscovery:
                 "No qualifying first user turns found. Returning empty result."
             )
             return GoalDiscoveryResult(
-                goals=[], method="llm_light", n_input=len(conversations)
+                goals=[], method="goal_discovery", n_input=len(conversations)
             )
 
         if self.max_input and len(indexed_turns) > self.max_input:
@@ -151,16 +151,21 @@ class LLMLightGoalDiscovery:
                 "Clustering produced no clusters. Try reducing min_cluster_size."
             )
             return GoalDiscoveryResult(
-                goals=[], method="llm_light", n_input=len(conversations)
+                goals=[], method="goal_discovery", n_input=len(conversations)
             )
 
-        # Step 4: Select exemplars per cluster
+        # Step 4: Select exemplars per cluster, dropping under-sized ones.
+        # K-Means assigns every point to a cluster regardless of size, so we
+        # apply min_cluster_size here for both methods.
         exemplar_text_filter = contains_profanity if self.filter_exemplars else None
         cluster_exemplars: dict[int, list[str]] = {}
         cluster_sizes: dict[int, int] = {}
         cluster_neg_counts: dict[int, int] = {}
         for cid in cluster_ids:
             mask = labels == cid
+            size = int(np.sum(mask))
+            if size < self.min_cluster_size:
+                continue
             cluster_texts = [texts[i] for i, m in enumerate(mask.tolist()) if m]
             exemplars = select_exemplars(
                 embeddings,
@@ -171,10 +176,25 @@ class LLMLightGoalDiscovery:
                 text_filter=exemplar_text_filter,
             )
             cluster_exemplars[cid] = exemplars
-            cluster_sizes[cid] = int(np.sum(mask))
+            cluster_sizes[cid] = size
             cluster_neg_counts[cid] = sum(
                 1 for t in cluster_texts if is_negative_emotion(t)
             )
+        cluster_ids = sorted(cluster_sizes)
+        if not cluster_ids:
+            logger.warning(
+                "All clusters fell below min_cluster_size=%d. "
+                "Try reducing min_cluster_size or providing more conversations.",
+                self.min_cluster_size,
+            )
+            return GoalDiscoveryResult(
+                goals=[], method="goal_discovery", n_input=len(conversations)
+            )
+        logger.info(
+            "%d clusters passed min_cluster_size=%d filter",
+            len(cluster_ids),
+            self.min_cluster_size,
+        )
 
         # Step 5: Name clusters concurrently via LLM
         llm = LLM(model=self.llm_model, provider=self.llm_provider)
@@ -208,7 +228,7 @@ class LLMLightGoalDiscovery:
 
         return GoalDiscoveryResult(
             goals=goals,
-            method="llm_light",
+            method="goal_discovery",
             n_input=len(conversations),
             metadata={
                 "clustering_method": self.clustering_method,

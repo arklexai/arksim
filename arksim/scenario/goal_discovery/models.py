@@ -30,7 +30,7 @@ class GoalDiscoveryResult:
     """Output of a goal discovery run."""
 
     goals: list[GoalCluster]
-    method: Literal["llm_light", "llm_heavy"]
+    method: Literal["goal_discovery"]
     n_input: int
     metadata: dict = field(default_factory=dict)
 

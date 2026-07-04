@@ -9,7 +9,7 @@ scenario discovery wizard (spec §17.4 and §17.6):
 
 The dispatch endpoint starts a background thread that:
   1. Downloads conversations.json from S3 (or reads a local path in dev mode).
-  2. Runs LLMLightGoalDiscovery with knobs from discovery_config.
+  2. Runs GoalDiscoveryPipeline with knobs from discovery_config.
   3. Formats the result as the artifacts shape (spec §17.9).
   4. Writes status + artifacts back to the attribute_discovery_run row via a
      direct MySQL connection (requires ARKDOCK_DB_* env vars) or logs if the
@@ -90,7 +90,7 @@ def dispatch_discovery(body: DispatchRequest) -> dict:
 
     cfg = ArkdockDiscoveryConfig.model_validate(body.discovery_config)
     logger.info(
-        "discovery config parsed: method=llm_light clustering=%s k_range=(2,%d) min_support=%d model=%s",
+        "discovery config parsed: method=goal_discovery clustering=%s k_range=(2,%d) min_support=%d model=%s",
         cfg.clustering_method,
         cfg.approved_top_k,
         cfg.min_support,
@@ -178,7 +178,7 @@ def _run_discovery(
             return
 
         # Step 2: run LLM-light discovery
-        pipeline = cfg.to_llm_light()
+        pipeline = cfg.to_pipeline()
         logger.info(
             "LLM-light pipeline starting: run_id=%s conversations=%d embedding=%s/%s clustering=%s",
             run_id,

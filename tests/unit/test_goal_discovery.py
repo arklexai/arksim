@@ -91,7 +91,7 @@ class TestGoalDiscoveryResult:
                     prevalence=0.2,
                 ),
             ],
-            method="llm_light",
+            method="goal_discovery",
             n_input=100,
         )
 
@@ -479,10 +479,10 @@ class TestSelectExemplars:
         assert all("cluster1_" in t for t in result)
 
 
-# ── LLMLightGoalDiscovery integration (mocked LLM + embedder) ────────────────
+# ── GoalDiscoveryPipeline integration (mocked LLM + embedder) ────────────────
 
 
-class TestLLMLightGoalDiscovery:
+class TestGoalDiscoveryPipeline:
     def _fake_embeddings(self, n: int, d: int = 8) -> np.ndarray:
         rng = np.random.default_rng(42)
         e = rng.standard_normal((n, d)).astype(np.float32)
@@ -500,12 +500,12 @@ class TestLLMLightGoalDiscovery:
         ]
         return [make_conv(("user", phrases[i % len(phrases)])) for i in range(n)]
 
-    @patch("arksim.scenario.goal_discovery.llm_light.build_embedding_service")
-    @patch("arksim.scenario.goal_discovery.llm_light.LLM")
+    @patch("arksim.scenario.goal_discovery.pipeline.build_embedding_service")
+    @patch("arksim.scenario.goal_discovery.pipeline.LLM")
     def test_discover_returns_result(
         self, mock_llm_cls: MagicMock, mock_embedder_cls: MagicMock
     ) -> None:
-        from arksim.scenario.goal_discovery.llm_light import LLMLightGoalDiscovery
+        from arksim.scenario.goal_discovery.pipeline import GoalDiscoveryPipeline
 
         convs = self._make_convs(30)
         fake_emb = self._fake_embeddings(30)
@@ -522,7 +522,7 @@ class TestLLMLightGoalDiscovery:
         mock_llm.call.return_value = '{"groups": [[0], [1]]}'
         mock_llm_cls.return_value = mock_llm
 
-        pipeline = LLMLightGoalDiscovery(
+        pipeline = GoalDiscoveryPipeline(
             clustering_method="kmeans",
             k_range=(2, 3),
             min_words=1,
@@ -531,30 +531,30 @@ class TestLLMLightGoalDiscovery:
         result = pipeline.discover(convs)
 
         assert isinstance(result, GoalDiscoveryResult)
-        assert result.method == "llm_light"
+        assert result.method == "goal_discovery"
         assert result.n_input == 30
         assert len(result.goals) >= 1
 
-    @patch("arksim.scenario.goal_discovery.llm_light.build_embedding_service")
-    @patch("arksim.scenario.goal_discovery.llm_light.LLM")
+    @patch("arksim.scenario.goal_discovery.pipeline.build_embedding_service")
+    @patch("arksim.scenario.goal_discovery.pipeline.LLM")
     def test_discover_empty_input(
         self, mock_llm_cls: MagicMock, mock_embedder_cls: MagicMock
     ) -> None:
-        from arksim.scenario.goal_discovery.llm_light import LLMLightGoalDiscovery
+        from arksim.scenario.goal_discovery.pipeline import GoalDiscoveryPipeline
 
-        pipeline = LLMLightGoalDiscovery(min_words=1)
+        pipeline = GoalDiscoveryPipeline(min_words=1)
         # All conversations have no user turns
         convs = [make_conv(("assistant", "Hello")) for _ in range(5)]
         result = pipeline.discover(convs)
         assert result.goals == []
         assert result.n_input == 5
 
-    @patch("arksim.scenario.goal_discovery.llm_light.build_embedding_service")
-    @patch("arksim.scenario.goal_discovery.llm_light.LLM")
+    @patch("arksim.scenario.goal_discovery.pipeline.build_embedding_service")
+    @patch("arksim.scenario.goal_discovery.pipeline.LLM")
     def test_discover_goals_sorted_by_prevalence(
         self, mock_llm_cls: MagicMock, mock_embedder_cls: MagicMock
     ) -> None:
-        from arksim.scenario.goal_discovery.llm_light import LLMLightGoalDiscovery
+        from arksim.scenario.goal_discovery.pipeline import GoalDiscoveryPipeline
 
         convs = self._make_convs(20)
         fake_emb = self._fake_embeddings(20)
@@ -570,7 +570,7 @@ class TestLLMLightGoalDiscovery:
         mock_llm.call_async = AsyncMock(return_value=name_json)
         mock_llm_cls.return_value = mock_llm
 
-        pipeline = LLMLightGoalDiscovery(
+        pipeline = GoalDiscoveryPipeline(
             clustering_method="kmeans", k_range=(2, 2), min_words=1, merge_similar=False
         )
         result = pipeline.discover(convs)
@@ -579,16 +579,16 @@ class TestLLMLightGoalDiscovery:
         assert prevalences == sorted(prevalences, reverse=True)
 
     def test_invalid_clustering_method_raises(self) -> None:
-        from arksim.scenario.goal_discovery.llm_light import LLMLightGoalDiscovery
+        from arksim.scenario.goal_discovery.pipeline import GoalDiscoveryPipeline
 
-        pipeline = LLMLightGoalDiscovery(clustering_method="bad_method", min_words=1)
+        pipeline = GoalDiscoveryPipeline(clustering_method="bad_method", min_words=1)
         convs = self._make_convs(5)
 
         with (
             patch(
-                "arksim.scenario.goal_discovery.llm_light.build_embedding_service"
+                "arksim.scenario.goal_discovery.pipeline.build_embedding_service"
             ) as me,
-            patch("arksim.scenario.goal_discovery.llm_light.LLM"),
+            patch("arksim.scenario.goal_discovery.pipeline.LLM"),
         ):
             me.return_value.embed.return_value = self._fake_embeddings(5)
             with pytest.raises(ValueError, match="Unknown clustering_method"):
@@ -672,7 +672,7 @@ class TestArkdockArtifacts:
         ]
         return GoalDiscoveryResult(
             goals=goals,
-            method="llm_light",
+            method="goal_discovery",
             n_input=100,
             metadata={"n_clustered": 100, "n_noise": 0},
         )
@@ -717,11 +717,11 @@ class TestArkdockArtifacts:
         assert summary["failure_like_turns"] == 13  # 5 + 8
         assert summary["user_turn_count"] == 100
 
-    def test_config_maps_to_llm_light(self) -> None:
+    def test_config_maps_to_pipeline(self) -> None:
         from arksim.scenario.goal_discovery.arkdock import ArkdockDiscoveryConfig
 
         cfg = ArkdockDiscoveryConfig(approved_top_k=15, min_support=5)
-        pipeline = cfg.to_llm_light()
+        pipeline = cfg.to_pipeline()
         assert pipeline.k_range == (2, 15)
         assert pipeline.min_cluster_size == 5
 
