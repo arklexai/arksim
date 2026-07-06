@@ -180,10 +180,10 @@ def _run_discovery(
                 logger.info("arkdock discovery cancelled after load: run_id=%s", run_id)
                 return
 
-        # Step 2: run LLM-light discovery
+        # Step 2: run goal discovery
         pipeline = cfg.to_pipeline()
         logger.info(
-            "LLM-light pipeline starting: run_id=%s conversations=%d embedding=%s/%s clustering=%s",
+            "goal discovery pipeline starting: run_id=%s conversations=%d embedding=%s/%s clustering=%s",
             run_id,
             len(conversations),
             pipeline.embedding_provider,
@@ -192,7 +192,7 @@ def _run_discovery(
         )
         result = pipeline.discover(conversations)
         logger.info(
-            "LLM-light pipeline complete: run_id=%s goals=%d method=%s",
+            "goal discovery pipeline complete: run_id=%s goals=%d method=%s",
             run_id,
             len(result.goals),
             result.method,

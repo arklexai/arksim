@@ -107,7 +107,7 @@ class GoalDiscoveryPipeline:
         self.filter_exemplars = filter_exemplars
 
     def discover(self, conversations: list[ConversationInput]) -> GoalDiscoveryResult:
-        """Run the full LLM-light goal discovery pipeline.
+        """Run the full goal discovery pipeline.
 
         Args:
             conversations: Input conversations from any source schema.
@@ -115,7 +115,7 @@ class GoalDiscoveryPipeline:
         Returns:
             GoalDiscoveryResult with discovered goal clusters.
         """
-        logger.info("LLM-light discovery: %d input conversations", len(conversations))
+        logger.info("Goal discovery: %d input conversations", len(conversations))
 
         # Step 1: Extract and clean first user turns
         indexed_turns = extract_first_turns(conversations, min_words=self.min_words)

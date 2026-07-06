@@ -83,7 +83,7 @@ def to_arkdock_artifacts(result: GoalDiscoveryResult) -> dict[str, Any]:
     Maps the four artifact keys from spec §17.9:
       - approved_attributes: one entry per GoalCluster (attribute_category="goal")
       - failure_topics:      clusters with negative_emotion_count > 0
-      - dialogue_rules:      empty list (not yet supported by LLM light)
+      - dialogue_rules:      empty list (not yet supported)
       - discovery_summary:   run-level statistics from GoalDiscoveryResult.metadata
     """
     total_neg = sum(g.negative_emotion_count for g in result.goals)
