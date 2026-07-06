@@ -252,7 +252,7 @@ def _parse_record(record: dict) -> ConversationInput:
     """Detect format by key presence and dispatch to the right factory."""
     if "messages" in record:
         return ConversationInput.from_conversations_record(record)
-    return ConversationInput.from_maa_record(record)
+    return ConversationInput.from_flat_record(record)
 
 
 def _s3_download(bucket: str, key: str) -> bytes:

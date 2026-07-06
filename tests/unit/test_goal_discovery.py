@@ -282,10 +282,10 @@ class TestPreprocessing:
         assert result[0][1] == "Track my shipment please"
 
 
-# ── ConversationInput.from_maa_record ─────────────────────────────────────────
+# ── ConversationInput.from_flat_record ─────────────────────────────────────────
 
 
-class TestFromMAARecord:
+class TestFromFlatRecord:
     def _base_record(self) -> dict:
         return {
             "mcvis_id": "60494091257804828082499201313671060973",
@@ -314,24 +314,24 @@ class TestFromMAARecord:
         }
 
     def test_turns_populated(self) -> None:
-        conv = ConversationInput.from_maa_record(self._base_record())
+        conv = ConversationInput.from_flat_record(self._base_record())
         assert len(conv.turns) == 2
         assert conv.turns[0]["role"] == "user"
         assert conv.turns[0]["content"] == "What do I need to know before I buy?"
         assert conv.turns[1]["role"] == "assistant"
 
     def test_reformulated_question_in_meta(self) -> None:
-        conv = ConversationInput.from_maa_record(self._base_record())
+        conv = ConversationInput.from_flat_record(self._base_record())
         assert conv.meta["reformulated_question"] == (
             "What should I know before buying this bathroom fan motor assembly?"
         )
 
     def test_intent_in_meta(self) -> None:
-        conv = ConversationInput.from_maa_record(self._base_record())
+        conv = ConversationInput.from_flat_record(self._base_record())
         assert conv.meta["intent"] == "Product Information"
 
     def test_metadata_fields_present(self) -> None:
-        conv = ConversationInput.from_maa_record(self._base_record())
+        conv = ConversationInput.from_flat_record(self._base_record())
         assert conv.meta["page_type"] == "PIP"
         assert conv.meta["item_id"] == "341282955"
         assert conv.meta["store_id"] == "6003"
@@ -339,7 +339,7 @@ class TestFromMAARecord:
         assert conv.meta["device_type"] == "desktop"
 
     def test_none_fields_excluded_from_meta(self) -> None:
-        conv = ConversationInput.from_maa_record(self._base_record())
+        conv = ConversationInput.from_flat_record(self._base_record())
         assert "svoc_id" not in conv.meta
         assert "image_id" not in conv.meta
         assert "action_id" not in conv.meta
@@ -347,23 +347,23 @@ class TestFromMAARecord:
     def test_missing_summarized_answers(self) -> None:
         record = self._base_record()
         record["summarized_answers"] = None
-        conv = ConversationInput.from_maa_record(record)
+        conv = ConversationInput.from_flat_record(record)
         assert len(conv.turns) == 1
         assert conv.turns[0]["role"] == "user"
 
     def test_missing_user_question(self) -> None:
         record = self._base_record()
         record["user_question"] = None
-        conv = ConversationInput.from_maa_record(record)
+        conv = ConversationInput.from_flat_record(record)
         assert len(conv.turns) == 1
         assert conv.turns[0]["role"] == "assistant"
 
     def test_first_user_turn_returns_raw_question(self) -> None:
-        conv = ConversationInput.from_maa_record(self._base_record())
+        conv = ConversationInput.from_flat_record(self._base_record())
         assert conv.first_user_turn() == "What do I need to know before I buy?"
 
     def test_extract_first_turns_uses_reformulated(self) -> None:
-        conv = ConversationInput.from_maa_record(self._base_record())
+        conv = ConversationInput.from_flat_record(self._base_record())
         result = extract_first_turns(
             [conv], min_words=3, reformulated_key="reformulated_question"
         )
@@ -682,7 +682,7 @@ class TestParseRecord:
         conv = _parse_record(record)
         assert conv.first_user_turn() == "Where is my package?"
 
-    def test_no_messages_key_routes_to_maa_record(self) -> None:
+    def test_no_messages_key_routes_to_flat_record(self) -> None:
         from arksim.ui.api.routes_arkdock_discovery import _parse_record
 
         record = {

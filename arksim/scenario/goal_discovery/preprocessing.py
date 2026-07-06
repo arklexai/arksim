@@ -14,7 +14,7 @@ def extract_first_turns(
 ) -> list[tuple[int, str]]:
     """Extract (original_index, text) from each conversation.
 
-    When reformulated_key is set (e.g. "reformulated_question" for MAA data),
+    When reformulated_key is set (e.g. "reformulated_question"),
     the value at meta[reformulated_key] is used instead of the raw first user
     turn; it is already normalised and makes better embedding input.
     Falls back to the raw first user turn if the key is absent or too short.

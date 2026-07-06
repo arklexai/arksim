@@ -53,8 +53,8 @@ class GoalDiscoveryResult:
 
 USER_ROLES: frozenset[str] = frozenset({"user", "human", "customer"})
 
-# MAA meta fields carried into ConversationInput.meta
-_MAA_META_FIELDS: tuple[str, ...] = (
+# Flat-record meta fields carried into ConversationInput.meta
+_FLAT_META_FIELDS: tuple[str, ...] = (
     "intent",
     "page_type",
     "item_id",
@@ -99,14 +99,14 @@ class ConversationInput:
         return None
 
     @classmethod
-    def from_maa_record(cls, record: dict) -> ConversationInput:
-        """Build a ConversationInput from a single MAA chat history row.
+    def from_flat_record(cls, record: dict) -> ConversationInput:
+        """Build a ConversationInput from a single flat chat-log row.
 
-        The MAA schema is a flat record (one row = one user question +
-        one assistant response). The user_question becomes the user turn;
-        summarized_answers becomes the assistant turn.
+        A flat record is one row = one user question + one assistant response.
+        The user_question becomes the user turn; summarized_answers becomes the
+        assistant turn.
 
-        reformulated_user_question is the assistant-rewritten version of the
+        reformulated_user_question is an assistant-rewritten version of the
         question, already normalised for retrieval. It is stored in
         meta["reformulated_question"] so extract_first_turns() can prefer it
         over the raw user_question for embedding.
@@ -118,7 +118,7 @@ class ConversationInput:
             turns.append({"role": "assistant", "content": record["summarized_answers"]})
 
         meta: dict = {
-            k: record[k] for k in _MAA_META_FIELDS if record.get(k) is not None
+            k: record[k] for k in _FLAT_META_FIELDS if record.get(k) is not None
         }
         if record.get("reformulated_user_question"):
             meta["reformulated_question"] = record["reformulated_user_question"]

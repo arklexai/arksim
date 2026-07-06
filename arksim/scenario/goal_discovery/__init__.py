@@ -27,5 +27,5 @@ __all__ = [
     "sample_conversations",
 ]
 
-# from_maa_record is a classmethod on ConversationInput, not a standalone export.
-# Usage: ConversationInput.from_maa_record(record)
+# from_flat_record is a classmethod on ConversationInput, not a standalone export.
+# Usage: ConversationInput.from_flat_record(record)
