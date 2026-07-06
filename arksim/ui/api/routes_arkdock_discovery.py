@@ -27,10 +27,7 @@ import os
 import threading
 import uuid
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
-
-if TYPE_CHECKING:
-    pass
+from typing import Any
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -138,7 +135,8 @@ def cancel_discovery(run_id: str, body: CancelRequest) -> dict:
     if entry["run_id"] != run_id:
         raise HTTPException(status_code=400, detail="task_id / run_id mismatch")
 
-    entry["cancelled"] = True
+    with _jobs_lock:
+        entry["cancelled"] = True
     logger.info(
         "arkdock discovery cancel requested: run_id=%s task_id=%s", run_id, body.task_id
     )
@@ -156,9 +154,8 @@ def _run_discovery(
     cfg: ArkdockDiscoveryConfig,
 ) -> None:
     """Background thread: download → discover → write artifacts."""
-    _db_update_status(run_id, "running")
-
     try:
+        _db_update_status(run_id, "running")
         with _jobs_lock:
             entry = _jobs.get(task_id, {})
         if entry.get("cancelled"):
@@ -234,7 +231,14 @@ def _load_conversations(file_key: str) -> list[ConversationInput]:
         raw = path.read_bytes()
 
     records: list[dict] = json.loads(raw)
-    return [ConversationInput.from_conversations_record(r) for r in records]
+    return [_parse_record(r) for r in records]
+
+
+def _parse_record(record: dict) -> ConversationInput:
+    """Detect format by key presence and dispatch to the right factory."""
+    if "messages" in record:
+        return ConversationInput.from_conversations_record(record)
+    return ConversationInput.from_maa_record(record)
 
 
 def _s3_download(bucket: str, key: str) -> bytes:

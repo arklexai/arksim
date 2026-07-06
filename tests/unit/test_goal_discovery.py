@@ -594,6 +594,103 @@ class TestGoalDiscoveryPipeline:
             with pytest.raises(ValueError, match="Unknown clustering_method"):
                 pipeline.discover(convs)
 
+    @patch("arksim.scenario.goal_discovery.pipeline.build_embedding_service")
+    @patch("arksim.scenario.goal_discovery.pipeline.LLM")
+    def test_merge_preserves_clusters_omitted_by_llm(
+        self, mock_llm_cls: MagicMock, mock_embedder_cls: MagicMock
+    ) -> None:
+        from arksim.scenario.goal_discovery.pipeline import GoalDiscoveryPipeline
+
+        convs = self._make_convs(30)
+        fake_emb = self._fake_embeddings(30)
+
+        mock_embedder = MagicMock()
+        mock_embedder.embed.return_value = fake_emb
+        mock_embedder_cls.return_value = mock_embedder
+
+        name_json = (
+            '{"name": "Goal", "description": "desc", "intent_type": "informational"}'
+        )
+        mock_llm = MagicMock()
+        mock_llm.call_async = AsyncMock(return_value=name_json)
+        # LLM only mentions cluster 0 in groups, omitting cluster 1
+        mock_llm.call.return_value = '{"groups": [[0]]}'
+        mock_llm_cls.return_value = mock_llm
+
+        pipeline = GoalDiscoveryPipeline(
+            clustering_method="kmeans", k_range=(2, 2), min_words=1, merge_similar=True
+        )
+        result = pipeline.discover(convs)
+        assert len(result.goals) == 2
+
+    @patch("arksim.scenario.goal_discovery.pipeline.build_embedding_service")
+    @patch("arksim.scenario.goal_discovery.pipeline.LLM")
+    def test_merge_ignores_oob_indices_from_llm(
+        self, mock_llm_cls: MagicMock, mock_embedder_cls: MagicMock
+    ) -> None:
+        from arksim.scenario.goal_discovery.pipeline import GoalDiscoveryPipeline
+
+        convs = self._make_convs(30)
+        fake_emb = self._fake_embeddings(30)
+
+        mock_embedder = MagicMock()
+        mock_embedder.embed.return_value = fake_emb
+        mock_embedder_cls.return_value = mock_embedder
+
+        name_json = (
+            '{"name": "Goal", "description": "desc", "intent_type": "informational"}'
+        )
+        mock_llm = MagicMock()
+        mock_llm.call_async = AsyncMock(return_value=name_json)
+        # OOB index 99 should be ignored, not raise IndexError
+        mock_llm.call.return_value = '{"groups": [[0, 99], [1]]}'
+        mock_llm_cls.return_value = mock_llm
+
+        pipeline = GoalDiscoveryPipeline(
+            clustering_method="kmeans", k_range=(2, 2), min_words=1, merge_similar=True
+        )
+        result = pipeline.discover(convs)
+        assert len(result.goals) == 2
+
+
+# ── clusterer.best_k ──────────────────────────────────────────────────────────
+
+
+class TestBestK:
+    def test_corpus_smaller_than_min_k_does_not_raise(self) -> None:
+        from arksim.scenario.goal_discovery.clusterer import best_k
+
+        rng = np.random.default_rng(0)
+        # 4 samples but k_range starts at 5; previously caused sklearn ValueError
+        emb = rng.standard_normal((4, 8)).astype(np.float32)
+        k = best_k(emb, k_range=(5, 30))
+        assert 2 <= k <= 3  # clamped to n-1=3
+
+
+# ── routes_arkdock_discovery._parse_record ────────────────────────────────────
+
+
+class TestParseRecord:
+    def test_messages_key_routes_to_conversations_record(self) -> None:
+        from arksim.ui.api.routes_arkdock_discovery import _parse_record
+
+        record = {
+            "id": "c1",
+            "messages": [{"role": "user", "content": "Where is my package?"}],
+        }
+        conv = _parse_record(record)
+        assert conv.first_user_turn() == "Where is my package?"
+
+    def test_no_messages_key_routes_to_maa_record(self) -> None:
+        from arksim.ui.api.routes_arkdock_discovery import _parse_record
+
+        record = {
+            "user_question": "What do I need before buying?",
+            "summarized_answers": "Here is what you need.",
+        }
+        conv = _parse_record(record)
+        assert conv.first_user_turn() == "What do I need before buying?"
+
 
 # ── is_negative_emotion ───────────────────────────────────────────────────────
 

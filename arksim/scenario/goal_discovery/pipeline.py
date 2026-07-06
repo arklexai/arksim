@@ -4,7 +4,6 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-from typing import TYPE_CHECKING
 
 import numpy as np
 from pydantic import BaseModel
@@ -34,9 +33,6 @@ from arksim.scenario.goal_discovery.prompts import (
     MERGE_SIMILAR_GOALS_PROMPT,
     MERGE_SIMILAR_GOALS_SYSTEM,
 )
-
-if TYPE_CHECKING:
-    pass
 
 logger = logging.getLogger(__name__)
 
@@ -170,7 +166,7 @@ class GoalDiscoveryPipeline:
             exemplars = select_exemplars(
                 embeddings,
                 labels,
-                list(texts),
+                texts,
                 cid,
                 n=self.exemplar_count,
                 text_filter=exemplar_text_filter,
@@ -198,9 +194,15 @@ class GoalDiscoveryPipeline:
 
         # Step 5: Name clusters concurrently via LLM
         llm = LLM(model=self.llm_model, provider=self.llm_provider)
-        named = asyncio.run(
-            self._name_clusters_async(llm, cluster_ids, cluster_exemplars)
-        )
+        coro = self._name_clusters_async(llm, cluster_ids, cluster_exemplars)
+        try:
+            asyncio.get_running_loop()
+            import concurrent.futures
+
+            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+                named = pool.submit(asyncio.run, coro).result()
+        except RuntimeError:
+            named = asyncio.run(coro)
 
         # Step 6: Optionally merge near-duplicates
         if self.merge_similar and len(named) > 1:
@@ -318,13 +320,17 @@ class GoalDiscoveryPipeline:
             return named
 
         merged: dict[int, _ClusterName] = {}
+        seen_indices: set[int] = set()
         for group in merge_result.groups:
             if not group:
                 continue
-            primary_idx = max(group, key=lambda i: cluster_sizes[cids[i]])
+            valid_group = [i for i in group if 0 <= i < len(cids)]
+            if not valid_group:
+                continue
+            primary_idx = max(valid_group, key=lambda i: cluster_sizes[cids[i]])
             primary_cid = cids[primary_idx]
 
-            for idx in group:
+            for idx in valid_group:
                 if idx != primary_idx:
                     other_cid = cids[idx]
                     cluster_exemplars[primary_cid] = (
@@ -336,5 +342,10 @@ class GoalDiscoveryPipeline:
                     )
 
             merged[primary_cid] = named[primary_cid]
+            seen_indices.update(valid_group)
+
+        for idx, cid in enumerate(cids):
+            if idx not in seen_indices:
+                merged[cid] = named[cid]
 
         return merged

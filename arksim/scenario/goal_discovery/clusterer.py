@@ -95,6 +95,9 @@ def best_k(
     min_k, max_k = k_range
     max_k = min(max_k, len(embeddings) - 1)
     min_k = max(2, min_k)
+    if max_k < min_k:
+        # Corpus smaller than k_range[0]; clamp to the largest feasible k.
+        return max(2, max_k)
 
     best_score = -1.0
     best_k_val = min_k
