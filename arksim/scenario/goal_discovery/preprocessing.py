@@ -16,7 +16,7 @@ def extract_first_turns(
 
     When reformulated_key is set (e.g. "reformulated_question" for MAA data),
     the value at meta[reformulated_key] is used instead of the raw first user
-    turn — it is already normalised and makes better embedding input.
+    turn; it is already normalised and makes better embedding input.
     Falls back to the raw first user turn if the key is absent or too short.
 
     Conversations with no qualifying text are dropped.
@@ -48,7 +48,7 @@ def extract_first_turns(
     return result
 
 
-# Common profanity — whole-word match only (avoids "assassin", "classic", etc.)
+# Common profanity: whole-word match only (avoids "assassin", "classic", etc.)
 _PROFANITY_PATTERN = re.compile(
     r"\b("
     r"fuck|fucking|fucked|fucker|"
@@ -71,7 +71,7 @@ def contains_profanity(text: str) -> bool:
     return bool(_PROFANITY_PATTERN.search(text))
 
 
-# Negative sentiment words — frustration, anger, or strong dissatisfaction.
+# Negative sentiment words: frustration, anger, or strong dissatisfaction.
 _NEGATIVE_SENTIMENT_PATTERN = re.compile(
     r"\b("
     r"frustrated|frustrating|frustration|"

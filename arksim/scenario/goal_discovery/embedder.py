@@ -49,7 +49,7 @@ class OpenAIEmbeddingService(BaseEmbeddingService):
     """Embedding via OpenAI API (text-embedding-3-small by default).
 
     Requires OPENAI_API_KEY. No local model or torch dependency.
-    Costs ~$0.02 per 1M tokens — negligible for typical corpus sizes.
+    Costs ~$0.02 per 1M tokens, negligible for typical corpus sizes.
     """
 
     def __init__(self, model_name: str = "text-embedding-3-small") -> None:

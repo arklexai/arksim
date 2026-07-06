@@ -28,7 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-* **goal-discovery:** LLM-light goal discovery pipeline (embed → cluster → LLM name → optional merge) via `arksim.scenario.goal_discovery.LLMLightGoalDiscovery`; O(k) LLM calls instead of O(n)
+* **goal-discovery:** LLM-light goal discovery pipeline (embed → cluster → LLM name → optional merge) via `arksim.scenario.goal_discovery.GoalDiscoveryPipeline`; O(k) LLM calls instead of O(n)
 * **goal-discovery:** Arkdock backend integration via `to_arkdock_artifacts()` and `ArkdockDiscoveryConfig`; produces `approved_attributes`, `failure_topics`, `dialogue_rules`, and `discovery_summary` artifacts
 * **goal-discovery:** `ConversationInput.from_conversations_record()` and `from_maa_record()` for flexible input parsing
 * **integrations:** Claude Code integration with 6 skills (5 framework skills + arksim-simulate alias) and 6 MCP tools for IDE-native agent testing (`integrations/claude_code/`)

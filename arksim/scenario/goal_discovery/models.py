@@ -106,8 +106,8 @@ class ConversationInput:
         one assistant response). The user_question becomes the user turn;
         summarized_answers becomes the assistant turn.
 
-        reformulated_user_question — the assistant-rewritten version of the
-        question, already normalised for retrieval — is stored in
+        reformulated_user_question is the assistant-rewritten version of the
+        question, already normalised for retrieval. It is stored in
         meta["reformulated_question"] so extract_first_turns() can prefer it
         over the raw user_question for embedding.
         """
@@ -130,9 +130,9 @@ class ConversationInput:
         """Build a ConversationInput from a conversations-sample.json record.
 
         Schema:
-          id, created_at, modified_at, user_rating  — carried into meta
-          messages  — list of {role, content, intent?} turns
-          category, tags  — optional top-level fields, carried into meta
+          id, created_at, modified_at, user_rating: carried into meta
+          messages: list of {role, content, intent?} turns
+          category, tags: optional top-level fields, carried into meta
 
         The intent from the first user message is stored in meta["intent"]
         so extract_first_turns() and the dry-run preview can read it.

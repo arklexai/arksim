@@ -4,7 +4,7 @@ from __future__ import annotations
 CLUSTER_NAMING_SYSTEM = """\
 You are a product analyst categorizing user goals for a conversational AI assistant.
 Given a set of real user messages, identify the single underlying goal they share.
-Respond with valid JSON only — no commentary, no markdown fences.\
+Respond with valid JSON only. No commentary, no markdown fences.\
 """
 
 CLUSTER_NAMING_PROMPT = """\
@@ -28,7 +28,7 @@ Example:
 MERGE_SIMILAR_GOALS_SYSTEM = """\
 You are a product analyst consolidating a list of user goal categories.
 Your job is to merge goals that are semantically equivalent or too similar to be distinct.
-Respond with valid JSON only — no commentary, no markdown fences.\
+Respond with valid JSON only. No commentary, no markdown fences.\
 """
 
 MERGE_SIMILAR_GOALS_PROMPT = """\

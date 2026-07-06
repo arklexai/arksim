@@ -87,6 +87,11 @@ class GoalDiscoveryPipeline:
         max_input: int | None = None,
         filter_exemplars: bool = True,
     ) -> None:
+        if clustering_method not in ("hdbscan", "kmeans"):
+            raise ValueError(
+                f"Unknown clustering_method: {clustering_method!r}. "
+                "Use 'hdbscan' or 'kmeans'."
+            )
         self.embedding_model = embedding_model
         self.embedding_provider = embedding_provider
         self.clustering_method = clustering_method
@@ -129,6 +134,15 @@ class GoalDiscoveryPipeline:
         indices, texts = zip(*indexed_turns, strict=False)
         texts = [clean_text(t) for t in texts]
         logger.info("Extracted %d qualifying first turns", len(texts))
+
+        if len(texts) < 2:
+            logger.warning(
+                "Too few qualifying turns (%d) to cluster; need at least 2.",
+                len(texts),
+            )
+            return GoalDiscoveryResult(
+                goals=[], method="goal_discovery", n_input=len(conversations)
+            )
 
         # Step 2: Embed
         embedder = build_embedding_service(
@@ -194,15 +208,20 @@ class GoalDiscoveryPipeline:
 
         # Step 5: Name clusters concurrently via LLM
         llm = LLM(model=self.llm_model, provider=self.llm_provider)
-        coro = self._name_clusters_async(llm, cluster_ids, cluster_exemplars)
         try:
             asyncio.get_running_loop()
+        except RuntimeError:
+            named = asyncio.run(
+                self._name_clusters_async(llm, cluster_ids, cluster_exemplars)
+            )
+        else:
             import concurrent.futures
 
             with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
-                named = pool.submit(asyncio.run, coro).result()
-        except RuntimeError:
-            named = asyncio.run(coro)
+                named = pool.submit(
+                    asyncio.run,
+                    self._name_clusters_async(llm, cluster_ids, cluster_exemplars),
+                ).result()
 
         # Step 6: Optionally merge near-duplicates
         if self.merge_similar and len(named) > 1:
@@ -324,7 +343,9 @@ class GoalDiscoveryPipeline:
         for group in merge_result.groups:
             if not group:
                 continue
-            valid_group = [i for i in group if 0 <= i < len(cids)]
+            valid_group = [
+                i for i in group if 0 <= i < len(cids) and i not in seen_indices
+            ]
             if not valid_group:
                 continue
             primary_idx = max(valid_group, key=lambda i: cluster_sizes[cids[i]])

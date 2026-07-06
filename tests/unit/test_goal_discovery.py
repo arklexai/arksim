@@ -581,18 +581,19 @@ class TestGoalDiscoveryPipeline:
     def test_invalid_clustering_method_raises(self) -> None:
         from arksim.scenario.goal_discovery.pipeline import GoalDiscoveryPipeline
 
-        pipeline = GoalDiscoveryPipeline(clustering_method="bad_method", min_words=1)
-        convs = self._make_convs(5)
+        with pytest.raises(ValueError, match="Unknown clustering_method"):
+            GoalDiscoveryPipeline(clustering_method="bad_method", min_words=1)
 
-        with (
-            patch(
-                "arksim.scenario.goal_discovery.pipeline.build_embedding_service"
-            ) as me,
-            patch("arksim.scenario.goal_discovery.pipeline.LLM"),
-        ):
-            me.return_value.embed.return_value = self._fake_embeddings(5)
-            with pytest.raises(ValueError, match="Unknown clustering_method"):
-                pipeline.discover(convs)
+    def test_discover_single_turn_returns_empty(self) -> None:
+        from arksim.scenario.goal_discovery.pipeline import GoalDiscoveryPipeline
+
+        pipeline = GoalDiscoveryPipeline(
+            clustering_method="kmeans", k_range=(2, 3), min_words=1
+        )
+        convs = [make_conv(("user", "I need help with my order"))]
+        result = pipeline.discover(convs)
+        assert result.goals == []
+        assert result.n_input == 1
 
     @patch("arksim.scenario.goal_discovery.pipeline.build_embedding_service")
     @patch("arksim.scenario.goal_discovery.pipeline.LLM")

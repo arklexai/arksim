@@ -153,14 +153,19 @@ def _run_discovery(
     file_key: str,
     cfg: ArkdockDiscoveryConfig,
 ) -> None:
-    """Background thread: download → discover → write artifacts."""
+    """Background thread: download -> discover -> write artifacts."""
     try:
-        _db_update_status(run_id, "running")
+        # Check cancellation under lock before any DB write to avoid overwriting
+        # a 'cancelled' status that Go may have set before this thread started.
         with _jobs_lock:
             entry = _jobs.get(task_id, {})
-        if entry.get("cancelled"):
-            logger.info("arkdock discovery cancelled before start: run_id=%s", run_id)
-            return
+            if entry.get("cancelled"):
+                logger.info(
+                    "arkdock discovery cancelled before start: run_id=%s", run_id
+                )
+                return
+
+        _db_update_status(run_id, "running")
 
         # Step 1: load conversations
         conversations = _load_conversations(file_key)
@@ -170,9 +175,10 @@ def _run_discovery(
             run_id,
         )
 
-        if entry.get("cancelled"):
-            logger.info("arkdock discovery cancelled after load: run_id=%s", run_id)
-            return
+        with _jobs_lock:
+            if entry.get("cancelled"):
+                logger.info("arkdock discovery cancelled after load: run_id=%s", run_id)
+                return
 
         # Step 2: run LLM-light discovery
         pipeline = cfg.to_pipeline()
@@ -192,7 +198,15 @@ def _run_discovery(
             result.method,
         )
 
-        # Step 3: format and persist artifacts
+        # Step 3: format and persist artifacts. Check cancellation first to avoid
+        # overwriting a 'cancelled' status that Go set while the pipeline ran.
+        with _jobs_lock:
+            if entry.get("cancelled"):
+                logger.info(
+                    "arkdock discovery cancelled after pipeline: run_id=%s", run_id
+                )
+                return
+
         artifacts = to_arkdock_artifacts(result)
         _db_write_success(run_id, artifacts)
 
@@ -215,7 +229,7 @@ def _load_conversations(file_key: str) -> list[ConversationInput]:
       2. Otherwise treat file_key as a local filesystem path (dev mode).
 
     The file must be a JSON array whose items follow the conversations-sample
-    schema (id, messages, ...) — the same format produced by convert_bitext.py.
+    schema (id, messages, ...), the same format produced by convert_bitext.py.
     """
     raw: bytes
 
@@ -259,8 +273,8 @@ def _s3_download(bucket: str, key: str) -> bytes:
 # Writes status transitions and artifacts directly to the Go backend's MySQL DB.
 # Requires env vars: ARKDOCK_DB_HOST, ARKDOCK_DB_PORT, ARKDOCK_DB_USER,
 #                    ARKDOCK_DB_PASSWORD, ARKDOCK_DB_NAME.
-# Without those vars the calls are no-ops and a warning is logged — useful for
-# running the discovery pipeline locally without a backend DB.
+# Without those vars the calls are no-ops and a warning is logged. This is
+# useful for running the discovery pipeline locally without a backend DB.
 
 
 def _db_connection() -> object | None:
@@ -301,7 +315,7 @@ def _db_update_status(
     conn = _db_connection()
     if conn is None:
         logger.warning(
-            "ARKDOCK_DB_HOST not set — skipping DB status update: run_id=%s status=%s",
+            "ARKDOCK_DB_HOST not set; skipping DB status update: run_id=%s status=%s",
             run_id,
             status,
         )
@@ -328,7 +342,7 @@ def _db_write_success(run_id: str, artifacts: dict[str, Any]) -> None:
     conn = _db_connection()
     if conn is None:
         logger.warning(
-            "ARKDOCK_DB_HOST not set — discovery artifacts not persisted: run_id=%s",
+            "ARKDOCK_DB_HOST not set; discovery artifacts not persisted: run_id=%s",
             run_id,
         )
         logger.info("artifacts: %s", json.dumps(artifacts, indent=2))
