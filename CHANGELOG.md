@@ -89,7 +89,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
-* **goal-discovery:** LLM-heavy pipeline (`LLMHeavyGoalDiscovery`, `ConversationExtractor`, `extractor.py`, `llm_heavy.py`); the clustering pipeline is the only discovery path going forward
 * **ui:** project root path from the UI sidebar header
 * **cleanup:** dead code (unused error message constants, `METRIC_THRESHOLD`, `UNIQUE_BUGS` enum, `flip_hist_content_only`, `LLMConfig`)
 * **examples:** hidden Unicode characters (U+200C zero-width non-joiner) from e-commerce example data files
