@@ -229,7 +229,7 @@ def _load_conversations(file_key: str) -> list[ConversationInput]:
       2. Otherwise treat file_key as a local filesystem path (dev mode).
 
     The file must be a JSON array whose items follow the conversations-sample
-    schema (id, messages, ...), the same format produced by convert_bitext.py.
+    schema (id, messages, ...).
     """
     raw: bytes
 
