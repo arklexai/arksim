@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* **integrations:** Langfuse exporter (`arksim[langfuse]`) that maps scenarios to dataset items, conversations to traces via the Langfuse dataset-run/experiment API, and evaluation results to trace and turn scores; works against self-hosted Langfuse with the public SDK (`arksim.integrations.langfuse`)
 * **integrations:** Claude Code integration with 6 skills (5 framework skills + arksim-simulate alias) and 6 MCP tools for IDE-native agent testing (`integrations/claude_code/`)
 * **cli:** `arksim setup-claude` command for one-command installation of Claude Code integration
 * **cli:** `arksim setup-claude --uninstall` to remove the integration
