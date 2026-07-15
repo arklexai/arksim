@@ -5,6 +5,13 @@ All notable changes to ArkSim will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.8](https://github.com/arklexai/arksim/compare/v0.3.7...v0.3.8) (2026-07-15)
+
+
+### Added
+
+* **integrations:** add Langfuse integration ([#186](https://github.com/arklexai/arksim/issues/186)) ([8d426f2](https://github.com/arklexai/arksim/commit/8d426f2e863f1b1110bf76aa99143c6072bd6d49))
+
 ## [0.3.7](https://github.com/arklexai/arksim/compare/v0.3.6...v0.3.7) (2026-05-18)
 
 
