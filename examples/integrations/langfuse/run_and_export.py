@@ -17,7 +17,7 @@ Self-contained OpenAI setup (agent-under-test is a second OpenAI model):
     export LANGFUSE_PUBLIC_KEY=pk-lf-...
     export LANGFUSE_SECRET_KEY=sk-lf-...
 
-    python examples/langfuse/run_and_export.py
+    python examples/integrations/langfuse/run_and_export.py
 
 Optional overrides (sensible defaults shown):
 

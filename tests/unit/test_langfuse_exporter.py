@@ -382,3 +382,21 @@ def test_missing_langfuse_raises_helpful_error(
     monkeypatch.setattr(builtins, "__import__", fake_import)
     with pytest.raises(ImportError, match=r"arksim\[langfuse\]"):
         LangfuseExporter()
+
+
+def test_top_level_lazy_exports() -> None:
+    """The exporter is exposed via arksim's _LAZY_IMPORTS convention."""
+    import arksim
+    from arksim.integrations.langfuse import exporter
+
+    assert "LangfuseExporter" in arksim.__all__
+    assert "export_to_langfuse" in arksim.__all__
+    assert arksim.LangfuseExporter is exporter.LangfuseExporter
+    assert arksim.export_to_langfuse is exporter.export_to_langfuse
+
+
+def test_top_level_unknown_attribute_raises() -> None:
+    import arksim
+
+    with pytest.raises(AttributeError, match="has no attribute"):
+        _ = arksim.DoesNotExist

@@ -19,7 +19,7 @@ Usage:
     export LANGFUSE_HOST=http://localhost:3000
     export LANGFUSE_PUBLIC_KEY=pk-lf-...
     export LANGFUSE_SECRET_KEY=sk-lf-...
-    python examples/langfuse/export_to_langfuse.py
+    python examples/integrations/langfuse/export_to_langfuse.py
 """
 
 from __future__ import annotations

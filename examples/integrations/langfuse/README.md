@@ -37,7 +37,7 @@ export LANGFUSE_HOST=http://localhost:3000
 export LANGFUSE_PUBLIC_KEY=pk-lf-xxxxxxxx
 export LANGFUSE_SECRET_KEY=sk-lf-xxxxxxxx
 
-python examples/langfuse/export_to_langfuse.py
+python examples/integrations/langfuse/export_to_langfuse.py
 ```
 
 You should see `Export complete.` followed by a run summary. In the Langfuse
@@ -64,7 +64,7 @@ export LANGFUSE_HOST=http://localhost:3000
 export LANGFUSE_PUBLIC_KEY=pk-lf-...
 export LANGFUSE_SECRET_KEY=sk-lf-...
 
-python examples/langfuse/run_and_export.py
+python examples/integrations/langfuse/run_and_export.py
 ```
 
 Optional overrides: `ARKSIM_MODEL`, `ARKSIM_PROVIDER`, `AGENT_MODEL`,
