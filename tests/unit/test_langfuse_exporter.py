@@ -221,7 +221,7 @@ def _convo_eval(conversation_id: str) -> ConversationEvaluation:
                 turn_id=1,
                 scores=[QuantResult(name="coherence", value=5.0, reason="clear")],
                 turn_score=5.0,
-                turn_behavior_failure="skipped_good_performance",
+                turn_behavior_failure="incorrect_tool_usage",
                 turn_behavior_failure_reason="",
                 qual_scores=[QualResult(name="tone", value="professional")],
             ),
@@ -321,6 +321,19 @@ def test_attaches_scores(
     )
     assert any(
         sc["name"] == "tone" and sc["data_type"] == "CATEGORICAL"
+        for s in turn1
+        for sc in s.scores
+    )
+
+    # sentinel behavior-failure labels (SKIP_OUTCOMES) are not exported
+    assert not any(
+        sc["name"] == "turn_behavior_failure" for s in turn0 for sc in s.scores
+    )
+    # real failure labels are exported as categorical scores
+    assert any(
+        sc["name"] == "turn_behavior_failure"
+        and sc["value"] == "incorrect_tool_usage"
+        and sc["data_type"] == "CATEGORICAL"
         for s in turn1
         for sc in s.scores
     )

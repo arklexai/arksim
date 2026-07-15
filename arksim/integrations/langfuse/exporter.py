@@ -33,6 +33,7 @@ import logging
 from collections import defaultdict
 from typing import TYPE_CHECKING, Any
 
+from arksim.evaluator.utils.constants import SKIP_OUTCOMES
 from arksim.scenario.entities import AssertionType, Scenario, Scenarios
 from arksim.simulation_engine.entities import Conversation, Message, Simulation
 
@@ -204,7 +205,12 @@ class LangfuseExporter:
                     data_type="NUMERIC",
                     comment=q.reason,
                 )
-            if turn_eval.turn_behavior_failure:
+            # turn_behavior_failure is always a non-empty string; sentinel
+            # values in SKIP_OUTCOMES mean the turn had no actionable failure.
+            if (
+                turn_eval.turn_behavior_failure
+                and turn_eval.turn_behavior_failure not in SKIP_OUTCOMES
+            ):
                 turn_span.score(
                     name="turn_behavior_failure",
                     value=turn_eval.turn_behavior_failure,

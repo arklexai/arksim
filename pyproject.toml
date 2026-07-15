@@ -61,7 +61,7 @@ langfuse = [
     "langfuse>=4,<5",
 ]
 all = [
-    "arksim[azure,anthropic,google,otel,claude,langfuse]",
+    "arksim[azure,anthropic,google,otel,claude]",
 ]
 dev = [
     "pytest",
