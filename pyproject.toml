@@ -55,6 +55,11 @@ claude = [
     # `mcp` SDK, not the standalone `fastmcp` PyPI package.
     "mcp[cli]>=1.0,<2.0",
 ]
+langfuse = [
+    # Export simulations + evaluation scores to Langfuse via the public SDK
+    # (v4). Works against self-hosted instances; no hosted-only connector.
+    "langfuse>=4,<5",
+]
 all = [
     "arksim[azure,anthropic,google,otel,claude]",
 ]
@@ -101,6 +106,12 @@ ignore = [
   "E501",  # Line too long (managed by ruff format)
   "UP045", # Use X | None instead of Optional[X] - keep for compatibility
 ]
+
+[tool.ruff.lint.per-file-ignores]
+# The optional Langfuse SDK is not a runtime import and is untyped here, so
+# its client/spans/results are annotated as `Any` at the integration boundary.
+"arksim/integrations/langfuse/*" = ["ANN401"]
+"tests/unit/test_langfuse_exporter.py" = ["ANN401"]
 
 [tool.coverage.run]
 source = ["arksim", "integrations"]
