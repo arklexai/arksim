@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0",
+  "scenarios": [
+    {
+      "scenario_id": "nvda_filing_001",
+      "user_id": "user_001",
+      "goal": "Assess NVIDIA's near-term bull and bear case after the latest quarter using the filing only.",
+      "user_profile": "Hedge fund analyst",
+      "agent_context": "Provide a balanced filing-grounded analysis.",
+      "knowledge": [
+        { "title": "company", "content": "NVIDIA" },
+        { "title": "ticker", "content": "NVDA" },
+        { "title": "reports_dir", "content": "./data/reports" }
+      ]
+    }
+  ]
+}

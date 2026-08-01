@@ -1,0 +1,47 @@
+[
+  {
+    "scenario_id": "hf_analyst_nvda_qoq",
+    "user_profile": {
+      "role": "Hedge Fund Analyst",
+      "style": "direct, skeptical, catalyst-driven",
+      "risk_tolerance": "high"
+    },
+    "task": {
+      "company": "NVIDIA",
+      "ticker": "NVDA",
+      "goal": "Assess near-term upside/downside after latest earnings",
+      "constraints": [
+        "Use both filings and recent news",
+        "Highlight bull, bear, and key risks",
+        "Do not fabricate price targets"
+      ]
+    },
+    "context": {
+      "reports_dir": "./data/reports",
+      "report_file_pattern": "nvda_*.pdf"
+    }
+  },
+  {
+    "scenario_id": "long_only_pm_nvda_thesis",
+    "user_profile": {
+      "role": "Long Only PM",
+      "style": "thesis-driven, medium-term",
+      "risk_tolerance": "medium"
+    },
+    "task": {
+      "company": "NVIDIA",
+      "ticker": "NVDA",
+      "goal": "Form a 6-12 month investment view",
+      "constraints": [
+        "Focus on business quality and durability",
+        "Use financial statement evidence",
+        "Mention valuation uncertainty"
+      ]
+    },
+    "context": {
+      "pdf_paths": ["./data/reports/nvda_10k.pdf"],
+      "dataset_hint": "income_statement, balance_sheet, cash_flow",
+      "web_search": true
+    }
+  }
+]
