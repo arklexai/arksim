@@ -1,0 +1,40 @@
+{
+  "id": "arksim-local-001",
+  "provider_id": "arksim",
+  "benchmark_id": "customer-service-smoke",
+  "benchmark_index": 0,
+  "callback_url": "http://localhost:8080",
+  "experiment_name": "arksim-eval",
+  "model": {
+    "url": "https://api.openai.com/v1/chat/completions",
+    "name": "gpt-4.1-mini"
+  },
+  "parameters": {
+    "protocol": "chat_completions",
+    "target_agent_name": "support-bot",
+    "target_api_key_env": "OPENAI_API_KEY",
+    "simulator_model": "gpt-4.1-mini",
+    "simulator_provider": "openai",
+    "evaluator_model": "gpt-4.1-mini",
+    "evaluator_provider": "openai",
+    "num_conversations_per_scenario": 1,
+    "max_turns": 3,
+    "metrics_to_run": ["helpfulness", "goal_completion", "agent_behavior_failure"],
+    "scenarios": [
+      {
+        "scenario_id": "order-status",
+        "user_id": "u1",
+        "goal": "You placed order #12345 a few days ago and want to know exactly when it will arrive. Ask the support agent for the delivery date, and push for a specific date if the first answer is vague.",
+        "agent_context": "You are a customer support assistant for an online store.",
+        "user_profile": "You are Priya, a 31-year-old nurse working long shifts. You are mildly impatient, value quick and direct answers, and get frustrated by generic responses that don't address your specific question."
+      },
+      {
+        "scenario_id": "refund-request",
+        "user_id": "u2",
+        "goal": "Your order #67890 arrived with a damaged item and you want a refund. Explain the problem, provide order details when the agent asks, and confirm the refund amount and timeline before ending the conversation.",
+        "agent_context": "You are a customer support assistant for an online store.",
+        "user_profile": "You are Marcus, a 45-year-old small-business owner. You are polite and cooperative and provide details promptly when asked, but you expect clear confirmation and follow-through."
+      }
+    ]
+  }
+}

@@ -170,6 +170,8 @@ See the [integration README](integrations/claude_code/README.md) for the install
 | [Mastra](https://github.com/arklexai/arksim/tree/main/examples/integrations/mastra) | TypeScript |
 | [Vercel AI SDK](https://github.com/arklexai/arksim/tree/main/examples/integrations/vercel-ai-sdk) | TypeScript |
 
+ArkSim also runs as a provider *inside* eval platforms: [EvalHub](https://github.com/arklexai/arksim/tree/main/examples/integrations/evalhub).
+
 See [examples](https://github.com/arklexai/arksim/tree/main/examples) for end-to-end projects with custom metrics and scenarios.
 
 ## Learn More

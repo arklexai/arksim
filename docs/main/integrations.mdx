@@ -68,6 +68,16 @@ This example uses the `custom` connector with a `BaseAgent` subclass that forwar
   </Card>
 </CardGroup>
 
+## Eval platform integrations
+
+These examples run ArkSim *inside* another evaluation platform as a provider, rather than connecting ArkSim to your agent. ArkSim performs the multi-turn simulation and scoring; the platform schedules the job and stores the results.
+
+<CardGroup cols={2}>
+  <Card icon="layer-group" href="https://github.com/arklexai/arksim/tree/main/examples/integrations/evalhub/" title="EvalHub">
+    Run ArkSim as a benchmark provider in EvalHub, reporting aggregate metrics plus transcripts and an HTML report to MLflow.
+  </Card>
+</CardGroup>
+
 ---
 
 For details on each connection type, see [Agent configuration](./simulate-conversation#agent-configuration).

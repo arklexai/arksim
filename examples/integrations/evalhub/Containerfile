@@ -1,0 +1,21 @@
+# Containerfile for the arksim EvalHub adapter.
+# Build:  podman build -t arksim-evalhub:latest .
+# EvalHub runs the image, mounts the JobSpec at $EVALHUB_JOB_SPEC_PATH
+# (default /meta/job.json) and the model secret at /var/run/secrets/model.
+FROM python:3.11-slim
+
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY arksim_evalhub ./arksim_evalhub
+COPY main.py .
+
+# Run as non-root so a process compromise can't trivially read the mounted
+# model secret. For production, also pin the base image by digest
+# (FROM python:3.11-slim@sha256:...).
+RUN useradd --create-home --shell /usr/sbin/nologin appuser
+USER appuser
+
+CMD ["python", "main.py"]
