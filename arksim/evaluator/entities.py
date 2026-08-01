@@ -29,6 +29,31 @@ from .base_metric import (
 
 _entities_logger = logging.getLogger(__name__)
 
+
+def _norm_endpoint_value(value: str | None) -> str | None:
+    """Normalize an endpoint field for comparison.
+
+    Returns the stripped value when non-empty after stripping; otherwise
+    ``None``. This treats ``None``, ``""``, and whitespace-only as
+    equivalent ("unset"), matching the whitespace-stripping behavior of
+    the OpenAI provider so users do not silently trigger endpoint-split
+    semantics by typing trailing whitespace.
+    """
+    if value is None:
+        return None
+    stripped = value.strip()
+    return stripped if stripped else None
+
+
+# Canonical LLM kwarg names returned by ``EvaluationInput.evaluator_llm_kwargs``.
+# Adding a new field here requires also adding a matching ``evaluator_<field>``
+# attribute to ``EvaluationInput``; the same-endpoint branch of the helper
+# iterates this tuple so it picks the new field up automatically. The
+# endpoint-differs branch is intentionally explicit because ``base_url`` and
+# ``api_key`` have special "do not cross-inherit" credential semantics.
+_LLM_KWARG_FIELDS: tuple[str, ...] = ("model", "provider", "base_url", "api_key")
+
+
 _DEFAULT_METRICS_TO_RUN = [
     "faithfulness",
     "helpfulness",
@@ -57,6 +82,56 @@ class EvaluationInput(BaseModel):
     )
     model: str = Field(default=DEFAULT_MODEL, description="LLM model for evaluation")
     provider: str | None = Field(default=DEFAULT_PROVIDER, description="LLM provider")
+    base_url: str | None = Field(
+        default=None,
+        description=(
+            "Optional custom endpoint for the evaluator LLM. Use to point at any "
+            "Open Responses-conforming backend (Ollama, vLLM, NVIDIA NIM, Vercel AI "
+            "Gateway, OpenRouter, etc.). Defaults to the SDK's env var "
+            "(OPENAI_BASE_URL) or the canonical provider endpoint."
+        ),
+    )
+    api_key: str | None = Field(
+        default=None,
+        description=(
+            "Optional API key for the evaluator LLM. Pair with base_url for "
+            "self-hosted or alternate Responses backends. Defaults to the SDK's "
+            "env var (OPENAI_API_KEY)."
+        ),
+    )
+    evaluator_model: str | None = Field(
+        default=None,
+        description=(
+            "Optional override for the evaluator's LLM model. When unset, "
+            "falls back to `model`."
+        ),
+    )
+    evaluator_provider: str | None = Field(
+        default=None,
+        description=(
+            "Optional override for the evaluator's LLM provider. Useful when "
+            "the simulator runs on a backend that does not support structured "
+            "output, while the evaluator needs OpenAI-compatible `text_format` "
+            "support. When set with a value that differs from `provider`, the "
+            "shared `base_url` and `api_key` are NOT forwarded; specify "
+            "`evaluator_base_url` / `evaluator_api_key` explicitly or rely on "
+            "SDK env-var fallback."
+        ),
+    )
+    evaluator_base_url: str | None = Field(
+        default=None,
+        description=(
+            "Optional override for the evaluator LLM's custom endpoint. "
+            "When unset, falls back to `base_url`."
+        ),
+    )
+    evaluator_api_key: str | None = Field(
+        default=None,
+        description=(
+            "Optional override for the evaluator LLM's API key. When unset, "
+            "falls back to `api_key`."
+        ),
+    )
     num_workers: int | str = Field(
         default=50,
         description="Number of parallel workers (use 'auto' to default to 4)",
@@ -149,6 +224,104 @@ class EvaluationInput(BaseModel):
                 or set(),
             )
 
+        return self
+
+    def _evaluator_endpoint_differs(self) -> bool:
+        """Return True when the evaluator's endpoint *actually differs* from
+        the simulator's. Whitespace-only override values are treated as unset
+        to match the whitespace-stripping behavior of the OpenAI provider.
+
+        A redundant override (e.g. ``evaluator_provider`` equal to the
+        shared ``provider``) is NOT a real endpoint split, so the shared
+        ``api_key`` / ``base_url`` continue to apply. This avoids the
+        footgun where typing the same provider twice silently drops the
+        shared credentials and crashes the evaluator at run time.
+        """
+        eval_provider = _norm_endpoint_value(self.evaluator_provider)
+        eval_base_url = _norm_endpoint_value(self.evaluator_base_url)
+        if eval_provider is not None and eval_provider != _norm_endpoint_value(
+            self.provider
+        ):
+            return True
+        return eval_base_url is not None and eval_base_url != _norm_endpoint_value(
+            self.base_url
+        )
+
+    def evaluator_llm_kwargs(self) -> dict[str, str | None]:
+        """Resolve LLM kwargs for the evaluator, with safe fallback semantics.
+
+        - `evaluator_model` individually overrides `model` when set; otherwise
+          the evaluator uses the shared `model`.
+        - When the evaluator endpoint differs from the simulator endpoint
+          (`evaluator_provider` set OR `evaluator_base_url` set), the
+          credentials and base_url DO NOT cross-inherit from the shared
+          keys. They must be set explicitly via `evaluator_base_url` /
+          `evaluator_api_key`, or fall through to the SDK's env-var
+          defaults (`OPENAI_BASE_URL` / `OPENAI_API_KEY`).
+        - This prevents accidentally sending a credential intended for one
+          endpoint to another (e.g. forwarding a live OpenAI key to a
+          self-hosted Ollama endpoint).
+        - Whitespace-only override values are treated as unset.
+        """
+        if self._evaluator_endpoint_differs():
+            # Endpoint split: ``model`` and ``provider`` can fall back to the
+            # shared values (neither is credential-bearing), but ``base_url``
+            # and ``api_key`` must NOT cross-inherit. Leave them as-is so the
+            # SDK env-var fallback (e.g. ``OPENAI_API_KEY``) applies.
+            return {
+                "model": self.evaluator_model or self.model,
+                "provider": self.evaluator_provider or self.provider,
+                "base_url": self.evaluator_base_url,
+                "api_key": self.evaluator_api_key,
+            }
+
+        # Same endpoint: every field inherits from the shared key when the
+        # matching ``evaluator_<field>`` is unset (None, empty, or
+        # whitespace-only / invisible-only after normalization). Iterating
+        # ``_LLM_KWARG_FIELDS`` keeps this branch in sync with future kwarg
+        # additions automatically.
+        return {
+            field: _norm_endpoint_value(getattr(self, f"evaluator_{field}"))
+            or getattr(self, field)
+            for field in _LLM_KWARG_FIELDS
+        }
+
+    @model_validator(mode="after")
+    def _log_evaluator_endpoint_split(self) -> Self:
+        """Emit diagnostics for the two endpoint-split footguns:
+
+        1. INFO: evaluator endpoint differs from simulator but no
+           ``evaluator_api_key`` is set. Warns the user that the shared
+           ``api_key`` will NOT be forwarded; the evaluator falls back to
+           SDK env-var defaults instead.
+        2. WARNING: ``evaluator_api_key`` is set but the evaluator endpoint
+           does NOT differ from the simulator endpoint. In that case the
+           shared ``api_key`` is used and ``evaluator_api_key`` is silently
+           ignored. Warn so the user does not assume the override took effect.
+        """
+        endpoint_differs = self._evaluator_endpoint_differs()
+        if endpoint_differs and self.evaluator_api_key is None:
+            _entities_logger.info(
+                "Evaluator endpoint differs from simulator "
+                "(evaluator_provider=%s, evaluator_base_url=%s). "
+                "evaluator_api_key is unset; falling back to SDK env-var "
+                "defaults (e.g. OPENAI_API_KEY). The shared `api_key` will "
+                "NOT be forwarded to the evaluator endpoint.",
+                _norm_endpoint_value(self.evaluator_provider),
+                _norm_endpoint_value(self.evaluator_base_url),
+            )
+        if (
+            not endpoint_differs
+            and self.evaluator_api_key is not None
+            and self.evaluator_api_key.strip()
+        ):
+            _entities_logger.warning(
+                "evaluator_api_key is set but the evaluator endpoint matches "
+                "the simulator endpoint, so the shared api_key is used and "
+                "evaluator_api_key is ignored. To use a different key, also "
+                "set evaluator_provider or evaluator_base_url to point at a "
+                "different endpoint."
+            )
         return self
 
 

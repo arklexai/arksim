@@ -79,3 +79,30 @@ def retry(max_retries: int = 5) -> Callable[[F], F]:
             return sync_wrapper
 
     return decorator
+
+
+def log_cache_stats(llm: object, phase: str) -> None:
+    """Log a one-line summary of LLM cache-hit stats if available.
+
+    Tolerates LLM instances that do not implement ``cache_stats`` (e.g.
+    Anthropic, Google providers) and never raises from telemetry.
+    """
+    stats_fn = getattr(llm, "cache_stats", None)
+    if stats_fn is None:
+        return
+    try:
+        stats = stats_fn()
+    except Exception:
+        return
+    if stats.get("call_count", 0) == 0:
+        return
+    logger.info(
+        "%s LLM cache stats: %d calls, %d input tokens, "
+        "%d cached (%.1f%% hit rate), %d output tokens",
+        phase,
+        stats["call_count"],
+        stats["input_tokens"],
+        stats["cached_input_tokens"],
+        stats["cache_hit_rate"] * 100,
+        stats["output_tokens"],
+    )

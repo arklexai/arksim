@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING
 from tqdm import tqdm
 
 from arksim.llms.chat import LLM
+from arksim.llms.chat.utils import log_cache_stats
 from arksim.scenario import Scenarios
 from arksim.scenario.entities import AssertionType, ExpectedToolCall
 
@@ -938,10 +939,13 @@ def run_evaluation(
                 "scenario context will be unavailable"
             )
 
-    llm = LLM(
-        model=settings.model,
-        provider=settings.provider,
-    )
+    # See EvaluationInput.evaluator_llm_kwargs() for the per-group fallback
+    # rule. When evaluator endpoint differs from simulator, base_url and
+    # api_key do not cross-inherit from shared keys; they must be set
+    # explicitly or fall back to SDK env vars. This prevents credential
+    # leaks across endpoints.
+    evaluator_kwargs = settings.evaluator_llm_kwargs()
+    llm = LLM(**evaluator_kwargs)
     all_quant, all_qual = _load_custom_metrics(
         settings.custom_metrics_file_paths, llm=llm
     )
@@ -961,6 +965,8 @@ def run_evaluation(
     evaluator_output = evaluator.evaluate(simulation, on_progress=on_progress)
     evaluator.save_results()
     evaluator.display_evaluation_summary()
+    # Surface cache-hit telemetry from the evaluator LLM.
+    log_cache_stats(llm, phase="evaluation")
 
     if settings.generate_html_report:
         from arksim.utils.html_report.generate_html_report import (
@@ -986,8 +992,8 @@ def run_evaluation(
             metric_descriptions=metric_descriptions,
             metric_ranges=metric_ranges,
             qual_label_colors=qual_label_colors,
-            evaluation_model=settings.model,
-            evaluation_provider=settings.provider,
+            evaluation_model=evaluator_kwargs["model"],
+            evaluation_provider=evaluator_kwargs["provider"],
         )
         generate_html_report(report_params)
 

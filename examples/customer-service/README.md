@@ -127,3 +127,37 @@ The SQLite database (`store.db`) is created automatically on first run with samp
 - 4 orders (shipped, processing, delivered, cancelled)
 - 6 products (laptops, headphones, accessories)
 - 2 verification codes (one per customer)
+
+### Running the user simulator on a self-hosted backend
+
+The user-simulator LLM defaults to OpenAI. To run the simulator on any [Open Responses](https://www.openresponses.org/)-conforming backend (Ollama, vLLM, NVIDIA NIM, Vercel AI Gateway, OpenRouter) while keeping the evaluator on OpenAI, replace the LLM configuration in `config.yaml`:
+
+```yaml
+# Simulator on Ollama
+provider: responses
+model: llama3.1
+base_url: http://localhost:11434/v1
+api_key: ollama
+
+# Evaluator stays on OpenAI for structured-output support
+evaluator_provider: openai
+evaluator_model: gpt-4o-mini
+```
+
+The evaluator endpoint differs from the simulator endpoint, so arksim does not forward `api_key: ollama` to OpenAI. The evaluator falls back to `OPENAI_API_KEY` in your environment.
+
+Before running, start the local server and set the evaluator key. For Ollama:
+
+```bash
+ollama serve
+ollama pull llama3.1   # requires Ollama v0.13.3 or newer
+export OPENAI_API_KEY=sk-...
+```
+
+Then run:
+
+```bash
+arksim simulate-evaluate config.yaml
+```
+
+See [User simulator on Open Responses](https://docs.arklex.ai/main/user-simulator-on-open-responses) for vLLM, NIM, and other backends.

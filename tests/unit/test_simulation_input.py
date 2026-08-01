@@ -29,6 +29,22 @@ class TestSimulationInputValidator:
         with pytest.raises(ValidationError, match="num_workers"):
             SimulationInput(agent_config_file_path="a.json", num_workers="fast")
 
+    def test_simulation_input_accepts_base_url_and_api_key(self) -> None:
+        settings = SimulationInput(
+            agent_config_file_path="agent.json",
+            model="llama3.1",
+            provider="responses",
+            base_url="http://localhost:11434/v1",
+            api_key="ollama",
+        )
+        assert settings.base_url == "http://localhost:11434/v1"
+        assert settings.api_key == "ollama"
+
+    def test_simulation_input_defaults_base_url_and_api_key_to_none(self) -> None:
+        settings = SimulationInput(agent_config_file_path="agent.json")
+        assert settings.base_url is None
+        assert settings.api_key is None
+
 
 class TestSimulationInputPathResolution:
     """Tests for config-relative path resolution in SimulationInput."""

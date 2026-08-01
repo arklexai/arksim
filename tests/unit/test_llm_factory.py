@@ -48,3 +48,7 @@ class TestGetProvider:
     def test_unknown_provider_raises(self) -> None:
         with pytest.raises(ValueError, match="not supported"):
             LLM._get_provider("unknown")
+
+    def test_responses_provider_resolves_to_openai_llm(self) -> None:
+        cls = LLM._get_provider("responses")
+        assert cls.__name__ == "OpenAILLM"

@@ -23,7 +23,10 @@ class LLM(BaseLLM):
 
     @classmethod
     def _get_provider(cls, provider: str) -> type:
-        if provider == "openai":
+        if provider in ("openai", "responses"):
+            # `responses` is a documentation-only alias signaling multi-provider
+            # intent (Open Responses spec). Both names resolve to OpenAILLM.
+            # See docs/main/user-simulator-on-open-responses.mdx.
             from arksim.llms.chat.providers.openai import OpenAILLM
 
             return OpenAILLM

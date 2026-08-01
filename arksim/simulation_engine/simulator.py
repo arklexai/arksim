@@ -14,6 +14,7 @@ from tqdm import tqdm
 
 from arksim.config import AgentConfig, AgentType
 from arksim.llms.chat import LLM
+from arksim.llms.chat.utils import log_cache_stats
 from arksim.scenario import (
     KnowledgeItem,
     Scenarios,
@@ -486,6 +487,8 @@ async def run_simulation(
     llm = LLM(
         model=settings.model,
         provider=settings.provider,
+        base_url=settings.base_url,
+        api_key=settings.api_key,
     )
 
     simulation_params = SimulationParams(
@@ -532,6 +535,9 @@ async def run_simulation(
             )
 
         await simulator.save()
+        # Surface cache-hit telemetry from the simulator LLM. Helps users
+        # verify the documented prompt-caching benefit without leaving arksim.
+        log_cache_stats(llm, phase="simulation")
         return simulation_output
     finally:
         if trace_receiver is not None:
