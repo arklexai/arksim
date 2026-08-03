@@ -53,7 +53,7 @@ otel = [
 claude = [
     # The MCP server uses `mcp.server.fastmcp.FastMCP` from the official
     # `mcp` SDK, not the standalone `fastmcp` PyPI package.
-    "mcp[cli]>=1.0,<2.0",
+    "mcp[cli]>=1.0,<3.0",
 ]
 langfuse = [
     # Export simulations + evaluation scores to Langfuse via the public SDK
