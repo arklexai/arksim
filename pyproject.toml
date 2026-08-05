@@ -98,6 +98,10 @@ dev = [
     "pre-commit",
     "ruff",
     "numpy",
+    # Exercise optional voice drivers in unit-test coverage without installing
+    # heavyweight speech models. Pipecat itself requires Python 3.11+.
+    "livekit-agents>=1.5.9,<2.0",
+    "pipecat-ai>=1.4,<2.0; python_version >= '3.11'",
 ]
 
 [project.scripts]
