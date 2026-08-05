@@ -27,6 +27,16 @@ def _build_driver_for(agent_config: AgentConfig) -> VoiceDriver:
     unsupported framework fails fast without requiring the voice extras.
     """
     vc = agent_config.voice_config
+    if vc is None:
+        raise ValueError("Voice agent requires voice_config")
+    if vc.framework == VoiceFramework.LIVEKIT:
+        from arksim.integrations.livekit import LiveKitVoiceDriver
+        from arksim.speech import create_stt, create_tts
+
+        factory = load_callable(vc.agent_factory)
+        return LiveKitVoiceDriver(
+            factory, tts=create_tts(vc.tts), stt=create_stt(vc.stt)
+        )
     if vc.framework == VoiceFramework.PIPECAT:
         from arksim.integrations.pipecat import PipecatVoiceDriver
         from arksim.speech import create_stt, create_tts
@@ -62,5 +72,7 @@ class VoiceAgent(BaseAgent):
         return await self._driver_or_build().run_turn(user_query)
 
     async def close(self) -> None:
-        if self._driver is not None:
-            await self._driver.close()
+        driver = self._driver
+        self._driver = None
+        if driver is not None:
+            await driver.close()

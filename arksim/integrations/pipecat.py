@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import uuid
 from collections.abc import Callable
 from typing import Any
@@ -49,10 +50,16 @@ _PIPELINE_INPUT_RATE = 16000
 
 
 def _resample(audio: AudioBuffer, target_rate: int) -> AudioBuffer:
-    """Nearest-neighbor resample a mono ``AudioBuffer`` to ``target_rate``."""
-    if audio.sample_rate == target_rate:
+    """Downmix and nearest-neighbor resample audio for Pipecat input."""
+    if target_rate <= 0:
+        raise ValueError("target_rate must be positive")
+    if audio.sample_rate == target_rate and audio.num_channels == 1:
         return audio
     samples = np.asarray(audio.samples, dtype=np.float32)
+    if audio.num_channels > 1:
+        samples = samples.reshape(-1, audio.num_channels).mean(axis=1)
+    if audio.sample_rate == target_rate:
+        return AudioBuffer(samples=samples, sample_rate=target_rate)
     ratio = target_rate / audio.sample_rate
     idx = np.round(np.arange(0, len(samples) * ratio) / ratio).astype(int)
     return AudioBuffer(
@@ -180,12 +187,14 @@ class PipecatVoiceDriver:
         try:
             await asyncio.wait_for(self._capture.turn_done.wait(), _TURN_TIMEOUT_S)
         except (TimeoutError, asyncio.TimeoutError) as exc:
+            await self.close()
             raise TimeoutError(
                 f"Pipecat agent produced no audio within {_TURN_TIMEOUT_S}s "
                 f"for: {user_query!r}"
             ) from exc
         captured = self._capture.captured_audio()
         if captured is None:
+            await self.close()
             raise RuntimeError(f"Pipecat agent produced no audio for: {user_query!r}")
         reply = await self._stt.transcribe(captured)
         return AgentResponse(content=reply, tool_calls=list(self._capture.tool_calls))
@@ -206,6 +215,8 @@ class PipecatVoiceDriver:
                 await asyncio.wait_for(self._runner_run, timeout=10)
             except (TimeoutError, asyncio.TimeoutError):
                 self._runner_run.cancel()
+                with contextlib.suppress(asyncio.CancelledError):
+                    await self._runner_run
             self._runner_run = None
 
 

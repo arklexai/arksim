@@ -129,19 +129,21 @@ Provide agent connection by defining `agent_config` inline in your config YAML.
 | Field        | Type   | Required | Description                                                                            |
 | ------------ | ------ | -------- | -------------------------------------------------------------------------------------- |
 | `agent_name` | string | Yes      | Unique identifier for your agent (e.g. lowercase, no spaces).                          |
-| `agent_type` | string | Yes      | One of `chat_completions`, `a2a`, or `custom`. See [Connection types](#connection-types). |
+| `agent_type` | string | Yes      | One of `chat_completions`, `a2a`, `custom`, or `voice`. See [Connection types](#connection-types). |
 | `api_config` | object | Conditional | Required for `chat_completions` and `a2a`. See [Connection types](#connection-types). |
 | `custom_config` | object | Conditional | Required for `custom`. See [Connection types](#connection-types). |
+| `voice_config` | object | Conditional | Required for `voice`. Selects Pipecat or LiveKit and the speech providers. |
 
 ### Connection types
 
-ArkSim supports three ways to connect your agent:
+ArkSim supports four ways to connect your agent:
 
 | Type                                                                                | When to use                                                                            |
 | ----------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
 | [**Chat Completions**](https://developers.openai.com/api/reference/resources/chat/) | Any agent that accepts OpenAI-compatible requests (OpenAI or a custom wrapper) |
 | [**A2A**](https://a2a-protocol.org/latest/)                                         | Agents exposed via the Agent-to-Agent protocol                                         |
 | **Custom**                                                                          | Any Python agent loaded directly as a class — no HTTP server required                  |
+| **Voice**                                                                           | Pipecat or LiveKit Agents evaluated through their native STT → LLM → TTS pipeline      |
 
 <Tabs>
   <Tab title="Chat Completions">
@@ -237,11 +239,47 @@ ArkSim supports three ways to connect your agent:
     )
     ```
   </Tab>
+  <Tab title="Voice">
+    **Type:** `voice`
+
+    Drives a Pipecat or LiveKit agent through audio while keeping the existing
+    simulation and evaluation workflow. ArkSim voices each simulated-user turn,
+    captures the agent's spoken response, and transcribes it for evaluation.
+
+    **Required fields:** `framework` (`pipecat` or `livekit`) and
+    `agent_factory` (a zero-argument Python callable). **Optional:** `tts` and
+    `stt` provider configuration; they default to local Kokoro and
+    faster-whisper.
+
+    ```yaml
+    agent_config:
+      agent_type: voice
+      agent_name: support-voice
+      voice_config:
+        framework: livekit # or pipecat
+        agent_factory: ./agent.py:build
+        tts:
+          provider: kokoro
+        stt:
+          provider: faster_whisper
+          model: base.en
+    ```
+
+    Pipecat factories return `(LLMContext, [pipeline stages])`. LiveKit
+    factories return `(AgentSession, Agent)` with manual turn detection. Install
+    `arksim[voice]`, `arksim[livekit-voice]`, or `arksim[voice-all]`; see the
+    [Pipecat](https://github.com/arklexai/arksim/tree/main/examples/integrations/pipecat-voice)
+    and [LiveKit](https://github.com/arklexai/arksim/tree/main/examples/integrations/livekit-voice)
+    examples for complete factories.
+  </Tab>
 </Tabs>
 
 ### Environment variable support
 
-Both types support `${ENV_VAR}` substitution in header values (and in the endpoint URL for chat completions where applicable). At runtime the value is replaced; if unset, it becomes an empty string. You can mix static text and variables (e.g. `"Bearer ${API_KEY}"`).
+The API-based connection types support `${ENV_VAR}` substitution in header
+values (and in the endpoint URL for Chat Completions where applicable). At
+runtime the value is replaced; if unset, it becomes an empty string. You can
+mix static text and variables (for example, `"Bearer ${API_KEY}"`).
 
 <Tip>
   **Security:** Keep credentials in environment variables and out of committed config files.

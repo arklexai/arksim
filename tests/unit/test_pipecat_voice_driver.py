@@ -109,6 +109,42 @@ async def test_driver_drives_vad_gated_stt() -> None:
         await driver.close()
 
 
+async def test_driver_closes_pipeline_after_turn_timeout(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    pytest.importorskip("pipecat")
+    import numpy as np
+    from pipecat.frames.frames import Frame
+    from pipecat.processors.frame_processor import FrameDirection, FrameProcessor
+
+    import arksim.integrations.pipecat as pipecat_integration
+    from arksim.speech.types import AudioBuffer
+
+    class FakeTTS:
+        async def synthesize(self, text: str) -> AudioBuffer:
+            return AudioBuffer(np.zeros(160), 16000)
+
+    class FakeSTT:
+        async def transcribe(self, audio: AudioBuffer) -> str:
+            return "unused"
+
+    class SilentStage(FrameProcessor):
+        async def process_frame(self, frame: Frame, direction: FrameDirection) -> None:
+            await super().process_frame(frame, direction)
+            await self.push_frame(frame, direction)
+
+    monkeypatch.setattr(pipecat_integration, "_TURN_TIMEOUT_S", 0.01)
+    driver = pipecat_integration.PipecatVoiceDriver(
+        lambda: [SilentStage()], tts=FakeTTS(), stt=FakeSTT()
+    )
+
+    with pytest.raises(TimeoutError, match="produced no audio"):
+        await driver.run_turn("hello")
+
+    assert driver._task is None
+    assert driver._runner_run is None
+
+
 def test_resample_downsamples_to_target_rate() -> None:
     pytest.importorskip("pipecat")
     import numpy as np
@@ -119,3 +155,33 @@ def test_resample_downsamples_to_target_rate() -> None:
     out = _resample(AudioBuffer(np.zeros(2400, dtype=np.float32), 24000), 16000)
     assert out.sample_rate == 16000
     assert abs(len(out.samples) - 1600) <= 1
+
+
+def test_resample_downmixes_stereo_even_at_target_rate() -> None:
+    pytest.importorskip("pipecat")
+    import numpy as np
+
+    from arksim.integrations.pipecat import _resample
+    from arksim.speech.types import AudioBuffer
+
+    stereo = AudioBuffer(
+        np.array([1.0, -1.0, 0.5, 0.5], dtype=np.float32),
+        sample_rate=16000,
+        num_channels=2,
+    )
+
+    out = _resample(stereo, 16000)
+
+    assert out.num_channels == 1
+    assert out.samples == pytest.approx([0.0, 0.5])
+
+
+def test_resample_rejects_invalid_target_rate() -> None:
+    pytest.importorskip("pipecat")
+    import numpy as np
+
+    from arksim.integrations.pipecat import _resample
+    from arksim.speech.types import AudioBuffer
+
+    with pytest.raises(ValueError, match="target_rate"):
+        _resample(AudioBuffer(np.zeros(10), 16000), 0)

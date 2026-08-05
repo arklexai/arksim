@@ -226,7 +226,43 @@ The same YAML file can be used for `arksim simulate`, `arksim evaluate`, and `ar
 
 | Key              | Type   | Description                                                                                                    |
 | ---------------- | ------ | -------------------------------------------------------------------------------------------------------------- |
-| `agent_config`   | object | Inline agent configuration. See [Agent configuration](./simulate-conversation#agent-configuration) for `chat_completions` and `a2a`. |
+| `agent_config`   | object | Inline agent configuration. See [Agent configuration](./simulate-conversation#agent-configuration) for all connection types. |
+
+Voice agents use `agent_type: voice` and select either `pipecat` or `livekit`.
+The factory pointer is resolved relative to the config file. Pipecat factories
+return the framework's context and pipeline stages. LiveKit factories return
+`(AgentSession, Agent)` and must configure manual turn detection.
+
+| `voice_config` field | Type | Required | Description |
+| -------------------- | ---- | -------- | ----------- |
+| `framework` | string | Yes | `pipecat` or `livekit`. |
+| `agent_factory` | string | Yes | Zero-argument callable in `./file.py:callable` or `package.module:callable` form. |
+| `tts` | object | No | ArkSim-side provider that voices the simulated user. Defaults to `{provider: kokoro}`. |
+| `stt` | object | No | ArkSim-side provider that transcribes the agent reply. Defaults to `{provider: faster_whisper}`. |
+
+Both speech-provider objects accept `provider`, optional `model`, and an
+`options` mapping for provider-specific settings such as voice, language,
+device, and compute type.
+
+```yaml
+agent_config:
+  agent_type: voice
+  agent_name: support-voice
+  voice_config:
+    framework: livekit # or pipecat
+    agent_factory: ./agent.py:build
+    tts:
+      provider: kokoro
+    stt:
+      provider: faster_whisper
+      model: base.en
+```
+
+Use `arksim[voice]` for Pipecat, `arksim[livekit-voice]` for LiveKit Agents,
+or `arksim[voice-all]` for both. The framework-specific examples show the
+required factory contracts. `arksim[voice]` and `arksim[voice-all]` currently
+target Python 3.11–3.12; `arksim[livekit-voice]` targets Python 3.10–3.12.
+ArkSim core continues to support the full Python range declared by the package.
 
 ### Simulation keys
 

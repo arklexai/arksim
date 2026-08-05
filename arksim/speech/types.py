@@ -17,6 +17,19 @@ class AudioBuffer:
     sample_rate: int
     num_channels: int = 1
 
+    def __post_init__(self) -> None:
+        """Normalize samples and reject malformed PCM metadata early."""
+        samples = np.asarray(self.samples, dtype=np.float32)
+        if samples.ndim != 1:
+            raise ValueError("Audio samples must be a one-dimensional array")
+        if self.sample_rate <= 0:
+            raise ValueError("Audio sample_rate must be positive")
+        if self.num_channels <= 0:
+            raise ValueError("Audio num_channels must be positive")
+        if len(samples) % self.num_channels:
+            raise ValueError("Audio sample count must be divisible by num_channels")
+        self.samples = samples
+
 
 def pcm16_bytes(audio: AudioBuffer) -> bytes:
     """Encode a float32 ``AudioBuffer`` as little-endian signed 16-bit PCM."""

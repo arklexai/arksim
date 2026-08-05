@@ -16,4 +16,5 @@ class AgentType(Enum):
 class VoiceFramework(str, Enum):
     """Voice agent framework backing a ``voice`` agent."""
 
+    LIVEKIT = "livekit"
     PIPECAT = "pipecat"

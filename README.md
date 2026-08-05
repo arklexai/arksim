@@ -117,13 +117,39 @@ agent_config:
 
 A2A agents can also surface tool calls for evaluation via the arksim [tool call capture extension](https://docs.arklex.ai/main/tool-call-capture). See `examples/customer-service/a2a_server/` for a runnable reference server.
 
+### Voice agents
+
+ArkSim can evaluate Pipecat and LiveKit Agents through their actual
+STT → LLM → TTS pipelines. It synthesizes each simulated-user turn, injects
+the audio into the framework, captures the spoken response, and transcribes it
+for the standard evaluators.
+
+```yaml
+agent_config:
+  agent_type: voice
+  agent_name: support-voice
+  voice_config:
+    framework: livekit # or pipecat
+    agent_factory: ./agent.py:build
+    tts:
+      provider: kokoro
+    stt:
+      provider: faster_whisper
+      model: base.en
+```
+
+Install `arksim[voice]` for Pipecat, `arksim[livekit-voice]` for LiveKit, or
+`arksim[voice-all]` for both. See the [Pipecat](https://github.com/arklexai/arksim/tree/main/examples/integrations/pipecat-voice)
+and [LiveKit](https://github.com/arklexai/arksim/tree/main/examples/integrations/livekit-voice)
+examples for their framework-specific factory contracts.
+
 Write scenarios that match your agent's domain. See the [Scenarios documentation](https://docs.arklex.ai/main/build-scenario) for how to define goals, user profiles, and knowledge.
 
 ## Why ArkSim?
 
 - **Simulation, not just evaluation.** Most tools score conversations you already have. ArkSim generates them with synthetic users who push back, ask follow-ups, and behave unpredictably.
 - **Multi-turn by default.** Every test is a full conversation, not a single prompt. Context loss, tool misuse, and contradictions only show up across turns.
-- **Any agent, any framework.** Works with [14+ frameworks](#integrations) through Chat Completions, A2A, or direct Python import.
+- **Any agent, any framework.** Works with [16+ frameworks](#integrations) through Chat Completions, A2A, direct Python import, or native voice pipelines.
 - **Runs in CI.** Add it as a quality gate on every PR. Exits non-zero when your agent drops below threshold.
 - **Fully open source.** Runs on your infrastructure. Your data never leaves.
 
@@ -169,6 +195,8 @@ See the [integration README](integrations/claude_code/README.md) for the install
 | [Smolagents](https://github.com/arklexai/arksim/tree/main/examples/integrations/smolagents) | Hugging Face |
 | [Mastra](https://github.com/arklexai/arksim/tree/main/examples/integrations/mastra) | TypeScript |
 | [Vercel AI SDK](https://github.com/arklexai/arksim/tree/main/examples/integrations/vercel-ai-sdk) | TypeScript |
+| [Pipecat Voice](https://github.com/arklexai/arksim/tree/main/examples/integrations/pipecat-voice) | Pipecat |
+| [LiveKit Voice](https://github.com/arklexai/arksim/tree/main/examples/integrations/livekit-voice) | LiveKit Agents |
 
 See [examples](https://github.com/arklexai/arksim/tree/main/examples) for end-to-end projects with custom metrics and scenarios.
 

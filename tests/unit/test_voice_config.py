@@ -40,6 +40,11 @@ def test_voice_config_accepts_explicit_providers() -> None:
     assert cfg.voice_config.tts.options == {"voice": "af_heart"}
 
 
+def test_voice_config_accepts_livekit_framework() -> None:
+    cfg = AgentConfig.model_validate(_voice_dict(framework="livekit"))
+    assert cfg.voice_config.framework is VoiceFramework.LIVEKIT
+
+
 def test_voice_agent_requires_voice_config() -> None:
     with pytest.raises(ValueError, match="requires 'voice_config'"):
         AgentConfig(agent_name="x", agent_type="voice")

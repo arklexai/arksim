@@ -32,9 +32,12 @@ export OPENAI_API_KEY=...
 ```
 
 `arksim[voice]` installs the arksim-side TTS/STT (Kokoro + faster-whisper). The
-pipecat extras install the agent's own STT/LLM/TTS services used in `agent.py`;
+Pipecat extras install the agent's own STT/LLM/TTS services used in `agent.py`;
 the Whisper backend is platform-specific (MLX on Apple Silicon). If you just
-want to see the loop run without keys or a backend, use `smoke_local.py` above.
+want to see the loop run without keys or a backend, use `smoke_local.py` below.
+
+This example currently targets Python 3.11–3.12 (Pipecat requires 3.11+, while
+Kokoro currently requires Python <3.13).
 
 ## Run
 

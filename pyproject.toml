@@ -60,7 +60,13 @@ langfuse = [
     # (v4). Works against self-hosted instances; no hosted-only connector.
     "langfuse>=4,<5",
 ]
+livekit-agents = [
+    # The custom AgentSession audio I/O and manual turn APIs are v1 surfaces.
+    # Keep a major-version ceiling because LiveKit has announced v2 removals.
+    "livekit-agents>=1.5.9,<2.0",
+]
 pipecat = [
+    # Pipecat requires Python 3.11+.
     # <2.0: the PipelineRunner driver API used by the voice driver is removed
     # in pipecat 2.0; revisit the driver before widening this pin.
     "pipecat-ai>=1.4,<2.0",
@@ -68,10 +74,18 @@ pipecat = [
 speech = [
     "numpy",
     "faster-whisper>=1.2",
+    # Kokoro currently requires Python <3.13.
     "kokoro>=0.9",
 ]
 voice = [
+    # Backward-compatible Pipecat voice bundle.
     "arksim[pipecat,speech]",
+]
+livekit-voice = [
+    "arksim[livekit-agents,speech]",
+]
+voice-all = [
+    "arksim[livekit-voice,voice]",
 ]
 all = [
     "arksim[azure,anthropic,google,otel,claude]",

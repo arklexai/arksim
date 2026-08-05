@@ -1,0 +1,19 @@
+{
+    "schema_version": "v1",
+    "scenarios": [
+        {
+            "scenario_id": "order_status_inquiry",
+            "user_id": "user_0001",
+            "goal": "You placed an order last week and it has not arrived. Call support, explain the situation, and find out when it will be delivered.",
+            "agent_context": "You are a friendly phone support agent for an online store. Keep replies short and conversational.",
+            "user_profile": "You are Maria, a small business owner who is polite but in a hurry. You want a clear delivery date."
+        },
+        {
+            "scenario_id": "return_request",
+            "user_id": "user_0002",
+            "goal": "You received the wrong item and want to start a return. Ask how to send it back and get the correct item.",
+            "agent_context": "You are a friendly phone support agent for an online store. Keep replies short and conversational.",
+            "user_profile": "You are Devin, a first-time customer who is mildly frustrated but reasonable."
+        }
+    ]
+}
