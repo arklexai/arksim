@@ -1,9 +1,9 @@
 ---
 title: "Integrations"
-description: "Use ArkSim with any agent framework. Browse working examples for 14 popular frameworks."
+description: "Use ArkSim with any agent framework. Browse working examples for 16 popular frameworks."
 ---
 
-ArkSim connects to your agent through one of three [connection types](./simulate-conversation#connection-types). The examples below show how to wire up each framework.
+ArkSim connects to your agent through one of four [connection types](./simulate-conversation#connection-types). The examples below show how to wire up each framework.
 
 ## Custom connector
 
@@ -42,6 +42,21 @@ These Python examples load your agent directly as a `BaseAgent` subclass. No HTT
   </Card>
   <Card icon="robot" href="https://github.com/arklexai/arksim/tree/main/examples/integrations/smolagents/" title="SmolAgents">
     Hugging Face's lightweight agent library.
+  </Card>
+</CardGroup>
+
+## Voice connector
+
+These examples exercise the agent's native STT, LLM, and TTS pipeline. ArkSim
+synthesizes the simulated user as audio and transcribes the agent's spoken
+reply for evaluation; no microphone, speaker, or hosted media room is required.
+
+<CardGroup cols={2}>
+  <Card icon="microphone" href="https://github.com/arklexai/arksim/tree/main/examples/integrations/pipecat-voice/" title="Pipecat Voice">
+    Evaluate a Pipecat pipeline through its real speech services.
+  </Card>
+  <Card icon="microphone" href="https://github.com/arklexai/arksim/tree/main/examples/integrations/livekit-voice/" title="LiveKit Voice">
+    Evaluate a LiveKit AgentSession through custom in-memory audio I/O.
   </Card>
 </CardGroup>
 

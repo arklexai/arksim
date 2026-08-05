@@ -29,6 +29,12 @@ class ToolCallSource(str, Enum):
     #: Captured from an OTLP / OpenInference span (via the trace receiver).
     OTEL_TRACE = "otel_trace"
 
+    #: Captured from a Pipecat voice agent's function-call frames.
+    PIPECAT = "pipecat"
+
+    #: Captured from a LiveKit Agents function-tools-executed event.
+    LIVEKIT = "livekit"
+
 
 class A2AToolCaptureExtension:
     """A2A AgentExtension URI for arksim's tool call capture convention.

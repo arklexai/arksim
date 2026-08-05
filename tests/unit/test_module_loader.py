@@ -9,7 +9,11 @@ from pathlib import Path
 
 import pytest
 
-from arksim.utils.module_loader import _module_cache, load_module_from_file
+from arksim.utils.module_loader import (
+    _module_cache,
+    load_callable,
+    load_module_from_file,
+)
 
 # ── Fixtures ────────────────────────────────────────────────────────────────
 
@@ -143,3 +147,39 @@ class TestLoadModuleErrors:
         arksim_modules_after = {k for k in sys.modules if k.startswith("_arksim_")}
         # No new _arksim_ entries should remain
         assert arksim_modules_after == arksim_modules_before
+
+
+# ── load_callable tests ──────────────────────────────────────────────────────
+
+
+class TestLoadCallable:
+    """Tests for resolving 'module_or_path:attribute' pointers to callables."""
+
+    def test_from_file(self, tmp_path: Path) -> None:
+        p = tmp_path / "factory_mod.py"
+        p.write_text("def build():\n    return 'made'\n")
+        fn = load_callable(f"{p}:build")
+        assert callable(fn)
+        assert fn() == "made"
+
+    def test_from_dotted_module(self) -> None:
+        fn = load_callable("os.path:join")
+        assert fn("a", "b").endswith("b")
+
+    def test_missing_colon_raises(self, tmp_path: Path) -> None:
+        p = tmp_path / "factory_mod.py"
+        p.write_text("def build():\n    return 1\n")
+        with pytest.raises(ValueError, match="must be 'module_or_path:attribute'"):
+            load_callable(str(p))
+
+    def test_missing_attribute_raises(self, tmp_path: Path) -> None:
+        p = tmp_path / "factory_mod.py"
+        p.write_text("def build():\n    return 1\n")
+        with pytest.raises(AttributeError, match="has no attribute 'nope'"):
+            load_callable(f"{p}:nope")
+
+    def test_not_callable_raises(self, tmp_path: Path) -> None:
+        p = tmp_path / "factory_mod.py"
+        p.write_text("value = 42\n")
+        with pytest.raises(TypeError, match="is not callable"):
+            load_callable(f"{p}:value")

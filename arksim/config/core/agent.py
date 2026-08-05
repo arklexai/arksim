@@ -13,7 +13,7 @@ else:
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from arksim.config.types import AgentType
+from arksim.config.types import AgentType, VoiceFramework
 from arksim.config.utils import resolve_env_vars
 
 
@@ -111,6 +111,40 @@ class CustomConfig(BaseModel):
         return self
 
 
+class SpeechProviderConfig(BaseModel):
+    """A pluggable TTS or STT provider for the voice agent loop."""
+
+    provider: str = Field(
+        ..., description="Provider key, e.g. 'kokoro', 'faster_whisper'"
+    )
+    model: str | None = Field(None, description="Provider model id, if applicable")
+    options: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Provider-specific options (voice id, language, device)",
+    )
+
+
+class VoiceConfig(BaseModel):
+    """Configuration for the native ``voice`` agent type."""
+
+    framework: VoiceFramework = Field(
+        ..., description="Voice framework backing the agent"
+    )
+    agent_factory: str = Field(
+        ...,
+        description="Pointer to a zero-arg callable returning the framework agent. "
+        "Format: './agent.py:build' or 'pkg.module:build'.",
+    )
+    tts: SpeechProviderConfig = Field(
+        default_factory=lambda: SpeechProviderConfig(provider="kokoro"),
+        description="Provider that voices the simulated user",
+    )
+    stt: SpeechProviderConfig = Field(
+        default_factory=lambda: SpeechProviderConfig(provider="faster_whisper"),
+        description="Provider that transcribes the agent's audio reply",
+    )
+
+
 class AgentConfig(BaseModel):
     """Agent configuration."""
 
@@ -121,6 +155,9 @@ class AgentConfig(BaseModel):
     )
     custom_config: CustomConfig | None = Field(
         None, description="Configuration for custom agents"
+    )
+    voice_config: VoiceConfig | None = Field(
+        None, description="Configuration for voice agents"
     )
 
     @model_validator(mode="before")
@@ -152,6 +189,12 @@ class AgentConfig(BaseModel):
                     raise ValueError("a2a agent requires 'api_config'")
                 if not isinstance(config_data, A2AConfig):
                     data["api_config"] = A2AConfig(**config_data)
+            elif agent_type == AgentType.VOICE.value:
+                config_data = data.get("voice_config")
+                if not config_data:
+                    raise ValueError("voice agent requires 'voice_config'")
+                if not isinstance(config_data, VoiceConfig):
+                    data["voice_config"] = VoiceConfig(**config_data)
             else:
                 raise ValueError(f"Unsupported agent type: {agent_type}")
         else:
@@ -179,6 +222,8 @@ class AgentConfig(BaseModel):
             raise ValueError(f"'{self.agent_type}' agent requires 'api_config'")
         if self.agent_type == AgentType.CUSTOM.value and self.custom_config is None:
             raise ValueError("'custom' agent requires 'custom_config'")
+        if self.agent_type == AgentType.VOICE.value and self.voice_config is None:
+            raise ValueError("'voice' agent requires 'voice_config'")
         return self
 
     @classmethod

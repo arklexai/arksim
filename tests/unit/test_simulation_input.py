@@ -96,3 +96,30 @@ class TestSimulationInputPathResolution:
             context=self._ctx(tmp_path),
         )
         assert si.agent_config_file_path == str(tmp_path / "agent.json")
+
+    def _voice_data(self, factory: str) -> dict:
+        return {
+            "agent_config": {
+                "agent_name": "v",
+                "agent_type": "voice",
+                "voice_config": {"framework": "pipecat", "agent_factory": factory},
+            }
+        }
+
+    def test_voice_agent_factory_file_resolves(self, tmp_path: Path) -> None:
+        """A file-path agent_factory is rebased to the config dir; attr kept."""
+        si = SimulationInput.model_validate(
+            self._voice_data("./agent.py:build"),
+            context=self._ctx(tmp_path),
+        )
+        assert si.agent_config.voice_config.agent_factory == (
+            f"{tmp_path / 'agent.py'}:build"
+        )
+
+    def test_voice_dotted_factory_not_rebased(self, tmp_path: Path) -> None:
+        """A dotted-module agent_factory is left unchanged (not a file path)."""
+        si = SimulationInput.model_validate(
+            self._voice_data("my_pkg.module:build"),
+            context=self._ctx(tmp_path),
+        )
+        assert si.agent_config.voice_config.agent_factory == "my_pkg.module:build"

@@ -7,6 +7,7 @@ from .base import BaseAgent
 from .clients.a2a import A2AAgent
 from .clients.chat_completions import ChatCompletionsAgent
 from .clients.custom import CustomAgent
+from .clients.voice import VoiceAgent
 
 
 def create_agent(agent_config: AgentConfig) -> BaseAgent:
@@ -19,5 +20,7 @@ def create_agent(agent_config: AgentConfig) -> BaseAgent:
         return A2AAgent(agent_config)
     elif agent_type == AgentType.CUSTOM.value:
         return CustomAgent(agent_config)
+    elif agent_type == AgentType.VOICE.value:
+        return VoiceAgent(agent_config)
     else:
         raise ValueError(f"Unsupported agent type: {agent_type}")

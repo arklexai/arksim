@@ -75,7 +75,11 @@ Or wire it yourself by passing arksim objects straight through:
 ```python
 import asyncio
 from arksim import (
-    Scenarios, SimulationInput, EvaluationInput, run_simulation, run_evaluation,
+    Scenarios,
+    SimulationInput,
+    EvaluationInput,
+    run_simulation,
+    run_evaluation,
 )
 from arksim.integrations.langfuse import export_to_langfuse
 
@@ -84,7 +88,9 @@ simulation = asyncio.run(run_simulation(sim_settings, scenarios=scenarios))
 evaluation = run_evaluation(eval_settings, simulation=simulation, scenarios=scenarios)
 
 export_to_langfuse(
-    scenarios, simulation, evaluation,
+    scenarios,
+    simulation,
+    evaluation,
     dataset_name="my-agent-regression",
     run_name="v1.2.3",
 )
@@ -96,10 +102,14 @@ export_to_langfuse(
 from arksim.integrations.langfuse import LangfuseExporter
 
 exporter = LangfuseExporter(
-    public_key="pk-lf-...", secret_key="sk-lf-...", host="http://localhost:3000",
+    public_key="pk-lf-...",
+    secret_key="sk-lf-...",
+    host="http://localhost:3000",
 )
 result = exporter.export(
-    scenarios, simulation, evaluation,
+    scenarios,
+    simulation,
+    evaluation,
     dataset_name="my-agent-regression",
     run_name="nightly",
 )
