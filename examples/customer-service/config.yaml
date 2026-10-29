@@ -3,8 +3,8 @@
 # Runs simulation followed by evaluation in a single pipeline.
 #
 # Customer service agent with tool calling (OpenAI Agents SDK + SQLite).
-# Tools: lookup_customer, get_order, search_products, cancel_order,
-#        send_verification_code, verify_customer
+# Tools include customer/order operations, catalog search, and searchable
+# policy/guide knowledge exposed through the same MCP server.
 # The SQLite database (store.db) is created automatically on first run.
 #
 # Usage:
@@ -17,7 +17,7 @@ agent_config:
   agent_type: custom
   agent_name: customer-service
   custom_config:
-    module_path: ./custom_agent.py
+    module_path: ./openai_agents/custom_agent.py
 
 # ── SIMULATION SETTINGS ──────────────────────────────────────────────────────
 

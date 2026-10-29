@@ -69,7 +69,7 @@ generate_html_report: true
 # ── SHARED SETTINGS ──────────────────────────────────────────────────────────
 
 # LLM model
-model: gpt-5.1
+model: gpt-6-sol
 
 # LLM provider
 provider: openai

@@ -19,15 +19,20 @@ Auth:    export OPENAI_API_KEY="<your-key>"
 
 from __future__ import annotations
 
+import sys
 import uuid
+from pathlib import Path
 
-from agents import Agent, Runner, RunResult
-from agents.tracing import add_trace_processor
-from tools import AGENT_INSTRUCTIONS, TOOLS_LIST, init_db
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from arksim.config import AgentConfig
-from arksim.simulation_engine.agent.base import BaseAgent
-from arksim.tracing.openai import ArksimTracingProcessor
+from agents import Agent, Runner, RunResult  # noqa: E402
+from agents.tracing import add_trace_processor  # noqa: E402
+from tools import AGENT_INSTRUCTIONS, TOOLS_LIST, init_db  # noqa: E402
+
+from arksim.config import AgentConfig  # noqa: E402
+from arksim.simulation_engine.agent.base import BaseAgent  # noqa: E402
+from arksim.tracing.openai import ArksimTracingProcessor  # noqa: E402
 
 # Register once at module load. The module loader caches by file path,
 # so this runs exactly once even when the simulator creates multiple

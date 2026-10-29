@@ -21,7 +21,7 @@ class LlamaIndexAgent(BaseAgent):
     def __init__(self, agent_config: AgentConfig) -> None:
         super().__init__(agent_config)
         self._chat_id = str(uuid.uuid4())
-        llm = OpenAI(model="gpt-5.1")
+        llm = OpenAI(model="gpt-6-sol")
         self._memory = ChatMemoryBuffer.from_defaults()
         self._agent = FunctionAgent(
             tools=[],

@@ -1,0 +1,12 @@
+# LangGraph variant behind a chat completions endpoint (langgraph_agent/server.py).
+# Pinned so exported spans stay stable across runs.
+fastapi>=0.120.3
+uvicorn>=0.38.0
+langchain==1.4.3
+langgraph==1.2.12
+langchain-openai==1.6.7
+langsmith==0.14.2
+openinference-instrumentation-langchain==0.1.76
+opentelemetry-sdk==1.45.0
+opentelemetry-exporter-otlp-proto-http==1.45.0
+opentelemetry-instrumentation-fastapi==0.66b0

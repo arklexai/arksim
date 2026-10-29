@@ -50,6 +50,6 @@ generate_html_report: true
 
 # ── SHARED SETTINGS ──────────────────────────────────────────────────────────
 
-model: gpt-5.1
+model: gpt-6-sol
 provider: openai
 num_workers: 50

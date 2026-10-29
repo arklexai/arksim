@@ -14,14 +14,19 @@ Auth:    export OPENAI_API_KEY="<your-key>"
 
 from __future__ import annotations
 
+import sys
 import uuid
+from pathlib import Path
 
-from agents import Agent, Runner, RunResult
-from tools import AGENT_INSTRUCTIONS, TOOLS_LIST, init_db
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from arksim import AgentConfig, AgentResponse
-from arksim.simulation_engine.agent.base import BaseAgent
-from arksim.tracing.openai import extract_tool_calls
+from agents import Agent, Runner, RunResult  # noqa: E402
+from tools import AGENT_INSTRUCTIONS, TOOLS_LIST, init_db  # noqa: E402
+
+from arksim import AgentConfig, AgentResponse  # noqa: E402
+from arksim.simulation_engine.agent.base import BaseAgent  # noqa: E402
+from arksim.tracing.openai import extract_tool_calls  # noqa: E402
 
 
 class ToolCallExampleAgent(BaseAgent):

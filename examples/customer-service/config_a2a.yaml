@@ -17,6 +17,12 @@ agent_config:
   agent_name: customer-service-a2a
   api_config:
     endpoint: http://localhost:9998
+    # a2a-sdk reads requested extensions from this HTTP header; arksim's A2A
+    # client sets Message.extensions but does not send the header, so without
+    # this the server suppresses tool call metadata and trajectory metrics
+    # silently score against nothing.
+    headers:
+      A2A-Extensions: https://arksim.arklex.ai/a2a/tool-call-capture/v1
 
 # ── SIMULATION SETTINGS ──────────────────────────────────────────────────────
 

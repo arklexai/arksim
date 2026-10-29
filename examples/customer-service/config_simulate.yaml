@@ -7,7 +7,7 @@ agent_config:
   agent_type: custom
   agent_name: customer-service
   custom_config:
-    module_path: ./custom_agent.py
+    module_path: ./openai_agents/custom_agent.py
 
 # Path to the scenarios file
 scenario_file_path: ./scenarios.json

@@ -1,0 +1,9 @@
+# Dependencies for the Google ADK variant: agent.py and custom_agent.py
+# need google-adk; mcp_server.py additionally needs the official MCP
+# Python SDK. Both are listed explicitly so this variant installs
+# standalone, without needing openai_agents/requirements*.txt.
+google-adk>=2.0.0
+# 2.x is required, not just preferred: the handler registration API
+# (Server.add_request_handler), the client entry point (mcp.Client), and
+# snake_case result fields (is_error, structured_content) all changed in 2.0.
+mcp>=2.0.0

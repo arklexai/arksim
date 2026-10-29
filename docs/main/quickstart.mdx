@@ -93,7 +93,7 @@ If you want to see ArkSim in action before connecting your own agent, try one of
                     "Authorization": "Bearer ${OPENAI_API_KEY}",
                 },
                 "body": {
-                    "model": "gpt-5.1",
+                    "model": "gpt-6-sol",
                     "messages": [
                         {"role": "system", "content": "You are a customer service chatbot for XYZ Bank insurance."}
                     ],
@@ -119,7 +119,7 @@ If you want to see ArkSim in action before connecting your own agent, try one of
                 "faithfulness", "helpfulness", "coherence",
                 "relevance", "goal_completion", "agent_behavior_failure",
             ],
-            model="gpt-5.1",
+            model="gpt-6-sol",
             provider="openai",
             num_workers=50,
             generate_html_report=True,
