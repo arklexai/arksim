@@ -17,6 +17,7 @@ from arksim.evaluator.entities import TurnItem
 from arksim.evaluator.evaluate import evaluate_turn
 from arksim.evaluator.utils.enums import EvaluationOutcomes
 from arksim.evaluator.utils.schema import QualSchema, ScoreSchema
+from arksim.llms.chat.base.usage import track_usage, usage_run, usage_tags
 
 
 def _mock_llm(score: int = 4) -> MagicMock:
@@ -71,7 +72,7 @@ class TestEvaluateTurn:
         assert names == {"helpfulness", "coherence"}
 
     def test_good_scores_skip_behavior_failure(self) -> None:
-        # Score=3 means verbosity inverts to 3 (6-3), all scores >= 3 = 0.6*5
+        # All scores >= 3 = 0.6*5
         llm = _mock_llm(score=3)
         result = evaluate_turn(llm, _turn_item())
         assert (
@@ -190,3 +191,27 @@ class TestEvaluateTurn:
             "source": "custom-turn-metric",
             "band": "strong",
         }
+
+    def test_usage_tracking_context_propagates_to_metric_threads(self) -> None:
+        class UsageTrackingMetric(QuantitativeMetric):
+            def __init__(self) -> None:
+                super().__init__(name="usage_tracking_metric")
+
+            def score(self, score_input: ScoreInput) -> QuantResult:
+                track_usage("gpt-4o", "openai", 7, 2)
+                return QuantResult(name=self.name, value=4.0, reason="tracked")
+
+        llm = _mock_llm(score=4)
+        with usage_run() as tracker, usage_tags(component="threaded_metric"):
+            evaluate_turn(
+                llm,
+                _turn_item(),
+                custom_metrics=[UsageTrackingMetric()],
+                metrics_to_run=["nonexistent"],
+                num_workers=2,
+            )
+
+        assert len(tracker.records) == 1
+        assert tracker.records[0].component == "threaded_metric"
+        assert tracker.records[0].input_tokens == 7
+        assert tracker.records[0].output_tokens == 2

@@ -6,7 +6,11 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
-from arksim.scenario.entities import Scenario
+from arksim.scenario.entities import (
+    BehaviorParams,
+    GoalChecklistItem,
+    Scenario,
+)
 
 
 class TestScenarioValidator:
@@ -51,3 +55,44 @@ class TestScenarioValidator:
         s = Scenario(**data)
         assert s.knowledge == []
         assert s.origin == {}
+
+
+class TestCompiledScenarioFields:
+    def _base(self) -> dict:
+        return {
+            "scenario_id": "sc-1",
+            "user_id": "u-1",
+            "goal": "buy a ticket",
+            "agent_context": "travel agent",
+            "user_profile": "frequent traveler",
+        }
+
+    def test_uncompiled_scenario_defaults(self) -> None:
+        s = Scenario(**self._base())
+        assert s.behavior is None
+        assert s.goal_checklist == []
+
+    def test_compiled_scenario_round_trip(self) -> None:
+        data = self._base()
+        data["knowledge"] = [{"id": "kc_01", "content": "trains run hourly"}]
+        data["behavior"] = {"patience": 2}
+        data["goal_checklist"] = [
+            {
+                "description": "Learn how often trains run",
+                "satisfied_when": "The agent states a specific interval",
+                "knowledge_chunk_ids": ["kc_01"],
+            }
+        ]
+
+        s = Scenario(**data)
+        assert s.behavior == BehaviorParams(patience=2)
+        assert s.knowledge[0].id == "kc_01"
+        item = s.goal_checklist[0]
+        assert item == GoalChecklistItem(
+            type="knowledge_answer",
+            description="Learn how often trains run",
+            satisfied_when="The agent states a specific interval",
+            mandatory=True,
+            knowledge_chunk_ids=["kc_01"],
+        )
+        assert Scenario(**s.model_dump()) == s

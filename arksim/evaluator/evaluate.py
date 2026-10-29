@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import contextvars
 import logging
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -83,8 +84,14 @@ def _run_metrics_parallel(
     if all_tasks:
         _max = min(num_workers, len(all_tasks)) if num_workers > 0 else len(all_tasks)
         with ThreadPoolExecutor(max_workers=_max) as pool:
-            score_futures = {pool.submit(fn): name for name, fn in quant_tasks}
-            qual_futures = {pool.submit(fn): name for name, fn in qual_tasks}
+            score_futures = {
+                pool.submit(contextvars.copy_context().run, fn): name
+                for name, fn in quant_tasks
+            }
+            qual_futures = {
+                pool.submit(contextvars.copy_context().run, fn): name
+                for name, fn in qual_tasks
+            }
             all_futures = {**score_futures, **qual_futures}
 
             for future in as_completed(all_futures):
@@ -128,6 +135,9 @@ def evaluate_turn(
         knowledge=combine_knowledge(turn_item.knowledge or []),
         user_goal=turn_item.user_goal,
         profile=turn_item.profile,
+        tool_calls=turn_item.tool_calls or [],
+        agent_context=turn_item.system_prompt,
+        expected_behavior=turn_item.expected_behavior,
     )
 
     builtin: list[QuantitativeMetric] = [
@@ -185,6 +195,8 @@ def evaluate_turn(
             user_goal=score_input.user_goal,
             profile=score_input.profile,
             tool_calls=turn_item.tool_calls,
+            agent_context=score_input.agent_context,
+            expected_behavior=score_input.expected_behavior,
         )
         tool_qual = ToolCallBehaviorFailureMetric(llm).evaluate(tool_score_input)
 
@@ -253,6 +265,8 @@ def evaluate_conversation(
         knowledge=combine_knowledge(convo_item.knowledge or []),
         user_goal=convo_item.user_goal,
         profile=convo_item.profile,
+        agent_context=convo_item.system_prompt,
+        expected_behavior=convo_item.expected_behavior,
     )
 
     builtin_convo_metrics: list[QuantitativeMetric] = []

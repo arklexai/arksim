@@ -39,14 +39,59 @@ def _args_match(
     )
 
 
-def _find_match(
+def args_known(call: ToolCall) -> bool:
+    """Whether the call's arguments were fully captured."""
+    quality = call.capture_quality
+    return quality is None or quality.arguments in (None, "present")
+
+
+def tool_call_matches(
     actual: ToolCall,
     expected: ExpectedToolCall,
 ) -> bool:
-    """Check if an actual tool call matches an expected one."""
+    """Check if an actual tool call matches an expected one.
+
+    A call whose arguments were not fully captured matches on its name: its
+    arguments cannot be checked.
+    """
     if actual.name != expected.name:
         return False
+    if not args_known(actual):
+        return True
     return _args_match(actual.arguments, expected.arguments, expected.arg_match_mode)
+
+
+def _assign(
+    actual: list[ToolCall],
+    expected: list[ExpectedToolCall],
+) -> tuple[list[bool], list[bool]]:
+    """Pair expected calls with actual ones, as many pairs as possible.
+
+    Greedy first-fit can spend an actual call on one expected entry when only
+    it could satisfy another (a call matching on name alone, or an
+    ``ignore`` entry taking the one call a specific entry needed), so pairs
+    are found by augmenting paths instead.
+    """
+    owner: list[int | None] = [None] * len(actual)  # actual j -> expected i
+
+    def augment(i: int, seen: set[int]) -> bool:
+        for j, act in enumerate(actual):
+            if j in seen or not tool_call_matches(act, expected[i]):
+                continue
+            seen.add(j)
+            if owner[j] is None or augment(owner[j], seen):
+                owner[j] = i
+                return True
+        return False
+
+    for i in range(len(expected)):
+        augment(i, set())
+    matched_actual = [o is not None for o in owner]
+    matched_expected = [False] * len(expected)
+    for o in owner:
+        if o is not None:
+            matched_expected[o] = True
+    return matched_expected, matched_actual
 
 
 def match_trajectory(
@@ -108,14 +153,7 @@ def _match_strict(
     if len(actual) != len(expected):
         # Use unordered matching to identify accurate missing/extra lists,
         # then report the count mismatch with correct diagnostics.
-        matched_expected = [False] * len(expected)
-        matched_actual = [False] * len(actual)
-        for i, exp in enumerate(expected):
-            for j, act in enumerate(actual):
-                if not matched_actual[j] and _find_match(act, exp):
-                    matched_expected[i] = True
-                    matched_actual[j] = True
-                    break
+        matched_expected, matched_actual = _assign(actual, expected)
         missing = [
             expected[i].name for i in range(len(expected)) if not matched_expected[i]
         ]
@@ -144,9 +182,9 @@ def _match_strict(
                 )
             else:
                 substitutions.append(
-                    f"Position {i}: expected {exp.name}, got {act.name} (not in expected set)"
+                    f"Position {i}: expected {exp.name}, got {act.name} (not an expected tool)"
                 )
-        elif not _args_match(act.arguments, exp.arguments, exp.arg_match_mode):
+        elif not tool_call_matches(act, exp):
             label = (
                 "lack of specific information"
                 if exp.arg_match_mode == "partial"
@@ -192,6 +230,11 @@ def _match_strict(
     return TrajectoryResult(matched=True, reason="All tool calls match in order.")
 
 
+def _names(names: list[str]) -> str:
+    """Each name once, in first-seen order."""
+    return ", ".join(dict.fromkeys(names))
+
+
 def _extra_calls_label(
     extra: list[str],
     expected: list[ExpectedToolCall],
@@ -213,16 +256,7 @@ def _match_unordered(
     expected: list[ExpectedToolCall],
 ) -> TrajectoryResult:
     """Same set of calls, any order."""
-    # Track which expected calls have been matched
-    matched_expected: list[bool] = [False] * len(expected)
-    matched_actual: list[bool] = [False] * len(actual)
-
-    for i, exp in enumerate(expected):
-        for j, act in enumerate(actual):
-            if not matched_actual[j] and _find_match(act, exp):
-                matched_expected[i] = True
-                matched_actual[j] = True
-                break
+    matched_expected, matched_actual = _assign(actual, expected)
 
     missing = [
         expected[i].name for i in range(len(expected)) if not matched_expected[i]
@@ -234,7 +268,7 @@ def _match_unordered(
             matched=False,
             failure_label="disobey user request",
             reason=f"Missing expected calls: {', '.join(missing)}. "
-            f"Unexpected calls: {', '.join(extra)}.",
+            f"Agent made calls that were not expected: {_names(extra)}.",
             missing_calls=missing,
             extra_calls=extra,
         )
@@ -249,7 +283,7 @@ def _match_unordered(
         return TrajectoryResult(
             matched=False,
             failure_label=_extra_calls_label(extra, expected),
-            reason=f"Unexpected extra tool calls: {', '.join(extra)}.",
+            reason=f"Agent made calls that were not expected: {_names(extra)}.",
             extra_calls=extra,
         )
 
@@ -261,15 +295,7 @@ def _match_contains(
     expected: list[ExpectedToolCall],
 ) -> TrajectoryResult:
     """Agent must call at least the expected tools (extras are allowed)."""
-    matched_expected: list[bool] = [False] * len(expected)
-    matched_actual: list[bool] = [False] * len(actual)
-
-    for i, exp in enumerate(expected):
-        for j, act in enumerate(actual):
-            if not matched_actual[j] and _find_match(act, exp):
-                matched_expected[i] = True
-                matched_actual[j] = True
-                break
+    matched_expected, matched_actual = _assign(actual, expected)
 
     missing = [
         expected[i].name for i in range(len(expected)) if not matched_expected[i]
@@ -296,7 +322,7 @@ def _match_within(
 
     for j, act in enumerate(actual):
         for exp in expected:
-            if _find_match(act, exp):
+            if tool_call_matches(act, exp):
                 matched_actual[j] = True
                 break
 
@@ -305,10 +331,10 @@ def _match_within(
         return TrajectoryResult(
             matched=False,
             failure_label=_extra_calls_label(extra, expected),
-            reason=f"Agent called tools not in expected set: {', '.join(extra)}.",
+            reason=f"Agent called tools outside the allowed list: {_names(extra)}.",
             extra_calls=extra,
         )
 
     return TrajectoryResult(
-        matched=True, reason="All actual calls within expected set (within mode)."
+        matched=True, reason="All actual calls within the allowed list (within mode)."
     )
