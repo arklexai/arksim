@@ -11,7 +11,7 @@ simulation_file_path: ./examples/bank-insurance/results/simulation/simulation.js
 output_dir: ./examples/bank-insurance/results/evaluation
 
 # LLM model
-model: gpt-5.1
+model: gpt-6-sol
 
 # LLM provider
 provider: openai

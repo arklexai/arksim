@@ -14,6 +14,11 @@ from arksim.llms.utils import get_azure_token_provider
 
 T = TypeVar("T", bound=BaseModel)
 
+_NO_WEB_SEARCH = (
+    "Azure OpenAI does not support hosted web search in arksim. "
+    "Use the openai, anthropic, or google provider instead."
+)
+
 
 class AzureOpenAILLM(BaseLLM):
     def __init__(
@@ -89,8 +94,11 @@ class AzureOpenAILLM(BaseLLM):
         self,
         messages: str | list[LLMMessage],
         schema: type[T] | None = None,
+        web_search: bool = False,
         **kwargs: object,
     ) -> T | str:
+        if web_search:
+            raise ValueError(_NO_WEB_SEARCH)
         params = self._prepare_params(messages)
         if schema:
             response = self.client.beta.chat.completions.parse(
@@ -122,8 +130,11 @@ class AzureOpenAILLM(BaseLLM):
         self,
         messages: str | list[LLMMessage],
         schema: type[T] | None = None,
+        web_search: bool = False,
         **kwargs: object,
     ) -> T | str:
+        if web_search:
+            raise ValueError(_NO_WEB_SEARCH)
         params = self._prepare_params(messages)
         if schema:
             response = await self.async_client.beta.chat.completions.parse(
