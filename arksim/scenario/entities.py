@@ -9,9 +9,32 @@ from arksim.utils.output import load_json_file
 
 
 class KnowledgeItem(BaseModel):
-    """Knowledge used in a scenario."""
+    """Knowledge used in a scenario.
 
+    ``id`` is a scenario-local chunk identifier (e.g. ``kc_01``) assigned at
+    scenario compilation time so ``GoalChecklistItem.knowledge_chunk_ids`` can
+    reference the chunks that answer each sub-goal. Uncompiled scenarios leave
+    it unset.
+    """
+
+    id: str | None = None
     content: str = ""
+
+
+class BehaviorParams(BaseModel):
+    """Numeric knobs that seed the simulated user's state."""
+
+    patience: int = 3
+
+
+class GoalChecklistItem(BaseModel):
+    """One sub-goal of the scenario goal."""
+
+    type: Literal["knowledge_answer"] = "knowledge_answer"
+    description: str
+    satisfied_when: str
+    mandatory: bool = True
+    knowledge_chunk_ids: list[str] = []
 
 
 class ExpectedToolCall(BaseModel):
@@ -59,6 +82,8 @@ class Scenario(BaseModel):
     user_profile: str
     origin: dict = Field(default_factory=dict)
     assertions: list[Assertion] = []
+    behavior: BehaviorParams | None = None
+    goal_checklist: list[GoalChecklistItem] = []
 
     def find_assertion(self, assertion_type: str) -> ToolCallsAssertion | None:
         """Return the first assertion matching the given type, or None."""

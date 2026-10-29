@@ -7,8 +7,27 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+from arksim.scenario import Scenario
+from arksim.simulation_engine.core.state import TurnJudgeVerdict
+from arksim.simulation_engine.entities import ConversationExecutionError
 from arksim.simulation_engine.simulator import Simulator
 from arksim.simulation_engine.tool_types import AgentResponse, ToolCall
+
+# The judge now runs every turn regardless of whether the scenario has a
+# checklist; these tests are only about tool-call merging, so the judge is
+# stubbed to end the conversation after exactly one turn via `blocked`.
+_END_AFTER_ONE_TURN = TurnJudgeVerdict(responsiveness="refused")
+
+
+def _scenario() -> Scenario:
+    return Scenario(
+        scenario_id="s1",
+        user_id="u1",
+        goal="test goal",
+        agent_context="context",
+        knowledge=[{"content": "k1"}],
+        user_profile="test user",
+    )
 
 
 def _make_simulator(
@@ -45,7 +64,7 @@ async def test_trace_merge_appends_new_tool_calls() -> None:
 
     sim = _make_simulator(trace_receiver=receiver)
 
-    # Mock dependencies for _run_single_conversation
+    # Mock dependencies for run_single_conversation
     mock_agent = AsyncMock()
     mock_agent.get_chat_id = AsyncMock(return_value="conv-1")
     mock_agent.execute = AsyncMock(
@@ -58,20 +77,23 @@ async def test_trace_merge_appends_new_tool_calls() -> None:
     )
     mock_agent.close = AsyncMock()
 
-    # LLM returns non-STOP first so the agent gets a turn, then STOP
-    sim.llm.call_async = AsyncMock(side_effect=["hello", "###STOP###"])
-
-    with patch(
-        "arksim.simulation_engine.simulator.create_agent",
-        return_value=mock_agent,
+    with (
+        patch(
+            "arksim.simulation_engine.simulator.create_agent",
+            return_value=mock_agent,
+        ),
+        patch(
+            "arksim.simulation_engine.simulator.judge_turn",
+            AsyncMock(return_value=_END_AFTER_ONE_TURN),
+        ),
+        patch(
+            "arksim.simulation_engine.simulator.generate_utterance",
+            AsyncMock(return_value="hello"),
+        ),
     ):
-        state = await sim._run_single_conversation(
-            profile="test user",
-            goal="test goal",
-            knowledge=[{"content": "k1"}],
-            agent_context="context",
+        state = await sim.run_single_conversation(
+            _scenario(),
             max_turns=3,
-            scenario_id="s1",
         )
 
     assert state is not None
@@ -110,20 +132,23 @@ async def test_trace_merge_deduplicates_by_id() -> None:
     )
     mock_agent.close = AsyncMock()
 
-    # LLM returns non-STOP first, then STOP
-    sim.llm.call_async = AsyncMock(side_effect=["hello", "###STOP###"])
-
-    with patch(
-        "arksim.simulation_engine.simulator.create_agent",
-        return_value=mock_agent,
+    with (
+        patch(
+            "arksim.simulation_engine.simulator.create_agent",
+            return_value=mock_agent,
+        ),
+        patch(
+            "arksim.simulation_engine.simulator.judge_turn",
+            AsyncMock(return_value=_END_AFTER_ONE_TURN),
+        ),
+        patch(
+            "arksim.simulation_engine.simulator.generate_utterance",
+            AsyncMock(return_value="hello"),
+        ),
     ):
-        state = await sim._run_single_conversation(
-            profile="test user",
-            goal="test goal",
-            knowledge=[{"content": "k1"}],
-            agent_context="context",
+        state = await sim.run_single_conversation(
+            _scenario(),
             max_turns=3,
-            scenario_id="s1",
         )
 
     assert state is not None
@@ -166,19 +191,23 @@ async def test_trace_merge_deduplicates_by_name_args() -> None:
     )
     mock_agent.close = AsyncMock()
 
-    sim.llm.call_async = AsyncMock(side_effect=["hello", "###STOP###"])
-
-    with patch(
-        "arksim.simulation_engine.simulator.create_agent",
-        return_value=mock_agent,
+    with (
+        patch(
+            "arksim.simulation_engine.simulator.create_agent",
+            return_value=mock_agent,
+        ),
+        patch(
+            "arksim.simulation_engine.simulator.judge_turn",
+            AsyncMock(return_value=_END_AFTER_ONE_TURN),
+        ),
+        patch(
+            "arksim.simulation_engine.simulator.generate_utterance",
+            AsyncMock(return_value="hello"),
+        ),
     ):
-        state = await sim._run_single_conversation(
-            profile="test user",
-            goal="test goal",
-            knowledge=[{"content": "k1"}],
-            agent_context="context",
+        state = await sim.run_single_conversation(
+            _scenario(),
             max_turns=3,
-            scenario_id="s1",
         )
 
     assert state is not None
@@ -215,19 +244,23 @@ async def test_trace_merge_adds_unique_traced_calls() -> None:
     )
     mock_agent.close = AsyncMock()
 
-    sim.llm.call_async = AsyncMock(side_effect=["hello", "###STOP###"])
-
-    with patch(
-        "arksim.simulation_engine.simulator.create_agent",
-        return_value=mock_agent,
+    with (
+        patch(
+            "arksim.simulation_engine.simulator.create_agent",
+            return_value=mock_agent,
+        ),
+        patch(
+            "arksim.simulation_engine.simulator.judge_turn",
+            AsyncMock(return_value=_END_AFTER_ONE_TURN),
+        ),
+        patch(
+            "arksim.simulation_engine.simulator.generate_utterance",
+            AsyncMock(return_value="hello"),
+        ),
     ):
-        state = await sim._run_single_conversation(
-            profile="test user",
-            goal="test goal",
-            knowledge=[{"content": "k1"}],
-            agent_context="context",
+        state = await sim.run_single_conversation(
+            _scenario(),
             max_turns=3,
-            scenario_id="s1",
         )
 
     assert state is not None
@@ -256,19 +289,23 @@ async def test_no_trace_receiver_preserves_existing_behavior() -> None:
     )
     mock_agent.close = AsyncMock()
 
-    sim.llm.call_async = AsyncMock(side_effect=["hello", "###STOP###"])
-
-    with patch(
-        "arksim.simulation_engine.simulator.create_agent",
-        return_value=mock_agent,
+    with (
+        patch(
+            "arksim.simulation_engine.simulator.create_agent",
+            return_value=mock_agent,
+        ),
+        patch(
+            "arksim.simulation_engine.simulator.judge_turn",
+            AsyncMock(return_value=_END_AFTER_ONE_TURN),
+        ),
+        patch(
+            "arksim.simulation_engine.simulator.generate_utterance",
+            AsyncMock(return_value="hello"),
+        ),
     ):
-        state = await sim._run_single_conversation(
-            profile="test user",
-            goal="test goal",
-            knowledge=[{"content": "k1"}],
-            agent_context="context",
+        state = await sim.run_single_conversation(
+            _scenario(),
             max_turns=3,
-            scenario_id="s1",
         )
 
     assert state is not None
@@ -289,22 +326,26 @@ async def test_turn_id_passed_in_metadata() -> None:
     mock_agent.execute = AsyncMock(return_value="response")
     mock_agent.close = AsyncMock()
 
-    sim.llm.call_async = AsyncMock(side_effect=["hello", "###STOP###"])
-
-    with patch(
-        "arksim.simulation_engine.simulator.create_agent",
-        return_value=mock_agent,
+    with (
+        patch(
+            "arksim.simulation_engine.simulator.create_agent",
+            return_value=mock_agent,
+        ),
+        patch(
+            "arksim.simulation_engine.simulator.judge_turn",
+            AsyncMock(return_value=_END_AFTER_ONE_TURN),
+        ),
+        patch(
+            "arksim.simulation_engine.simulator.generate_utterance",
+            AsyncMock(return_value="hello"),
+        ),
     ):
-        await sim._run_single_conversation(
-            profile="test user",
-            goal="test goal",
-            knowledge=[{"content": "k1"}],
-            agent_context="context",
+        await sim.run_single_conversation(
+            _scenario(),
             max_turns=3,
-            scenario_id="s1",
         )
 
-    # agent.execute was called once (before STOP)
+    # agent.execute was called once (the judge stub ends it after one turn)
     assert mock_agent.execute.call_count == 1
     call_kwargs = mock_agent.execute.call_args
     metadata = call_kwargs.kwargs.get("metadata") or call_kwargs[1].get("metadata")
@@ -345,19 +386,23 @@ async def test_trace_merge_nested_dict_arguments() -> None:
     )
     mock_agent.close = AsyncMock()
 
-    sim.llm.call_async = AsyncMock(side_effect=["hello", "###STOP###"])
-
-    with patch(
-        "arksim.simulation_engine.simulator.create_agent",
-        return_value=mock_agent,
+    with (
+        patch(
+            "arksim.simulation_engine.simulator.create_agent",
+            return_value=mock_agent,
+        ),
+        patch(
+            "arksim.simulation_engine.simulator.judge_turn",
+            AsyncMock(return_value=_END_AFTER_ONE_TURN),
+        ),
+        patch(
+            "arksim.simulation_engine.simulator.generate_utterance",
+            AsyncMock(return_value="hello"),
+        ),
     ):
-        state = await sim._run_single_conversation(
-            profile="test user",
-            goal="test goal",
-            knowledge=[{"content": "k1"}],
-            agent_context="context",
+        state = await sim.run_single_conversation(
+            _scenario(),
             max_turns=3,
-            scenario_id="s1",
         )
 
     assert state is not None
@@ -395,19 +440,23 @@ async def test_trace_merge_three_way_overlap() -> None:
     )
     mock_agent.close = AsyncMock()
 
-    sim.llm.call_async = AsyncMock(side_effect=["hello", "###STOP###"])
-
-    with patch(
-        "arksim.simulation_engine.simulator.create_agent",
-        return_value=mock_agent,
+    with (
+        patch(
+            "arksim.simulation_engine.simulator.create_agent",
+            return_value=mock_agent,
+        ),
+        patch(
+            "arksim.simulation_engine.simulator.judge_turn",
+            AsyncMock(return_value=_END_AFTER_ONE_TURN),
+        ),
+        patch(
+            "arksim.simulation_engine.simulator.generate_utterance",
+            AsyncMock(return_value="hello"),
+        ),
     ):
-        state = await sim._run_single_conversation(
-            profile="test user",
-            goal="test goal",
-            knowledge=[{"content": "k1"}],
-            agent_context="context",
+        state = await sim.run_single_conversation(
+            _scenario(),
             max_turns=3,
-            scenario_id="s1",
         )
 
     assert state is not None
@@ -422,6 +471,45 @@ async def test_trace_merge_three_way_overlap() -> None:
     assert "span-b" not in ids
 
 
+async def _merge_one_turn(
+    explicit: list[ToolCall], traced: list[ToolCall]
+) -> list[dict]:
+    """Run one turn with the given explicit and traced calls; return merged calls."""
+    receiver = AsyncMock()
+    receiver.signal_turn_complete = MagicMock()
+    receiver.wait_for_traces = AsyncMock(return_value=traced)
+
+    sim = _make_simulator(trace_receiver=receiver)
+
+    mock_agent = AsyncMock()
+    mock_agent.get_chat_id = AsyncMock(return_value="conv-1")
+    mock_agent.execute = AsyncMock(
+        return_value=AgentResponse(content="result", tool_calls=explicit)
+    )
+    mock_agent.close = AsyncMock()
+
+    with (
+        patch(
+            "arksim.simulation_engine.simulator.create_agent",
+            return_value=mock_agent,
+        ),
+        patch(
+            "arksim.simulation_engine.simulator.judge_turn",
+            AsyncMock(return_value=_END_AFTER_ONE_TURN),
+        ),
+        patch(
+            "arksim.simulation_engine.simulator.generate_utterance",
+            AsyncMock(return_value="hello"),
+        ),
+    ):
+        state = await sim.run_single_conversation(_scenario(), max_turns=3)
+
+    assert state is not None
+    agent_msgs = [m for m in state.conversation_history if m.get("role") == "user"]
+    assert len(agent_msgs) == 1
+    return agent_msgs[0].get("tool_calls", [])
+
+
 @pytest.mark.asyncio
 async def test_empty_ids_do_not_collapse_distinct_traced_calls() -> None:
     """Empty tool-call ids must not be treated as a match in ID dedup.
@@ -430,153 +518,75 @@ async def test_empty_ids_do_not_collapse_distinct_traced_calls() -> None:
     If turn_tool_calls contains any empty-id call, every traced call
     with a distinct (name, arguments) signature must still be merged.
     """
-    receiver = AsyncMock()
-    receiver.signal_turn_complete = MagicMock()
-    receiver.wait_for_traces = AsyncMock(
-        return_value=[
-            ToolCall(id="", name="c", arguments={"z": 3}),
-        ]
+    tc_list = await _merge_one_turn(
+        explicit=[
+            ToolCall(id="", name="a", arguments={"x": 1}),
+            ToolCall(id="", name="b", arguments={"y": 2}),
+        ],
+        traced=[ToolCall(id="", name="c", arguments={"z": 3})],
     )
-
-    sim = _make_simulator(trace_receiver=receiver)
-
-    mock_agent = AsyncMock()
-    mock_agent.get_chat_id = AsyncMock(return_value="conv-1")
-    mock_agent.execute = AsyncMock(
-        return_value=AgentResponse(
-            content="result",
-            tool_calls=[
-                ToolCall(id="", name="a", arguments={"x": 1}),
-                ToolCall(id="", name="b", arguments={"y": 2}),
-            ],
-        )
-    )
-    mock_agent.close = AsyncMock()
-
-    sim.llm.call_async = AsyncMock(side_effect=["hello", "###STOP###"])
-
-    with patch(
-        "arksim.simulation_engine.simulator.create_agent",
-        return_value=mock_agent,
-    ):
-        state = await sim._run_single_conversation(
-            profile="test user",
-            goal="test goal",
-            knowledge=[{"content": "k1"}],
-            agent_context="context",
-            max_turns=3,
-            scenario_id="s1",
-        )
-
-    assert state is not None
-    agent_msgs = [m for m in state.conversation_history if m.get("role") == "user"]
-    assert len(agent_msgs) == 1
-    tc_list = agent_msgs[0].get("tool_calls", [])
     # 2 explicit (a, b) + 1 traced (c) = 3; empty ids must not collapse them
+    assert {tc["name"] for tc in tc_list} == {"a", "b", "c"}
     assert len(tc_list) == 3
-    names = {tc["name"] for tc in tc_list}
-    assert names == {"a", "b", "c"}
 
 
 @pytest.mark.asyncio
 async def test_empty_id_signature_match_still_dedupes() -> None:
-    """Signature-based dedup fires even when both sides have empty ids.
-
-    When turn_tool_calls and traced both carry id="" for the same
-    (name, arguments), the call must appear exactly once in the result.
-    """
-    receiver = AsyncMock()
-    receiver.signal_turn_complete = MagicMock()
-    receiver.wait_for_traces = AsyncMock(
-        return_value=[
-            ToolCall(id="", name="a", arguments={"x": 1}),
-        ]
+    """Signature-based dedup fires even when both sides have empty ids."""
+    tc_list = await _merge_one_turn(
+        explicit=[ToolCall(id="", name="a", arguments={"x": 1})],
+        traced=[ToolCall(id="", name="a", arguments={"x": 1})],
     )
-
-    sim = _make_simulator(trace_receiver=receiver)
-
-    mock_agent = AsyncMock()
-    mock_agent.get_chat_id = AsyncMock(return_value="conv-1")
-    mock_agent.execute = AsyncMock(
-        return_value=AgentResponse(
-            content="result",
-            tool_calls=[
-                ToolCall(id="", name="a", arguments={"x": 1}),
-            ],
-        )
-    )
-    mock_agent.close = AsyncMock()
-
-    sim.llm.call_async = AsyncMock(side_effect=["hello", "###STOP###"])
-
-    with patch(
-        "arksim.simulation_engine.simulator.create_agent",
-        return_value=mock_agent,
-    ):
-        state = await sim._run_single_conversation(
-            profile="test user",
-            goal="test goal",
-            knowledge=[{"content": "k1"}],
-            agent_context="context",
-            max_turns=3,
-            scenario_id="s1",
-        )
-
-    assert state is not None
-    agent_msgs = [m for m in state.conversation_history if m.get("role") == "user"]
-    assert len(agent_msgs) == 1
-    tc_list = agent_msgs[0].get("tool_calls", [])
-    # Signature match: only 1 call, not 2
     assert len(tc_list) == 1
-    assert tc_list[0]["name"] == "a"
 
 
 @pytest.mark.asyncio
 async def test_duplicate_empty_id_traced_calls_dedupe_within_traced() -> None:
-    """Two same-signature empty-id traced calls dedupe even when turn_tool_calls is empty.
-
-    Without sig_to_idx updates inside the append loop, both traced calls would
-    pass id-check (empty falls through) and sig-check (sig_to_idx empty from
-    turn_tool_calls=[]), producing a duplicate. The append branch tracks each
-    newly-merged call so subsequent traced entries dedupe against it.
-    """
-    receiver = AsyncMock()
-    receiver.signal_turn_complete = MagicMock()
-    receiver.wait_for_traces = AsyncMock(
-        return_value=[
-            ToolCall(id="", name="foo", arguments={"x": 1}),
-            ToolCall(id="", name="foo", arguments={"x": 1}),
-        ]
+    """Two traced calls with the same signature are merged only once."""
+    tc_list = await _merge_one_turn(
+        explicit=[],
+        traced=[
+            ToolCall(id="", name="a", arguments={"x": 1}),
+            ToolCall(id="", name="a", arguments={"x": 1}),
+        ],
     )
+    assert len(tc_list) == 1
 
-    sim = _make_simulator(trace_receiver=receiver)
+
+# ── Error propagation ──
+
+
+@pytest.mark.asyncio
+async def test_run_single_conversation_reraises_agent_error() -> None:
+    """A connector/agent error surfaces as ConversationExecutionError, carrying
+    the partial transcript, instead of being swallowed as None."""
+    sim = _make_simulator()
 
     mock_agent = AsyncMock()
     mock_agent.get_chat_id = AsyncMock(return_value="conv-1")
+    # Simulate a connector failure such as the "HTTP 429" RuntimeError raised
+    # by the chat_completions / custom_http clients.
     mock_agent.execute = AsyncMock(
-        return_value=AgentResponse(content="result", tool_calls=[])
+        side_effect=RuntimeError("CustomHTTP API error: HTTP 429: rate limited")
     )
     mock_agent.close = AsyncMock()
 
-    sim.llm.call_async = AsyncMock(side_effect=["hello", "###STOP###"])
-
-    with patch(
-        "arksim.simulation_engine.simulator.create_agent",
-        return_value=mock_agent,
+    with (
+        patch(
+            "arksim.simulation_engine.simulator.create_agent",
+            return_value=mock_agent,
+        ),
+        patch(
+            "arksim.simulation_engine.simulator.generate_utterance",
+            AsyncMock(return_value="hello"),
+        ),
+        pytest.raises(ConversationExecutionError, match="HTTP 429") as excinfo,
     ):
-        state = await sim._run_single_conversation(
-            profile="test user",
-            goal="test goal",
-            knowledge=[{"content": "k1"}],
-            agent_context="context",
-            max_turns=3,
-            scenario_id="s1",
-        )
+        await sim.run_single_conversation(_scenario(), max_turns=3)
 
-    assert state is not None
-    agent_msgs = [m for m in state.conversation_history if m.get("role") == "user"]
-    assert len(agent_msgs) == 1
-    tc_list = agent_msgs[0].get("tool_calls", [])
-    # Both traced calls share id="" and (name, args); only one survives.
-    assert len(tc_list) == 1
-    assert tc_list[0]["name"] == "foo"
+    # The simulated-user turn attempted before the failure is preserved so the
+    # caller can persist a partial transcript.
+    assert excinfo.value.partial_state is not None
+    assert len(excinfo.value.partial_state.conversation_history) > 1
+    # The agent is still closed on the error path (finally block).
+    mock_agent.close.assert_awaited_once()

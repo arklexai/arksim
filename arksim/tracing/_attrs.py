@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import base64
 from typing import Any
 
 
@@ -29,7 +30,25 @@ def get_attr(attrs: list[dict[str, Any]], key: str) -> str | None:
             double_val = value.get("doubleValue", value.get("double_value"))
             if double_val is not None:
                 return str(double_val)
+            # LangSmith's OTel export sends its JSON payloads as bytes, which
+            # OTLP JSON and protojson carry base64 encoded.
+            bytes_val = value.get("bytesValue", value.get("bytes_value"))
+            if bytes_val is not None:
+                return _bytes_text(bytes_val)
     return None
+
+
+def _bytes_text(raw: str | bytes) -> str:
+    """UTF-8 text of a bytes value, or its base64 form when it is not text."""
+    if isinstance(raw, str):
+        try:
+            raw = base64.b64decode(raw, validate=True)
+        except ValueError:
+            return raw
+    try:
+        return raw.decode("utf-8")
+    except UnicodeDecodeError:
+        return base64.b64encode(raw).decode("ascii")
 
 
 def first_attr(attrs: list[dict[str, Any]], *keys: str) -> str | None:

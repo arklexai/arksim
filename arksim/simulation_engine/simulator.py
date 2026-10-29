@@ -8,34 +8,39 @@ import traceback
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
+import httpx
 from jinja2.sandbox import SandboxedEnvironment
 from pydantic import ValidationError
 from tqdm import tqdm
 
 from arksim.config import AgentConfig, AgentType
 from arksim.llms.chat import LLM
-from arksim.scenario import (
-    KnowledgeItem,
-    Scenarios,
-)
+from arksim.scenario import Scenario, Scenarios
 from arksim.utils.concurrency import resolve_num_workers
 from arksim.utils.output import save_json_file_async
 
 if TYPE_CHECKING:
     from arksim.tracing import TraceReceiver
 
-from arksim.tracing.context import _clear_trace_context, _set_trace_context
+from arksim.tracing.context import (
+    _clear_trace_context,
+    _set_trace_context,
+    reset_request_headers,
+    set_request_headers,
+)
 
 from .agent.factory import create_agent
-from .core import TURN_KNOWLEDGE_FN
+from .core import ConversationLedger, generate_utterance, judge_turn
 from .entities import (
     Conversation,
+    ConversationExecutionError,
     ConversationState,
     Message,
     SimulatedUserPrompt,
     Simulation,
     SimulationInput,
     SimulationParams,
+    TurnHooks,
 )
 from .tool_types import AgentResponse, ToolCall, ToolCallSource
 from .utils.prompts import DEFAULT_SIMULATED_USER_PROMPT_TEMPLATE
@@ -44,12 +49,9 @@ from .utils.utils import flip_hist
 logger = logging.getLogger(__name__)
 
 
-# v1.1: Message.tool_calls field added (optional, backward-compatible with v1)
-SIMULATION_SCHEMA_VERSION = "v1.1"
-SIMULATOR_VERSION = "v1"
-
-
-STOP_SIGNAL = "###STOP###"
+# v2: every conversation runs a judged turn loop (see run_single_conversation).
+SIMULATION_SCHEMA_VERSION = "v2"
+SIMULATOR_VERSION = "v2"
 
 
 _KNOWN_TOOL_CALL_SOURCES = {s.value for s in ToolCallSource}
@@ -90,135 +92,143 @@ class Simulator:
         simulator_params: SimulationParams,
         llm: LLM,
         trace_receiver: TraceReceiver | None = None,
+        *,
+        agent_http_client_factory: Callable[..., httpx.AsyncClient] | None = None,
     ) -> None:
         self.agent_config = agent_config
         self.simulator_params = simulator_params
         self.llm = llm
         self.trace_receiver = trace_receiver
+        self.agent_http_client_factory = agent_http_client_factory
         self.simulation: Simulation | None = None
 
     def _render_simulated_user_prompt(
         self,
         simulated_user_prompt_template: str,
-        profile: str,
-        goal: str,
-        knowledge: list[KnowledgeItem],
-        agent_context: str,
+        scenario: Scenario,
     ) -> str:
         """Render the simulated-user system prompt via Jinja2."""
         template = SandboxedEnvironment().from_string(simulated_user_prompt_template)
         return template.render(
             scenario={
-                "agent_context": agent_context,
-                "goal": goal,
-                "knowledge": knowledge,
-                "user_profile": profile,
+                "user_profile": scenario.user_profile,
             },
+            web_search=self.simulator_params.web_search,
         )
 
-    async def _generate_simulated_user_output(
+    async def run_single_conversation(
         self,
-        history: list[dict[str, Any]],
-        is_multi_knowledge: bool,
-        knowledge_content: list[str],
-        turn_state: dict[str, Any],
-    ) -> tuple[str, dict[str, Any]]:
-        """Generate the simulated user's next message.
-
-        Returns the LLM output and the (possibly updated)
-        turn state for multi-knowledge scenarios.
-        """
-        if is_multi_knowledge:
-            current_turn_knowledge, turn_state = await TURN_KNOWLEDGE_FN(
-                self.llm,
-                history,
-                knowledge_content,
-                turn_state,
-            )
-            if current_turn_knowledge:
-                knowledge_msg = (
-                    f"[Reference knowledge for this turn]:\n{current_turn_knowledge}"
-                )
-                augmented = list(history) + [{"role": "user", "content": knowledge_msg}]
-                return await self.llm.call_async(augmented), turn_state
-        return await self.llm.call_async(history), turn_state
-
-    async def _run_single_conversation(
-        self,
-        profile: str,
-        goal: str,
-        knowledge: KnowledgeItem | list[KnowledgeItem],
-        agent_context: str,
+        scenario: Scenario,
         max_turns: int,
-        scenario_id: str = "",
         on_turn_complete: Callable[[], None] | None = None,
         on_turn_display: Callable[[str, str, str, int], None] | None = None,
+        *,
+        chat_id: str | None = None,
+        turn_hooks: TurnHooks | None = None,
     ) -> ConversationState | None:
-        """Run a single conversation and return its state."""
-        knowledge_content: list[str] = [
-            kc.content if hasattr(kc, "content") else kc.get("content", "")
-            for kc in knowledge
-        ]
-        is_multi_knowledge = len(knowledge_content) > 1 and any(knowledge_content)
+        """Run a single conversation and return its state.
+
+        ``chat_id`` overrides ``agent.get_chat_id()`` as the conversation id.
+        ``turn_hooks`` (see ``TurnHooks``) run before and after each
+        ``agent.execute()``; headers returned by the before-hook are applied
+        to that single agent request via the ``request_headers`` contextvar.
+
+        The system prompt is fixed for the whole conversation and renders
+        only ``user_profile`` - ``agent_context``/``goal`` never reach the
+        simulated user (goal only reaches the generator decomposed into the
+        directive's ``pending_checklist``); per-turn state (patience,
+        pending checklist) rides on an ephemeral directive instead (see
+        ``core.utterance.generate_utterance``).
+        The simulated user never sees the scenario's ground-truth
+        ``knowledge``. A turn judge updates a ``ConversationLedger`` after
+        every agent reply, and termination is decided entirely in code
+        (``user_satisfied``, ``gave_up``, ``blocked``, or ``max_turns``) -
+        never by the generator. A scenario with an empty ``goal_checklist``
+        (uncompiled) simply has no mandatory sub-goal to satisfy, so it
+        runs to ``gave_up`` or ``max_turns``.
+        """
+        knowledge_content: list[str] = [kc.content for kc in scenario.knowledge]
+        ledger = ConversationLedger.from_scenario(scenario)
 
         simulated_user_prompt_template = (
             self.simulator_params.simulated_user_prompt_template
             or DEFAULT_SIMULATED_USER_PROMPT_TEMPLATE
         )
         instructional_prompt = self._render_simulated_user_prompt(
-            simulated_user_prompt_template, profile, goal, knowledge, agent_context
+            simulated_user_prompt_template, scenario
         )
 
-        agent = create_agent(self.agent_config)
+        agent = create_agent(
+            self.agent_config, http_client_factory=self.agent_http_client_factory
+        )
         try:
-            conversation_id = await agent.get_chat_id()
-            logger.info(f"Starting conversation {conversation_id} with goal: {goal}")
+            conversation_id = chat_id or await agent.get_chat_id()
+            logger.info(
+                f"Starting conversation {conversation_id} with goal: {scenario.goal}"
+            )
 
             history: list[dict[str, Any]] = [
                 {"role": "system", "content": instructional_prompt}
             ]
             metadata: dict[str, Any] = {
                 "chat_id": conversation_id,
-                "user_goal": goal,
-                "knowledge": knowledge,
+                "user_goal": scenario.goal,
+                "knowledge": scenario.knowledge,
             }
 
-            turn_state: dict[str, Any] = {}
             for turn in range(max_turns):
-                output, turn_state = await self._generate_simulated_user_output(
+                output = await generate_utterance(
+                    self.llm,
+                    scenario,
+                    ledger,
                     history,
-                    is_multi_knowledge,
-                    knowledge_content,
-                    turn_state,
+                    turn,
+                    web_search=self.simulator_params.web_search,
                 )
 
                 history.append({"role": "assistant", "content": output})
                 if on_turn_complete:
                     on_turn_complete()
 
-                if STOP_SIGNAL in output:
-                    logger.info(
-                        f"Conversation {conversation_id} stopped "
-                        f"at turn {turn + 1} (STOP signal)"
-                    )
-                    break
-
                 metadata["turn_id"] = turn
 
-                # Set trace routing context so processors can read it
-                # without the agent passing it explicitly.
-                if self.trace_receiver is not None:
-                    _set_trace_context(conversation_id, turn, self.trace_receiver)
+                # A before-hook failure propagates here, before the request.
+                headers = (
+                    await turn_hooks.before_agent_execute(turn)
+                    if turn_hooks is not None
+                    else None
+                )
 
+                error: BaseException | None = None
+                headers_token = None
                 try:
+                    headers_token = set_request_headers(headers)
+                    # Set trace routing context so processors can read it
+                    # without the agent passing it explicitly.
+                    if self.trace_receiver is not None:
+                        _set_trace_context(conversation_id, turn, self.trace_receiver)
                     result = await agent.execute(
                         user_query=output,
                         metadata=metadata,
                     )
+                except BaseException as e:
+                    error = e
+                    raise
                 finally:
+                    if headers_token is not None:
+                        reset_request_headers(headers_token)
                     if self.trace_receiver is not None:
                         self.trace_receiver.signal_turn_complete(conversation_id, turn)
                         _clear_trace_context()
+                    if turn_hooks is not None:
+                        try:
+                            await turn_hooks.after_agent_execute(turn, error)
+                        except Exception:
+                            # Never mask the in-flight exception (or fail a
+                            # successful turn) because a hook failed.
+                            logger.exception(
+                                "after_agent_execute hook failed for turn %d", turn
+                            )
 
                 # Normalize response
                 if isinstance(result, AgentResponse):
@@ -251,11 +261,17 @@ class Simulator:
                         existing_ids = {tc.id for tc in turn_tool_calls if tc.id}
                         sig_to_idx: dict[tuple[str, str], int] = {}
                         for i, tc in enumerate(turn_tool_calls):
-                            sig = (tc.name, json.dumps(tc.arguments, sort_keys=True))
+                            sig = (
+                                tc.name,
+                                json.dumps(tc.arguments, sort_keys=True),
+                            )
                             sig_to_idx[sig] = i
 
                         for tc in traced:
-                            sig = (tc.name, json.dumps(tc.arguments, sort_keys=True))
+                            sig = (
+                                tc.name,
+                                json.dumps(tc.arguments, sort_keys=True),
+                            )
                             if tc.id not in existing_ids and sig not in sig_to_idx:
                                 turn_tool_calls.append(tc)
                                 sig_to_idx[sig] = len(turn_tool_calls) - 1
@@ -277,6 +293,23 @@ class Simulator:
                 if on_turn_display:
                     on_turn_display(conversation_id, output, answer, turn + 1)
 
+                verdict = await judge_turn(
+                    self.llm, scenario, ledger, history, answer, turn
+                )
+                if verdict is not None:
+                    ledger.apply(verdict, turn)
+                reason = ledger.should_terminate()
+                if reason is not None:
+                    ledger.termination_reason = reason
+                    logger.info(
+                        f"Conversation {conversation_id} terminated "
+                        f"at turn {turn + 1} ({reason})"
+                    )
+                    break
+
+            if ledger.termination_reason is None:
+                ledger.termination_reason = "max_turns"
+
             logger.info(
                 f"Conversation {conversation_id} completed "
                 f"with {len(history) - 1} messages"
@@ -284,21 +317,43 @@ class Simulator:
 
             return ConversationState(
                 conversation_id=conversation_id,
-                scenario_id=scenario_id,
+                scenario_id=scenario.scenario_id,
                 conversation_history=history,
                 simulated_user_prompt_template=simulated_user_prompt_template,
-                simulated_user_profile=profile,
-                user_goal=goal,
+                simulated_user_profile=scenario.user_profile,
+                user_goal=scenario.goal,
                 knowledge=knowledge_content,
-                agent_context=agent_context,
+                agent_context=scenario.agent_context,
+                ledger=ledger,
             )
         except Exception as e:
-            logger.error(f"Error simulating conversation: {str(e)}")
-            return None
+            # Surface the real error (e.g. the connector's "HTTP 429: ..."
+            # RuntimeError) instead of a silent None, and carry any turns
+            # completed before the failure so the caller can persist a partial
+            # transcript. The batch runner in run_num_conversations catches this
+            # like any Exception, so its behavior is unchanged.
+            logger.exception("Error simulating conversation")
+            partial_state: ConversationState | None = None
+            try:
+                if history and len(history) > 1:
+                    partial_state = ConversationState(
+                        conversation_id=conversation_id,
+                        scenario_id=scenario.scenario_id,
+                        conversation_history=history,
+                        simulated_user_prompt_template=simulated_user_prompt_template,
+                        simulated_user_profile=scenario.user_profile,
+                        user_goal=scenario.goal,
+                        knowledge=knowledge_content,
+                        agent_context=scenario.agent_context,
+                    )
+            except NameError:
+                # Failure occurred before history/conversation_id were assigned.
+                partial_state = None
+            raise ConversationExecutionError(str(e), partial_state) from e
         finally:
             await agent.close()
 
-    def _to_conversation_output(self, state: ConversationState) -> Conversation:
+    def to_conversation_output(self, state: ConversationState) -> Conversation:
         """Convert internal state to an output-format conversation."""
         flipped = flip_hist(state.conversation_history)
 
@@ -331,13 +386,14 @@ class Simulator:
                 )
                 turn_id += 1
 
+        # Only user_profile is an actual prompt variable now (see
+        # run_single_conversation); the other ConversationState fields still
+        # carry their values, just not here.
         simulated_user_prompt = SimulatedUserPrompt(
             simulated_user_prompt_template=state.simulated_user_prompt_template,
             variables={
-                "scenario.agent_context": state.agent_context,
-                "scenario.goal": state.user_goal,
-                "scenario.knowledge": state.knowledge,
                 "scenario.user_profile": state.simulated_user_profile,
+                "web_search": self.simulator_params.web_search,
             },
         )
 
@@ -346,6 +402,7 @@ class Simulator:
             scenario_id=state.scenario_id,
             conversation_history=messages,
             simulated_user_prompt=simulated_user_prompt,
+            ledger=state.ledger,
         )
 
     async def simulate(
@@ -401,13 +458,9 @@ class Simulator:
                             logger.error(f"Error processing conversation: {str(e)}")
                             logger.error(traceback.format_exc())
 
-                coro = self._run_single_conversation(
-                    scenario.user_profile,
-                    scenario.goal,
-                    scenario.knowledge,
-                    scenario.agent_context,
+                coro = self.run_single_conversation(
+                    scenario,
                     max_turns,
-                    scenario_id=scenario.scenario_id,
                     on_turn_complete=on_turn_complete,
                     on_turn_display=on_turn_display,
                 )
@@ -432,9 +485,7 @@ class Simulator:
         pbar.close()
 
         # Convert internal states to output conversations
-        conversation_outputs = [
-            self._to_conversation_output(state) for state in results
-        ]
+        conversation_outputs = [self.to_conversation_output(state) for state in results]
         conversation_outputs.sort(key=lambda c: c.conversation_id)
 
         self.simulation = Simulation(
@@ -488,12 +539,22 @@ async def run_simulation(
         provider=settings.provider,
     )
 
+    web_search = settings.web_search
+    if web_search and not llm.supports_web_search:
+        logger.warning(
+            "Provider '%s' has no hosted web fetch or search tool; the "
+            "simulated user will run without it.",
+            settings.provider,
+        )
+        web_search = False
+
     simulation_params = SimulationParams(
         num_convos_per_scenario=settings.num_conversations_per_scenario,
         max_turns=settings.max_turns,
         num_workers=settings.num_workers,
         output_file_path=settings.output_file_path,
         simulated_user_prompt_template=settings.simulated_user_prompt_template,
+        web_search=web_search,
     )
 
     # Start trace receiver if configured (lazy import to avoid circular deps)
@@ -521,6 +582,7 @@ async def run_simulation(
             llm=llm,
             trace_receiver=trace_receiver,
         )
+
         simulation_output = await simulator.simulate(
             scenarios, on_progress=on_progress, verbose=verbose
         )

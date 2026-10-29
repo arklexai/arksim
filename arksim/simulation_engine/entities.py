@@ -4,8 +4,9 @@ from __future__ import annotations
 import os
 import sys
 import uuid
+from collections.abc import Mapping
 from datetime import datetime, timezone
-from typing import Any, Literal
+from typing import Any, Literal, Protocol
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -17,9 +18,28 @@ from pydantic import BaseModel, Field, ValidationInfo, model_validator
 from arksim.config.core.agent import AgentConfig
 from arksim.config.utils import resolve_model_paths
 from arksim.constants import DEFAULT_MODEL, DEFAULT_PROVIDER
+from arksim.llms.chat.base.usage import TokenUsage
+from arksim.simulation_engine.core.state import ConversationLedger
 from arksim.simulation_engine.tool_types import ToolCall
 from arksim.tracing.config import TraceReceiverConfig
 from arksim.utils.concurrency import validate_num_workers
+
+
+class TurnHooks(Protocol):
+    """Async hooks the simulator awaits around each ``agent.execute()``.
+
+    ``turn_id`` is zero-based and equals the assistant ``Message.turn_id``.
+    Headers returned by ``before_agent_execute`` apply to that one agent
+    request only. An exception from ``before_agent_execute`` aborts the
+    conversation before the request is sent; ``after_agent_execute`` runs in
+    ``finally`` with the in-flight exception (or None) and never masks it.
+    """
+
+    async def before_agent_execute(self, turn_id: int) -> Mapping[str, str] | None: ...
+
+    async def after_agent_execute(
+        self, turn_id: int, error: BaseException | None
+    ) -> None: ...
 
 
 class SimulationInput(BaseModel):
@@ -59,6 +79,16 @@ class SimulationInput(BaseModel):
     simulated_user_prompt_template: str | None = Field(
         default=None,
         description="Jinja2 template for the simulated user system prompt",
+    )
+    web_search: bool = Field(
+        default=True,
+        description=(
+            "Let the simulated user open a link the agent sent instead of "
+            "taking it on faith, using the provider's hosted tool: web_fetch "
+            "on anthropic, google_search on google, web_search on openai. The "
+            "model decides per turn whether to use it. Ignored with a warning "
+            "on providers that have none. Billed by the provider."
+        ),
     )
     trace_receiver: TraceReceiverConfig | None = Field(
         default=None,
@@ -127,6 +157,7 @@ class SimulationParams(BaseModel):
     num_workers: int | str = Field(default=50)
     output_file_path: str = Field(default="./simulation.json")
     simulated_user_prompt_template: str | None = None
+    web_search: bool = Field(default=True)
 
 
 # ── Conversation state during simulation ──
@@ -143,6 +174,23 @@ class ConversationState(BaseModel):
     user_goal: str
     knowledge: list[str]
     agent_context: str
+    ledger: ConversationLedger | None = None
+
+
+class ConversationExecutionError(Exception):
+    """Raised when a conversation fails part-way through.
+
+    Carries the partial ``ConversationState`` (turns completed before the
+    failure) so callers can persist a partial transcript alongside the error.
+    ``partial_state`` is ``None`` when the failure happened before any turn
+    completed.
+    """
+
+    def __init__(
+        self, message: str, partial_state: ConversationState | None = None
+    ) -> None:
+        super().__init__(message)
+        self.partial_state = partial_state
 
 
 # ── Conversation output file schema models ──
@@ -172,6 +220,9 @@ class Conversation(BaseModel):
     scenario_id: str
     conversation_history: list[Message]
     simulated_user_prompt: SimulatedUserPrompt
+    # Lets the evaluator derive outcomes without re-judging. Optional for
+    # older records.
+    ledger: ConversationLedger | None = None
 
 
 class Simulation(BaseModel):
@@ -186,3 +237,4 @@ class Simulation(BaseModel):
         )
     )
     conversations: list[Conversation]
+    usage: TokenUsage | None = None

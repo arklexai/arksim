@@ -11,8 +11,19 @@ from arksim.evaluator.entities import TurnItem
 from arksim.evaluator.evaluate import evaluate_turn
 from arksim.evaluator.tool_call_metrics import ToolCallBehaviorFailureMetric
 from arksim.evaluator.utils.schema import QualSchema, ScoreSchema
-from arksim.simulation_engine.entities import Message
-from arksim.simulation_engine.tool_types import AgentResponse, ToolCall
+from arksim.simulation_engine.entities import (
+    Conversation,
+    Message,
+    SimulatedUserPrompt,
+)
+from arksim.simulation_engine.simulator import _tool_call_from_dict
+from arksim.simulation_engine.tool_types import (
+    AgentResponse,
+    ToolCall,
+    ToolCallCaptureQuality,
+    ToolCallSource,
+    ToolCallTrace,
+)
 
 # ── ToolCall / AgentResponse data model tests ──
 
@@ -53,6 +64,62 @@ class TestToolCallModel:
     def test_default_arguments(self) -> None:
         tc = ToolCall(id="tc-5", name="no_args")
         assert tc.arguments == {}
+
+    def test_trace_and_capture_quality_default_none(self) -> None:
+        tc = ToolCall(id="tc-6", name="plain")
+        assert tc.trace is None
+        assert tc.capture_quality is None
+        assert ToolCall(**tc.model_dump()) == tc
+
+    def test_partial_trace_and_capture_quality_validate(self) -> None:
+        # A2A agents may send only part of either block.
+        tc = ToolCall.model_validate(
+            {
+                "id": "tc-7",
+                "name": "get_order",
+                "trace": {"start_time_unix_nano": "1"},
+                "capture_quality": {"ordering": "exact"},
+            }
+        )
+        assert tc.trace.span_id is None
+        assert tc.capture_quality.arguments is None
+
+    def test_trace_and_capture_quality_roundtrip(self) -> None:
+        tc = ToolCall(
+            id="8f3c1a2b9d4e5f60",
+            name="get_order",
+            arguments={"order_id": "ORD-1001"},
+            result='{"status": "shipped"}',
+            source=ToolCallSource.OTEL_TRACE,
+            trace=ToolCallTrace(
+                trace_id="a" * 32,
+                span_id="b" * 16,
+                start_time_unix_nano="1758715200000000000",
+                end_time_unix_nano="1758715200500000000",
+            ),
+            capture_quality=ToolCallCaptureQuality(
+                arguments="present", result="present", error="absent", ordering="exact"
+            ),
+        )
+        convo = Conversation(
+            conversation_id="c1",
+            scenario_id="s1",
+            conversation_history=[
+                Message(turn_id=0, role="assistant", content="shipped", tool_calls=[tc])
+            ],
+            simulated_user_prompt=SimulatedUserPrompt(
+                simulated_user_prompt_template="t", variables={}
+            ),
+        )
+
+        restored = Conversation.model_validate_json(convo.model_dump_json())
+        restored_tc = restored.conversation_history[0].tool_calls[0]
+        assert restored_tc == tc
+        assert restored_tc.trace.parent_span_id is None
+        # Nanosecond timestamps stay strings through JSON.
+        assert tc.model_dump()["trace"]["start_time_unix_nano"] == "1758715200000000000"
+        # The snapshot loader path used by the simulator.
+        assert _tool_call_from_dict(tc.model_dump()) == tc
 
 
 class TestAgentResponse:

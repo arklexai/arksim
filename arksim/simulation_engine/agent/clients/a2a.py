@@ -6,11 +6,13 @@ import contextlib
 import json
 import logging
 import uuid
+from collections.abc import Callable
 from typing import Any
 
 import httpx
 from a2a.client import (
     A2ACardResolver,
+    ClientCallContext,
     ClientConfig,
     ClientFactory,
 )
@@ -33,6 +35,7 @@ from arksim.simulation_engine.tool_types import (
     ToolCall,
     ToolCallSource,
 )
+from arksim.tracing.context import request_headers
 
 logger = logging.getLogger(__name__)
 
@@ -52,12 +55,18 @@ class A2AAgent(BaseAgent):
     For the simulator's per-simulation agent lifecycle this is intentional.
     """
 
-    def __init__(self, agent_config: AgentConfig) -> None:
+    def __init__(
+        self,
+        agent_config: AgentConfig,
+        *,
+        http_client_factory: Callable[..., httpx.AsyncClient] | None = None,
+    ) -> None:
         super().__init__(agent_config)
         if agent_config.agent_type != AgentType.A2A.value:
             raise ValueError("Agent config must be of type a2a")
         self.config: A2AConfig = agent_config.api_config
         self.chat_id = str(uuid.uuid4())
+        self._http_client_factory = http_client_factory
 
         # Initialized lazily on first execute() call.
         self._client = None
@@ -91,7 +100,7 @@ class A2AAgent(BaseAgent):
                 # Copy headers to avoid mutating the caller's config.
                 headers = dict(self.config.get_headers() or {})
 
-                self._httpx_client = httpx.AsyncClient(
+                self._httpx_client = (self._http_client_factory or httpx.AsyncClient)(
                     timeout=httpx.Timeout(60.0),
                     headers=headers or None,
                 )
@@ -325,8 +334,18 @@ class A2AAgent(BaseAgent):
             tool_calls: list[ToolCall] = []
             final_message_text: str | None = None
 
+            # Per-request headers (trace context) ride on the call context;
+            # the SDK layers service_parameters over the httpx client's
+            # default headers for this request only.
+            extra_headers = request_headers.get()
+            context = (
+                ClientCallContext(service_parameters=dict(extra_headers))
+                if extra_headers
+                else None
+            )
+
             response: StreamResponse
-            async for response in self._client.send_message(request):
+            async for response in self._client.send_message(request, context=context):
                 if response.HasField("message"):
                     # Per A2A spec 3.7, Messages do not carry task outputs.
                     # Record text as a fallback if no Task artifacts have text.

@@ -3,6 +3,9 @@
 
 from __future__ import annotations
 
+import base64
+import json
+
 from arksim.tracing._attrs import get_attr
 from arksim.tracing.span_converter import (
     span_to_tool_call,
@@ -142,8 +145,8 @@ class TestSpanToToolCall:
         assert tc.arguments == {}
         assert tc.result is None
 
-    def test_openinference_tool_parameters(self) -> None:
-        """tool.parameters is an alternative to tool_call.function.arguments."""
+    def test_openinference_tool_parameters_are_not_arguments(self) -> None:
+        """tool.parameters is the tool's schema; the call's arguments are input.value."""
         span = {
             "name": "tool",
             "spanId": "param1",
@@ -151,14 +154,28 @@ class TestSpanToToolCall:
                 {"key": "tool.name", "value": {"stringValue": "search"}},
                 {
                     "key": "tool.parameters",
-                    "value": {"stringValue": '{"q": "test"}'},
+                    "value": {"stringValue": '{"q": {"type": "string"}}'},
                 },
+                {"key": "input.value", "value": {"stringValue": '{"q": "test"}'}},
             ],
             "status": {},
         }
         tc = span_to_tool_call(span)
         assert tc is not None
         assert tc.arguments == {"q": "test"}
+
+    def test_declared_non_tool_kind_is_skipped(self) -> None:
+        """An LLM span carrying a tool name is a proposed call, not an executed one."""
+        span = {
+            "name": "chat",
+            "spanId": "llm1",
+            "attributes": [
+                {"key": "openinference.span.kind", "value": {"stringValue": "LLM"}},
+                {"key": "tool.name", "value": {"stringValue": "search"}},
+            ],
+            "status": {},
+        }
+        assert span_to_tool_call(span) is None
 
     def test_openinference_output_value_result(self) -> None:
         """OpenInference output.value is used as tool result."""
@@ -174,6 +191,26 @@ class TestSpanToToolCall:
         tc = span_to_tool_call(span)
         assert tc is not None
         assert tc.result == "found 3 results"
+
+    def test_langsmith_bytes_payloads(self) -> None:
+        def payload(text: str) -> dict:
+            return {"bytesValue": base64.b64encode(text.encode()).decode()}
+
+        span = {
+            "name": "get_order",
+            "spanId": "ls-1",
+            "attributes": [
+                {"key": "langsmith.span.kind", "value": {"stringValue": "tool"}},
+                {"key": "gen_ai.tool.name", "value": {"stringValue": "get_order"}},
+                {"key": "gen_ai.prompt", "value": payload('{"order_id":"ORD-1"}')},
+                {"key": "gen_ai.completion", "value": payload('{"output":"ok"}')},
+            ],
+            "status": {},
+        }
+        tc = span_to_tool_call(span)
+        assert tc is not None
+        assert tc.arguments == {"order_id": "ORD-1"}
+        assert tc.result == '{"output":"ok"}'
 
 
 class TestGetAttrFalsyValues:
@@ -194,6 +231,19 @@ class TestGetAttrFalsyValues:
     def test_missing_key_returns_none(self) -> None:
         attrs = [{"key": "other", "value": {"stringValue": "val"}}]
         assert get_attr(attrs, "k") is None
+
+    def test_bytes_value_decoded(self) -> None:
+        """LangSmith sends JSON payloads as bytes, base64 in OTLP JSON."""
+        encoded = base64.b64encode(b'{"order_id":"ORD-1001"}').decode()
+        assert get_attr([{"key": "k", "value": {"bytesValue": encoded}}], "k") == (
+            '{"order_id":"ORD-1001"}'
+        )
+        assert get_attr([{"key": "k", "value": {"bytes_value": b"hi"}}], "k") == "hi"
+        binary = base64.b64encode(b"\xff\xfe").decode()
+        assert get_attr([{"key": "k", "value": {"bytesValue": binary}}], "k") == binary
+        assert get_attr([{"key": "k", "value": {"bytesValue": "not!b64"}}], "k") == (
+            "not!b64"
+        )
 
 
 class TestSpansToToolCalls:
@@ -239,3 +289,38 @@ class TestSpansToToolCalls:
         result = spans_to_tool_calls(spans)
         assert len(result) == 1
         assert result[0].name == "valid"
+
+    def test_langchain_single_argument_uses_proposed_call(self) -> None:
+        """OpenInference records a single-argument LangChain tool's bare value;
+        the argument name comes from the model's call with the same id."""
+        prefix = "llm.output_messages.0.message.tool_calls.0.tool_call"
+
+        def s(key: str, value: str) -> dict:
+            return {"key": key, "value": {"stringValue": value}}
+
+        message = {"type": "tool", "data": {"content": "{}", "tool_call_id": "c-1"}}
+        spans = [
+            {
+                "name": "ChatOpenAI",
+                "spanId": "llm",
+                "attributes": [
+                    s("openinference.span.kind", "LLM"),
+                    s(f"{prefix}.id", "c-1"),
+                    s(f"{prefix}.function.name", "get_order"),
+                    s(f"{prefix}.function.arguments", '{"order_id": "ORD-1"}'),
+                ],
+            },
+            {
+                "name": "get_order",
+                "spanId": "tool",
+                "attributes": [
+                    s("openinference.span.kind", "TOOL"),
+                    s("tool.name", "get_order"),
+                    s("input.value", "ORD-1"),
+                    s("output.value", json.dumps(message)),
+                ],
+            },
+        ]
+        [tc] = spans_to_tool_calls(spans)
+        assert tc.id == "c-1"
+        assert tc.arguments == {"order_id": "ORD-1"}
