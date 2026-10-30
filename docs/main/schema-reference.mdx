@@ -43,6 +43,21 @@ The scenario file is a single JSON document that lists scenario objects. Each sc
       Knowledge items injected into the simulated user's context. Can be an empty list. Each item has:
 
       - `content` (string, required): Text used as the user's background knowledge. (Additional keys such as `metadata` may be present in the file for traceability but are not part of the loaded model.)
+      - `id` (string, optional): Scenario-local chunk id (e.g. `kc_01`) that `goal_checklist` items can reference.
+    </ResponseField>
+    <ResponseField name="goal_checklist" type="list[GoalChecklistItem]">
+      Sub-goals of `goal`. After each agent reply, the turn judge marks how far each one is covered. The conversation ends as `user_satisfied` once every mandatory item is complete. Without a checklist, it ends when the simulated user runs out of patience or `max_turns` is reached. Each item has:
+
+      - `description` (string, required): The sub-goal, shown to the simulated user.
+      - `satisfied_when` (string, required): What the agent must say or do for it to count as complete. Only the turn judge sees it.
+      - `mandatory` (bool, default `true`): Whether it must be complete for the user to be satisfied.
+      - `knowledge_chunk_ids` (list[string], default `[]`): `knowledge` item ids that answer it.
+      - `type` (string, default `"knowledge_answer"`): The only supported type.
+    </ResponseField>
+    <ResponseField name="behavior" type="BehaviorParams">
+      Settings for the simulated user. Optional.
+
+      - `patience` (int, default `3`): Starting patience. A turn that makes progress on the checklist adds one, up to this value. A turn that makes none takes one away, and a contradiction takes away one more. Asking the user for information costs nothing. The user gives up (`gave_up`) at 0.
     </ResponseField>
     <ResponseField name="origin" type="dict[string, Any]">
       Provenance metadata (e.g. `target_agent_capability`, `goal_raw`, `user_attributes`). Not used by the simulator or evaluator.

@@ -111,7 +111,7 @@
           "turn_id": 0,
           "message_id": "msg-fi-peril-0u",
           "role": "simulated_user",
-          "content": "What does Basic Form cover?",
+          "content": "What's the full list of perils Basic Form covers?",
           "tool_calls": null
         },
         {
