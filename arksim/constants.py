@@ -3,5 +3,5 @@
 
 from __future__ import annotations
 
-DEFAULT_MODEL = "gpt-5.1"
+DEFAULT_MODEL = "gpt-6-sol"
 DEFAULT_PROVIDER = "openai"

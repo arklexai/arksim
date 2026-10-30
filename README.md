@@ -86,6 +86,7 @@ The report tells you where your agent is strong and where it breaks. You get per
 from arksim.simulation_engine.agent.base import BaseAgent
 from arksim.simulation_engine.tool_types import AgentResponse
 
+
 class MyAgent(BaseAgent):
     async def get_chat_id(self) -> str:
         return "unique-id"
