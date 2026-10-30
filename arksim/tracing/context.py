@@ -13,6 +13,7 @@ conversations running under different async tasks.
 from __future__ import annotations
 
 import contextvars
+from collections.abc import Mapping
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -28,6 +29,26 @@ trace_turn_id: contextvars.ContextVar[int | None] = contextvars.ContextVar(
 trace_receiver_ref: contextvars.ContextVar[TraceReceiver | None] = (
     contextvars.ContextVar("trace_receiver_ref", default=None)
 )
+
+# Extra HTTP headers for the single in-flight agent request (e.g.
+# ``traceparent`` / ``baggage``). Set by the simulator around each
+# ``agent.execute()`` and read by the connectors; never merged into a
+# client's default headers.
+request_headers: contextvars.ContextVar[Mapping[str, str] | None] = (
+    contextvars.ContextVar("request_headers", default=None)
+)
+
+
+def set_request_headers(
+    headers: Mapping[str, str] | None,
+) -> contextvars.Token[Mapping[str, str] | None]:
+    """Set per-request headers; reset with the returned token in ``finally``."""
+    return request_headers.set(headers)
+
+
+def reset_request_headers(token: contextvars.Token[Mapping[str, str] | None]) -> None:
+    """Restore the headers that were in effect before ``set_request_headers``."""
+    request_headers.reset(token)
 
 
 def _set_trace_context(

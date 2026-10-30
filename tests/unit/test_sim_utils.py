@@ -3,7 +3,22 @@
 
 from __future__ import annotations
 
-from arksim.simulation_engine.utils.utils import flip_hist
+from arksim.simulation_engine.utils.utils import combine_knowledge, flip_hist
+
+
+class TestCombineKnowledge:
+    def test_empty(self) -> None:
+        assert combine_knowledge([]) == ""
+
+    def test_single_item(self) -> None:
+        result = combine_knowledge(["fact A"])
+        assert result == "Knowledge 1:\nfact A"
+
+    def test_multiple_items(self) -> None:
+        result = combine_knowledge(["alpha", "beta", "gamma"])
+        assert "Knowledge 1:\nalpha" in result
+        assert "Knowledge 2:\nbeta" in result
+        assert "Knowledge 3:\ngamma" in result
 
 
 class TestFlipHist:

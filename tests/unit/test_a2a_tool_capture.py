@@ -15,6 +15,7 @@ from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
+from a2a.client import ClientCallContext
 from a2a.types import (
     Artifact,
     Message,
@@ -32,6 +33,7 @@ from arksim.simulation_engine.tool_types import (
     AgentResponse,
     ToolCallSource,
 )
+from arksim.tracing.context import reset_request_headers, set_request_headers
 
 # ---------------------------------------------------------------------------
 # Builder helpers: _text_part, _make_artifact, _make_task, _make_message,
@@ -148,7 +150,9 @@ def _mock_agent(
 
     agent = A2AAgent(config)
 
-    async def mock_send_message(_payload: object) -> AsyncIterator[StreamResponse]:
+    async def mock_send_message(
+        _payload: object, *, context: ClientCallContext | None = None
+    ) -> AsyncIterator[StreamResponse]:
         for ev in events:
             yield ev
 
@@ -788,6 +792,39 @@ class TestToolCallFromDictCallerSemantics:
         parsed = [_tool_call_from_dict({"id": "a"}), _tool_call_from_dict({"id": "b"})]
         assert parsed == [None, None]
 
-        # Mirror the caller logic from _to_conversation_output:
+        # Mirror the caller logic from to_conversation_output:
         tool_calls = [tc for tc in parsed if tc is not None] or None
         assert tool_calls is None
+
+
+class TestRequestHeaders:
+    """Per-request headers from the request_headers contextvar."""
+
+    @staticmethod
+    def _capturing_agent(seen: list[ClientCallContext | None]) -> A2AAgent:
+        agent = _mock_agent([_message_response(_make_message("ok"))])
+
+        async def send_message(
+            _payload: object, *, context: ClientCallContext | None = None
+        ) -> AsyncIterator[StreamResponse]:
+            seen.append(context)
+            yield _message_response(_make_message("ok"))
+
+        agent._client.send_message = send_message
+        return agent
+
+    @pytest.mark.asyncio()
+    async def test_headers_passed_as_service_parameters(self) -> None:
+        seen: list[ClientCallContext | None] = []
+        agent = self._capturing_agent(seen)
+        token = set_request_headers({"traceparent": "00-abc-def-01"})
+        try:
+            await agent.execute("hi")
+        finally:
+            reset_request_headers(token)
+        # Once the contextvar is reset the next call carries no context.
+        await agent.execute("again")
+
+        assert seen[0] is not None
+        assert seen[0].service_parameters == {"traceparent": "00-abc-def-01"}
+        assert seen[1] is None

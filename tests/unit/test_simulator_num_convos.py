@@ -47,17 +47,13 @@ def _make_agent_config() -> AgentConfig:
 
 @pytest.fixture()
 def _patch_conversation(monkeypatch: pytest.MonkeyPatch) -> Callable[[], int]:
-    """Patch _run_single_conversation to return a dummy ConversationState."""
+    """Patch run_single_conversation to return a dummy ConversationState."""
     call_count = 0
 
     async def fake_run(
         self: Simulator,
-        profile: str,
-        goal: str,
-        knowledge: list[KnowledgeItem],
-        agent_context: str,
+        scenario: Scenario,
         max_turns: int,
-        scenario_id: str = "",
         on_turn_complete: Callable[[], None] | None = None,
         on_turn_display: Callable[[str, str, str, int], None] | None = None,
     ) -> ConversationState:
@@ -67,19 +63,19 @@ def _patch_conversation(monkeypatch: pytest.MonkeyPatch) -> Callable[[], int]:
             on_turn_complete()
         return ConversationState(
             conversation_id=f"conv-{call_count}",
-            scenario_id=scenario_id,
+            scenario_id=scenario.scenario_id,
             conversation_history=[
                 {"role": "user", "content": "hi"},
                 {"role": "assistant", "content": "hello"},
             ],
             simulated_user_prompt_template="tpl",
-            simulated_user_profile=profile,
-            user_goal=goal,
+            simulated_user_profile=scenario.user_profile,
+            user_goal=scenario.goal,
             knowledge=["k"],
-            agent_context=agent_context,
+            agent_context=scenario.agent_context,
         )
 
-    monkeypatch.setattr(Simulator, "_run_single_conversation", fake_run)
+    monkeypatch.setattr(Simulator, "run_single_conversation", fake_run)
 
     def get_count() -> int:
         return call_count

@@ -53,6 +53,40 @@ class A2AToolCaptureExtension:
     METADATA_KEY = f"{URI}/tool_calls"
 
 
+class ToolCallTrace(BaseModel):
+    """OTel span identity and timing for a traced tool call.
+
+    Nanosecond timestamps stay decimal strings so they round-trip through
+    JSON without float precision loss.
+    """
+
+    model_config = ConfigDict(extra="ignore")
+
+    trace_id: str | None = None
+    span_id: str | None = None
+    parent_span_id: str | None = None
+    start_time_unix_nano: str | None = None
+    end_time_unix_nano: str | None = None
+
+
+class ToolCallCaptureQuality(BaseModel):
+    """Per-field capture diagnostics for a traced tool call.
+
+    Field values are ``present | absent | invalid | truncated | redacted``;
+    ``ordering`` is ``exact | ambiguous``; ``merge`` is ``ambiguous`` when a
+    traced call was paired by name with one of several protocol calls. Kept as
+    plain strings so new values load on older arksim.
+    """
+
+    model_config = ConfigDict(extra="ignore")
+
+    arguments: str | None = None
+    result: str | None = None
+    error: str | None = None
+    ordering: str | None = None
+    merge: str | None = None
+
+
 class ToolCall(BaseModel):
     """A single tool/function call observed during a turn.
 
@@ -69,6 +103,8 @@ class ToolCall(BaseModel):
     result: str | None = None
     error: str | None = None
     source: ToolCallSource | None = None
+    trace: ToolCallTrace | None = None
+    capture_quality: ToolCallCaptureQuality | None = None
 
 
 class AgentResponse(BaseModel):
@@ -85,4 +121,11 @@ class AgentResponse(BaseModel):
     tool_calls: list[ToolCall] = Field(default_factory=list)
 
 
-__all__ = ["A2AToolCaptureExtension", "AgentResponse", "ToolCall", "ToolCallSource"]
+__all__ = [
+    "A2AToolCaptureExtension",
+    "AgentResponse",
+    "ToolCall",
+    "ToolCallCaptureQuality",
+    "ToolCallSource",
+    "ToolCallTrace",
+]

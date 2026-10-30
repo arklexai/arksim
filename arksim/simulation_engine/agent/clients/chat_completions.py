@@ -4,6 +4,7 @@ from __future__ import annotations
 import copy
 import logging
 import uuid
+from collections.abc import Callable
 from typing import Any
 
 import httpx
@@ -17,6 +18,7 @@ from arksim.simulation_engine.agent.base import BaseAgent
 from arksim.simulation_engine.agent.response_parsers import parse_response
 from arksim.simulation_engine.agent.utils import rate_limit_handler
 from arksim.simulation_engine.tool_types import AgentResponse
+from arksim.tracing.context import request_headers
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +26,12 @@ logger = logging.getLogger(__name__)
 class ChatCompletionsAgent(BaseAgent):
     """Chat completion agent implementation (OpenAI-compatible)."""
 
-    def __init__(self, agent_config: AgentConfig) -> None:
+    def __init__(
+        self,
+        agent_config: AgentConfig,
+        *,
+        http_client_factory: Callable[..., httpx.AsyncClient] | None = None,
+    ) -> None:
         super().__init__(agent_config)
         if agent_config.agent_type != AgentType.CHAT_COMPLETIONS.value:
             raise ValueError("Agent config must be of type chat_completions")
@@ -35,7 +42,7 @@ class ChatCompletionsAgent(BaseAgent):
             self.chat_headers = self.config.get_headers()
             self.chat_id = str(uuid.uuid4())
             self.conversation_history: list[dict[str, Any]] = []
-            self._client = httpx.AsyncClient(timeout=120)
+            self._client = (http_client_factory or httpx.AsyncClient)(timeout=120)
 
         except Exception as e:
             logger.error(f"Error: Could not initialize chat completion agent: {e}")
@@ -51,10 +58,14 @@ class ChatCompletionsAgent(BaseAgent):
             await self._client.aclose()
 
     async def _post_request(self, payload: dict[str, Any]) -> dict[str, Any]:
+        # Per-request headers (trace context) layered over the agent's own
+        # for this call only; self.chat_headers is never mutated.
+        headers = {**self.chat_headers, **(request_headers.get() or {})}
+
         @rate_limit_handler
         async def _raw_post() -> httpx.Response:
             return await self._client.post(
-                self.chat_endpoint, headers=self.chat_headers, json=payload
+                self.chat_endpoint, headers=headers, json=payload
             )
 
         response = await _raw_post()
