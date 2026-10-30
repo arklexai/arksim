@@ -38,7 +38,7 @@ qualitative_failure_labels:
   prohibited_statements: ["violated"] # custom metric
 
 # LLM model
-model: gpt-5.1
+model: gpt-6-sol
 
 # LLM provider
 provider: openai

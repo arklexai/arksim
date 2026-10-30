@@ -1,0 +1,42 @@
+# Google ADK Agent Connector Configuration
+# Loads the Google ADK variant of the customer-service agent directly as a
+# Python class. No HTTP server required - arksim imports the agent module
+# at runtime.
+#
+# Usage: arksim simulate-evaluate config_adk.yaml
+
+# ── AGENT CONFIGURATION ────────────────────────────────────────────────────
+
+agent_config:
+  agent_type: custom
+  agent_name: customer-service-adk
+  custom_config:
+    module_path: ./google_adk/custom_agent.py
+
+# ── SIMULATION SETTINGS ──────────────────────────────────────────────────────
+
+scenario_file_path: ./scenarios.json
+num_conversations_per_scenario: 1
+max_turns: 5
+output_file_path: ./results/simulation/simulation_adk.json
+simulated_user_prompt_template: null
+
+# ── EVALUATION SETTINGS ──────────────────────────────────────────────────────
+
+output_dir: ./results/evaluation_adk
+
+custom_metrics_file_paths:
+  - ./custom_metrics.py
+
+metrics_to_run:
+  - helpfulness
+  - agent_behavior_failure
+  - tool_call_behavior_failure
+
+generate_html_report: true
+
+# ── SHARED SETTINGS ──────────────────────────────────────────────────────────
+
+model: gemini-flash-lite-latest
+provider: google
+num_workers: 50

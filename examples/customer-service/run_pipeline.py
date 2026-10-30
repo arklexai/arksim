@@ -13,13 +13,13 @@ import asyncio
 import os
 import sys
 
-from custom_agent import ToolCallExampleAgent
 from custom_metrics import (
     DataPrivacyMetric,
     ToolUsageEfficiencyMetric,
     UnauthorizedActionMetric,
     VerificationComplianceMetric,
 )
+from openai_agents.custom_agent import ToolCallExampleAgent
 
 from arksim.config import AgentConfig, CustomConfig
 from arksim.evaluator import (

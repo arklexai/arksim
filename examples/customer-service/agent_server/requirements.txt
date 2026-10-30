@@ -1,0 +1,8 @@
+# Dependencies for the chat_completions wrapper around the Google ADK
+# variant (agent_server/core/agent.py, agent_server/chat_completions/).
+# Does not need `mcp` - that's only required by google_adk/mcp_server.py,
+# which this deployment path doesn't use.
+fastapi>=0.120.3
+uvicorn>=0.38.0
+pydantic>=2.10.6
+google-adk>=2.0.0

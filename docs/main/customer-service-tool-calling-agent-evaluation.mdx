@@ -84,6 +84,25 @@ Each expected tool call can optionally specify how arguments are compared:
 
 Trajectory matching runs between turn-level evaluation and goal completion, so failures are reflected in the Turn Success Ratio.
 
+To check that a tool is never called, list it under `forbidden` (for example, `cancel_order` in a scenario where the order has already shipped). A forbidden entry uses the same name and argument rules as an expected one.
+
+## Assertions
+
+`tool_calls` is one kind of assertion. A scenario can also state the expected behavior in words for an LLM judge, or match the agent's replies as text:
+
+```json
+{
+  "goal": "Cancel order ORD-1001.",
+  "assertions": [
+    {"type": "llm_judge", "expected": "Declines to cancel ORD-1001 because it has already shipped"},
+    {"type": "tool_calls", "expected": [{"name": "get_order"}], "match_mode": "contains", "forbidden": [{"name": "cancel_order"}]},
+    {"type": "text_match", "op": "not_contains", "value": "123456"}
+  ]
+}
+```
+
+Each assertion is reported on its own, and the conversation's `result` is `pass` only when every assertion passes. The goal stays what the simulated user wants; the assertions say what the agent should do. In a refusal scenario like this one, user goal completion is low and the result is `pass`, which is correct: the user did not get what they asked for, and the agent behaved as it should.
+
 ---
 
 <Note>

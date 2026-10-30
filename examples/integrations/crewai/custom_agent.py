@@ -24,7 +24,7 @@ class CrewAIAgent(BaseAgent):
             role="Assistant",
             goal="Answer user questions helpfully",
             backstory="You are a helpful assistant.",
-            llm="gpt-5.1",
+            llm="gpt-6-sol",
         )
         self._history: list[dict[str, str]] = []
 

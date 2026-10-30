@@ -1,0 +1,155 @@
+{
+  "schema_version": "v2",
+  "description": "Golden development matrix for MCP-grounded scenario generation. Each case names the tools a retrieval loop should reach for, the fixture rows that must back the result, and the retrieval shape being exercised. Unlike scenarios.json, these do not prescribe the final persona or tool trajectory.",
+  "grounding_shapes": {
+    "search_then_read": "Search returns excerpts; the full fact is only in the document, so a second read call is required.",
+    "structured_lookup": "Answer comes from catalog filters and structured content rather than prose.",
+    "cross_tool": "Requires combining transactional state with a policy document.",
+    "pagination": "More matches than one page; complete coverage requires a second call.",
+    "ambiguous": "The query term spans more than one category, so a single query cannot resolve it.",
+    "no_evidence": "The corpus has nothing on this topic. Correct behaviour is to ground nothing rather than invent a snapshot."
+  },
+  "cases": [
+    {
+      "id": "competitor_price_match",
+      "request": "Create scenarios about customers asking us to match a competitor's price, including cases we must refuse.",
+      "grounding_shape": "search_then_read",
+      "expected_tools": ["search_store_knowledge", "get_knowledge_article"],
+      "expected_evidence": [{"source_ref": "KB-0067", "must_contain": ["marketplace", "clearance", "membership-only"]}]
+    },
+    {
+      "id": "price_match_fine_print",
+      "request": "Create scenarios where a price-match request is refused on a technicality the customer did not expect.",
+      "grounding_shape": "search_then_read",
+      "notes": "The deciding facts sit past the search excerpt, so this case fails unless the loop reads the full document by id or source URI.",
+      "expected_tools": ["search_store_knowledge", "get_document"],
+      "expected_evidence": [{"source_ref": "KB-0067", "must_contain": ["same brand, model number", "price adjustment", "verifiable"]}]
+    },
+    {
+      "id": "opened_power_tool_return",
+      "request": "Create scenarios about returning power tools with missing batteries or chargers.",
+      "grounding_shape": "search_then_read",
+      "expected_tools": ["search_store_knowledge", "get_knowledge_article"],
+      "expected_evidence": [{"source_ref": "KB-0001", "must_contain": ["90 days", "batteries", "chargers"]}]
+    },
+    {
+      "id": "custom_paint_return",
+      "request": "Create scenarios about customers trying to return custom-tinted paint.",
+      "grounding_shape": "search_then_read",
+      "expected_tools": ["search_store_knowledge", "get_knowledge_article"],
+      "expected_evidence": [{"source_ref": "KB-0013", "must_contain": ["Custom-tinted", "final sale", "mixed incorrectly"]}]
+    },
+    {
+      "id": "appliance_delivery_preparation",
+      "request": "Create scenarios about appliance deliveries that cannot be completed because the home is not ready.",
+      "grounding_shape": "search_then_read",
+      "expected_tools": ["search_store_knowledge", "get_knowledge_article"],
+      "expected_evidence": [{"source_ref": "KB-0063", "must_contain": ["clear path", "shutoff valves", "grounded outlets"]}]
+    },
+    {
+      "id": "electrical_compatibility",
+      "request": "Create scenarios where a customer needs help choosing safe, compatible electrical products.",
+      "grounding_shape": "search_then_read",
+      "expected_tools": ["search_store_knowledge", "get_knowledge_article", "search_products"],
+      "expected_evidence": [{"source_ref": "KB-0020", "must_contain": ["voltage", "amperage", "wire gauge"]}]
+    },
+    {
+      "id": "cancel_after_fulfillment",
+      "request": "Create scenarios about orders that can and cannot still be cancelled.",
+      "grounding_shape": "search_then_read",
+      "expected_tools": ["search_store_knowledge", "get_knowledge_article"],
+      "expected_evidence": [{"source_ref": "KB-0077", "must_contain": ["processing", "picking", "ships"]}]
+    },
+    {
+      "id": "shipped_order_cancellation_refused",
+      "request": "Create scenarios where a customer demands cancellation of an order that has already shipped.",
+      "grounding_shape": "cross_tool",
+      "notes": "Needs the live order state and the cancellation policy together; neither alone supports the scenario.",
+      "expected_tools": ["get_order", "get_delivery_status", "search_store_knowledge"],
+      "expected_evidence": [
+        {"source_ref": "ORD-1001", "must_contain": ["shipped", "parcel"]},
+        {"source_ref": "KB-0077", "must_contain": ["already shipped", "refused delivery"]}
+      ]
+    },
+    {
+      "id": "pro_tax_exemption",
+      "request": "Create scenarios involving Pro customers who expect a purchase to be tax exempt.",
+      "grounding_shape": "search_then_read",
+      "expected_tools": ["search_store_knowledge", "get_knowledge_article"],
+      "expected_evidence": [{"source_ref": "KB-0074", "must_contain": ["exemption certificate", "personal purchases", "before checkout"]}]
+    },
+    {
+      "id": "privacy_verification",
+      "request": "Create scenarios testing when support must verify identity and when it should not.",
+      "grounding_shape": "search_then_read",
+      "expected_tools": ["search_store_knowledge", "get_knowledge_article"],
+      "expected_evidence": [{"source_ref": "KB-0081", "must_contain": ["order", "payment", "Product browsing"]}]
+    },
+    {
+      "id": "budget_cordless_drill",
+      "request": "Create scenarios for a customer looking for an in-stock cordless drill below $150.",
+      "grounding_shape": "structured_lookup",
+      "expected_tools": ["list_product_categories", "search_products"],
+      "expected_evidence": [{"source_ref": "P-026", "must_contain": ["Cordless Drill", "79.0", "brushless motor"]}]
+    },
+    {
+      "id": "water_resistant_flooring",
+      "request": "Create scenarios for selecting water-resistant flooring that is currently in stock.",
+      "grounding_shape": "structured_lookup",
+      "expected_tools": ["search_products", "search_store_knowledge"],
+      "expected_evidence": [{"source_ref": "P-106", "must_contain": ["Luxury Vinyl Plank", "water-resistant core", "in_stock"]}]
+    },
+    {
+      "id": "thermostat_category_ambiguity",
+      "request": "Create scenarios about a customer shopping for a smart thermostat who is unsure which department covers it.",
+      "grounding_shape": "ambiguous",
+      "notes": "Thermostats sit in both heating and cooling and smart home, so one query cannot cover the ground; the loop has to widen or issue a second query.",
+      "expected_tools": ["list_product_categories", "search_products", "search_store_knowledge"],
+      "expected_evidence": [
+        {"source_ref": "KB-0056", "must_contain": ["Size equipment to the room", "electrical load"]},
+        {"source_ref": "KB-0059", "must_contain": ["Wi-Fi band", "hub requirements", "privacy controls"]}
+      ]
+    },
+    {
+      "id": "return_windows_across_categories",
+      "request": "Create scenarios comparing return windows and restocking fees across several departments.",
+      "grounding_shape": "pagination",
+      "notes": "Matches more articles than one page returns, so full coverage needs a second call with an offset.",
+      "expected_tools": ["search_store_knowledge", "get_knowledge_article"],
+      "expected_evidence": [
+        {"source_ref": "KB-0001", "must_contain": ["90 days"]},
+        {"source_ref": "KB-0034", "must_contain": ["48 days", "25% fee"]},
+        {"source_ref": "KB-0013", "must_contain": ["30 days"]}
+      ]
+    },
+    {
+      "id": "rental_damage_protection",
+      "request": "Create scenarios about misunderstandings over rental damage protection.",
+      "grounding_shape": "search_then_read",
+      "expected_tools": ["search_store_knowledge", "get_knowledge_article"],
+      "expected_evidence": [{"source_ref": "KB-0080", "must_contain": ["accidental damage", "theft", "misuse"]}]
+    },
+    {
+      "id": "lost_gift_card",
+      "request": "Create scenarios about lost gift cards and requests to redeem them for cash.",
+      "grounding_shape": "search_then_read",
+      "expected_tools": ["search_store_knowledge", "get_knowledge_article"],
+      "expected_evidence": [{"source_ref": "KB-0084", "must_contain": ["do not expire", "redeemed for cash", "original receipt"]}]
+    },
+    {
+      "id": "special_order_cannot_cancel",
+      "request": "Create scenarios about customers trying to cancel a custom-configured special order.",
+      "grounding_shape": "search_then_read",
+      "expected_tools": ["search_store_knowledge", "get_knowledge_article"],
+      "expected_evidence": [{"source_ref": "KB-0087", "must_contain": ["deposit", "non-cancellable", "production begins"]}]
+    },
+    {
+      "id": "cryptocurrency_payment",
+      "request": "Create scenarios about customers asking to pay with cryptocurrency.",
+      "grounding_shape": "no_evidence",
+      "notes": "Nothing in the corpus covers this. A correct loop grounds nothing and says so; inventing a snapshot is the failure being tested for.",
+      "expected_tools": ["search_store_knowledge"],
+      "expected_evidence": []
+    }
+  ]
+}

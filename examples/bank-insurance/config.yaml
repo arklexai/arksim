@@ -13,7 +13,7 @@ agent_config:
       Content-Type: application/json
       Authorization: "Bearer ${OPENAI_API_KEY}"
     body:
-      model: gpt-5.1
+      model: gpt-6-sol
       messages:
         - role: system
           content: >-
@@ -82,7 +82,7 @@ qualitative_failure_labels:
 # ── SHARED SETTINGS ──────────────────────────────────────────────────────────
 
 # LLM model
-model: gpt-5.1
+model: gpt-6-sol
 
 # LLM provider
 provider: openai

@@ -1,0 +1,13 @@
+# Dependencies for the A2A variant. Both backends need a2a-sdk plus arksim
+# itself - server.py imports A2AToolCaptureExtension and agent.py imports
+# ToolCall, so unlike agent_server/ this path cannot avoid arksim.
+# Install the chosen backend's requirements alongside these:
+#   ADK backend:    -r ../google_adk/requirements.txt
+#   OpenAI backend: openai-agents
+# [http-server] is required, not optional: create_agent_card_routes and
+# create_jsonrpc_routes need starlette and sse-starlette, and importing
+# server.py without it fails on sse_starlette.
+a2a-sdk[http-server]>=1.0.0
+# 0.3.8 is the floor that exports A2AToolCaptureExtension.
+arksim>=0.3.8
+uvicorn>=0.38.0

@@ -26,7 +26,7 @@ import requests
 import tiktoken
 from bs4 import BeautifulSoup
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from mistralai import Mistral
+from mistralai.client import Mistral
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager

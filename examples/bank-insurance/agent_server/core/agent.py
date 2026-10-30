@@ -64,7 +64,7 @@ class Agent:
             name="BankInsuranceAgent",
             instructions=SYSTEM_INSTRUCTIONS,
             tools=[retrieve_context],
-            model="gpt-5.1",
+            model="gpt-6-sol",
         )
         self.context_id = context_id or str(uuid.uuid4())
         self._history: list[dict[str, Any]] = list(history) if history else []

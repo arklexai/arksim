@@ -74,7 +74,7 @@ simulation_file_path: ./examples/path/to/simulation.json
 
 # Model
 provider: openai
-model: gpt-5.1
+model: gpt-6-sol
 
 # Execution
 num_workers: 50
@@ -330,7 +330,7 @@ for convo in evaluator_output.conversations:
             simulation_file_path="./simulation.json",
             scenario_file_path="./scenarios.json",
             output_dir="./evaluation",
-            model="gpt-5.1",
+            model="gpt-6-sol",
             provider="openai",
             num_workers=50,
             generate_html_report=True,
@@ -347,7 +347,7 @@ for convo in evaluator_output.conversations:
 
         evaluation_results = run_evaluation(EvaluationInput(
             output_dir="./evaluation",
-            model="gpt-5.1",
+            model="gpt-6-sol",
             provider="openai",
             num_workers="auto",
             generate_html_report=True,
@@ -365,7 +365,7 @@ for convo in evaluator_output.conversations:
 | File                | Description                                                                                                                                                                       |
 | ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `evaluation.json`   | Full evaluation output: conversations with scores, failure labels, and unique errors. See [Evaluation output](./schema-reference#evaluation-output-evaluationjson) for the schema. |
-| `final_report.html` | High-level summary with metric averages, overall assessment, and top unique errors, rendered for easier browsing and sharing.                                                      |
+| `final_report.html` | Standalone report in two tabs. Overview shows how many conversations passed their assertions, each metric by scope with its lowest conversations, and failure patterns. Conversations lists every conversation; click one to read it. |
 | `focus/error_N.json` | Filtered scenario file for error group N (sorted by severity). Only appears when unique errors are detected and a scenario file is provided. See [Focus Files](#focus-files).     |
 | `focus/all_failures.json` | Union of all failing scenarios across every error group. Use this to rerun everything that failed in one pass.                                                                |
 

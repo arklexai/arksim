@@ -47,6 +47,13 @@ The scenario file is a single JSON document that lists scenario objects. Each sc
     <ResponseField name="origin" type="dict[string, Any]">
       Provenance metadata (e.g. `target_agent_capability`, `goal_raw`, `user_attributes`). Not used by the simulator or evaluator.
     </ResponseField>
+    <ResponseField name="assertions" type="list[Assertion]">
+      What the agent is expected to do. Evaluated after the conversation and never shown to the simulated user. Each conversation's `result` comes from these alone. Discriminated on `type`:
+
+      - `llm_judge`: `expected` (string). One sentence describing the correct agent behavior, judged by an LLM over the whole conversation and its tool calls. All of a scenario's `llm_judge` assertions share one judge call.
+      - `text_match`: `op` (`contains`, `not_contains`, or `matches` for a regex in [RE2 syntax](https://github.com/google/re2/wiki/Syntax), which has no lookaround or backreferences), `value` (string). Case is ignored. `contains` and `matches` pass when any agent reply matches; `not_contains` passes only when no reply does.
+      - `tool_calls`: `expected` (list of expected calls), `match_mode`, and `forbidden` (calls the agent must not make, matched with the same name and argument rules). At most one per scenario. See [trajectory matching](./customer-service-tool-calling-agent-evaluation#trajectory-matching).
+    </ResponseField>
   </Expandable>
 </ResponseField>
 
@@ -134,7 +141,7 @@ Written by `arksim evaluate` or the evaluation step of `arksim simulate-evaluate
       ID of the conversation.
     </ResponseField>
     <ResponseField name="goal_completion_score" type="float" required>
-      How fully the user goal was achieved (0–1).
+      User goal completion: whether the simulated user got what they asked for (0–1). A low score is expected when the agent correctly declines; whether the agent behaved correctly is what `result` reports.
     </ResponseField>
     <ResponseField name="goal_completion_reason" type="string" required>
       Explanation for the goal completion score.
@@ -153,7 +160,17 @@ Written by `arksim evaluate` or the evaluation step of `arksim simulate-evaluate
 
       Each turn has: `turn_id`, `scores` (list of metric results with `name`, `value`, optional `reason`, optional `metadata`), `turn_score`, `turn_behavior_failure`, `turn_behavior_failure_reason`, `qual_scores`, `unique_error_ids`.
     </ResponseField>
+    <ResponseField name="assertion_results" type="list[AssertionResult]">
+      One entry per scenario assertion, in scenario order: `type`, `label` (the assertion in words), `status` (`pass`, `fail`, or `inconclusive` when the conversation never reached the point the assertion is about), and `reason`.
+    </ResponseField>
+    <ResponseField name="result" type="string">
+      `pass` when every assertion passed, `fail` when any failed, `inconclusive` when none failed but some could not be decided, `no_assertions` when the scenario has none.
+    </ResponseField>
   </Expandable>
+</ResponseField>
+
+<ResponseField name="assertion_summary" type="dict[string, integer]">
+  Conversations by how their scenario's assertions came out: `passed`, `failed`, `inconclusive`, `no_assertions`.
 </ResponseField>
 
 <ResponseField name="unique_errors" type="list[UniqueError]" required>
@@ -239,9 +256,11 @@ Used by `simulate` and the simulation phase of `simulate-evaluate`.
 | `max_turns`                      | int           | Maximum turns per conversation.                                |
 | `output_file_path`               | string        | Path where `simulation.json` is written.                       |
 | `simulated_user_prompt_template` | string        | Optional. Jinja template for the simulated user system prompt. |
-| `model`                          | string        | LLM model (e.g. `gpt-5.1`).                                    |
+| `model`                          | string        | LLM model (e.g. `gpt-6-sol`).                                    |
 | `provider`                       | string        | LLM provider (e.g. `openai`).                                  |
 | `num_workers`                    | string \| int | Parallel workers (default `50`). Set `"auto"` to auto-scale.   |
+| `web_search`                     | bool          | Optional, default `true`. See below.                           |
+
 
 ### Evaluation keys
 

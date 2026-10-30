@@ -6,7 +6,7 @@ agent_config:
   agent_type: custom
   agent_name: tool-call-traced-example
   custom_config:
-    module_path: ./traced_agent.py
+    module_path: ./openai_agents/traced_agent.py
 
 scenario_file_path: ./scenarios.json
 num_conversations_per_scenario: 1
