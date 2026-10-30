@@ -5,6 +5,7 @@ import logging
 import os
 import sys
 import warnings
+from typing import Literal
 
 from arksim.simulation_engine.tool_types import ToolCall
 
@@ -17,8 +18,10 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, model_validat
 
 from arksim.config.utils import resolve_model_paths
 from arksim.constants import DEFAULT_MODEL, DEFAULT_PROVIDER
+from arksim.llms.chat.base.usage import TokenUsage
 from arksim.utils.concurrency import validate_num_workers
 
+from .assertions import AssertionResult, ScenarioResult
 from .base_metric import (
     ChatMessage,
     QualitativeMetric,
@@ -194,6 +197,7 @@ class TurnItem(BaseModel):
     profile: str
     user_goal: str
     tool_calls: list[ToolCall] | None = None
+    expected_behavior: str = ""
 
 
 class ConvoItem(BaseModel):
@@ -204,6 +208,7 @@ class ConvoItem(BaseModel):
     profile: str
     user_goal: str
     turns: int
+    expected_behavior: str = ""
 
 
 class TurnEvaluation(BaseModel):
@@ -222,7 +227,8 @@ class Occurrence(BaseModel):
     """Location of a unique error occurrence."""
 
     conversation_id: str
-    turn_id: int
+    #: None when the error applies to the whole conversation (a failed assertion).
+    turn_id: int | None = None
 
 
 class UniqueError(BaseModel):
@@ -233,6 +239,9 @@ class UniqueError(BaseModel):
     unique_error_description: str
     severity: str = "medium"
     occurrences: list[Occurrence]
+    #: What the error was grouped from: a failed "assertion", a "metric" (named
+    #: by behavior_failure_category) or an agent "behavior" failure.
+    source: Literal["assertion", "metric", "behavior"] = "behavior"
 
 
 class ConversationEvaluation(BaseModel):
@@ -241,12 +250,18 @@ class ConversationEvaluation(BaseModel):
     conversation_id: str
     goal_completion_score: float  # 0–1 (normalized from 1–5)
     goal_completion_reason: str
-    turn_success_ratio: float  # 0–1
-    overall_agent_score: float  # 0–1
-    evaluation_status: str
+    # Defaulted so a caller that does not score conversations this way can omit
+    # them. arksim's own evaluate() still populates all three.
+    turn_success_ratio: float = 0.0  # 0-1
+    overall_agent_score: float = 0.0  # 0-1
+    evaluation_status: str = ""
     turn_scores: list[TurnEvaluation]
     convo_scores: list[QuantResult] = Field(default_factory=list)
     convo_qual_scores: list[QualResult] = Field(default_factory=list)
+    # One entry per scenario assertion ("check"); ``result`` is derived from
+    # them alone (see arksim.evaluator.assertions.overall_result).
+    assertion_results: list[AssertionResult] = Field(default_factory=list)
+    result: ScenarioResult = "no_assertions"
 
 
 class ErrorScenarioMapping(BaseModel):
@@ -269,4 +284,8 @@ class Evaluation(BaseModel):
     simulation_id: str
     conversations: list[ConversationEvaluation]
     unique_errors: list[UniqueError]
+    usage: TokenUsage | None = None
     error_scenario_mappings: list[ErrorScenarioMapping] = Field(default_factory=list)
+    # Conversations by how their scenario's assertions came out: passed, failed,
+    # inconclusive, no_assertions.
+    assertion_summary: dict[str, int] = Field(default_factory=dict)

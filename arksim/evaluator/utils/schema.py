@@ -5,13 +5,16 @@ from pydantic import BaseModel
 
 
 class ScoreSchema(BaseModel):
-    score: int
+    # reason precedes score: structured output generates fields in property
+    # order, so the judge reasons before committing to a score.
     reason: str
+    score: int
 
 
 class QualSchema(BaseModel):
-    label: str
+    # reason precedes label for the same reason as ScoreSchema.
     reason: str
+    label: str
 
 
 class UniqueErrorSchema(BaseModel):

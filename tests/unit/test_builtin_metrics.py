@@ -180,20 +180,20 @@ class TestVerbosityMetric:
     def test_name(self) -> None:
         assert VerbosityMetric(_mock_llm()).name == "verbosity"
 
-    def test_score_inverts(self) -> None:
-        """LLM score of 1 (verbose) should be stored as 5 (good)."""
+    def test_score_low(self) -> None:
+        """LLM score of 1 (extremely verbose) is stored as-is."""
         llm = _mock_llm(score=1)
-        result = VerbosityMetric(llm).score(_score_input())
-        assert result.value == 5
-
-    def test_score_inverts_high(self) -> None:
-        """LLM score of 5 (concise) should be stored as 1."""
-        llm = _mock_llm(score=5)
         result = VerbosityMetric(llm).score(_score_input())
         assert result.value == 1
 
+    def test_score_high(self) -> None:
+        """LLM score of 5 (appropriately concise) is stored as-is."""
+        llm = _mock_llm(score=5)
+        result = VerbosityMetric(llm).score(_score_input())
+        assert result.value == 5
+
     def test_score_midpoint(self) -> None:
-        """LLM score of 3 stays at 3 (6-3=3)."""
+        """LLM score of 3 stays at 3."""
         llm = _mock_llm(score=3)
         result = VerbosityMetric(llm).score(_score_input())
         assert result.value == 3

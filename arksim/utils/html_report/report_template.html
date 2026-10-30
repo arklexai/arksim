@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulator Report</title>
+    <title>Evaluation Report</title>
 
     <!-- PapaParse for CSV parsing -->
 
@@ -47,461 +47,13 @@
             color: #1a1a1a;
         }
 
-        .section-title {
-            font-size: 20px;
-            font-weight: 600;
-            margin-bottom: 20px;
-            color: #1a1a1a;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .metrics-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
-            margin-bottom: 40px;
-        }
-
-        .metric-card {
-            background: #ffffff;
-            border: 1px solid #e8ecef;
-            border-radius: 12px;
-            padding: 24px;
-            transition: all 0.3s ease;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-        }
-
-        .metric-card:hover {
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            transform: translateY(-2px);
-        }
-
-        .metric-label {
-            font-size: 14px;
-            color: #64748b;
-            margin-bottom: 8px;
-            font-weight: 500;
-        }
-
-        .metric-value {
-            font-size: 36px;
-            font-weight: 700;
-            color: #1a1a1a;
-            margin-bottom: 4px;
-        }
-
-        .metric-icon {
-            float: right;
-            font-size: 48px;
-            opacity: 0.3;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .metric-icon.material-icons {
-            font-size: 48px;
-            line-height: 1;
-        }
-
-        .performance-section {
-            background: #f8fafc;
-            border-radius: 12px;
-            padding: 30px;
-            margin-top: 30px;
-            border: 1px solid #e8ecef;
-        }
-
-        .performance-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
-        }
-
-        .performance-item {
-            background: white;
-            border-radius: 8px;
-            padding: 20px;
-            border-left: 4px solid #3b82f6;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-        }
-
-        .performance-item.helpfulness {
-            border-left-color: #10b981;
-        }
-
-        .performance-item.coherence {
-            border-left-color: #6366f1;
-        }
-
-        .performance-item.verbosity {
-            border-left-color: #f59e0b;
-        }
-
-        .performance-item.relevance {
-            border-left-color: #8b5cf6;
-        }
-
-        .performance-item.faithfulness {
-            border-left-color: #ec4899;
-        }
-
-        .performance-label {
-            font-size: 14px;
-            color: #64748b;
-            margin-bottom: 8px;
-            text-transform: capitalize;
-            font-weight: 500;
-        }
-
-        .performance-value {
-            font-size: 28px;
-            font-weight: 700;
-            color: #1a1a1a;
-        }
-
-        .performance-bar-container {
-            width: 100%;
-            height: 8px;
-            background-color: #e5e7eb;
-            border-radius: 4px;
-            margin-top: 10px;
-            overflow: hidden;
-        }
-
-        .performance-bar {
-            height: 100%;
-            border-radius: 4px;
-            transition: width 0.5s ease;
-        }
-
-        .performance-bar.score-excellent {
-            background: linear-gradient(90deg, #10b981, #059669);
-        }
-
-        .performance-bar.score-good {
-            background: linear-gradient(90deg, #3b82f6, #2563eb);
-        }
-
-        .performance-bar.score-needs-improvement {
-            background: linear-gradient(90deg, #f59e0b, #d97706);
-        }
-
-        .performance-bar.score-poor {
-            background: linear-gradient(90deg, #ef4444, #dc2626);
-        }
-
-        .score-label-badge {
-            font-size: 12px;
-            font-weight: 600;
-            padding: 2px 8px;
-            border-radius: 4px;
-            margin-left: 8px;
-            display: inline-block;
-        }
-
-        .score-label-badge.excellent {
-            background-color: #dcfce7;
-            color: #15803d;
-        }
-
-        .score-label-badge.good {
-            background-color: #dbeafe;
-            color: #1d4ed8;
-        }
-
-        .score-label-badge.needs-improvement {
-            background-color: #fef3c7;
-            color: #92400e;
-        }
-
-        .score-label-badge.poor {
-            background-color: #fecaca;
-            color: #dc2626;
-        }
-
-        .methodology-note {
-            margin-top: 16px;
-            padding: 12px 16px;
-            background: #f1f5f9;
-            border-radius: 8px;
-            font-size: 13px;
-            color: #64748b;
-            line-height: 1.6;
-        }
-
         /* Scoring Methodology Section */
-        .methodology-section {
-            margin-top: 24px;
-            border: 1px solid #e2e8f0;
-            border-radius: 10px;
-            overflow: hidden;
-        }
-
-        .methodology-section .collapsible-header {
-            padding: 14px 20px;
-            background: #f8fafc;
-            border-bottom: 1px solid #e2e8f0;
-        }
-
-        .methodology-section .collapsible-header h3 {
-            font-size: 15px;
-            font-weight: 600;
-            color: #334155;
-            margin: 0;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .methodology-body {
-            padding: 24px;
-        }
-
-        .methodology-body h4 {
-            font-size: 14px;
-            font-weight: 600;
-            color: #1e293b;
-            margin: 20px 0 10px 0;
-        }
-
-        .methodology-body h4:first-child {
-            margin-top: 0;
-        }
 
         .methodology-body p,
-        .methodology-body li {
-            font-size: 13px;
-            color: #475569;
-            line-height: 1.7;
-        }
-
-        .methodology-body ul {
-            padding-left: 20px;
-            margin: 8px 0;
-        }
-
-        .methodology-body li {
-            margin-bottom: 4px;
-        }
-
-        .methodology-body code {
-            background: #f1f5f9;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 12px;
-            color: #0f172a;
-            font-family: 'SF Mono', 'Fira Code', monospace;
-        }
-
-        .scale-table {
-            border-collapse: collapse;
-            margin: 10px 0 16px 0;
-            font-size: 13px;
-        }
 
         .scale-table th,
-        .scale-table td {
-            padding: 8px 12px;
-            border: 1px solid #e2e8f0;
-            color: #475569;
-            white-space: nowrap;
-        }
-
-        .scale-table td:last-child {
-            white-space: normal;
-        }
-
-        .scale-table th {
-            text-align: left;
-            background: #f8fafc;
-            font-weight: 600;
-            color: #334155;
-        }
-
-        .methodology-ref {
-            margin-top: 16px;
-            padding-top: 14px;
-            border-top: 1px solid #e2e8f0;
-            font-size: 12px;
-            color: #94a3b8;
-        }
-
-        .methodology-ref a {
-            color: #667eea;
-            text-decoration: none;
-        }
-
-        .methodology-ref a:hover {
-            text-decoration: underline;
-        }
 
         /* Failure Breakdown Styles */
-        .failure-breakdown-section {
-            margin-top: 30px;
-        }
-
-        .failure-bar-row {
-            display: flex;
-            align-items: center;
-            margin-bottom: 12px;
-            gap: 12px;
-        }
-
-        .failure-bar-label {
-            min-width: 220px;
-            font-size: 14px;
-            font-weight: 500;
-            color: #1a1a1a;
-            text-transform: capitalize;
-        }
-
-        .failure-bar-track {
-            flex: 1;
-            height: 24px;
-            background-color: #e5e7eb;
-            border-radius: 6px;
-            overflow: hidden;
-        }
-
-        .failure-bar-fill {
-            height: 100%;
-            border-radius: 6px;
-            transition: width 0.5s ease;
-            display: flex;
-            align-items: center;
-            padding-left: 8px;
-            font-size: 12px;
-            font-weight: 600;
-            color: white;
-            min-width: fit-content;
-        }
-
-        .failure-bar-fill.no-failure {
-            background: linear-gradient(90deg, #10b981, #059669);
-        }
-
-        .failure-bar-fill.has-failure {
-            background: linear-gradient(90deg, #ef4444, #dc2626);
-        }
-
-        .failure-bar-stat {
-            min-width: 100px;
-            font-size: 13px;
-            color: #64748b;
-            text-align: right;
-            white-space: nowrap;
-        }
-
-        .qual-metric-group {
-            margin-bottom: 24px;
-        }
-
-        .qual-metric-name {
-            font-size: 13px;
-            font-weight: 600;
-            color: #64748b;
-            text-transform: capitalize;
-            margin-bottom: 8px;
-            letter-spacing: 0.3px;
-        }
-
-        .qual-bar-wrapper .failure-bar-row {
-            cursor: pointer;
-            border-radius: 6px;
-            padding: 4px 8px;
-            transition: background 0.15s;
-            user-select: none;
-        }
-        .qual-bar-wrapper .failure-bar-row:hover {
-            background: #f1f5f9;
-        }
-        .qual-bar-wrapper .qual-expand-icon {
-            font-size: 18px;
-            color: #94a3b8;
-            transition: transform 0.2s ease, color 0.2s ease;
-            margin-left: 4px;
-            flex-shrink: 0;
-        }
-        .qual-bar-wrapper .failure-bar-row:hover .qual-expand-icon {
-            color: #475569;
-        }
-        .qual-bar-wrapper.expanded .qual-expand-icon {
-            transform: rotate(180deg);
-            color: #3b82f6;
-        }
-        .qual-turn-details {
-            display: none;
-            margin: 0 0 12px 0;
-            padding: 8px 12px;
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 6px;
-            font-size: 13px;
-            color: #334155;
-            max-height: 200px;
-            overflow-y: auto;
-        }
-        .qual-turn-details.open {
-            display: block;
-        }
-        .qual-turn-details .qual-turn-group {
-            margin-bottom: 6px;
-        }
-        .qual-turn-details .qual-turn-group:last-child {
-            margin-bottom: 0;
-        }
-        .qual-turn-details .qual-turn-conv-label {
-            font-weight: 600;
-            font-size: 12px;
-            color: #334155;
-            margin-bottom: 4px;
-        }
-        .qual-turn-details .qual-turn-chips {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 4px;
-        }
-        .qual-turn-chip {
-            display: inline-flex;
-            align-items: center;
-            padding: 2px 8px;
-            border-radius: 999px;
-            background-color: #eff6ff;
-            color: #1d4ed8;
-            font-size: 11px;
-            font-weight: 500;
-            border: 1px solid #bfdbfe;
-            cursor: pointer;
-            transition: background-color 0.2s ease, box-shadow 0.2s ease;
-        }
-        .qual-turn-chip:hover {
-            background-color: #dbeafe;
-            color: #1e3a8a;
-            box-shadow: 0 1px 3px rgba(37, 99, 235, 0.3);
-        }
-        .qual-turn-chip--convo {
-            background-color: #eff6ff;
-            color: #1d4ed8;
-            border-color: #bfdbfe;
-        }
-        .qual-turn-chip--convo:hover {
-            background-color: #dbeafe;
-            color: #1e3a8a;
-            box-shadow: 0 1px 3px rgba(37, 99, 235, 0.3);
-        }
-        .qual-turn-details .qual-turn-empty {
-            color: #94a3b8;
-            font-style: italic;
-        }
-        .message-wrapper.highlight-turn > .message-container > .message-bubble {
-            box-shadow: 0 0 0 2px #3b82f6;
-            border-radius: 12px;
-            transition: box-shadow 0.3s ease;
-        }
 
         /* Table Styles */
         .table-section {
@@ -509,7 +61,7 @@
         }
 
         .table-container {
-            overflow-y: visible;
+            overflow-x: auto;
             background: white;
             border-radius: 8px;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -572,50 +124,7 @@
             position: relative;
         }
 
-        .has-tooltip {
-            border-bottom: 1px dotted #64748b;
-            cursor: help;
-        }
-
-        .user-goal-tooltip {
-            position: absolute;
-            bottom: 100%;
-            left: 50%;
-            transform: translateX(-50%);
-            margin-bottom: 8px;
-            padding: 8px 12px;
-            background-color: #1f2937;
-            color: white;
-            font-size: 12px;
-            line-height: 1.5;
-            border-radius: 6px;
-            white-space: normal;
-            width: 300px;
-            z-index: 1000;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.2s ease;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        .user-goal-tooltip::after {
-            content: '';
-            position: absolute;
-            top: 100%;
-            left: 50%;
-            transform: translateX(-50%);
-            border: 6px solid transparent;
-            border-top-color: #1f2937;
-        }
-
-        tbody td:nth-child(2):hover .user-goal-tooltip {
-            opacity: 1;
-        }
-
         /* Ensure tooltip appears above table row hover effect */
-        tbody td:nth-child(2) .user-goal-tooltip {
-            z-index: 1001;
-        }
 
         .status-badge {
             display: inline-block;
@@ -626,10 +135,6 @@
             text-transform: uppercase;
         }
 
-        .status-badge.success {
-            background-color: #dcfce7;
-            color: #15803d;
-        }
 
         .status-badge.done {
             background-color: #dcfce7;
@@ -641,10 +146,14 @@
             color: #dc2626;
         }
 
-        .chat-id {
-            font-family: 'Courier New', monospace;
-            color: #6366f1;
-            font-weight: 600;
+        .status-badge.inconclusive {
+            background-color: #fef3c7;
+            color: #b45309;
+        }
+
+        .status-badge.no-assertions {
+            background-color: #f1f5f9;
+            color: #64748b;
         }
 
         /* Modal Styles */
@@ -712,224 +221,10 @@
             padding: 24px;
         }
 
-        .info-section {
-            margin-bottom: 24px;
-        }
-
-        details.info-section {
-            background: #f1f5f9;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            padding: 12px 16px;
-        }
-
-        details.info-section[open] {
-            padding-bottom: 16px;
-        }
-
-        details.info-section > summary {
-            list-style: none;
-            cursor: pointer;
-            user-select: none;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        details.info-section > summary::-webkit-details-marker {
-            display: none;
-        }
-
-        details.info-section > summary::before {
-            content: '▶';
-            font-size: 9px;
-            transition: transform 0.2s;
-            display: inline-block;
-            color: #64748b;
-        }
-
-        details.info-section[open] > summary::before {
-            transform: rotate(90deg);
-        }
-
-        .info-label {
-            font-size: 12px;
-            color: #64748b;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
-
-        .info-value {
-            font-size: 14px;
-            color: #1a1a1a;
-            padding: 12px;
-            background: #f8fafc;
-            border-radius: 6px;
-            border-left: 3px solid #667eea;
-        }
-
         /* Conversation-level scores list in modal */
-        .conv-scores-list {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-        .conv-score-item {
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 6px;
-            overflow: hidden;
-        }
-        .conv-score-item[open] {
-            border-color: #667eea;
-        }
-        .conv-score-summary {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 10px 14px;
-            cursor: pointer;
-            list-style: none;
-            user-select: none;
-            gap: 12px;
-        }
-        .conv-score-summary::-webkit-details-marker { display: none; }
-        .conv-score-summary::after {
-            content: 'expand_more';
-            font-family: 'Material Icons';
-            font-size: 18px;
-            color: #94a3b8;
-            flex-shrink: 0;
-            transition: transform 0.15s ease;
-        }
-        .conv-score-item[open] .conv-score-summary::after {
-            transform: rotate(180deg);
-        }
-        .conv-score-name {
-            font-size: 14px;
-            font-weight: 500;
-            color: #1e293b;
-            flex: 1;
-            text-transform: capitalize;
-        }
-        .conv-score-value {
-            font-size: 14px;
-            font-weight: 600;
-            color: #667eea;
-            flex-shrink: 0;
-        }
-        .conv-qual-badge {
-            font-size: 12px;
-            font-weight: 600;
-            flex-shrink: 0;
-        }
-        .conv-qual-badge.positive { color: #16a34a; }
-        .conv-qual-badge.neutral  { color: #d97706; }
-        .conv-qual-badge.negative { color: #dc2626; }
-        .conv-score-reason {
-            padding: 10px 14px;
-            font-size: 13px;
-            color: #475569;
-            border-top: 1px solid #e2e8f0;
-            background: #fff;
-            line-height: 1.6;
-        }
-
-        .conversation-section {
-            margin-top: 24px;
-            padding: 20px;
-            background: #ffffff;
-            border-radius: 8px;
-        }
-
-        .conversation-title {
-            font-size: 16px;
-            font-weight: 600;
-            color: #1a1a1a;
-            margin-bottom: 20px;
-        }
-
-        .message-wrapper {
-            display: flex;
-            margin-bottom: 20px;
-            animation: fadeIn 0.5s ease;
-        }
-
-        .message-wrapper.user {
-            justify-content: flex-end;
-        }
-
-        .message-wrapper.assistant {
-            justify-content: flex-start;
-        }
-
-        .message-container {
-            display: flex;
-            max-width: 75%;
-            gap: 12px;
-        }
-
-        .message-wrapper.user .message-container {
-            flex-direction: row-reverse;
-        }
-
-        .message-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            flex-shrink: 0;
-            align-self: flex-start;
-        }
-
-        .message-wrapper.user .message-avatar {
-            background: #e5e7eb;
-            color: #6b7280;
-        }
-
-        .message-wrapper.assistant .message-avatar {
-            background: #dbeafe;
-            color: #3b82f6;
-        }
-
-        .message-bubble {
-            position: relative;
-        }
-
-        .message-label {
-            font-size: 11px;
-            color: #6b7280;
-            margin-bottom: 6px;
-            font-weight: 500;
-        }
-
-        .message-wrapper.user .message-label {
-            text-align: right;
-        }
 
         .message-content {
-            padding: 12px 16px;
-            border-radius: 12px;
-            font-size: 14px;
-            line-height: 1.6;
             word-wrap: break-word;
-        }
-
-        .message-wrapper.user .message-content {
-            background: #f3f4f6;
-            color: #1f2937;
-            border-bottom-right-radius: 4px;
-        }
-
-        .message-wrapper.assistant .message-content {
-            background: #eff6ff;
-            color: #1e293b;
-            border-bottom-left-radius: 4px;
         }
 
         /* Markdown content styles */
@@ -1011,141 +306,6 @@
         .message-content h2 { font-size: 1.3em; }
         .message-content h3 { font-size: 1.1em; }
 
-        /* Agent message expandable UI */
-        .message-expand-btn {
-            background: none;
-            border: none;
-            color: #dc2626;
-            cursor: pointer;
-            font-size: 12px;
-            padding: 6px 10px;
-            border-radius: 4px;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            transition: all 0.2s ease;
-            font-weight: 500;
-            margin-top: 8px;
-        }
-
-        .message-expand-btn:hover {
-            background-color: #fef2f2;
-            color: #b91c1c;
-        }
-
-        .message-expand-icon {
-            font-size: 14px;
-            transition: transform 0.3s ease;
-            display: inline-flex;
-            align-items: center;
-        }
-
-        .message-expand-icon.material-icons {
-            font-size: 14px;
-            line-height: 1;
-        }
-
-        .message-expand-icon.expanded {
-            transform: rotate(180deg);
-        }
-
-        .message-extra-info {
-            margin-top: 8px;
-            padding: 12px;
-            background: #fef2f2;
-            border-radius: 8px;
-            border-left: 3px solid #dc2626;
-            max-height: 0;
-            overflow: hidden;
-            opacity: 0;
-            transition: max-height 0.3s ease-out, opacity 0.3s ease-out, margin-top 0.3s ease-out;
-        }
-
-        .message-extra-info.expanded {
-            max-height: 1000px;
-            opacity: 1;
-            margin-top: 8px;
-        }
-
-        .message-extra-info-title {
-            font-size: 12px;
-            font-weight: 600;
-            color: #991b1b;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 8px;
-        }
-
-        .message-extra-info-content {
-            font-size: 13px;
-            color: #1a1a1a;
-            line-height: 1.6;
-        }
-
-        .message-extra-info.metrics-only {
-            background: #f8fafc;
-            border-left-color: #94a3b8;
-        }
-
-        .turn-metrics {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-            margin-bottom: 10px;
-        }
-
-        .score-chip {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            padding: 3px 8px;
-            background: #eff6ff;
-            border: 1px solid #bfdbfe;
-            border-radius: 12px;
-            font-size: 12px;
-            color: #1e40af;
-            font-weight: 500;
-            cursor: help;
-        }
-
-        .qual-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            padding: 3px 8px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 500;
-            border: 1px solid;
-            cursor: help;
-        }
-
-        .qual-badge.positive { background: #f0fdf4; border-color: #bbf7d0; color: #15803d; }
-        .qual-badge.neutral  { background: #fffbeb; border-color: #fde68a; color: #92400e; }
-        .qual-badge.negative { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
-
-        .failure-source-tag {
-            display: inline-block;
-            padding: 1px 6px;
-            border-radius: 4px;
-            font-size: 11px;
-            font-weight: 600;
-            letter-spacing: 0.3px;
-            margin-right: 4px;
-            vertical-align: middle;
-        }
-        .failure-source-tag.trajectory { background: #ede9fe !important; color: #5b21b6 !important; border: 1px solid #c4b5fd; }
-        .failure-source-tag.tool-call  { background: #e0f2fe !important; color: #0369a1 !important; border: 1px solid #7dd3fc; }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-            }
-            to {
-                opacity: 1;
-            }
-        }
-
         @keyframes slideUp {
             from {
                 transform: translateY(50px);
@@ -1157,220 +317,10 @@
             }
         }
 
-        .score-highlight {
-            font-weight: 700;
-            color: #667eea;
-        }
 
         /* Unique Errors Section Styles */
-        .unique-errors-section {
-            margin-top: 40px;
-        }
-
-        .error-card {
-            background: white;
-            border: 1px solid #d9d9d9;
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-            transition: transform 0.2s;
-        }
-
-        .error-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        }
-
-        .bug-badge {
-            font-weight: 600;
-            font-size: 16px;
-            color: #1a1a1a;
-            margin-bottom: 10px;
-        }
-
-        .error-title {
-            font-weight: 600;
-            font-size: 16px;
-            color: #1a1a1a;
-        }
-
-        .error-description {
-            color: #4a4a4a;
-            margin-bottom: 16px;
-            line-height: 1.5;
-        }
-
-        .error-header {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 12px;
-        }
-
-        .occurrence-badge {
-            background-color: #d4183e;
-            color: white;
-            padding: 4px 12px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        .category-badge {
-            background-color: #f3f4f6;
-            color: #374151;
-            padding: 4px 12px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: 600;
-            border: 1px solid #e5e7eb;
-        }
-
-        .severity-badge {
-            padding: 4px 12px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        .severity-critical { background-color: #991b1b; color: white; }
-        .severity-high { background-color: #d4183e; color: white; }
-        .severity-medium { background-color: #d97706; color: white; }
-        .severity-low { background-color: #6b7280; color: white; }
-
-
-        .divider {
-            border-top: 1px solid #e5e7eb;
-            margin: 10px 0;
-        }
-
-        .error-conversations {
-            margin-top: 12px;
-        }
-
-        .error-conversations-label {
-            font-weight: 600;
-            font-size: 14px;
-            color: #1a1a1a;
-            margin-bottom: 6px;
-        }
-
-        .error-conversations-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-
-        .chat-id-chip {
-            display: inline-flex;
-            align-items: center;
-            padding: 4px 10px;
-            border-radius: 999px;
-            background-color: #eff6ff;
-            color: #1d4ed8;
-            font-size: 12px;
-            font-weight: 500;
-            border: 1px solid #bfdbfe;
-            cursor: pointer;
-            transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
-        }
-
-        .chat-id-chip:hover {
-            background-color: #dbeafe;
-            color: #1e3a8a;
-            box-shadow: 0 1px 3px rgba(37, 99, 235, 0.3);
-        }
-
-        .scenario-id-chip {
-            display: inline-flex;
-            align-items: center;
-            padding: 4px 10px;
-            border-radius: 999px;
-            background-color: #f0fdf4;
-            color: #15803d;
-            font-size: 12px;
-            font-weight: 500;
-            border: 1px solid #bbf7d0;
-        }
 
         /* Snippet expand/collapse styles */
-        .snippet-toggle-btn {
-            background: none;
-            border: none;
-            color: #3b82f6;
-            cursor: pointer;
-            font-size: 13px;
-            padding: 6px 10px;
-            border-radius: 4px;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            transition: all 0.2s ease;
-            font-weight: 500;
-            margin-top: 8px;
-        }
-
-        .snippet-toggle-btn:hover {
-            background-color: #eff6ff;
-            color: #1d4ed8;
-        }
-
-        .snippet-expand-icon {
-            font-size: 14px;
-            transition: transform 0.3s ease;
-            display: inline-flex;
-            align-items: center;
-        }
-
-        .snippet-expand-icon.material-icons {
-            font-size: 14px;
-            line-height: 1;
-        }
-
-        .snippet-expand-icon.expanded {
-            transform: rotate(180deg);
-        }
-
-        .snippet-container {
-            margin-top: 8px;
-            max-height: 0;
-            overflow: hidden;
-            opacity: 0;
-            transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
-        }
-
-        .snippet-container.expanded {
-            max-height: 2000px;
-            opacity: 1;
-        }
-
-        .snippet-item {
-            margin-bottom: 12px;
-            padding: 12px;
-            background: #f8fafc;
-            border-radius: 8px;
-            border-left: 3px solid #3b82f6;
-        }
-
-        .snippet-header {
-            font-size: 12px;
-            font-weight: 600;
-            color: #64748b;
-            margin-bottom: 8px;
-        }
-
-        .snippet-message {
-            font-size: 13px;
-            line-height: 1.5;
-            color: #1a1a1a;
-            margin-bottom: 4px;
-        }
-
-        .snippet-message strong {
-            color: #64748b;
-            font-weight: 600;
-        }
 
         /* Collapsible styles */
         .collapsible-header {
@@ -1509,205 +459,457 @@
         #globalTooltip.visible {
             opacity: 1;
         }
+
+        /* ── Report layout (mirrors the Arklex platform's evaluation page) ── */
+        .run-details {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            color: #64748b;
+            font-size: 14px;
+        }
+        .run-details > span {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .run-details .material-icons { font-size: 16px; }
+        .tabs {
+            display: flex;
+            gap: 24px;
+            border-bottom: 1px solid #e5e7eb;
+            margin: -16px 0 24px;
+        }
+        .tab {
+            background: none;
+            border: none;
+            border-bottom: 2px solid transparent;
+            padding: 8px 0;
+            margin-bottom: -1px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #64748b;
+            cursor: pointer;
+            display: inline-flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .tab.active { color: #1a1a1a; border-bottom-color: #1a1a1a; }
+        .tab-count {
+            background: #f1f5f9;
+            border-radius: 9999px;
+            padding: 0 8px;
+            font-size: 12px;
+        }
+        .report-section { margin-bottom: 32px; }
+        .section-heading {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .card {
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            background: #fff;
+            padding: 12px 16px;
+        }
+        .notice {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            background: #f8fafc;
+            padding: 10px 16px;
+            font-size: 14px;
+            color: #64748b;
+            margin-bottom: 32px;
+        }
+        .card-label {
+            font-size: 12px;
+            font-weight: 500;
+            color: #64748b;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .num { font-variant-numeric: tabular-nums; }
+        .muted { color: #64748b; }
+        .muted-small { color: #64748b; font-size: 12px; }
+        .text-destructive { color: #dc2626; font-weight: 500; }
+        .text-warning { color: #d97706; font-weight: 500; }
+        .nowrap { white-space: nowrap; }
+        .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+        .results-summary {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: baseline;
+            gap: 24px;
+        }
+        .results-big {
+            font-size: 30px;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+        }
+        .results-big span { font-size: 20px; color: #64748b; }
+        .results-sub { font-size: 14px; color: #64748b; }
+        .not-passed {
+            border-top: 1px solid #e5e7eb;
+            margin-top: 12px;
+            padding-top: 12px;
+        }
+        .not-passed-list { list-style: none; margin-top: 8px; }
+        .not-passed-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+            background: none;
+            border: none;
+            border-radius: 6px;
+            padding: 4px 8px;
+            font-size: 14px;
+            text-align: left;
+            cursor: pointer;
+            color: inherit;
+        }
+        .not-passed-row:hover { background: #f8fafc; }
+        .not-passed-name {
+            display: flex;
+            flex: 1;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 4px 8px;
+            min-width: 0;
+        }
+        .not-passed-count { font-size: 12px; color: #64748b; font-variant-numeric: tabular-nums; }
+        .type-chip, .label-chip {
+            border: 1px solid #e5e7eb;
+            border-radius: 9999px;
+            padding: 1px 8px;
+            font-size: 11px;
+            color: #64748b;
+            white-space: nowrap;
+        }
+        .chip-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px;
+        }
+        .chip-group { display: inline-flex; gap: 4px; }
+        .chip, .filter-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            max-width: 14rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 9999px;
+            background: #fff;
+            padding: 2px 8px;
+            font-size: 12px;
+            color: inherit;
+            cursor: pointer;
+        }
+        .chip:hover, .filter-chip:hover { border-color: #667eea; color: #667eea; }
+        .filter-chip { color: #64748b; padding: 2px 10px; }
+        .filter-chip.active { border-color: #667eea; background: #eef2ff; color: #667eea; }
+        .link-button {
+            background: none;
+            border: none;
+            padding: 0;
+            font-size: 12px;
+            color: #667eea;
+            cursor: pointer;
+        }
+        .link-button:hover { text-decoration: underline; }
+        .metric-scope { padding-bottom: 4px; margin-bottom: 20px; }
+        .metric-scope h3 {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #eef0f3;
+        }
+        .metric-list { list-style: none; }
+        .metric-list + .metric-list { border-top: 1px solid #eef0f3; }
+        .metric-row {
+            display: grid;
+            grid-template-columns: minmax(0, 12rem) 10rem minmax(0, 1fr);
+            align-items: center;
+            gap: 16px;
+            padding: 10px 0;
+        }
+        .metric-row + .metric-row { border-top: 1px solid #eef0f3; }
+        .metric-row.qual { grid-template-columns: minmax(0, 12rem) minmax(0, 1fr); align-items: start; }
+        .metric-name p { font-size: 14px; font-weight: 500; }
+        .metric-score { display: flex; align-items: center; gap: 8px; }
+        .metric-numbers { width: 80px; font-variant-numeric: tabular-nums; }
+        .metric-mean { font-size: 14px; font-weight: 600; }
+        .metric-mean span { font-size: 12px; font-weight: 400; color: #64748b; }
+        .metric-median { font-size: 11px; color: #64748b; }
+        .bar-track {
+            flex: 1;
+            height: 6px;
+            border-radius: 9999px;
+            background: #f1f5f9;
+            overflow: hidden;
+            display: block;
+        }
+        .bar-track.thick { height: 8px; flex: 3; }
+        .bar-fill { display: block; height: 100%; border-radius: 9999px; background: #64748b; }
+        .bar-fill.band-excellent { background: #16a34a; }
+        .bar-fill.band-good { background: #2563eb; }
+        .bar-fill.band-needs-improvement { background: #d97706; }
+        .bar-fill.band-poor { background: #dc2626; }
+        .qual-label-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+            background: none;
+            border: none;
+            padding: 6px 0;
+            text-align: left;
+            cursor: pointer;
+            color: inherit;
+        }
+        .qual-label { flex: 2; font-size: 14px; min-width: 0; }
+        .qual-count { width: 96px; text-align: right; font-size: 12px; color: #64748b; font-variant-numeric: tabular-nums; }
+        .qual-chevron { font-size: 16px; color: #64748b; transform: rotate(-90deg); transition: transform 0.2s; }
+        .qual-label-row.open .qual-chevron { transform: none; }
+        .qual-convs { display: none; border: 1px solid #e5e7eb; border-radius: 8px; margin: 4px 0; }
+        .qual-convs.open { display: block; }
+        .qual-conv { display: flex; align-items: flex-start; gap: 12px; padding: 8px 12px; }
+        .qual-conv + .qual-conv { border-top: 1px solid #eef0f3; }
+        .qual-cell { display: inline-flex; flex-direction: column; gap: 2px; }
+        .pattern-list { list-style: none; margin-top: 4px; }
+        .pattern-row { display: flex; align-items: flex-start; gap: 12px; padding: 10px 0; }
+        .pattern-row + .pattern-row { border-top: 1px solid #eef0f3; }
+        .pattern-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; font-size: 14px; }
+        .severity-badge {
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: capitalize;
+            color: #fff;
+            background: #94a3b8;
+            flex-shrink: 0;
+        }
+        .severity-critical { background: #dc2626; }
+        .severity-high { background: #ef4444; }
+        .severity-medium { background: #d97706; }
+        .severity-low { background: #2563eb; }
+        .tool-check-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+        .mode-pill {
+            border: 1px solid #c7d2fe;
+            background: #eef2ff;
+            color: #4338ca;
+            border-radius: 9999px;
+            padding: 1px 10px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .call-columns {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 8px 24px;
+            margin-top: 10px;
+            padding: 10px 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            background: #fafbfc;
+        }
+        .call-heading {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.4px;
+            text-transform: uppercase;
+            color: #64748b;
+            margin-bottom: 4px;
+        }
+        .call-heading .num { font-weight: 500; color: #94a3b8; margin-left: 2px; }
+        .call-list { list-style: none; display: flex; flex-direction: column; gap: 4px; }
+        .call { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 13px; }
+        .call-name { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; }
+        .call.is-missing .call-name, .call.is-unexpected .call-name { color: #b91c1c; }
+        .call-args {
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 11.5px;
+            color: #64748b;
+            word-break: break-all;
+        }
+        .call-index { color: #94a3b8; font-size: 12px; min-width: 14px; }
+        .call-mark { font-size: 16px; }
+        .call-mark.called { color: #16a34a; }
+        .call-mark.missing { color: #dc2626; }
+        .call-note { font-size: 11px; color: #94a3b8; }
+        .call-tag {
+            font-size: 11px;
+            font-weight: 600;
+            border-radius: 9999px;
+            padding: 0 8px;
+        }
+        .call-tag.missing { background: #fee2e2; color: #b91c1c; }
+        .call-turn {
+            border: 1px solid #e5e7eb;
+            border-radius: 9999px;
+            background: #fff;
+            padding: 0 8px;
+            font-size: 11px;
+            color: #64748b;
+            cursor: pointer;
+        }
+        .call-turn:hover { border-color: #667eea; color: #667eea; }
+        /* ── Conversation drawer (mirrors the platform's) ── */
+        .drawer-top { display: flex; flex-direction: column; gap: 12px; padding-bottom: 16px; border-bottom: 1px solid #e5e7eb; }
+        .drawer-card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 10px 12px; font-size: 14px; }
+        .card-head { display: flex; align-items: center; gap: 8px; }
+        .card-toggle {
+            display: flex; align-items: center; gap: 8px; flex: 1;
+            background: none; border: none; padding: 0; cursor: pointer; text-align: left; color: inherit;
+        }
+        .card-title { font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; }
+        .chevron { font-size: 16px; color: #64748b; transform: rotate(-90deg); transition: transform 0.15s; }
+        .open > .card-head .chevron, .open > .agent-col > .turn-actions .chevron,
+        details[open] > summary .chevron { transform: none; }
+        .drawer-card .card-body { display: none; margin-top: 8px; }
+        .drawer-card.open .card-body { display: block; }
+        .score-box { border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; font-size: 14px; }
+        .score-group { padding: 10px 12px 6px; display: flex; flex-direction: column; gap: 6px; }
+        .score-group + .score-group { border-top: 1px solid #e5e7eb; }
+        .group-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #94a3b8; }
+        .leader-row { display: flex; align-items: flex-end; gap: 4px; }
+        .leader-name { color: #64748b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+        .leader-line { flex: 1; border-bottom: 1px dashed #cbd5e1; margin-bottom: 4px; min-width: 12px; }
+        .leader-value { font-weight: 500; font-variant-numeric: tabular-nums; }
+        .leader-row .pad { padding-left: 8px; }
+        .leader-row .muted-small { align-self: center; }
+        .qual-dot { width: 6px; height: 6px; border-radius: 50%; align-self: center; flex-shrink: 0; }
+        .qual-value { font-weight: 500; }
+        .check-list { list-style: none; margin-top: 4px; }
+        .check-item { display: flex; align-items: flex-start; gap: 12px; padding: 8px 0; }
+        .check-item + .check-item { border-top: 1px solid #e5e7eb; }
+        .check-icon { font-size: 16px; color: #64748b; margin-top: 2px; }
+        .check-icon.primary { color: #667eea; }
+        .check-text { flex: 1; min-width: 0; }
+        .kind-label { font-size: 12px; color: #64748b; }
+        .kind-title { color: #334155; }
+        .check-reason { font-size: 12px; color: #64748b; margin-top: 2px; }
+        .show-calls > summary {
+            display: inline-flex; align-items: center; gap: 2px; cursor: pointer; list-style: none;
+            font-size: 12px; color: #64748b; margin-top: 4px;
+        }
+        .show-calls > summary::-webkit-details-marker { display: none; }
+        .scenario-body { padding-left: 24px; display: flex; flex-direction: column; gap: 12px; }
+        .drawer-card.open .scenario-body { display: flex; }
+        .scenario-body dt { font-size: 12px; color: #64748b; margin-bottom: 2px; }
+        .scenario-body dd { line-height: 1.5; }
+        .knowledge-list { padding-left: 18px; display: flex; flex-direction: column; gap: 6px; }
+        .prompt-pre { white-space: pre-wrap; word-break: break-word; background: #f8fafc; padding: 10px; border-radius: 6px; font-size: 12px; max-height: 300px; overflow-y: auto; }
+        .transcript-label {
+            font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b; font-weight: 400;
+            padding: 12px 0; border-bottom: 1px solid #e5e7eb;
+        }
+        .transcript { padding: 16px 0 48px; display: flex; flex-direction: column; gap: 24px; }
+        .turn { display: flex; flex-direction: column; gap: 12px; }
+        .turn.highlighted { border: 1px solid rgba(102, 126, 234, 0.5); border-radius: 12px; margin: 0 -12px; padding: 12px; }
+        .speaker { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: #64748b; }
+        .speaker .material-icons { font-size: 14px; }
+        .turn-user { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+        .bubble { border-radius: 8px; padding: 12px 16px; font-size: 14px; line-height: 1.6; }
+        .bubble.user { max-width: 75%; background: #f1f5f9; white-space: pre-wrap; }
+        .bubble.agent { background: #eff6ff; color: #1e3a8a; }
+        .turn-agent { display: flex; gap: 12px; }
+        .bot-avatar {
+            flex-shrink: 0; width: 32px; height: 32px; border-radius: 50%; background: #dbeafe;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .bot-avatar .material-icons { font-size: 16px; color: #2563eb; }
+        .agent-col { flex: 1; max-width: 80%; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-width: 0; }
+        .tool-calls { border: 1px solid #e5e7eb; border-radius: 6px; padding: 6px 12px; width: 100%; font-size: 12px; }
+        .tool-calls > summary { color: #64748b; cursor: pointer; }
+        .tool-calls ul { list-style: none; margin-top: 8px; }
+        .tool-calls li { padding: 8px 0; }
+        .tool-calls li + li { border-top: 1px solid #e5e7eb; }
+        .call-name.strong { font-weight: 600; }
+        .field-label { font-size: 11px; color: #64748b; margin-top: 6px; }
+        .field-pre {
+            margin-top: 2px; max-height: 160px; overflow: auto; background: #f8fafc; border-radius: 4px;
+            padding: 4px 8px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px;
+            white-space: pre-wrap; word-break: break-word;
+        }
+        .field-pre.destructive { color: #dc2626; }
+        .turn-actions button {
+            display: inline-flex; align-items: center; gap: 2px; background: none; border: none; padding: 0;
+            font-size: 12px; color: #64748b; cursor: pointer; margin-top: 2px;
+        }
+        .turn-actions button:hover { color: #1a1a1a; }
+        .turn-metrics-box { display: none; width: 100%; font-size: 12px; margin-top: 4px; }
+        .turn-agent.open .turn-metrics-box { display: block; }
     </style>
 </head>
 <body>
     <div id="globalTooltip"></div>
     <div class="container">
         <div class="header">
-            <h1 id="reportTitle">Simulator Report</h1>
-            <div id="evaluationPipeline" style="display:none; margin-top:8px; color:#64748b; font-size:14px;"></div>
+            <h1 id="reportTitle">Evaluation Report</h1>
+            <div class="run-details" id="runDetails"></div>
         </div>
 
-        <div class="section-title">Metrics</div>
-
-        <div class="metrics-grid">
-            <div class="metric-card">
-                <div class="metric-icon material-icons">forum</div>
-                <div class="metric-label">Total Conversations</div>
-                <div class="metric-value" id="totalConversations">-</div>
-            </div>
-
-            <div class="metric-card">
-                <div class="metric-icon material-icons">sync</div>
-                <div class="metric-label">Avg Turns per Conversation</div>
-                <div class="metric-value" id="avgTurns">-</div>
-            </div>
+        <div class="tabs" role="tablist">
+            <button type="button" class="tab active" data-tab="overview" onclick="showTab('overview')">Overview</button>
+            <button type="button" class="tab" data-tab="conversations" onclick="showTab('conversations')">Conversations <span class="tab-count" id="conversationsCount"></span></button>
         </div>
 
-        <div class="performance-section">
-            <div class="section-title">Performance Metrics</div>
-            <div class="performance-grid" id="performanceGrid">
-                <!-- Performance metrics will be inserted here -->
-            </div>
-            <div class="methodology-section">
-                <div class="collapsible-header" onclick="toggleMethodology()">
-                    <h3>
-                        <span class="material-icons" style="font-size: 18px; color: #667eea;">science</span>
-                        How Scores Are Computed
-                        <span class="arrow-icon material-icons collapsed" id="methodologyArrow">expand_more</span>
-                    </h3>
+        <!-- Overview: whether conversations passed, the metric scores, then the
+             recurring problems behind both. -->
+        <div class="tab-panel" id="overviewTab">
+            <p class="notice" id="nothingGraded" style="display:none">No pass or fail: these scenarios have no assertions. Add assertions to a scenario to get one.</p>
+
+            <section class="report-section" id="resultsSection" style="display:none">
+                <h2 class="section-heading">Results</h2>
+                <div class="card" id="resultsCard"></div>
+            </section>
+
+            <section class="report-section" id="metricsSection" style="display:none">
+                <h2 class="section-heading">Metrics <span class="info-icon-wrapper"><span class="info-icon material-icons">info</span><span class="tooltip">Scores describe quality and do not change whether a conversation passed. Click a conversation to open it.</span></span></h2>
+                <div id="metricsBody"></div>
+            </section>
+
+            <section class="report-section" id="patternsSection" style="display:none">
+                <h2 class="section-heading"><span id="patternsTitle">Failure patterns</span> <span class="info-icon-wrapper"><span class="info-icon material-icons">info</span><span class="tooltip">Recurring problems found across these conversations, from failed assertions and low metric scores. The gray tag on each says where it came from.</span></span></h2>
+                <div class="card" id="patternsBody"></div>
+            </section>
+
+            <section class="report-section" id="tokenUsageSection" style="display:none">
+                <h2 class="section-heading">Token usage</h2>
+                <div id="tokenUsageBody"></div>
+            </section>
+
+            <section class="report-section" id="promptsAppendixSection" style="display:none">
+                <h2 class="section-heading collapsible-header" onclick="togglePromptsAppendix()">
+                    Evaluation prompts
+                    <span class="arrow-icon material-icons collapsed" id="promptsAppendixArrow">expand_more</span>
+                </h2>
+                <div id="promptsAppendixContent" class="collapsible-content collapsed">
+                    <div id="promptsAppendixBody"></div>
                 </div>
-                <div id="methodologyContent" class="collapsible-content collapsed">
-                    <div class="methodology-body">
+            </section>
+        </div>
 
-                        <h4>Metric Definitions</h4>
-                        <p>Each turn is evaluated on five quantitative metrics using LLM-as-a-judge:</p>
-                        <ul>
-                            <li><strong>Helpfulness</strong> &mdash; how effectively the response addresses the user's request</li>
-                            <li><strong>Coherence</strong> &mdash; logical flow and consistency of the response</li>
-                            <li><strong>Verbosity</strong> &mdash; response length appropriateness (inverted: higher = more concise)</li>
-                            <li><strong>Relevance</strong> &mdash; how on-topic the response is relative to the user's query</li>
-                            <li><strong>Faithfulness</strong> &mdash; accuracy relative to the provided knowledge base (only flags contradictions, not missing information)</li>
-                        </ul>
-
-                        <h4>Score Scale</h4>
-                        <table class="scale-table">
-                            <thead>
-                                <tr>
-                                    <th>Range</th>
-                                    <th>Label</th>
-                                    <th>Meaning</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr><td>1.0 &ndash; 2.0</td><td>Poor</td><td>Response fails to meet basic expectations</td></tr>
-                                <tr><td>2.0 &ndash; 3.0</td><td>Needs Improvement</td><td>Partially addresses the task but has significant gaps</td></tr>
-                                <tr><td>3.0 &ndash; 4.0</td><td>Good</td><td>Adequately addresses the task with minor issues</td></tr>
-                                <tr><td>4.0 &ndash; 5.0</td><td>Excellent</td><td>Fully addresses the task with high quality</td></tr>
-                            </tbody>
-                        </table>
-
-                        <h4>Behaviour Failure Detection</h4>
-                        <p>
-                            If any turn-level metric scores below <code>3.0</code>, a qualitative behaviour failure
-                            evaluation is triggered. The threshold of 3.0 ("Good") was chosen because scores below
-                            this indicate the response has significant gaps worth diagnosing. Failure categories include:
-                        </p>
-                        <ul>
-                            <li><strong>Failure to ask for clarification</strong> &mdash; agent proceeds with an ambiguous request instead of asking</li>
-                            <li><strong>Repetition</strong> &mdash; redundant restatement within or across turns</li>
-                            <li><strong>Disobey user request</strong> &mdash; agent ignores or misinterprets a clear request</li>
-                            <li><strong>Lack of specific information</strong> &mdash; correct but generic/incomplete answer</li>
-                            <li><strong>False information</strong> &mdash; hallucinated or factually incorrect content</li>
-                        </ul>
-                        <p>
-                            Each score includes an LLM-generated reasoning explaining why the score was given.
-                            For turns with behaviour failures, the detailed failure reason is shown in the
-                            conversation modal under "Issue Details".
-                        </p>
-
-                        <h4>Conversation Score Formula</h4>
-                        <p>Each conversation receives a <strong>Final Score</strong> (0&ndash;1) computed as:</p>
-                        <p style="margin: 12px 0; padding: 10px 16px; background: #f8fafc; border-radius: 6px; font-size: 14px;">
-                            <code>final_score = turn_success_ratio &times; 0.75 + goal_completion &times; 0.25</code>
-                        </p>
-                        <ul>
-                            <li><strong>Turn Success Ratio</strong> (weight: 75%) = <code>(total_turns &minus; behaviour_failures) / total_turns</code>.
-                                Measures the fraction of turns without agent behavior failures.
-                                Weighted higher because consistent turn-level quality is the primary indicator
-                                of a reliable agent.</li>
-                            <li><strong>Goal Completion</strong> (weight: 25%) = <code>1</code> if the user's goal was successfully addressed,
-                                <code>0</code> otherwise. Evaluated by LLM at conversation end.
-                                Weighted lower because an agent can complete the goal while still exhibiting
-                                problematic behaviour in individual turns.</li>
-                        </ul>
-                        <p>Conversation status is determined by the final score:</p>
-                        <ul>
-                            <li><code>1.0</code> = <strong>Done</strong> &mdash; perfect score, no failures</li>
-                            <li><code>&ge; 0.6</code> = <strong>Partial Failure</strong> &mdash; goal may be met but with some turn-level issues</li>
-                            <li><code>&lt; 0.6</code> = <strong>Failed</strong> &mdash; significant quality issues</li>
-                        </ul>
-
-                        <h4>Unique Errors</h4>
-                        <p>
-                            After all turns are evaluated, the agent behavior failure reasons are collected and
-                            deduplicated across conversations using an LLM. This produces a list of unique errors,
-                            each with a root cause description and the specific conversation turns where it occurred.
-                            For automated fix suggestions, see <a href="https://arklex.ai" target="_blank" rel="noopener">arklex.ai</a>.
-                        </p>
-
-                        <div class="methodology-ref">
-                            For more on agent simulation evaluation, see the
-                            <a href="https://arxiv.org/pdf/2510.11997" target="_blank" rel="noopener">SAGE paper</a>.
-                        </div>
-                    </div>
+        <!-- Conversations: one row per conversation; click to open it. -->
+        <div class="tab-panel" id="conversationsTab" style="display:none">
+            <div class="table-section">
+                <div class="table-container">
+                    <table id="conversationsTable">
+                        <thead id="conversationsTableHead"></thead>
+                        <tbody id="conversationsTableBody"></tbody>
+                    </table>
                 </div>
-            </div>
-        </div>
-
-        <!-- Qualitative Metrics Distribution -->
-        <div class="failure-breakdown-section" id="qualMetricsSection" style="display: none;">
-            <div class="section-title">Qualitative Metrics</div>
-            <div id="qualMetricsContent">
-                <!-- Qual metric distributions will be inserted here -->
-            </div>
-        </div>
-
-        <!-- Unique Errors Section -->
-        <div class="unique-errors-section" id="uniqueErrorsSection" style="display: none;">
-            <div class="section-title collapsible-header" onclick="toggleUniqueErrors()">
-                <span>Unique Errors</span>
-                <span class="arrow-icon material-icons" id="uniqueErrorsArrow">expand_more</span>
-            </div>
-            <div id="uniqueErrorsContent" class="collapsible-content">
-                <div style="margin-bottom: 20px; color: #64748b; font-size: 14px;">
-                    Identified unique errors by analyzing and duplicating recurring failure patterns.
-                </div>
-                <div id="uniqueErrorsList">
-                    <!-- Unique errors will be inserted here -->
-                </div>
-            </div>
-        </div>
-
-        <!-- Conversations Table -->
-        <div class="table-section">
-            <div class="section-title"><span class="material-icons" style="vertical-align: middle; font-size: 20px; margin-right: 8px;">forum</span>Conversations</div>
-            <div class="table-container">
-                <table id="conversationsTable">
-                    <thead>
-                        <tr>
-                            <th>chat id</th>
-                            <th>scenario id</th>
-                            <th>
-                                goal completion score
-                                <span class="info-icon-wrapper">
-                                    <span class="info-icon material-icons">info</span>
-                                    <span class="tooltip">goal completion score indicates whether the agent has completed the goal of the user (ranges between 0-1).</span>
-                                </span>
-                            </th>
-                            <th>
-                                final score
-                                <span class="info-icon-wrapper">
-                                    <span class="info-icon material-icons">info</span>
-                                    <span class="tooltip">a weighted sum of turn_success_ratio and goal_completion_score (goal_completion_weight = 0.25, turn_success_ratio_weight = 0.75). ranges between 0-1.</span>
-                                </span>
-                            </th>
-                            <th>
-                                status
-                                <span class="info-icon-wrapper">
-                                    <span class="info-icon material-icons">info</span>
-                                    <span class="tooltip">the status of the conversation based on final_score:<br><br><strong>done:</strong> final_score == 1.0 - perfect performance with no agent behavior failures and goal completed.<br><br><strong>partial failure:</strong> final_score > 0.6 - some agent behavior failures or goal not completed, but performance is acceptable.<br><br><strong>failed:</strong> final_score ≤ 0.6 - too many agent behavior failures or goal not completed, indicating poor performance.</span>
-                                </span>
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody id="conversationsTableBody">
-                        <!-- Table rows will be inserted here -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Evaluation Prompts Appendix -->
-        <div id="promptsAppendixSection" style="display:none; margin-top:40px;">
-            <div class="section-title collapsible-header" onclick="togglePromptsAppendix()">
-                <span class="material-icons" style="font-size:20px;">description</span>
-                Evaluation Prompts Appendix
-                <span class="arrow-icon material-icons collapsed" id="promptsAppendixArrow">expand_more</span>
-            </div>
-            <div id="promptsAppendixContent" class="collapsible-content collapsed">
-                <div id="promptsAppendixBody" style="padding:16px 0;"></div>
             </div>
         </div>
     </div>
@@ -1747,234 +949,437 @@
         let uniqueErrorsData = {{UNIQUE_ERRORS_DATA}};
         let perTurnData = {{TURNS_DATA}};
 
-        // Score interpretation (matches Python score_label())
-        function scoreLabel(score) {
-            if (score < 1.0) return 'Poor';
-            if (score < 2.0) return 'Poor';
-            if (score < 3.0) return 'Needs Improvement';
-            if (score < 4.0) return 'Good';
-            return 'Excellent';
-        }
-
-        function scoreLabelClass(score) {
-            const label = scoreLabel(score);
-            return label.toLowerCase().replace(/\s+/g, '-');
-        }
-
         // Human-readable label for a chat_id
         function chatLabel(chatId) {
             return CHAT_ID_TO_LABEL[chatId] || chatId;
         }
 
+        const RESULT_LABELS = { pass: 'Pass', fail: 'Fail', inconclusive: 'Inconclusive', no_assertions: 'No assertions' };
+        const RESULT_CLASSES = { pass: 'done', fail: 'failed', inconclusive: 'inconclusive', no_assertions: 'no-assertions' };
+        const RESULT_TITLES = {
+            inconclusive: 'Could not determine whether this passed',
+            no_assertions: 'This scenario has no assertions, so there is no Pass or Fail.',
+        };
+        const CHECK_TYPE_LABELS = { llm_judge: 'LLM judge', tool_calls: 'Tool calls', text_match: 'Text match' };
+        const INCONCLUSIVE_TIP = 'Nothing failed, but at least one assertion could not be judged: the conversation never reached that point, or tool call data was missing. Left out of all scores.';
+        const SEVERITY_ORDER = { critical: 0, high: 1, medium: 2, low: 3 };
+        const ASSERTION_FAILURE_CATEGORY = 'assertion failed';
+        const ASSERTIONS_SOURCE = 'Assertions';
+        const BEHAVIOR_SOURCE = 'Agent Behavior Failure';
+        const PATTERNS_SHOWN = 5;
+        const POSITIVE_QUAL_LABELS = new Set(['no failure', 'clean', 'within scope', 'appropriate', 'complete']);
+        const NEGATIVE_QUAL_LABELS = new Set(['violated', 'overstepped', 'missing', 'false information', 'over-escalated', 'disobey user request']);
+        const SCOPES = [
+            { scope: 'conversation', title: 'Conversation scoped', info: 'Scored once for the whole conversation, after it ends.' },
+            { scope: 'turn', title: 'Turn scoped', info: "Scored on each agent reply. A conversation's score is the mean of its turns." },
+        ];
 
+        let patternSourceFilter = null;
+        let showAllPatterns = false;
+        let resultTypeFilter = null;
 
-        // Render Unique Errors
-        function renderUniqueErrors() {
-            const container = document.getElementById('uniqueErrorsList');
-            const section = document.getElementById('uniqueErrorsSection');
+        function resultBadge(result) {
+            const r = result || 'no_assertions';
+            const title = RESULT_TITLES[r] ? ` title="${escapeHtml(RESULT_TITLES[r])}"` : '';
+            return `<span class="status-badge ${RESULT_CLASSES[r] || 'no-assertions'}"${title}>${RESULT_LABELS[r] || escapeHtml(r)}</span>`;
+        }
 
-            if (!uniqueErrorsData || uniqueErrorsData.length === 0) {
-                section.style.display = 'none';
+        // Same labels and wording as the platform's scenario editor.
+        const MATCH_MODES = {
+            strict: ['Exact order', 'The agent makes exactly these calls, in this order, and no others.'],
+            unordered: ['Any order', 'The agent makes exactly these calls, in any order, and no others.'],
+            contains: ['At least these', 'The agent makes these calls in any order. Other calls are allowed.'],
+            within: ['Only these tools', 'The agent calls only tools from this list.'],
+        };
+        const ARG_MATCH_LABELS = { partial: 'match listed arguments', exact: 'match arguments exactly' };
+
+        function callArgs(args) {
+            return args && Object.keys(args).length ? `<span class="call-args">${escapeHtml(JSON.stringify(args))}</span>` : '';
+        }
+
+        // Pops one entry per name from a multiset, so a call expected twice is
+        // marked missing only as many times as it is missing.
+        function nameCounter(calls) {
+            const counts = new Map();
+            (calls || []).forEach(c => counts.set(c.name, (counts.get(c.name) || 0) + 1));
+            return name => {
+                const n = counts.get(name) || 0;
+                if (n > 0) counts.set(name, n - 1);
+                return n > 0;
+            };
+        }
+
+        // A tool_calls check: the match mode, each expected call marked called
+        // or missing, and what the agent actually called.
+        function toolCallsDetail(check) {
+            const t = check.trajectory;
+            const [modeLabel, modeHelp] = MATCH_MODES[t.match_mode] || [t.match_mode, ''];
+            const within = t.match_mode === 'within';
+            const isMissing = nameCounter(t.missing);
+            const isUnexpected = nameCounter(t.unexpected);
+            const decided = t.status === 'pass' || t.status === 'fail';
+            const expected = (t.expected || []).map((c, i) => {
+                const missing = isMissing(c.name);
+                const mark = within || !decided ? '' : missing
+                    ? '<span class="call-mark missing material-icons" title="Not called">close</span>'
+                    : '<span class="call-mark called material-icons" title="Called">check</span>';
+                const argMode = ARG_MATCH_LABELS[c.arg_match_mode];
+                return `<li class="call${missing && decided ? ' is-missing' : ''}">${mark}${t.match_mode === 'strict' ? `<span class="call-index">${i + 1}.</span>` : ''}<span class="call-name">${escapeHtml(c.name)}</span>${argMode ? callArgs(c.arguments) + `<span class="call-note">${argMode}</span>` : ''}${missing && decided ? '<span class="call-tag missing">missing</span>' : ''}</li>`;
+            }).join('');
+            const actual = (t.actual || []).map(c => {
+                const unexpected = isUnexpected(c.name);
+                const turn = c.turn_id === undefined || c.turn_id === null ? '' :
+                    `<button type="button" class="call-turn" onclick="scrollToTurn(${c.turn_id})">turn ${c.turn_id + 1}</button>`;
+                return `<li class="call${unexpected ? ' is-unexpected' : ''}"><span class="call-name">${escapeHtml(c.name)}</span>${callArgs(c.arguments)}${turn}${unexpected ? `<span class="call-tag missing">${within ? 'not allowed' : 'unexpected'}</span>` : ''}</li>`;
+            }).join('');
+            const forbidden = (check.label || '').split('; ').filter(part => part.startsWith('Never calls'));
+            return `
+                <div class="tool-check">
+                    <div class="tool-check-head">
+                        <span class="mode-pill" title="${escapeHtml(modeHelp)}">${escapeHtml(modeLabel)}</span>
+                        <span class="muted-small">${escapeHtml(modeHelp)}</span>
+                    </div>
+                    ${check.reason ? `<p class="check-reason">${escapeHtml(check.reason)}</p>` : ''}
+                    <details class="show-calls"${check.status === 'pass' ? '' : ' open'}>
+                        <summary><span class="material-icons chevron">expand_more</span>calls</summary>
+                    <div class="call-columns">
+                        <div>
+                            <p class="call-heading">${within ? 'Allowed tools' : 'Expected'} <span class="num">${(t.expected || []).length}</span></p>
+                            <ul class="call-list">${expected}</ul>
+                        </div>
+                        <div>
+                            <p class="call-heading">Agent called <span class="num">${(t.actual || []).length}</span></p>
+                            ${actual ? `<ul class="call-list">${actual}</ul>` : '<p class="muted-small">No tool calls captured.</p>'}
+                        </div>
+                    </div>
+                    </details>
+                    ${forbidden.map(f => `<p class="check-reason">${escapeHtml(f)}</p>`).join('')}
+                </div>`;
+        }
+
+        function scrollToTurn(turnId) {
+            document.querySelector(`#modalBody .turn[data-turn-id="${turnId}"]`)
+                ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        function checkRow(check) {
+            const [icon, title, hint] = CHECK_KINDS[check.type] || ['rule', check.type, ''];
+            const hasCalls = check.type === 'tool_calls' && check.trajectory && check.trajectory.status !== 'not_applicable';
+            return `
+                <li class="check-item">
+                    <span class="material-icons check-icon${check.type === 'llm_judge' ? ' primary' : ''}">${icon}</span>
+                    <div class="check-text">
+                        <span class="kind-label"><span class="kind-title">${escapeHtml(title)}</span>${hint ? ` · ${escapeHtml(hint)}` : ''}</span>
+                        ${hasCalls ? toolCallsDetail(check) : `<p>${escapeHtml(check.label)}</p>`}
+                        ${check.reason && !hasCalls ? `<p class="check-reason">${escapeHtml(check.reason)}</p>` : ''}
+                    </div>
+                    ${resultBadge(check.status)}
+                </li>`;
+        }
+
+        function infoTip(text) {
+            return `<span class="info-icon-wrapper"><span class="info-icon material-icons">info</span><span class="tooltip">${escapeHtml(text)}</span></span>`;
+        }
+
+        // A button that opens a conversation, optionally at a turn (0-based id).
+        function convChip(chatId, text, turnId) {
+            const turnAttr = turnId === undefined || turnId === null ? '' : ` data-turn-id="${turnId}"`;
+            return `<button type="button" class="chip" data-chat-id="${escapeHtml(chatId)}"${turnAttr} onclick="openFromChip(this)">${text}</button>`;
+        }
+
+        function openFromChip(el) {
+            const turn = el.getAttribute('data-turn-id');
+            openModal(el.getAttribute('data-chat-id'), turn === null ? undefined : parseInt(turn));
+        }
+
+        function formatScore(value, metric) {
+            return metric.score_max <= 1 ? value.toFixed(2) : value.toFixed(1);
+        }
+
+        function bandClass(band) {
+            return 'band-' + (band || '').toLowerCase().replace(/\s+/g, '-');
+        }
+
+        function qualBarColor(label) {
+            const key = (label || '').toLowerCase();
+            if (POSITIVE_QUAL_LABELS.has(key)) return '#16a34a';
+            if (NEGATIVE_QUAL_LABELS.has(key)) return '#dc2626';
+            return '#d97706';
+        }
+
+        function showTab(name) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+            document.getElementById('overviewTab').style.display = name === 'overview' ? '' : 'none';
+            document.getElementById('conversationsTab').style.display = name === 'conversations' ? '' : 'none';
+        }
+
+        // The line under the title: who judged the run, and when.
+        function renderHeader() {
+            const data = EMBEDDED_FINAL_REPORT;
+            const details = [];
+            if (data.evaluation_model) {
+                details.push(['balance', 'Judge', `Judged by ${data.evaluation_model}`]);
+            }
+            if (data.generated_at) {
+                details.push(['schedule', 'Ran', new Date(data.generated_at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })]);
+            }
+            details.push(['forum', 'Conversations', `${data.total_conversations} conversations · ${data.average_turns_per_conversation.toFixed(1)} turns on average`]);
+            document.getElementById('runDetails').innerHTML = details.map(([icon, label, value]) =>
+                `<span title="${escapeHtml(label)}"><span class="material-icons">${icon}</span>${escapeHtml(value)}</span>`
+            ).join('');
+            document.getElementById('conversationsCount').textContent = data.total_conversations;
+        }
+
+        // Whether conversations passed, decided by their scenarios' assertions.
+        function renderResults() {
+            const counts = { pass: 0, fail: 0, inconclusive: 0, no_assertions: 0 };
+            convosData.forEach(c => { const r = c.result || 'no_assertions'; counts[r] = (counts[r] || 0) + 1; });
+            if (counts.pass + counts.fail + counts.inconclusive === 0) {
+                document.getElementById('nothingGraded').style.display = '';
                 return;
             }
+            document.getElementById('resultsSection').style.display = '';
 
-            section.style.display = 'block';
-            container.innerHTML = '';
+            const notPassed = convosData
+                .filter(c => c.result === 'fail' || c.result === 'inconclusive')
+                .sort((a, b) => (a.result === 'fail' ? 0 : 1) - (b.result === 'fail' ? 0 : 1));
+            const notPassedTypes = c => [...new Set((c.assertion_results || []).filter(r => r.status !== 'pass').map(r => r.type))];
+            const typeCounts = new Map();
+            notPassed.forEach(c => notPassedTypes(c).forEach(t => typeCounts.set(t, (typeCounts.get(t) || 0) + 1)));
+            const showTypeChips = typeCounts.size > 1 && notPassed.length > 1;
+            const shown = resultTypeFilter ? notPassed.filter(c => notPassedTypes(c).includes(resultTypeFilter)) : notPassed;
+            const typeChip = (value, label, count) =>
+                `<button type="button" class="filter-chip${resultTypeFilter === value ? ' active' : ''}" onclick="resultTypeFilter = ${value === null ? 'null' : `'${value}'`}; renderResults()">${escapeHtml(label)} <span class="num">${count}</span></button>`;
 
-            // Count total turns for an occurrences object {conv_id: [turn_ids]}
-            function countOccurrences(occ) {
-                if (!occ || typeof occ !== 'object') return 0;
-                return Object.values(occ).reduce((sum, turns) =>
-                    sum + (Array.isArray(turns) ? turns.length : 1), 0);
+            document.getElementById('resultsCard').innerHTML = `
+                <div class="results-summary">
+                    <div>
+                        <p class="card-label">Conversations passed ${infoTip('A conversation passes when every assertion on its scenario passes. Open one to see each assertion and why.')}</p>
+                        <p class="results-big">${counts.pass} <span>/ ${convosData.length}</span></p>
+                    </div>
+                    <p class="results-sub">
+                        <span class="text-destructive num">${counts.fail}</span> failed ·
+                        <span class="text-warning num">${counts.inconclusive}</span> inconclusive ${infoTip(INCONCLUSIVE_TIP)} ·
+                        <span class="num">${counts.no_assertions}</span> no assertions
+                    </p>
+                </div>
+                ${notPassed.length ? `
+                <div class="not-passed">
+                    <div class="chip-row">
+                        <p class="card-label">Failed</p>
+                        ${showTypeChips ? typeChip(null, 'All', notPassed.length) + [...typeCounts].map(([t, n]) => typeChip(t, CHECK_TYPE_LABELS[t] || t, n)).join('') : ''}
+                    </div>
+                    <ul class="not-passed-list">
+                        ${shown.map(c => `
+                        <li><button type="button" class="not-passed-row" data-chat-id="${escapeHtml(c.chat_id)}" onclick="openFromChip(this)">
+                            ${resultBadge(c.result)}
+                            <span class="not-passed-name">
+                                <span class="truncate">${escapeHtml(c.scenario_id || chatLabel(c.chat_id))}</span>
+                                ${notPassedTypes(c).map(t => `<span class="type-chip">${escapeHtml(CHECK_TYPE_LABELS[t] || t)}</span>`).join('')}
+                            </span>
+                            <span class="not-passed-count">${c.checks_passed} / ${c.checks_total} passed</span>
+                        </button></li>`).join('')}
+                    </ul>
+                </div>` : ''}`;
+        }
+
+        // Where a pattern came from: a failed assertion, the metric its category
+        // names, or otherwise an agent behavior failure.
+        function patternSource(pattern) {
+            if (pattern.source === 'assertion' || pattern.agent_behavior_failure_category === ASSERTION_FAILURE_CATEGORY) {
+                return ASSERTIONS_SOURCE;
             }
-
-            // Sort errors by severity (critical first) then by occurrence count
-            const severityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
-            const sorted = [...uniqueErrorsData].sort((a, b) => {
-                const sa = severityOrder[a.severity] ?? 2;
-                const sb = severityOrder[b.severity] ?? 2;
-                if (sa !== sb) return sa - sb;
-                // Secondary sort by occurrence count descending
-                return countOccurrences(b.occurrences) - countOccurrences(a.occurrences);
-            });
-
-            sorted.forEach(error => {
-                // Calculate occurrences count from native object {conv_id: [turn_ids]}
-                let count = 0;
-                let chatIds = [];
-                const occurrencesObj = error.occurrences;
-                if (occurrencesObj && typeof occurrencesObj === 'object') {
-                    chatIds = Object.keys(occurrencesObj);
-                    Object.values(occurrencesObj).forEach(turns => {
-                        count += Array.isArray(turns) ? turns.length : 1;
-                    });
-                }
-
-                // Build conversations markup if we have chat IDs
-                let conversationsHtml = '';
-                if (chatIds.length > 0) {
-                    const chatLinks = chatIds
-                        .map(chatId => `
-                            <button
-                                class="chat-id-chip"
-                                data-chat-id="${escapeHtml(chatId)}"
-                                onclick="openModal(this.getAttribute('data-chat-id'))"
-                            >
-                                ${escapeHtml(chatLabel(chatId))}
-                            </button>
-                        `.trim())
-                        .join(' ');
-
-                    conversationsHtml = `
-                    <div class="divider"></div>
-                    <div class="error-conversations">
-                        <div class="error-conversations-label">Conversations</div>
-                        <div class="error-conversations-list">
-                            ${chatLinks}
-                        </div>
-                    </div>
-                    `;
-                }
-
-                // Build snippets markup
-                let snippetsHtml = '';
-                const snippets = Array.isArray(error.occurrence_snippets)
-                    ? error.occurrence_snippets : [];
-                if (snippets.length > 0) {
-                    const snippetId = 'snippet-' + Math.random().toString(36).substr(2, 9);
-                    const iconId = snippetId + '-icon';
-                    const snippetItems = snippets.map(s => `
-                        <div class="snippet-item">
-                            <div class="snippet-header">${escapeHtml(s.conversation_label)}, Turn ${s.turn_number + 1}</div>
-                            <div class="snippet-message"><strong>User:</strong> ${escapeHtml(s.user_message)}</div>
-                            <div class="snippet-message"><strong>Agent:</strong> ${escapeHtml(s.assistant_message)}</div>
-                        </div>
-                    `).join('');
-                    snippetsHtml = `
-                        <button class="snippet-toggle-btn" onclick="toggleSnippet('${snippetId}', '${iconId}')">
-                            <span class="snippet-expand-icon material-icons" id="${iconId}">expand_more</span>
-                            <span>Transcript Snippets (${snippets.length})</span>
-                        </button>
-                        <div class="snippet-container" id="${snippetId}">
-                            ${snippetItems}
-                        </div>
-                    `;
-                }
-
-                // Build scenario IDs markup
-                let scenarioIdsHtml = '';
-                if (Array.isArray(error.scenario_ids) && error.scenario_ids.length > 0) {
-                    const chips = error.scenario_ids
-                        .map(id => `<span class="scenario-id-chip">${escapeHtml(id)}</span>`)
-                        .join(' ');
-                    scenarioIdsHtml = `
-                    <div class="divider"></div>
-                    <div class="error-conversations">
-                        <div class="error-conversations-label">Scenarios</div>
-                        <div class="error-conversations-list">
-                            ${chips}
-                        </div>
-                    </div>
-                    `;
-                }
-
-                const card = document.createElement('div');
-                card.className = 'error-card';
-
-                const occurrenceText = count === 1 ? '1 Occurrence' : `${count} Occurrences`;
-
-                const sev = (error.severity || 'medium').toLowerCase();
-                const sevClass = 'severity-' + sev;
-
-                card.innerHTML = `
-                    <div class="error-header">
-                        <span class="severity-badge ${sevClass}">${sev}</span>
-                        <span class="occurrence-badge">${occurrenceText}</span>
-                        <span class="category-badge">${escapeHtml(error.agent_behavior_failure_category || 'General')}</span>
-                    </div>
-                    <div class="bug-badge">Bug</div>
-                    <div class="error-description">
-                        ${escapeHtml(error.unique_error)}
-                    </div>
-                    ${conversationsHtml}
-                    ${scenarioIdsHtml}
-                    ${snippetsHtml}
-                `;
-
-                container.appendChild(card);
-            });
-
-        }
-
-        // Toggle Scoring Methodology Section
-        function toggleMethodology() {
-            const content = document.getElementById('methodologyContent');
-            const arrow = document.getElementById('methodologyArrow');
-
-            content.classList.toggle('collapsed');
-            arrow.classList.toggle('collapsed');
-        }
-
-        // Toggle Unique Errors Section
-        function toggleUniqueErrors() {
-            const content = document.getElementById('uniqueErrorsContent');
-            const arrow = document.getElementById('uniqueErrorsArrow');
-
-            content.classList.toggle('collapsed');
-            arrow.classList.toggle('collapsed');
-        }
-
-        // Populate the conversations table
-        function populateTable() {
-            const tbody = document.getElementById('conversationsTableBody');
-            tbody.innerHTML = '';
-
-            const sortedConvos = [...convosData].sort((a, b) => {
-                const aNum = parseInt(a.chat_id.replace(/\D+/g, '')) || 0;
-                const bNum = parseInt(b.chat_id.replace(/\D+/g, '')) || 0;
-                return aNum - bNum;
-            });
-
-            sortedConvos.forEach((row, index) => {
-                const tr = document.createElement('tr');
-                tr.onclick = () => openModal(row.chat_id);
-
-                // Extract chat_id number (e.g., "conv_0" -> "0")
-                const chatIdNum = row.chat_id.replace('conv_', '');
-
-                // Clean status and determine status class
-                const cleanedStatus = cleanStatus(row.status) || '';
-                const status = cleanedStatus.toLowerCase();
-                let statusClass = 'failed';
-                if (status === 'success' || status === 'done') {
-                    statusClass = 'done';
-                }
-
-                tr.innerHTML = `
-                    <td><span class="chat-id">${chatLabel(row.chat_id)}</span></td>
-                    <td style="position:relative">
-                        ${row.goal ? `<span class="has-tooltip">${escapeHtml(row.scenario_id || '')}</span>` : escapeHtml(row.scenario_id || '')}
-                        ${row.goal ? `<span class="user-goal-tooltip"><strong>Goal:</strong> ${escapeHtml(row.goal)}</span>` : ''}
-                    </td>
-                    <td><span class="score-highlight">${parseFloat(row.goal_completion_score).toFixed(2)}</span></td>
-                    <td><span class="score-highlight">${parseFloat(row.final_score).toFixed(2)}</span></td>
-                    <td>
-                        <span class="status-badge ${statusClass}">
-                            ${cleanedStatus}
-                        </span>
-                    </td>
-                `;
-
-                tbody.appendChild(tr);
-            });
-        }
-
-        // Truncate text with ellipsis
-        function truncateText(text, maxLength) {
-            if (text.length > maxLength) {
-                return text.substring(0, maxLength) + '...';
+            if (pattern.source === 'metric') {
+                const m = [...EMBEDDED_FINAL_REPORT.metrics, ...EMBEDDED_FINAL_REPORT.qual_metrics]
+                    .find(m => m.key.toLowerCase() === pattern.agent_behavior_failure_category.toLowerCase());
+                return m ? m.name : pattern.agent_behavior_failure_category;
             }
-            return text;
+            return BEHAVIOR_SOURCE;
+        }
+
+        function patternOccurrences(pattern) {
+            return Object.values(pattern.occurrences || {}).reduce((n, turns) => n + Math.max(turns.length, 1), 0);
+        }
+
+        function sortedPatterns() {
+            const isAssertion = p => p.agent_behavior_failure_category === ASSERTION_FAILURE_CATEGORY;
+            return uniqueErrorsData.map(p => ({ ...p, sourceLabel: patternSource(p) })).sort((a, b) => {
+                const s = (SEVERITY_ORDER[a.severity] ?? 99) - (SEVERITY_ORDER[b.severity] ?? 99);
+                if (s !== 0) return s;
+                if (isAssertion(a) !== isAssertion(b)) return isAssertion(a) ? -1 : 1;
+                return patternOccurrences(b) - patternOccurrences(a);
+            });
+        }
+
+        // "N failure patterns" under a metric's name, filtering the list below to it.
+        function patternsLink(metricName) {
+            const count = sortedPatterns().filter(p => p.sourceLabel === metricName).length;
+            if (!count) return '';
+            return `<button type="button" class="link-button" data-source="${escapeHtml(metricName)}" onclick="filterPatterns(this.getAttribute('data-source'))">${count} failure ${count === 1 ? 'pattern' : 'patterns'}</button>`;
+        }
+
+        function filterPatterns(source) {
+            patternSourceFilter = source;
+            renderPatterns();
+            document.getElementById('patternsSection').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function quantRow(metric) {
+            const lowest = (metric.lowest || []).filter(l => l.value < metric.score_max);
+            const width = Math.max(0, Math.min(100, (metric.value - metric.score_min) / ((metric.score_max - metric.score_min) || 1) * 100));
+            const desc = CUSTOM_METRIC_DESCRIPTIONS[metric.key];
+            return `
+                <li class="metric-row">
+                    <div class="metric-name">
+                        <p class="truncate">${escapeHtml(metric.name)} ${desc ? infoTip(desc) : ''}</p>
+                        ${patternsLink(metric.name)}
+                    </div>
+                    <div class="metric-score">
+                        <div class="metric-numbers">
+                            <p class="metric-mean" title="Mean">${formatScore(metric.value, metric)}<span> /${metric.score_max}</span></p>
+                            <p class="metric-median">median ${formatScore(metric.median, metric)}</p>
+                        </div>
+                        <div class="bar-track"><div class="bar-fill ${bandClass(metric.band)}" style="width:${width}%" title="${escapeHtml(metric.band)}"></div></div>
+                    </div>
+                    <div class="chip-row">
+                        ${lowest.length ? '<span class="muted-small">Lowest</span>' : ''}
+                        ${lowest.map(l => {
+                            const title = l.min_turn_id !== null && l.min_turn_id !== undefined
+                                ? ` title="Lowest turn: ${formatScore(l.min_value, metric)} on turn ${l.min_turn_id + 1}"` : '';
+                            return `<button type="button" class="chip" data-chat-id="${escapeHtml(l.chat_id)}"${l.min_turn_id !== null && l.min_turn_id !== undefined ? ` data-turn-id="${l.min_turn_id}"` : ''}${title} onclick="openFromChip(this)"><span class="truncate">${escapeHtml(chatLabel(l.chat_id))}</span><span class="muted num">${formatScore(l.value, metric)}</span></button>`;
+                        }).join('')}
+                    </div>
+                </li>`;
+        }
+
+        function qualRow(metric, metricIndex) {
+            const desc = CUSTOM_METRIC_DESCRIPTIONS[metric.key];
+            return `
+                <li class="metric-row qual">
+                    <div class="metric-name">
+                        <p class="truncate">${escapeHtml(metric.name)} ${desc ? infoTip(desc) : ''}</p>
+                        ${patternsLink(metric.name)}
+                    </div>
+                    <div class="qual-labels">
+                        ${metric.labels.map((lbl, i) => {
+                            const id = `qual-${metricIndex}-${i}`;
+                            return `
+                            <div>
+                                <button type="button" class="qual-label-row" onclick="document.getElementById('${id}').classList.toggle('open'); this.classList.toggle('open')">
+                                    <span class="qual-label">${escapeHtml(lbl.label)}</span>
+                                    <span class="bar-track thick"><span class="bar-fill" style="width:${lbl.percentage}%; background:${lbl.color || qualBarColor(lbl.label)}"></span></span>
+                                    <span class="qual-count">${lbl.count} (${lbl.percentage.toFixed(1)}%)</span>
+                                    <span class="material-icons qual-chevron">expand_more</span>
+                                </button>
+                                <div class="qual-convs" id="${id}">
+                                    ${lbl.conversations.map(c => `
+                                    <div class="qual-conv">
+                                        <button type="button" class="link-button" data-chat-id="${escapeHtml(c.chat_id)}" onclick="openFromChip(this)">${escapeHtml(chatLabel(c.chat_id))}</button>
+                                        <div class="chip-row">${c.turn_ids.map(t => convChip(c.chat_id, `Turn ${t + 1}`, t)).join('')}</div>
+                                    </div>`).join('')}
+                                </div>
+                            </div>`;
+                        }).join('')}
+                    </div>
+                </li>`;
+        }
+
+        // Metrics grouped by scope; quantitative ones worst first.
+        function renderMetrics() {
+            const data = EMBEDDED_FINAL_REPORT;
+            const quant = data.metrics || [];
+            const qual = data.qual_metrics || [];
+            if (quant.length + qual.length === 0) return;
+            document.getElementById('metricsSection').style.display = '';
+            const relative = m => (m.value - m.score_min) / ((m.score_max - m.score_min) || 1);
+            let qualIndex = 0;
+            document.getElementById('metricsBody').innerHTML = SCOPES.map(({ scope, title, info }) => {
+                const q = quant.filter(m => m.scope === scope).sort((a, b) => relative(a) - relative(b));
+                const ql = qual.filter(m => m.scope === scope);
+                if (q.length + ql.length === 0) return '';
+                return `
+                    <div class="card metric-scope">
+                        <h3>${title} ${infoTip(info)}</h3>
+                        ${q.length ? `<ul class="metric-list">${q.map(quantRow).join('')}</ul>` : ''}
+                        ${ql.length ? `<ul class="metric-list">${ql.map(m => qualRow(m, qualIndex++)).join('')}</ul>` : ''}
+                    </div>`;
+            }).join('');
+        }
+
+        // Recurring problems, each pointing at the conversations and turns behind it.
+        function renderPatterns() {
+            const patterns = sortedPatterns();
+            if (patterns.length === 0) return;
+            document.getElementById('patternsSection').style.display = '';
+            document.getElementById('patternsTitle').textContent = `Failure patterns (${patterns.length})`;
+
+            const counts = new Map([[ASSERTIONS_SOURCE, 0]]);
+            patterns.forEach(p => counts.set(p.sourceLabel, (counts.get(p.sourceLabel) || 0) + 1));
+            const sources = [...counts].filter(([, n]) => n > 0);
+            const filtered = patternSourceFilter ? patterns.filter(p => p.sourceLabel === patternSourceFilter) : patterns;
+            const shown = showAllPatterns ? filtered : filtered.slice(0, PATTERNS_SHOWN);
+            const filterChip = (value, label, count) =>
+                `<button type="button" class="filter-chip${patternSourceFilter === value ? ' active' : ''}" data-source="${value === null ? '' : escapeHtml(value)}" onclick="patternSourceFilter = this.getAttribute('data-source') || null; renderPatterns()">${escapeHtml(label)} <span class="num">${count}</span></button>`;
+
+            document.getElementById('patternsBody').innerHTML = `
+                ${sources.length > 1 ? `<div class="chip-row">${filterChip(null, 'All', patterns.length)}${sources.map(([name, n]) => filterChip(name, name, n)).join('')}</div>` : ''}
+                <ul class="pattern-list">
+                    ${shown.map(p => {
+                        const n = patternOccurrences(p);
+                        const convs = Object.entries(p.occurrences || {}).map(([chatId, turns]) => {
+                            const turnIds = turns.map(t => parseInt(String(t).replace('turn_', '')));
+                            return `<span class="chip-group">${convChip(chatId, `<span class="truncate">${escapeHtml(chatLabel(chatId))}</span>`, turnIds[0])}${turnIds.map(t => convChip(chatId, `turn ${t + 1}`, t)).join('')}</span>`;
+                        }).join('');
+                        return `
+                        <li class="pattern-row">
+                            <span class="severity-badge severity-${escapeHtml((p.severity || 'medium').toLowerCase())}">${escapeHtml(p.severity || 'medium')}</span>
+                            <div class="pattern-body">
+                                <p>${escapeHtml(p.unique_error)}</p>
+                                <div class="chip-row">
+                                    <span class="muted-small">${escapeHtml(p.agent_behavior_failure_category)} · ${n} ${n === 1 ? 'occurrence' : 'occurrences'}</span>
+                                    ${convs}
+                                </div>
+                            </div>
+                        </li>`;
+                    }).join('')}
+                </ul>
+                ${filtered.length > PATTERNS_SHOWN ? `<button type="button" class="link-button" onclick="showAllPatterns = !showAllPatterns; renderPatterns()">${showAllPatterns ? 'Show fewer' : `Show all ${filtered.length}`}</button>` : ''}`;
+        }
+
+        // One row per conversation: result, assertions passed, and a column per metric.
+        function renderConversationsTable() {
+            const data = EMBEDDED_FINAL_REPORT;
+            const showChecks = convosData.some(c => (c.checks_total || 0) > 0);
+            const columns = [...(data.metrics || []), ...(data.qual_metrics || [])]
+                .sort((a, b) => a.key === 'goal_completion' ? -1 : b.key === 'goal_completion' ? 1 : a.name.localeCompare(b.name));
+            const metricCell = (col, cell) => {
+                if (!cell) return '<span class="muted">—</span>';
+                if (cell.type === 'qualitative') {
+                    return `<span class="qual-cell">${cell.labels.map(l =>
+                        `<span class="label-chip">${escapeHtml(l.value)}${l.turn_ids.length ? ` <span class="muted">×${l.turn_ids.length}</span>` : ''}</span>`).join('')}</span>`;
+                }
+                const title = cell.min_turn_id !== undefined && cell.min_turn_id !== null
+                    ? ` title="Mean across turns. Lowest: ${formatScore(cell.min_value, col)} on turn ${cell.min_turn_id + 1}"` : '';
+                return `<span class="num"${title}>${formatScore(cell.value, col)}</span>`;
+            };
+            document.getElementById('conversationsTableHead').innerHTML = `
+                <tr>
+                    <th>Conv #</th>
+                    ${showChecks ? '<th>Result</th>' : ''}
+                    <th>Scenario</th>
+                    <th>Turns</th>
+                    ${showChecks ? '<th>Assertions</th>' : ''}
+                    ${columns.map(c => `<th>${escapeHtml(c.name)}</th>`).join('')}
+                </tr>`;
+            document.getElementById('conversationsTableBody').innerHTML = convosData.map((row, i) => `
+                <tr data-chat-id="${escapeHtml(row.chat_id)}" onclick="openFromChip(this)">
+                    <td class="muted num">${i + 1}</td>
+                    ${showChecks ? `<td>${resultBadge(row.result)}</td>` : ''}
+                    <td class="nowrap" title="${escapeHtml(row.goal || '')}">${escapeHtml(row.scenario_id || '—')}</td>
+                    <td class="num">${row.turn_count || '—'}</td>
+                    ${showChecks ? `<td class="num">${row.checks_total > 0 ? `${row.checks_passed} / ${row.checks_total}` : '—'}</td>` : ''}
+                    ${columns.map(c => `<td>${metricCell(c, (row.metric_results || {})[c.key])}</td>`).join('')}
+                </tr>`).join('');
         }
 
         // Escape HTML for safe display (both text content and attribute values)
@@ -1987,366 +1392,216 @@
                 .replace(/'/g, '&#39;');
         }
 
-        // Remove "EvaluationStatus." prefix from status string
-        function cleanStatus(status) {
-            if (!status) return '';
-            // Remove "EvaluationStatus." prefix if present
-            return status.replace(/^EvaluationStatus\./, '');
+        // Same names and hints as the platform's scenario editor.
+        const CHECK_KINDS = {
+            llm_judge: ['auto_awesome', 'LLM judge', 'reads the whole conversation'],
+            text_match: ['format_quote', 'Text match', 'no AI, ignores case'],
+            tool_calls: ['build', 'Tool calls', 'checked against captured calls'],
+        };
+
+        function toggleCard(el) {
+            el.closest('.drawer-card, .turn-agent').classList.toggle('open');
         }
 
-        // Open modal with conversation details
-        function openModal(chatId, highlightTurnId) {
-            // Extract the numeric ID from chat_id (e.g., "conv_0" -> 0)
-            const numericId = parseInt(chatId.replace('conv_', ''));
+        function chevronButton(label, extra) {
+            return `<button type="button" class="card-toggle" onclick="toggleCard(this)">
+                <span class="material-icons chevron">expand_more</span>
+                <span class="card-title">${label}</span>${extra || ''}
+            </button>`;
+        }
 
-            // Find conversation in simulate_data by id
-            // Try to match by numeric ID (convert conversation_id to number if it's a string)
-            // Also try to match by string ID directly (in case conversation_id is "conv_0" format)
-            const conversation = simulateData.find(conv => {
-                // Try numeric comparison first
-                const convIdNum = parseInt(conv.conversation_id);
-                if (!isNaN(convIdNum) && convIdNum === numericId) {
-                    return true;
-                }
-                // Try string comparison (in case conversation_id is "conv_0" format)
-                if (conv.conversation_id === chatId || conv.conversation_id === String(numericId)) {
-                    return true;
-                }
-                return false;
+        // "name ........ value", the platform's score row.
+        function leaderRow(name, value, opts = {}) {
+            const dot = opts.dot ? `<span class="qual-dot" style="background:${opts.dot}"></span>` : '';
+            const tip = opts.reason ? infoTip(opts.reason) : '';
+            return `<div class="leader-row">${dot}<span class="leader-name" title="${escapeHtml(name)}">${escapeHtml(name)}</span><span class="leader-line"></span>${value}${tip}</div>`;
+        }
+
+        function scoreValue(value, max) {
+            return Number.isInteger(value) && max ? `${value} / ${max}` : Number(value).toFixed(2);
+        }
+
+        function qualValue(value, color) {
+            return `<span class="qual-value" style="color:${color}">${escapeHtml(String(value).toLowerCase())}</span>`;
+        }
+
+        // Scores for the whole conversation: conversation metrics once, turn
+        // metrics as their mean and median across the turns.
+        function metricsCard(convosRow, turns) {
+            const ranges = Object.fromEntries((EMBEDDED_FINAL_REPORT.metrics || []).map(m => [m.key, m.score_max]));
+            const name = key => key === 'goal_completion' ? 'User Goal Completion' : key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+            const quant = [];
+            if (convosRow.goal_completion_score >= 0) {
+                quant.push(leaderRow('User Goal Completion', `<span class="leader-value">${convosRow.goal_completion_score.toFixed(2)}</span>`, { reason: convosRow.goal_completion_reason }));
+            }
+            (convosRow.scores || []).filter(s => s.value >= 0).forEach(s => quant.push(
+                leaderRow(name(s.name), `<span class="leader-value">${scoreValue(s.value, ranges[s.name])}</span>`, { reason: s.reason })));
+            const byMetric = {};
+            turns.forEach(t => (t.scores || []).filter(s => s.value >= 0).forEach(s => (byMetric[s.name] = byMetric[s.name] || []).push(s.value)));
+            Object.entries(byMetric).forEach(([key, values]) => {
+                const sorted = [...values].sort((a, b) => a - b);
+                const mid = Math.floor(sorted.length / 2);
+                const median = sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+                const fmt = v => Number.isInteger(v) ? v : v.toFixed(2);
+                quant.push(leaderRow(name(key), `<span class="muted-small">Mean</span><span class="leader-value">${fmt(values.reduce((a, b) => a + b, 0) / values.length)}</span><span class="muted-small pad">Median</span><span class="leader-value">${fmt(median)}</span>`));
             });
+            const qual = (convosRow.qual_scores || []).map(q => {
+                const color = (QUAL_LABEL_COLORS[q.name] || {})[q.value] || qualBarColor(q.value);
+                return leaderRow(name(q.name), qualValue(q.value, color), { dot: color, reason: q.reason });
+            });
+            if (quant.length + qual.length === 0) return '';
+            return `
+                <div class="drawer-card">
+                    <div class="card-head">${chevronButton('Metrics')}</div>
+                    <div class="card-body score-box">
+                        ${quant.length ? `<div class="score-group"><p class="group-label">Quantitative</p>${quant.join('')}</div>` : ''}
+                        ${qual.length ? `<div class="score-group"><p class="group-label">Qualitative</p>${qual.join('')}</div>` : ''}
+                    </div>
+                </div>`;
+        }
 
-            if (!conversation) {
-                console.error('Conversation not found:', chatId, numericId);
-                console.error('Available conversation IDs:', simulateData.map(conv => conv.conversation_id));
+        // The scenario's assertions, each with its own verdict and reason, and
+        // the result they decide.
+        function assertionsCard(convosRow) {
+            const checks = convosRow.assertion_results || [];
+            if (!checks.length) {
+                return `
+                    <div class="drawer-card open">
+                        <div class="card-head static"><span class="card-title">Assertions</span>${resultBadge('no_assertions')}</div>
+                        <p class="muted-small">This scenario has no assertions, so there is no Pass or Fail. Add assertions to the scenario to get one.</p>
+                    </div>`;
+            }
+            return `
+                <div class="drawer-card open">
+                    <div class="card-head static"><span class="card-title">Assertions</span>${resultBadge(convosRow.result)}</div>
+                    <ul class="check-list">${checks.map(checkRow).join('')}</ul>
+                </div>`;
+        }
+
+        function scenarioCard(convosRow, conversation) {
+            const knowledge = (convosRow.knowledge || []).length
+                ? `<ol class="knowledge-list">${convosRow.knowledge.map(k => `<li>${escapeHtml(k)}</li>`).join('')}</ol>`
+                : '<span class="muted-small">None</span>';
+            const prompt = conversation?.simulated_user_prompt?.simulated_user_prompt_template;
+            return `
+                <div class="drawer-card">
+                    <div class="card-head">${chevronButton(`Scenario${convosRow.scenario_id ? ` (${escapeHtml(convosRow.scenario_id)})` : ''}`)}</div>
+                    <dl class="card-body scenario-body">
+                        ${convosRow.goal ? `<div><dt>User Goal</dt><dd>${escapeHtml(convosRow.goal)}</dd></div>` : ''}
+                        ${convosRow.user_profile ? `<div><dt>User Profile</dt><dd>${escapeHtml(convosRow.user_profile)}</dd></div>` : ''}
+                        <div><dt>Knowledge</dt><dd>${knowledge}</dd></div>
+                        ${prompt ? `<div><dt>Simulated user prompt</dt><dd><pre class="prompt-pre">${escapeHtml(prompt)}</pre></dd></div>` : ''}
+                    </dl>
+                </div>`;
+        }
+
+        // Tool calls beneath one agent turn, folded like the platform's.
+        function toolCallList(calls) {
+            if (!calls || !calls.length) return '';
+            const field = (label, value, destructive) => value === null || value === undefined ? '' : `
+                <p class="field-label">${label}</p>
+                <pre class="field-pre${destructive ? ' destructive' : ''}">${escapeHtml(typeof value === 'string' ? value : JSON.stringify(value, null, 2))}</pre>`;
+            return `
+                <details class="tool-calls">
+                    <summary>${calls.length} tool call${calls.length === 1 ? '' : 's'}</summary>
+                    <ul>${calls.map(c => `
+                        <li>
+                            <span class="call-name strong">${escapeHtml(c.name)}</span>
+                            ${field('Arguments', c.arguments)}
+                            ${c.error !== null && c.error !== undefined ? field('Error', c.error, true) : field('Result', c.result)}
+                        </li>`).join('')}
+                    </ul>
+                </details>`;
+        }
+
+        // One turn's scores, opened from its "metrics" toggle.
+        function turnScores(row) {
+            if (!row) return '';
+            const ranges = Object.fromEntries((EMBEDDED_FINAL_REPORT.metrics || []).map(m => [m.key, m.score_max]));
+            const quant = (row.scores || []).filter(s => s.value >= 0).map(s =>
+                leaderRow(s.name.replace(/_/g, ' '), `<span class="leader-value">${scoreValue(s.value, ranges[s.name] || 5)}</span>`, { reason: s.reason }));
+            const quals = (row.qual_scores || []).map(q => [q.name, q.value, q.reason]);
+            const abf = row.agent_behavior_failure_label;
+            if (abf && !['skipped_good_performance', 'evaluation_run_failed', 'agent_api_error'].includes(abf)) {
+                quals.unshift(['agent behavior failure', abf, row.agent_behavior_failure_reason]);
+            }
+            const qual = quals.map(([n, v, reason]) => {
+                const color = (QUAL_LABEL_COLORS[n.replace(/ /g, '_')] || {})[v] || qualBarColor(v);
+                return leaderRow(n.replace(/_/g, ' '), qualValue(v, color), { dot: color, reason });
+            });
+            if (quant.length + qual.length === 0) return '';
+            return `
+                <div class="turn-metrics-box score-box">
+                    ${quant.length ? `<div class="score-group"><p class="group-label">Quantitative</p>${quant.join('')}</div>` : ''}
+                    ${qual.length ? `<div class="score-group"><p class="group-label">Qualitative</p>${qual.join('')}</div>` : ''}
+                </div>`;
+        }
+
+        function renderMarkdown(text) {
+            if (typeof marked === 'undefined') return escapeHtml(text);
+            try { return marked.parse(text); } catch (e) { return escapeHtml(text); }
+        }
+
+        // The conversation drawer, laid out as on the platform: metrics,
+        // assertions and scenario, then the transcript turn by turn.
+        function openModal(chatId, highlightTurnId) {
+            const conversation = simulateData.find(c => c.conversation_id === chatId);
+            const convosRow = convosData.find(row => row.chat_id === chatId);
+            if (!conversation || !convosRow) {
+                console.error('Conversation not found:', chatId);
                 return;
             }
-
-            // Find row for additional info
-            const convosRow = convosData.find(row => row.chat_id === chatId);
-
-            const modal = document.getElementById('conversationModal');
-            const modalBody = document.getElementById('modalBody');
-            const modalTitle = document.getElementById('modalTitle');
-
-            modalTitle.textContent = `${chatLabel(chatId)}`;
-
-            // Build modal content
-            let modalContent = '';
-
-            if (convosRow) {
-                // Clean status and determine status class
-                const cleanedModalStatus = cleanStatus(convosRow.status) || '';
-                const modalStatus = cleanedModalStatus.toLowerCase();
-                let modalStatusClass = 'failed';
-                if (modalStatus === 'success' || modalStatus === 'done') {
-                    modalStatusClass = 'done';
-                }
-
-                const knowledgeItems = Array.isArray(convosRow.knowledge) ? convosRow.knowledge : [];
-                const knowledgeHtml = knowledgeItems.length
-                    ? knowledgeItems.map((item, i) => `<div style="margin-bottom:8px"><strong>${i + 1}.</strong> ${escapeHtml(item)}</div>`).join('')
-                    : 'N/A';
-
-                const simPromptTemplate = conversation?.simulated_user_prompt?.simulated_user_prompt_template || 'N/A';
-
-                modalContent += `
-                    <details class="info-section" style="margin-bottom:24px">
-                        <summary class="info-label">
-                            Scenario (${escapeHtml(convosRow.scenario_id || '')})
-                        </summary>
-                        <div style="margin-top:12px;display:flex;flex-direction:column;gap:12px">
-                            <div>
-                                <div class="info-label">Goal</div>
-                                <div class="info-value">${escapeHtml(convosRow.goal || 'N/A')}</div>
-                            </div>
-                            <div>
-                                <div class="info-label">User Profile</div>
-                                <div class="info-value">${escapeHtml(convosRow.user_profile || 'N/A')}</div>
-                            </div>
-                            <div>
-                                <div class="info-label">Knowledge</div>
-                                <div class="info-value">${knowledgeHtml}</div>
-                            </div>
-                        </div>
-                    </details>
-
-                    <div class="info-section">
-                        <div class="info-label">Scores</div>
-                        <div class="conv-scores-list">
-                            <details class="conv-score-item">
-                                <summary class="conv-score-summary">
-                                    <span class="conv-score-name">Goal Completion</span>
-                                    <span class="conv-score-value">${parseFloat(convosRow.goal_completion_score).toFixed(2)}</span>
-                                </summary>
-                                <div class="conv-score-reason">${escapeHtml(convosRow.goal_completion_reason || 'N/A')}</div>
-                            </details>
-                            <details class="conv-score-item">
-                                <summary class="conv-score-summary">
-                                    <span class="conv-score-name">Final Score</span>
-                                    <span class="conv-score-value">${parseFloat(convosRow.final_score).toFixed(2)}</span>
-                                </summary>
-                                <div class="conv-score-reason">Weighted average of Turn Success Ratio (40%) and Goal Completion Score (60%).</div>
-                            </details>
-                            <details class="conv-score-item">
-                                <summary class="conv-score-summary">
-                                    <span class="conv-score-name">Status</span>
-                                    <span class="status-badge ${modalStatusClass}">${cleanedModalStatus}</span>
-                                </summary>
-                                <div class="conv-score-reason">Done if final score = 1.0; Partial Failure if ≥ 0.6; Failed if &lt; 0.6.</div>
-                            </details>
-                            ${(convosRow.scores || []).map(s => `
-                            <details class="conv-score-item">
-                                <summary class="conv-score-summary">
-                                    <span class="conv-score-name">${escapeHtml(s.name.replace(/_/g, ' '))}</span>
-                                    <span class="conv-score-value">${parseFloat(s.value).toFixed(2)}</span>
-                                </summary>
-                                <div class="conv-score-reason">${escapeHtml(s.reason || 'No reason provided.')}</div>
-                            </details>`).join('')}
-                            ${(convosRow.qual_scores || []).map(q => {
-                                const POSITIVE_LABELS = ['compliant', 'professional', 'pass', 'good', 'complete', 'no failure', 'ok'];
-                                const NEGATIVE_LABELS = ['flagged', 'unprofessional', 'fail', 'error', 'poor', 'missing', 'violated', 'partial'];
-                                const sentiment = POSITIVE_LABELS.includes(q.value.toLowerCase()) ? 'positive'
-                                               : NEGATIVE_LABELS.includes(q.value.toLowerCase()) ? 'negative'
-                                               : 'neutral';
-                                const customColor = (QUAL_LABEL_COLORS[q.name] || {})[q.value];
-                                const styleAttr = customColor ? ` style="color:${customColor};"` : '';
-                                return `
-                            <details class="conv-score-item">
-                                <summary class="conv-score-summary">
-                                    <span class="conv-score-name">${escapeHtml(q.name.replace(/_/g, ' '))}</span>
-                                    <span class="conv-qual-badge ${sentiment}"${styleAttr}>${escapeHtml(q.value)}</span>
-                                </summary>
-                                <div class="conv-score-reason">${escapeHtml(q.reason || 'No reason provided.')}</div>
-                            </details>`;
-                            }).join('')}
-                        </div>
-                    </div>
-
-                    <details class="info-section" style="margin-bottom:24px">
-                        <summary class="info-label">
-                            Simulation Prompt
-                        </summary>
-                        <div style="margin-top:12px">
-                            <pre style="white-space:pre-wrap;word-break:break-word;background:#f5f7fa;padding:12px;border-radius:8px;font-size:13px;line-height:1.5;max-height:400px;overflow-y:auto">${escapeHtml(simPromptTemplate)}</pre>
-                        </div>
-                    </details>
-                `;
-            }
-
-            // Add conversation messages
-            modalContent += `
-                <div class="conversation-section">
-                    <div class="conversation-title">Conversation Transcript</div>
-            `;
-
-            // Track agent message index (turn_id) for this conversation
-            let agentTurnIndex = 0;
-
-            conversation.conversation_history.forEach((message, index) => {
-                const isUser = message.role === 'simulated_user' || message.role === 'user';
-                const avatar = isUser ? '👤' : '🤖';
-                const label = isUser ? 'User' : 'Agent';
-
-                // Parse markdown content
-                let parsedContent = message.content;
-                if (typeof marked !== 'undefined') {
-                    try {
-                        parsedContent = marked.parse(message.content);
-                    } catch (e) {
-                        console.error('Error parsing markdown:', e);
-                        parsedContent = message.content;
-                    }
-                }
-
-                // For agent messages, add expandable UI
-                let expandBtnHtml = '';
-                let extraInfoHtml = '';
-                const currentTurnId = agentTurnIndex;
-
-                if (!isUser) {
-                    const perTurnRow = perTurnData.find(row =>
-                        row.chat_id === chatId &&
-                        parseInt(row.turn_id) === currentTurnId
-                    );
-
-                    // Check if agent_behavior_failure_reason has a value
-                    const hasFailureReason = perTurnRow &&
-                        perTurnRow.agent_behavior_failure_reason &&
-                        perTurnRow.agent_behavior_failure_reason.trim() !== '';
-
-                    // Check if agent_behavior_failure_label should be skipped
-                    const shouldSkip = perTurnRow && (
-                        perTurnRow.agent_behavior_failure_label === 'skipped_good_performance' ||
-                        perTurnRow.agent_behavior_failure_label === 'no failure'
-                    );
-
-                    const hasScores = perTurnRow && perTurnRow.scores && perTurnRow.scores.length > 0;
-                    const hasQualScores = perTurnRow && perTurnRow.qual_scores && perTurnRow.qual_scores.length > 0;
-                    const hasExpandable = (hasFailureReason && !shouldSkip) || hasScores || hasQualScores;
-
-                    if (hasExpandable) {
-                        const expandBtnId = `expand-btn-${chatId}-${index}`;
-                        const extraInfoId = `extra-info-${chatId}-${index}`;
-                        const showFailure = hasFailureReason && !shouldSkip;
-                        const btnLabel = showFailure ? 'Issue Details' : 'Metrics';
-
-                        expandBtnHtml = `
-                            <button class="message-expand-btn" onclick="toggleMessageExtraInfo('${extraInfoId}', '${expandBtnId}')">
-                                <span class="message-expand-icon material-icons" id="${expandBtnId}">expand_more</span>
-                                <span>${btnLabel}</span>
-                            </button>
-                        `;
-
-                        // Build quantitative score chips
-                        let metricsHtml = '';
-                        if (hasScores) {
-                            const chips = perTurnRow.scores.map(s => {
-                                const label = s.name.replace(/_/g, ' ');
-                                const val = typeof s.value === 'number' ? s.value.toFixed(1) : s.value;
-                                const tipRaw = s.reason || '';
-                                const tip = tipRaw.replace(/"/g, '&quot;');
-                                return `<span class="score-chip" title="${tip}"><span>${label}:</span><strong>${val}/5</strong></span>`;
-                            }).join('');
-                            metricsHtml += `<div class="turn-metrics">${chips}</div>`;
-                        }
-
-                        // Build qualitative label badges
-                        if (hasQualScores) {
-                            const POSITIVE_LABELS = ['compliant', 'professional', 'pass', 'good'];
-                            const NEGATIVE_LABELS = ['flagged', 'unprofessional', 'fail', 'error', 'poor'];
-                            const badges = perTurnRow.qual_scores.map(q => {
-                                const sentiment = POSITIVE_LABELS.includes(q.value.toLowerCase()) ? 'positive'
-                                               : NEGATIVE_LABELS.includes(q.value.toLowerCase()) ? 'negative'
-                                               : 'neutral';
-                                const tipRaw = q.reason || '';
-                                const tip = tipRaw.replace(/"/g, '&quot;');
-                                const customColor = (QUAL_LABEL_COLORS[q.name] || {})[q.value];
-                                const styleAttr = customColor ? ` style="background:${customColor};"` : '';
-                                // Show source tag (Trajectory / Tool call) in the badge label
-                                let source = '';
-                                if (tipRaw.startsWith('[Trajectory]')) source = '<span class="failure-source-tag trajectory">Trajectory</span> ';
-                                else if (tipRaw.startsWith('[Tool call]')) source = '<span class="failure-source-tag tool-call">Tool call</span> ';
-                                const label = q.name.replace(/_/g, ' ');
-                                return `<span class="qual-badge ${sentiment}"${styleAttr} title="${tip}">${source}<span>${label}:</span><strong>${q.value}</strong></span>`;
-                            }).join('');
-                            metricsHtml += `<div class="turn-metrics">${badges}</div>`;
-                        }
-
-                        // Add agent_behavior_failure label badge (skip if source-tagged entries already cover it)
-                        const abfLabel = perTurnRow && perTurnRow.agent_behavior_failure_label;
-                        const skipAbfLabels = new Set(['skipped_good_performance', '']);
-                        const hasSourceTaggedAbf = hasQualScores && perTurnRow.qual_scores.some(q =>
-                            q.name === 'agent_behavior_failure' &&
-                            (q.reason?.startsWith('[Trajectory]') || q.reason?.startsWith('[Tool call]'))
-                        );
-                        if (abfLabel && !skipAbfLabels.has(abfLabel) && !hasSourceTaggedAbf) {
-                            const abfSentiment = abfLabel === 'no failure' ? 'positive' : 'negative';
-                            const abfTip = (perTurnRow.agent_behavior_failure_reason || '').replace(/"/g, '&quot;');
-                            const abfCustomColor = (QUAL_LABEL_COLORS['agent_behavior_failure'] || {})[abfLabel];
-                            const abfStyleAttr = abfCustomColor ? ` style="background:${abfCustomColor};"` : '';
-                            const abfBadge = `<span class="qual-badge ${abfSentiment}"${abfStyleAttr} title="${abfTip}"><span>agent behavior failure:</span><strong>${abfLabel}</strong></span>`;
-                            metricsHtml += `<div class="turn-metrics">${abfBadge}</div>`;
-                        }
-
-                        // Build failure reason block
-                        let failureHtml = '';
-                        if (showFailure) {
-                            let escaped = perTurnRow.agent_behavior_failure_reason
-                                .replace(/&/g, '&amp;')
-                                .replace(/</g, '&lt;')
-                                .replace(/>/g, '&gt;')
-                                .replace(/"/g, '&quot;')
-                                .replace(/'/g, '&#39;')
-                                .replace(/\n/g, '<br>');
-                            // Style [Trajectory] and [Tool call] source prefixes
-                            escaped = escaped
-                                .replace(/\[Trajectory\]/g, '<span class="failure-source-tag trajectory">Trajectory</span>')
-                                .replace(/\[Tool call\]/g, '<span class="failure-source-tag tool-call">Tool call</span>');
-                            const topMargin = metricsHtml ? 'margin-top: 12px;' : '';
-                            failureHtml = `
-                                <div style="margin-bottom: 12px; ${topMargin}">
-                                    <strong style="color: #991b1b;">Agent Behavior Failure Reason:</strong>
-                                </div>
-                                <div>${escaped}</div>`;
-                        }
-
-                        const extraInfoClass = showFailure ? 'message-extra-info' : 'message-extra-info metrics-only';
-                        extraInfoHtml = `
-                            <div class="${extraInfoClass}" id="${extraInfoId}">
-                                <div class="message-extra-info-content">
-                                    ${metricsHtml}${failureHtml}
-                                </div>
-                            </div>
-                        `;
-                    }
-
-                    // Increment agent turn index for next agent message
-                    agentTurnIndex++;
-                }
-
-                const turnAttr = !isUser ? ` data-turn-id="${currentTurnId}"` : '';
-                const highlightClass = (!isUser && highlightTurnId !== undefined && currentTurnId === highlightTurnId)
-                    ? ' highlight-turn' : '';
-
-                modalContent += `
-                    <div class="message-wrapper ${message.role === 'simulated_user' ? 'user' : message.role}${highlightClass}"${turnAttr}>
-                        <div class="message-container">
-                            <div class="message-avatar">${avatar}</div>
-                            <div class="message-bubble">
-                                <div class="message-label">${label}</div>
-                                <div class="message-content">${parsedContent}</div>
-                                ${expandBtnHtml}
-                                ${extraInfoHtml}
-                            </div>
-                        </div>
-                    </div>
-                `;
+            const turnRows = perTurnData.filter(r => r.chat_id === chatId);
+            const turns = [];
+            conversation.conversation_history.forEach(m => {
+                let t = turns.find(x => x.id === m.turn_id);
+                if (!t) turns.push(t = { id: m.turn_id });
+                if (m.role === 'simulated_user' || m.role === 'user') t.user = m; else t.agent = m;
             });
 
-            modalContent += `</div>`;
+            document.getElementById('modalTitle').textContent = chatLabel(chatId);
+            document.getElementById('modalBody').innerHTML = `
+                <div class="drawer-top">
+                    ${metricsCard(convosRow, turnRows)}
+                    ${assertionsCard(convosRow)}
+                    ${scenarioCard(convosRow, conversation)}
+                </div>
+                <h4 class="transcript-label">Conversation Transcript</h4>
+                <div class="transcript">
+                    ${turns.map(t => {
+                        const scores = turnScores(turnRows.find(r => r.turn_id === t.id));
+                        return `
+                        <div class="turn${t.id === highlightTurnId ? ' highlighted' : ''}" data-turn-id="${t.id}">
+                            ${t.user ? `
+                            <div class="turn-user">
+                                <span class="speaker">User <span class="material-icons">person</span></span>
+                                <div class="bubble user">${escapeHtml(t.user.content)}</div>
+                            </div>` : ''}
+                            ${t.agent ? `
+                            <div class="turn-agent">
+                                <div class="bot-avatar"><span class="material-icons">smart_toy</span></div>
+                                <div class="agent-col">
+                                    <span class="speaker">Agent</span>
+                                    <div class="bubble agent message-content">${renderMarkdown(t.agent.content)}</div>
+                                    ${toolCallList(t.agent.tool_calls)}
+                                    ${scores ? `
+                                    <div class="turn-actions">
+                                        <button type="button" onclick="toggleCard(this)"><span class="material-icons chevron">expand_more</span>metrics</button>
+                                    </div>
+                                    ${scores}` : ''}
+                                </div>
+                            </div>` : ''}
+                        </div>`;
+                    }).join('')}
+                </div>`;
 
-            modalBody.innerHTML = modalContent;
+            const modal = document.getElementById('conversationModal');
             modal.classList.add('show');
-
-            // Scroll to highlighted turn, or reset to top
-            const modalContentElement = modal.querySelector('.modal-content');
-            if (modalContentElement) {
-                if (highlightTurnId !== undefined) {
-                    const target = modalBody.querySelector(`.message-wrapper[data-turn-id="${highlightTurnId}"]`);
-                    if (target) {
-                        // Let the modal render, then scroll
-                        requestAnimationFrame(() => {
-                            target.scrollIntoView({ block: 'center' });
-                        });
-                    } else {
-                        modalContentElement.scrollTop = 0;
-                    }
-                } else {
-                    modalContentElement.scrollTop = 0;
-                }
-            }
-        }
-
-        // Toggle message extra info
-        function toggleMessageExtraInfo(extraInfoId, expandBtnId) {
-            const extraInfo = document.getElementById(extraInfoId);
-            const expandIcon = document.getElementById(expandBtnId);
-
-            if (extraInfo && expandIcon) {
-                extraInfo.classList.toggle('expanded');
-                expandIcon.classList.toggle('expanded');
-            }
-        }
-
-        // Toggle snippet expand/collapse
-        function toggleSnippet(containerId, iconId) {
-            const container = document.getElementById(containerId);
-            const icon = document.getElementById(iconId);
-
-            if (container && icon) {
-                container.classList.toggle('expanded');
-                icon.classList.toggle('expanded');
-            }
+            const content = modal.querySelector('.modal-content');
+            const target = highlightTurnId === undefined ? null
+                : document.querySelector(`#modalBody .turn[data-turn-id="${highlightTurnId}"]`);
+            if (target) requestAnimationFrame(() => target.scrollIntoView({ block: 'center' }));
+            else if (content) content.scrollTop = 0;
         }
 
         // Close modal
@@ -2369,247 +1624,6 @@
                 closeModal();
             }
         });
-
-        // Initialize report data
-        function initializeReport() {
-            const data = EMBEDDED_FINAL_REPORT;
-
-            // Update title
-            document.getElementById('reportTitle').textContent = 'Simulator Report';
-
-            // Update metrics
-            document.getElementById('totalConversations').textContent = data.total_conversations;
-            document.getElementById('avgTurns').textContent = data.average_turns_per_conversation.toFixed(1);
-
-            // Update performance metrics
-            const performanceGrid = document.getElementById('performanceGrid');
-            const metrics = data.performance_metrics;
-
-            // Metric definitions (built-in + custom merged)
-            const metricDefinitions = {
-                'helpfulness': 'How effectively the response addresses the user\'s needs (1=Poor, 5=Excellent)',
-                'coherence': 'Logical flow and consistency of the response (1=Poor, 5=Excellent)',
-                'verbosity': 'How concise the response is (1=verbose, 5=concise). Higher is better.',
-                'relevance': 'How well the response addresses the user\'s query (1=Poor, 5=Excellent)',
-                'faithfulness': 'How accurately the response reflects the provided knowledge base (1=Poor, 5=Excellent)'
-            };
-            Object.assign(metricDefinitions, CUSTOM_METRIC_DESCRIPTIONS);
-
-            if (metrics && typeof metrics === 'object') {
-                // Render a single metric card (1-5 scale with label + bar)
-                function renderMetricCard(name, value, isCustom) {
-                    if (isCustom) {
-                        if (typeof value !== 'object' || value === null || value.value === -1) return;
-                    } else {
-                        if (typeof value !== 'number' || value === -1) return;
-                    }
-                    const definition = metricDefinitions[name.toLowerCase()]
-                        || metricDefinitions[name.toLowerCase().replace(/ /g, '_')] || '';
-
-                    const item = document.createElement('div');
-                    item.className = `performance-item ${name}`;
-
-                    if (isCustom) {
-                        const rawValue = value.value;
-                        const minVal = value.min;
-                        const maxVal = value.max;
-                        const range = maxVal - minVal;
-                        const percentage = range > 0
-                            ? Math.max(0, Math.min(100, ((rawValue - minVal) / range) * 100))
-                            : 0;
-                        const normalizedValue = range > 0 ? 1 + ((rawValue - minVal) / range) * 4 : 1;
-                        const label = scoreLabel(normalizedValue);
-                        const labelClass = scoreLabelClass(normalizedValue);
-                        item.innerHTML = `
-                            <div class="performance-label">
-                                ${name}
-                                ${definition ? `
-                                    <span class="info-icon-wrapper">
-                                        <span class="info-icon material-icons">info</span>
-                                        <span class="tooltip">${definition}</span>
-                                    </span>
-                                ` : ''}
-                            </div>
-                            <div class="performance-value">
-                                ${rawValue.toFixed(1)}
-                                <span class="score-label-badge ${labelClass}">${label}</span>
-                            </div>
-                            <div class="performance-bar-container">
-                                <div class="performance-bar score-${labelClass}" style="width: ${percentage}%"></div>
-                            </div>
-                        `;
-                    } else {
-                        const percentage = Math.max(0, Math.min(100, ((value - 1) / 4) * 100));
-                        const label = scoreLabel(value);
-                        const labelClass = scoreLabelClass(value);
-                        item.innerHTML = `
-                            <div class="performance-label">
-                                ${name}
-                                ${definition ? `
-                                    <span class="info-icon-wrapper">
-                                        <span class="info-icon material-icons">info</span>
-                                        <span class="tooltip">${definition}</span>
-                                    </span>
-                                ` : ''}
-                            </div>
-                            <div class="performance-value">
-                                ${value.toFixed(1)}
-                                <span class="score-label-badge ${labelClass}">${label}</span>
-                            </div>
-                            <div class="performance-bar-container">
-                                <div class="performance-bar score-${labelClass}" style="width: ${percentage}%"></div>
-                            </div>
-                        `;
-                    }
-                    performanceGrid.appendChild(item);
-                }
-
-                // Render built-in metrics
-                Object.keys(metrics).forEach(key => {
-                    if (key === 'custom_metric_scores') return; // handled separately below
-                    renderMetricCard(key, metrics[key], false);
-                });
-
-                // Render custom metrics (no label/bar — scale may differ from 1-5)
-                if (metrics.custom_metric_scores && typeof metrics.custom_metric_scores === 'object') {
-                    Object.keys(metrics.custom_metric_scores).forEach(key => {
-                        renderMetricCard(key, metrics.custom_metric_scores[key], true);
-                    });
-                }
-            }
-        }
-
-        // Render Qualitative Metrics Distribution
-        function renderQualMetrics() {
-            const data = EMBEDDED_FINAL_REPORT;
-            const distributions = data.qual_metric_distributions;
-            const section = document.getElementById('qualMetricsSection');
-            const container = document.getElementById('qualMetricsContent');
-
-            if (!distributions || Object.keys(distributions).length === 0) {
-                section.style.display = 'none';
-                return;
-            }
-
-            const QUAL_PALETTE = [
-                '#3b82f6',  // blue
-                '#f59e0b',  // amber
-                '#22c55e',  // green
-                '#ef4444',  // red
-                '#a855f7',  // purple
-                '#14b8a6',  // teal
-            ];
-
-            section.style.display = 'block';
-            container.innerHTML = '';
-
-            Object.entries(distributions).forEach(([metricName, labels]) => {
-                const group = document.createElement('div');
-                group.className = 'qual-metric-group';
-
-                const nameEl = document.createElement('div');
-                nameEl.className = 'qual-metric-name';
-                const formattedQualName = metricName.replace(/_/g, ' ');
-                const qualDesc = CUSTOM_METRIC_DESCRIPTIONS[metricName] || '';
-                nameEl.innerHTML = `${escapeHtml(formattedQualName)}${qualDesc ? `
-                    <span class="info-icon-wrapper">
-                        <span class="info-icon material-icons">info</span>
-                        <span class="tooltip">${escapeHtml(qualDesc)}</span>
-                    </span>` : ''}`;
-                group.appendChild(nameEl);
-
-                const entries = Object.entries(labels); // already sorted desc by count
-
-                entries.forEach(([label, item], idx) => {
-                    const metricColors = QUAL_LABEL_COLORS[metricName] || {};
-                    const color = metricColors[label] || QUAL_PALETTE[idx % QUAL_PALETTE.length];
-                    const barWidth = item.percentage;
-
-                    const wrapper = document.createElement('div');
-                    wrapper.className = 'qual-bar-wrapper';
-
-                    const row = document.createElement('div');
-                    row.className = 'failure-bar-row';
-                    row.innerHTML = `
-                        <div class="failure-bar-label">${escapeHtml(label)}</div>
-                        <div class="failure-bar-track">
-                            <div class="failure-bar-fill" style="width: ${barWidth}%; background: ${color};">
-                                ${item.occurrences}
-                            </div>
-                        </div>
-                        <div class="failure-bar-stat">${item.percentage}%</div>
-                        <span class="qual-expand-icon material-icons">expand_more</span>
-                    `;
-
-                    const details = document.createElement('div');
-                    details.className = 'qual-turn-details';
-
-                    // Find matching turns from perTurnData
-                    const isAbf = metricName === 'agent_behavior_failure';
-                    const matchingTurns = perTurnData.filter(t => {
-                        if (isAbf) return t.agent_behavior_failure_label === label;
-                        return (t.qual_scores || []).some(
-                            q => q.name === metricName && q.value === label
-                        );
-                    });
-
-                    // Find matching conversations (conversation-level metrics)
-                    const matchingConvos = convosData.filter(c =>
-                        (c.qual_scores || []).some(
-                            q => q.name === metricName && q.value === label
-                        )
-                    );
-
-                    if (matchingTurns.length === 0 && matchingConvos.length === 0) {
-                        details.innerHTML = '<div class="qual-turn-empty">No matching results found</div>';
-                    } else {
-                        let html = '';
-
-                        // Conversation-level matches — all chips on one row
-                        if (matchingConvos.length > 0) {
-                            html +=
-                                `<div class="qual-turn-group">` +
-                                `<div class="qual-turn-chips">` +
-                                matchingConvos.map(c =>
-                                    `<button class="qual-turn-chip qual-turn-chip--convo" onclick="openModal('${escapeHtml(c.chat_id)}')">${escapeHtml(chatLabel(c.chat_id))}</button>`
-                                ).join('') +
-                                `</div></div>`;
-                        }
-
-                        // Turn-level matches (grouped by conversation)
-                        if (matchingTurns.length > 0) {
-                            const grouped = {};
-                            matchingTurns.forEach(t => {
-                                if (!grouped[t.chat_id]) grouped[t.chat_id] = [];
-                                grouped[t.chat_id].push(t.turn_id);
-                            });
-                            html += Object.entries(grouped).map(([chatId, turnIds]) =>
-                                `<div class="qual-turn-group">` +
-                                `<div class="qual-turn-conv-label">${escapeHtml(chatLabel(chatId))}</div>` +
-                                `<div class="qual-turn-chips">` +
-                                turnIds.map(tid =>
-                                    `<button class="qual-turn-chip" data-chat-id="${escapeHtml(chatId)}" data-turn-id="${tid}" onclick="openModal(this.getAttribute('data-chat-id'), parseInt(this.getAttribute('data-turn-id')))">Turn ${tid}</button>`
-                                ).join('') +
-                                `</div></div>`
-                            ).join('');
-                        }
-
-                        details.innerHTML = html;
-                    }
-
-                    row.addEventListener('click', () => {
-                        const isOpen = details.classList.toggle('open');
-                        wrapper.classList.toggle('expanded', isOpen);
-                    });
-
-                    wrapper.appendChild(row);
-                    wrapper.appendChild(details);
-                    group.appendChild(wrapper);
-                });
-
-                container.appendChild(group);
-            });
-        }
 
         // Global JS tooltip for table headers (CSS-only tooltips get clipped
         // by border-collapse: collapse on table cells)
@@ -2657,25 +1671,206 @@
             });
         })();
 
-        // Render evaluation pipeline note (model/provider) in header
-        function renderEvaluationPipeline() {
-            const data = EMBEDDED_FINAL_REPORT;
-            const el = document.getElementById('evaluationPipeline');
-            if (data.evaluation_model || data.evaluation_provider) {
-                const parts = [];
-                if (data.evaluation_provider) parts.push(data.evaluation_provider);
-                if (data.evaluation_model) parts.push(data.evaluation_model);
-                el.textContent = 'Evaluation model: ' + parts.join(' / ');
-                el.style.display = 'block';
-            }
-        }
-
         // Toggle prompts appendix collapse
         function togglePromptsAppendix() {
             const content = document.getElementById('promptsAppendixContent');
             const arrow = document.getElementById('promptsAppendixArrow');
             content.classList.toggle('collapsed');
             arrow.classList.toggle('collapsed');
+        }
+
+        // Toggle a single token usage breakdown table by id
+        function toggleTokenUsageBreakdown(id) {
+            const content = document.getElementById(id);
+            const arrow = document.getElementById(id + '-arrow');
+            if (!content) return;
+            content.classList.toggle('collapsed');
+            if (arrow) arrow.classList.toggle('collapsed');
+        }
+
+        // Render token usage section
+        function renderTokenUsage() {
+            const data = EMBEDDED_FINAL_REPORT;
+            const simUsage = data.simulation_token_usage;
+            const evalUsage = data.evaluation_token_usage;
+            if (!simUsage && !evalUsage) return;
+
+            const section = document.getElementById('tokenUsageSection');
+            const body = document.getElementById('tokenUsageBody');
+            section.style.display = '';
+
+            // Aggregate per-model counts across simulation + evaluation
+            const perModel = {};
+            function accumulate(usage) {
+                if (!usage || !usage.by_model) return;
+                for (const [model, counts] of Object.entries(usage.by_model)) {
+                    if (!perModel[model]) {
+                        perModel[model] = {
+                            input_tokens: 0,
+                            output_tokens: 0,
+                            cache_read_tokens: 0,
+                            cache_creation_tokens: 0,
+                            reasoning_tokens: 0,
+                            total_tokens: 0,
+                        };
+                    }
+                    perModel[model].input_tokens += counts.input_tokens || 0;
+                    perModel[model].output_tokens += counts.output_tokens || 0;
+                    perModel[model].cache_read_tokens += counts.cache_read_tokens || 0;
+                    perModel[model].cache_creation_tokens += counts.cache_creation_tokens || 0;
+                    perModel[model].reasoning_tokens += counts.reasoning_tokens || 0;
+                    perModel[model].total_tokens += counts.total_tokens || 0;
+                }
+            }
+            accumulate(simUsage);
+            accumulate(evalUsage);
+
+            function fmtModelRow(model, counts) {
+                const total = counts.total_tokens || (counts.input_tokens + counts.output_tokens);
+                return `<tr>
+                    <td style="padding:8px 12px; font-family:ui-monospace,Menlo,monospace; font-size:13px">${escapeHtml(model)}</td>
+                    <td style="padding:8px 12px; text-align:right">${counts.input_tokens.toLocaleString()}</td>
+                    <td style="padding:8px 12px; text-align:right; color:#64748b">${counts.cache_read_tokens.toLocaleString()}</td>
+                    <td style="padding:8px 12px; text-align:right; color:#64748b">${counts.cache_creation_tokens.toLocaleString()}</td>
+                    <td style="padding:8px 12px; text-align:right">${counts.output_tokens.toLocaleString()}</td>
+                    <td style="padding:8px 12px; text-align:right; color:#64748b">${counts.reasoning_tokens.toLocaleString()}</td>
+                    <td style="padding:8px 12px; text-align:right; font-weight:600">${total.toLocaleString()}</td>
+                </tr>`;
+            }
+
+            const sortedModels = Object.entries(perModel).sort((a, b) => {
+                const aTotal = a[1].total_tokens || (a[1].input_tokens + a[1].output_tokens);
+                const bTotal = b[1].total_tokens || (b[1].input_tokens + b[1].output_tokens);
+                return bTotal - aTotal;
+            });
+
+            let rows = '';
+            let totalIn = 0, totalOut = 0, totalCacheRead = 0, totalCacheCreate = 0, totalReasoning = 0, totalAll = 0;
+            for (const [model, counts] of sortedModels) {
+                rows += fmtModelRow(model, counts);
+                totalIn += counts.input_tokens;
+                totalOut += counts.output_tokens;
+                totalCacheRead += counts.cache_read_tokens;
+                totalCacheCreate += counts.cache_creation_tokens;
+                totalReasoning += counts.reasoning_tokens;
+                totalAll += counts.total_tokens || (counts.input_tokens + counts.output_tokens);
+            }
+            if (sortedModels.length > 1) {
+                rows += `<tr style="border-top:2px solid #e8ecef; font-weight:700">
+                    <td style="padding:8px 12px">Total</td>
+                    <td style="padding:8px 12px; text-align:right">${totalIn.toLocaleString()}</td>
+                    <td style="padding:8px 12px; text-align:right; color:#64748b">${totalCacheRead.toLocaleString()}</td>
+                    <td style="padding:8px 12px; text-align:right; color:#64748b">${totalCacheCreate.toLocaleString()}</td>
+                    <td style="padding:8px 12px; text-align:right">${totalOut.toLocaleString()}</td>
+                    <td style="padding:8px 12px; text-align:right; color:#64748b">${totalReasoning.toLocaleString()}</td>
+                    <td style="padding:8px 12px; text-align:right">${totalAll.toLocaleString()}</td>
+                </tr>`;
+            }
+
+            let breakdownIdCounter = 0;
+            function renderBreakdownTable(title, headers, breakdownRows, dataKeys) {
+                if (!breakdownRows || breakdownRows.length === 0) return '';
+                const headRow = headers.map(h =>
+                    `<th style="padding:8px 12px; text-align:${h.align || 'left'}">${escapeHtml(h.label)}</th>`
+                ).join('');
+                const sortedRows = breakdownRows.slice().sort((a, b) => {
+                    const aTotal = (a.input_tokens || 0) + (a.output_tokens || 0);
+                    const bTotal = (b.input_tokens || 0) + (b.output_tokens || 0);
+                    return bTotal - aTotal;
+                });
+                const bodyRows = sortedRows.map(row => {
+                    const cells = dataKeys.map(k => {
+                        const v = row[k];
+                        const isNum = typeof v === 'number';
+                        const text = isNum ? v.toLocaleString() : escapeHtml(String(v ?? ''));
+                        const align = isNum ? 'right' : 'left';
+                        const fontFam = isNum ? '' : 'font-family:ui-monospace,Menlo,monospace; font-size:13px;';
+                        return `<td style="padding:6px 12px; text-align:${align}; ${fontFam}">${text}</td>`;
+                    }).join('');
+                    return `<tr>${cells}</tr>`;
+                }).join('');
+                const id = `tokenUsageBreakdown-${breakdownIdCounter++}`;
+                return `<div style="margin-top:16px">
+                    <div class="collapsible-header" style="cursor:pointer; display:flex; align-items:center; gap:6px; padding:6px 0;" onclick="toggleTokenUsageBreakdown('${id}')">
+                        <h4 style="margin:0; font-size:14px; color:#334155">${escapeHtml(title)}</h4>
+                        <span class="arrow-icon material-icons collapsed" id="${id}-arrow" style="font-size:18px; color:#64748b;">expand_more</span>
+                    </div>
+                    <div id="${id}" class="collapsible-content collapsed">
+                        <table style="width:100%; border-collapse:collapse; margin-top:8px;">
+                            <thead>
+                                <tr style="background:#f8fafc; color:#64748b; font-size:12px; text-transform:uppercase; letter-spacing:0.5px">
+                                    ${headRow}
+                                </tr>
+                            </thead>
+                            <tbody>${bodyRows}</tbody>
+                        </table>
+                    </div>
+                </div>`;
+            }
+
+            const tokenCols = [
+                { label: 'Calls', align: 'right' },
+                { label: 'Input', align: 'right' },
+                { label: 'Cache read', align: 'right' },
+                { label: 'Cache create', align: 'right' },
+                { label: 'Output', align: 'right' },
+                { label: 'Reasoning', align: 'right' },
+                { label: 'Total', align: 'right' },
+            ];
+            const tokenKeys = ['calls', 'input_tokens', 'cache_read_tokens', 'cache_creation_tokens', 'output_tokens', 'reasoning_tokens', 'total_tokens'];
+
+            function renderUsageGroup(title, subTables) {
+                const visibleSubs = subTables.filter(s => s.html);
+                if (visibleSubs.length === 0) return '';
+                return `<div style="margin-top:24px; padding-top:16px; border-top:1px solid #e8ecef">
+                    <h3 style="margin:0; font-size:15px; color:#1e293b">${escapeHtml(title)}</h3>
+                    ${visibleSubs.map(s => s.html).join('')}
+                </div>`;
+            }
+
+            const simBreakdowns = (simUsage && simUsage.breakdowns) || {};
+            const simSection = renderUsageGroup('Simulation', [
+                {
+                    html: renderBreakdownTable(
+                        'By conversation',
+                        [{label: 'Conversation'}, ...tokenCols],
+                        simBreakdowns.by_conversation,
+                        ['conversation_id', ...tokenKeys],
+                    ),
+                },
+            ]);
+
+            const evalBreakdowns = (evalUsage && evalUsage.breakdowns) || {};
+            const evalSection = renderUsageGroup('Evaluation', [
+                {
+                    html: renderBreakdownTable(
+                        'By phase (score / error detection)',
+                        [{label: 'Phase'}, ...tokenCols],
+                        evalBreakdowns.by_phase,
+                        ['phase', ...tokenKeys],
+                    ),
+                },
+            ]);
+
+            body.innerHTML = `<div style="background:white; border-radius:12px; padding:20px; box-shadow:0 2px 8px rgba(0,0,0,0.1)">
+                <table style="width:100%; border-collapse:collapse">
+                    <thead>
+                        <tr style="background:#f8fafc; color:#64748b; font-size:13px; text-transform:uppercase; letter-spacing:0.5px">
+                            <th style="padding:8px 12px; text-align:left">Model</th>
+                            <th style="padding:8px 12px; text-align:right">Input</th>
+                            <th style="padding:8px 12px; text-align:right" title="Cache read tokens (subset of input)">Cache read</th>
+                            <th style="padding:8px 12px; text-align:right" title="Cache creation tokens (subset of input, Anthropic)">Cache create</th>
+                            <th style="padding:8px 12px; text-align:right">Output</th>
+                            <th style="padding:8px 12px; text-align:right" title="Reasoning tokens (subset of output)">Reasoning</th>
+                            <th style="padding:8px 12px; text-align:right">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                </table>
+                <div style="margin-top:8px; font-size:12px; color:#64748b">Cache read/create tokens are subsets of input; reasoning tokens are a subset of output. Out-of-process agents (Chat Completions / A2A) report their own usage and are not included.</div>
+                ${simSection}
+                ${evalSection}
+            </div>`;
         }
 
         // Render evaluation prompts appendix
@@ -2714,12 +1909,12 @@
 
         // Initialize everything when page loads
         window.onload = function() {
-            console.log('Simulate data loaded:', simulateData.length, 'conversations');
-            initializeReport();
-            renderQualMetrics();
-            renderEvaluationPipeline();
-            populateTable();
-            renderUniqueErrors();
+            renderHeader();
+            renderResults();
+            renderMetrics();
+            renderPatterns();
+            renderConversationsTable();
+            renderTokenUsage();
             renderPromptsAppendix();
         };
     </script>

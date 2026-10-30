@@ -187,6 +187,18 @@ class TestWithinMode:
         assert result.failure_label == "disobey user request"
         assert "search_products" in result.extra_calls
 
+    def test_reason_names_each_disallowed_tool_once(self) -> None:
+        actual = [_tc("search"), _tc("get_order"), _tc("search"), _tc("refund")]
+        result = match_trajectory(actual, [_etc("get_order")], "within")
+        assert result.reason == (
+            "Agent called tools outside the allowed list: search, refund."
+        )
+        assert result.extra_calls == ["search", "search", "refund"]
+        unordered = match_trajectory(actual, [_etc("get_order")], "unordered")
+        assert unordered.reason == (
+            "Agent made calls that were not expected: search, refund."
+        )
+
     def test_duplicate_of_expected_call_allowed(self) -> None:
         """Calling an expected tool twice is OK in within mode (still within the set)."""
         actual = [_tc("get_order"), _tc("get_order")]
@@ -786,3 +798,16 @@ class TestAssertionSchema:
         assert isinstance(tc, ToolCallsAssertion)
         assert tc.expected[0].name == "get_order"
         assert tc.match_mode == "strict"
+
+
+# ── Pairing ──
+
+
+class TestPairing:
+    def test_an_ignore_entry_does_not_take_the_call_a_specific_entry_needs(
+        self,
+    ) -> None:
+        expected = [_etc("get_order"), _etc("get_order", "exact", order_id="A")]
+        actual = [_tc("get_order", order_id="A"), _tc("get_order", order_id="B")]
+        for mode in ("unordered", "contains"):
+            assert match_trajectory(actual, expected, mode).matched, mode

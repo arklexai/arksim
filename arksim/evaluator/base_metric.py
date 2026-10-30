@@ -66,6 +66,14 @@ class ScoreInput(BaseModel):
     knowledge: str = ""
     user_goal: str = ""
     profile: str = ""
+    agent_context: str = Field(
+        default="",
+        description="What the agent is configured to do (scenario agent_context)",
+    )
+    expected_behavior: str = Field(
+        default="",
+        description="The scenario's expected agent behaviors, one per line",
+    )
     tool_calls: list = Field(
         default_factory=list,
         description="Tool calls observed during this turn (list of ToolCall or dict)",

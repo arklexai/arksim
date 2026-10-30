@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
+import contextvars
 import inspect
 import logging
 import os
@@ -25,6 +26,12 @@ from arksim.simulation_engine import Conversation, Simulation
 from arksim.utils.module_loader import load_module_from_file
 from arksim.utils.output import load_json_file, save_json_file
 
+from .assertions import (
+    evaluate_assertions,
+    expected_behavior_text,
+    overall_result,
+    summarize_results,
+)
 from .base_metric import ChatMessage, QualitativeMetric, QualResult, QuantitativeMetric
 from .entities import (
     ConversationEvaluation,
@@ -77,6 +84,9 @@ class Evaluator:
         self.total_conversations: int = 0
         self.chat_id_to_label: dict[str, str] = {}
         self._conv_to_scenario: dict[str, str] = {}
+        self._scenarios_by_id = (
+            {s.scenario_id: s for s in scenarios.scenarios} if scenarios else {}
+        )
         # Build scenario_id -> (expected_tool_calls, match_mode) mapping
         self._scenario_expected: dict[str, tuple[list[ExpectedToolCall], str]] = {}
         if scenarios:
@@ -98,6 +108,17 @@ class Evaluator:
         knowledge = variables.get("scenario.knowledge", [])
         profile = variables.get("scenario.user_profile", "")
         user_goal = variables.get("scenario.goal", "")
+        # The simulated user now sees only its profile, so the prompt variables no
+        # longer carry the rest; the scenario itself does. The variables stay as a
+        # fallback for conversations recorded before that change.
+        scenario = self._scenarios_by_id.get(entry.scenario_id)
+        expected_behavior = ""
+        if scenario is not None:
+            system_prompt = scenario.agent_context
+            knowledge = [kc.content for kc in scenario.knowledge]
+            profile = profile or scenario.user_profile
+            user_goal = scenario.goal
+            expected_behavior = expected_behavior_text(scenario.assertions)
 
         convo_list = []
         all_messages: list[ChatMessage] = []
@@ -129,6 +150,7 @@ class Evaluator:
                             profile=profile,
                             user_goal=user_goal,
                             tool_calls=turn_tool_calls,
+                            expected_behavior=expected_behavior,
                         )
                     )
                     turn_id += 1
@@ -142,8 +164,53 @@ class Evaluator:
             profile=profile,
             user_goal=user_goal,
             turns=turn_id,
+            expected_behavior=expected_behavior,
         )
         return convo_list, convo_item
+
+    def _apply_assertions(
+        self,
+        conversations: list[Conversation],
+        processed_entries: list[tuple[list[TurnItem], ConvoItem]],
+        convo_score_list: list[ConversationEvaluation],
+        num_workers: int,
+    ) -> None:
+        """Evaluate each conversation's scenario assertions and set its result."""
+        evals_by_id = {c.conversation_id: c for c in convo_score_list}
+        jobs = []
+        for entry, (convo_list, convo_item) in zip(
+            conversations, processed_entries, strict=False
+        ):
+            convo_eval = evals_by_id.get(entry.conversation_id)
+            scenario = self._scenarios_by_id.get(entry.scenario_id)
+            if convo_eval is None or scenario is None or not scenario.assertions:
+                continue
+            jobs.append((convo_eval, scenario, convo_item, convo_list))
+        if not jobs:
+            return
+        with ThreadPoolExecutor(max_workers=max(1, min(num_workers, len(jobs)))) as ex:
+            futures = {
+                ex.submit(
+                    contextvars.copy_context().run,
+                    evaluate_assertions,
+                    scenario.assertions,
+                    llm=self.llm,
+                    turns=convo_list,
+                    agent_context=convo_item.system_prompt,
+                    knowledge="\n\n".join(convo_item.knowledge),
+                ): convo_eval
+                for convo_eval, scenario, convo_item, convo_list in jobs
+            }
+            for future in as_completed(futures):
+                convo_eval = futures[future]
+                try:
+                    convo_eval.assertion_results = future.result()
+                except Exception:
+                    logger.exception(
+                        "Assertion evaluation failed for conversation %s",
+                        convo_eval.conversation_id,
+                    )
+                convo_eval.result = overall_result(convo_eval.assertion_results)
 
     def _apply_trajectory_matching(
         self,
@@ -295,6 +362,7 @@ class Evaluator:
                 inner_workers = 0 if self.params.num_workers == "auto" else num_workers
                 turn_futures = {
                     executor.submit(
+                        contextvars.copy_context().run,
                         evaluate_turn,
                         self.llm,
                         turn_item,
@@ -338,6 +406,7 @@ class Evaluator:
         with ThreadPoolExecutor(max_workers=convo_max_workers) as executor:
             convo_futures = {
                 executor.submit(
+                    contextvars.copy_context().run,
                     evaluate_conversation,
                     self.llm,
                     convo_item,
@@ -363,9 +432,23 @@ class Evaluator:
                     )
                 pbar.update(1)
 
+        # Phase 3: scenario assertions ("checks") decide each conversation's result.
+        pbar.set_description("Running assertions")
+        self._apply_assertions(
+            conversations, processed_entries, convo_score_list, num_workers
+        )
+
         pbar.set_description("Detecting agent errors")
         logger.info("Detecting agent errors")
-        unique_errors = detect_agent_error(self.llm, convo_score_list)
+        unique_errors = detect_agent_error(
+            self.llm,
+            convo_score_list,
+            {
+                m.name: m.score_range
+                for m in self.params.custom_metrics
+                if isinstance(m, QuantitativeMetric)
+            },
+        )
         logger.info(f"Detected {len(unique_errors)} unique errors")
 
         # Link unique_error_ids back to TurnEvaluation objects
@@ -400,6 +483,7 @@ class Evaluator:
             simulation_id=simulation_id,
             conversations=convo_score_list,
             unique_errors=unique_errors,
+            assertion_summary=summarize_results([c.result for c in convo_score_list]),
         )
         self.total_turns = sum(len(conv.turn_scores) for conv in convo_score_list)
         self.total_conversations = len(conversations)
@@ -583,7 +667,8 @@ class Evaluator:
         for i, c in enumerate(convo_evaluations, 1):
             logger.info(
                 f"\nConversation {i} (Turns: {len(c.turn_scores)}):\n"
-                f"   - Goal Completion Rate: {c.goal_completion_score:.2f}\n"
+                f"   - User Goal Completion: {c.goal_completion_score:.2f}\n"
+                f"   - Assertions: {c.result}\n"
                 f"   - Turn Success Ratio: {c.turn_success_ratio:.2f}\n"
                 f"   - Overall Agent Score: {c.overall_agent_score:.2f}\n"
                 f"   - Status: {c.evaluation_status}",
@@ -958,6 +1043,7 @@ def run_evaluation(
         llm=llm,
         scenarios=scenarios,
     )
+
     evaluator_output = evaluator.evaluate(simulation, on_progress=on_progress)
     evaluator.save_results()
     evaluator.display_evaluation_summary()

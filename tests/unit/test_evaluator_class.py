@@ -18,6 +18,7 @@ from arksim.evaluator.entities import (
     UniqueError,
 )
 from arksim.evaluator.evaluator import Evaluator, _load_custom_metrics
+from arksim.scenario import KnowledgeItem, Scenario, Scenarios
 from arksim.simulation_engine.entities import (
     Conversation,
     Message,
@@ -103,6 +104,94 @@ class TestProcessInput:
         assert turns[0].turn_id == 0
         assert turns[1].turn_id == 1
         assert len(turns[1].conversation_history) == 4
+
+    def test_knowledge_comes_from_the_scenario(self) -> None:
+        """The simulator records only the profile as a prompt variable, so the
+        judge got empty knowledge and Faithfulness passed every turn."""
+        scenario = Scenario(
+            scenario_id="sc-1",
+            user_id="u-1",
+            goal="know the laptop return window",
+            agent_context="electronics store agent",
+            knowledge=[KnowledgeItem(content="Laptops: 30 days from delivery.")],
+            user_profile="casual",
+        )
+        ev = Evaluator(
+            params=EvaluationParams(output_dir="/tmp/test_eval", num_workers=1),
+            llm=None,
+            scenarios=Scenarios(schema_version="v2", scenarios=[scenario]),
+        )
+        entry = Conversation(
+            conversation_id="conv-3",
+            scenario_id="sc-1",
+            conversation_history=[
+                Message(turn_id=0, role="simulated_user", content="Return window?"),
+                Message(turn_id=0, role="assistant", content="90 days."),
+            ],
+            # What the simulator writes today.
+            simulated_user_prompt=SimulatedUserPrompt(
+                simulated_user_prompt_template="tmpl",
+                variables={"scenario.user_profile": "casual", "web_search": False},
+            ),
+        )
+
+        turns, convo = ev._process_input(entry)
+
+        assert turns[0].knowledge == ["Laptops: 30 days from delivery."]
+        assert turns[0].user_goal == "know the laptop return window"
+        assert turns[0].system_prompt == "electronics store agent"
+        assert convo.knowledge == ["Laptops: 30 days from delivery."]
+
+    def test_checks_set_each_conversation_result(self) -> None:
+        """Checks run after metrics; only they decide the result."""
+        scenario = Scenario(
+            scenario_id="sc-1",
+            user_id="u-1",
+            goal="cancel ORD-1001",
+            agent_context="store agent",
+            user_profile="casual",
+            assertions=[
+                {"type": "text_match", "op": "contains", "value": "shipped"},
+                {"type": "text_match", "op": "not_contains", "value": "cancelled"},
+            ],
+        )
+        ev = Evaluator(
+            params=EvaluationParams(output_dir="/tmp/test_eval", num_workers=1),
+            llm=None,
+            scenarios=Scenarios(schema_version="v2", scenarios=[scenario]),
+        )
+        entries = [
+            Conversation(
+                conversation_id=cid,
+                scenario_id="sc-1",
+                conversation_history=[
+                    Message(turn_id=0, role="simulated_user", content="Cancel it"),
+                    Message(turn_id=0, role="assistant", content=reply),
+                ],
+                simulated_user_prompt=SimulatedUserPrompt(
+                    simulated_user_prompt_template="tmpl", variables={}
+                ),
+            )
+            for cid, reply in (
+                ("conv-pass", "It has shipped, so I can't stop it now."),
+                ("conv-fail", "Done, ORD-1001 is cancelled."),
+            )
+        ]
+        processed = [ev._process_input(e) for e in entries]
+        evals = [
+            ConversationEvaluation(
+                conversation_id=e.conversation_id,
+                goal_completion_score=0.0,
+                goal_completion_reason="",
+                turn_scores=[],
+            )
+            for e in entries
+        ]
+
+        ev._apply_assertions(entries, processed, evals, num_workers=2)
+
+        assert [c.result for c in evals] == ["pass", "fail"]
+        assert [r.status for r in evals[1].assertion_results] == ["fail", "fail"]
 
     def test_empty_history(self) -> None:
         ev = _make_evaluator()

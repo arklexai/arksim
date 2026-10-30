@@ -38,6 +38,11 @@ from .utils.schema import QualSchema, ScoreSchema
 # class, a score method that calls the llm and formats the user prompt with all
 # the score_input fields instead of hardcoding the format string.
 class HelpfulnessMetric(QuantitativeMetric):
+    DESCRIPTION = (
+        "Measures how effectively the response addresses the user's need,"
+        " scored on a scale of 1 to 5."
+    )
+
     def __init__(self, llm: LLM) -> None:
         super().__init__(name="helpfulness")
         self._llm = llm
@@ -59,6 +64,11 @@ class HelpfulnessMetric(QuantitativeMetric):
 
 
 class CoherenceMetric(QuantitativeMetric):
+    DESCRIPTION = (
+        "Assesses the logical flow and clarity of the response,"
+        " scored on a scale of 1 to 5."
+    )
+
     def __init__(self, llm: LLM) -> None:
         super().__init__(name="coherence")
         self._llm = llm
@@ -80,6 +90,12 @@ class CoherenceMetric(QuantitativeMetric):
 
 
 class VerbosityMetric(QuantitativeMetric):
+    DESCRIPTION = (
+        "Measures conciseness and penalizes unnecessarily long responses,"
+        " scored on a scale of 1 to 5 where higher scores indicate more concise"
+        " responses."
+    )
+
     def __init__(self, llm: LLM) -> None:
         super().__init__(name="verbosity")
         self._llm = llm
@@ -97,13 +113,15 @@ class VerbosityMetric(QuantitativeMetric):
             ],
             schema=ScoreSchema,
         )
-        # Invert scale: LLM scores 1=verbose (bad) → stored as 5; 5=concise (good) → 1
-        return QuantResult(
-            name=self.name, value=6 - response.score, reason=response.reason
-        )
+        return QuantResult(name=self.name, value=response.score, reason=response.reason)
 
 
 class RelevanceMetric(QuantitativeMetric):
+    DESCRIPTION = (
+        "Evaluates how directly the response addresses the user's input,"
+        " scored on a scale of 1 to 5."
+    )
+
     def __init__(self, llm: LLM) -> None:
         super().__init__(name="relevance")
         self._llm = llm
@@ -125,6 +143,11 @@ class RelevanceMetric(QuantitativeMetric):
 
 
 class FaithfulnessMetric(QuantitativeMetric):
+    DESCRIPTION = (
+        "Determines whether the response contradicts the user's knowledge,"
+        " scored on a scale of 1 to 5."
+    )
+
     def __init__(self, llm: LLM) -> None:
         super().__init__(name="faithfulness")
         self._llm = llm
@@ -147,6 +170,14 @@ class FaithfulnessMetric(QuantitativeMetric):
 
 
 class GoalCompletionMetric(QuantitativeMetric):
+    DESCRIPTION = (
+        "User goal completion: whether the simulated user got what they asked"
+        " for by the end of the conversation, scored 0 (not achieved) or 1"
+        " (fully achieved). A low score is expected when the agent correctly"
+        " declines; whether the agent behaved correctly is decided by the"
+        " scenario's checks."
+    )
+
     def __init__(self, llm: LLM) -> None:
         super().__init__(name="goal_completion")
         self._llm = llm
@@ -158,6 +189,7 @@ class GoalCompletionMetric(QuantitativeMetric):
                 {
                     "role": "user",
                     "content": goal_completion_user_prompt.format(
+                        agent_context=score_input.agent_context or "N/A",
                         chat_history=format_chat_history(score_input.chat_history),
                         user_goal=score_input.user_goal,
                     ),
@@ -170,8 +202,8 @@ class GoalCompletionMetric(QuantitativeMetric):
 
 class AgentBehaviorFailureMetric(QualitativeMetric):
     DESCRIPTION = (
-        "Distribution of agent behavior failure types across all evaluated turns."
-        " Labels: false information, disobey user request,"
+        "Qualitative categorization of agent behavior failure types across all"
+        " evaluated turns. Labels: false information, disobey user request,"
         " lack of specific information, failure to ask for clarification,"
         " repetition, no failure."
     )
@@ -202,6 +234,8 @@ class AgentBehaviorFailureMetric(QualitativeMetric):
                 {
                     "role": "user",
                     "content": agent_behavior_failure_user_prompt.format(
+                        agent_context=score_input.agent_context or "N/A",
+                        expected_behavior=score_input.expected_behavior or "N/A",
                         user_goal=score_input.user_goal,
                         chat_history=format_chat_history(score_input.chat_history),
                         knowledge=score_input.knowledge,
