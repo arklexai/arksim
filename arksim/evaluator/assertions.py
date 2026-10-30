@@ -500,7 +500,8 @@ def overall_result(results: Sequence[AssertionResult]) -> ScenarioResult:
 
 
 _SUMMARY_KEYS: dict[ScenarioResult, str] = {
-    "pass": "passed",
+    # A result name, not a password; Bandit flags the "pass" key.
+    "pass": "passed",  # nosec B105
     "fail": "failed",
     "inconclusive": "inconclusive",
     "no_assertions": "no_assertions",
