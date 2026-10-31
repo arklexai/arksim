@@ -5,6 +5,32 @@ All notable changes to ArkSim will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0](https://github.com/arklexai/arksim/compare/v0.3.8...v0.4.0) (2026-10-31)
+
+
+### ⚠ BREAKING CHANGES
+
+* **evaluator:** always run behavior failure and use gpt-6-luna ([#198](https://github.com/arklexai/arksim/issues/198))
+* **simulator:** v2 judged turn loop ([#192](https://github.com/arklexai/arksim/issues/192))
+
+### Added
+
+* **evaluator:** always run behavior failure and use gpt-6-luna ([#198](https://github.com/arklexai/arksim/issues/198)) ([25b00e1](https://github.com/arklexai/arksim/commit/25b00e19604d9c6b126d8fa77c5c9a588ef3591d))
+* **evaluator:** assertion grading and failure patterns ([#193](https://github.com/arklexai/arksim/issues/193)) ([d872524](https://github.com/arklexai/arksim/commit/d8725246630944dbc9c4e08ab32beaa179c6998b))
+* **llms:** token usage, streaming and native tool calling ([#191](https://github.com/arklexai/arksim/issues/191)) ([05ff304](https://github.com/arklexai/arksim/commit/05ff304900a3222af8bbfa9093878f645586e6d2))
+* **simulator:** v2 judged turn loop ([#192](https://github.com/arklexai/arksim/issues/192)) ([b042ab4](https://github.com/arklexai/arksim/commit/b042ab47aa6b2c7a66b4b80dfed5a411fcfc0aba))
+
+
+### Fixed
+
+* **examples:** use a model LlamaIndex recognizes in its example agent ([#196](https://github.com/arklexai/arksim/issues/196)) ([e05d082](https://github.com/arklexai/arksim/commit/e05d08224ef2e8ecd9de3c2d53e15ff9f8dd2adc))
+
+
+### Documentation
+
+* **examples:** expand customer-service example and update docs ([#194](https://github.com/arklexai/arksim/issues/194)) ([7a36765](https://github.com/arklexai/arksim/commit/7a3676574478031e0c9b9230aeadec616682bc80))
+* **scenario:** document v2 scenario fields and stabilize an eval test ([#197](https://github.com/arklexai/arksim/issues/197)) ([091cee2](https://github.com/arklexai/arksim/commit/091cee2d2e8df6c07287d3600d6726a5ed820f59))
+
 ## [0.3.8](https://github.com/arklexai/arksim/compare/v0.3.7...v0.3.8) (2026-07-15)
 
 
