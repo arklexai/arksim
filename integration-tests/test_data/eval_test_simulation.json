@@ -151,7 +151,7 @@
           "turn_id": 0,
           "message_id": "msg-fi-appeal-0a",
           "role": "assistant",
-          "content": "You can appeal through our internal review process.",
+          "content": "You can appeal through our review process.",
           "tool_calls": null,
           "test.expected_behavior_failure": "lack of specific information"
         }

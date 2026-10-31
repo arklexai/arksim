@@ -17,5 +17,5 @@ pip install crewai --quiet
 run_shell_test \
     "crewai" \
     "$REPO_ROOT/examples/integrations/crewai/custom_agent.py" \
-    "gpt-5.1" \
+    "gpt-6-luna" \
     "openai"

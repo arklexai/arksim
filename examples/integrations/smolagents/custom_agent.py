@@ -28,7 +28,7 @@ class SmolagentsAgent(BaseAgent):
         super().__init__(agent_config)
         self._chat_id = str(uuid.uuid4())
         model = OpenAIServerModel(
-            model_id="gpt-4o",
+            model_id="gpt-6-luna",
             api_base="https://api.openai.com/v1",
             api_key=os.environ["OPENAI_API_KEY"],
         )

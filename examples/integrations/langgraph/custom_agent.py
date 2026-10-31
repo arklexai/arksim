@@ -34,7 +34,7 @@ class LangGraphAgent(BaseAgent):
     def __init__(self, agent_config: AgentConfig) -> None:
         super().__init__(agent_config)
         self._thread_id = str(uuid.uuid4())
-        llm = ChatOpenAI(model="gpt-4o")
+        llm = ChatOpenAI(model="gpt-6-luna")
 
         def chatbot(state: State) -> State:
             return {"messages": [llm.invoke(state["messages"])]}

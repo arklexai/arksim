@@ -22,7 +22,7 @@ class LlamaIndexAgent(BaseAgent):
         super().__init__(agent_config)
         self._chat_id = str(uuid.uuid4())
         # LlamaIndex's OpenAI class rejects models missing from its built-in list.
-        llm = OpenAI(model="gpt-5.1")
+        llm = OpenAI(model="gpt-5.6-luna")
         self._memory = ChatMemoryBuffer.from_defaults()
         self._agent = FunctionAgent(
             tools=[],

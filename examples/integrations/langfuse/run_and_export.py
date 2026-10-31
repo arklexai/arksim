@@ -21,9 +21,9 @@ Self-contained OpenAI setup (agent-under-test is a second OpenAI model):
 
 Optional overrides (sensible defaults shown):
 
-    export ARKSIM_MODEL=gpt-5.1            # sim/eval LLM (provider=openai)
+    export ARKSIM_MODEL=gpt-6-luna            # sim/eval LLM (provider=openai)
     export ARKSIM_PROVIDER=openai
-    export AGENT_MODEL=gpt-4o-mini         # agent-under-test model
+    export AGENT_MODEL=gpt-6-luna         # agent-under-test model
     export AGENT_ENDPOINT=https://api.openai.com/v1/chat/completions
     export AGENT_API_KEY=$OPENAI_API_KEY   # auth for the agent endpoint
 """
@@ -96,7 +96,7 @@ def build_agent_config() -> AgentConfig:
     endpoint = os.environ.get(
         "AGENT_ENDPOINT", "https://api.openai.com/v1/chat/completions"
     )
-    agent_model = os.environ.get("AGENT_MODEL", "gpt-4o-mini")
+    agent_model = os.environ.get("AGENT_MODEL", "gpt-6-luna")
     # AGENT_API_KEY falls back to OPENAI_API_KEY. The ${ENV_VAR} syntax is
     # resolved by arksim at request time, so the key is never hard-coded.
     auth_var = "AGENT_API_KEY" if os.environ.get("AGENT_API_KEY") else "OPENAI_API_KEY"
@@ -135,7 +135,7 @@ def main() -> None:
     with tempfile.TemporaryDirectory(prefix="arksim-lf-") as workdir:
         sim_settings = SimulationInput(
             agent_config=build_agent_config(),
-            model=os.environ.get("ARKSIM_MODEL", "gpt-5.1"),
+            model=os.environ.get("ARKSIM_MODEL", "gpt-6-luna"),
             provider=os.environ.get("ARKSIM_PROVIDER", "openai"),
             num_conversations_per_scenario=1,
             max_turns=4,
@@ -147,7 +147,7 @@ def main() -> None:
 
         print("Running evaluation...")
         eval_settings = EvaluationInput(
-            model=os.environ.get("ARKSIM_MODEL", "gpt-5.1"),
+            model=os.environ.get("ARKSIM_MODEL", "gpt-6-luna"),
             provider=os.environ.get("ARKSIM_PROVIDER", "openai"),
             output_dir=os.path.join(workdir, "evaluation"),
             generate_html_report=False,

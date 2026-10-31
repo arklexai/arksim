@@ -27,7 +27,7 @@ class PydanticAIAgent(BaseAgent):
         super().__init__(agent_config)
         self._chat_id = str(uuid.uuid4())
         self._agent = Agent(
-            "openai:gpt-4o",
+            "openai:gpt-6-luna",
             system_prompt="You are a helpful assistant.",
         )
         self._history: list[ModelMessage] = []

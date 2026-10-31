@@ -14,7 +14,7 @@ const agent = new Agent({
   id: "assistant",
   name: "assistant",
   instructions: "You are a helpful assistant.",
-  model: openai("gpt-4o"),
+  model: openai("gpt-6-luna"),
 });
 
 const mastra = new Mastra({ agents: { assistant: agent } });

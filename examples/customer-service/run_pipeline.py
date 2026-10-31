@@ -46,7 +46,7 @@ async def main() -> None:
     simulation_output_file = os.path.join(results_dir, "simulation", "simulation.json")
     evaluation_output_dir = os.path.join(results_dir, "evaluation")
 
-    model = "gpt-4.1-mini"
+    model = "gpt-6-luna"
     provider = "openai"
     max_turns = 3
 

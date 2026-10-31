@@ -25,5 +25,5 @@ metrics_to_run:
   - agent_behavior_failure
   - tool_call_behavior_failure
 
-model: gpt-4.1-mini
+model: gpt-6-luna
 provider: openai

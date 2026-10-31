@@ -40,7 +40,7 @@ agent_config:
       Content-Type: application/json
       Authorization: "Bearer ${OPENAI_API_KEY}"
     body:
-      model: gpt-6-sol
+      model: gpt-6-luna
       messages:
         - role: system
           content: "You are a helpful assistant."
@@ -57,7 +57,7 @@ num_workers: 50                      # Parallel workers
 output_file_path: ./simulation.json
 
 # Model configuration (used for the simulated user, not your agent)
-model: gpt-6-sol
+model: gpt-6-luna
 provider: openai
 
 # Optional: custom Jinja2 template for the simulated user prompt
@@ -165,7 +165,7 @@ ArkSim supports three ways to connect your agent:
           Content-Type: application/json
           Authorization: "Bearer ${OPENAI_API_KEY}"
         body:
-          model: gpt-6-sol
+          model: gpt-6-luna
           messages:
             - role: system
               content: "You are a helpful assistant."
@@ -265,7 +265,7 @@ Both types support `${ENV_VAR}` substitution in header values (and in the endpoi
           Content-Type: application/json
           Authorization: "Bearer ${OPENAI_API_KEY}"
         body:
-          model: gpt-6-sol
+          model: gpt-6-luna
           messages:
             - role: system
               content: "You are a helpful assistant."
@@ -275,7 +275,7 @@ Both types support `${ENV_VAR}` substitution in header values (and in the endpoi
     max_turns: 5
     num_workers: 50
     output_file_path: ./simulation.json
-    model: gpt-6-sol
+    model: gpt-6-luna
     provider: openai
     ```
   </Step>
@@ -310,7 +310,7 @@ Both types support `${ENV_VAR}` substitution in header values (and in the endpoi
                     "Authorization": "Bearer ${OPENAI_API_KEY}",
                 },
                 "body": {
-                    "model": "gpt-6-sol",
+                    "model": "gpt-6-luna",
                     "messages": [
                         {"role": "system", "content": "You are a helpful assistant."}
                     ],

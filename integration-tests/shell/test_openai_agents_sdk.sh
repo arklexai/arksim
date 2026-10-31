@@ -17,5 +17,5 @@ pip install openai-agents --quiet
 run_shell_test \
     "openai-agents-sdk" \
     "$REPO_ROOT/examples/integrations/openai-agents-sdk/custom_agent.py" \
-    "gpt-5.1" \
+    "gpt-6-luna" \
     "openai"

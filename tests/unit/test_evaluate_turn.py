@@ -71,10 +71,22 @@ class TestEvaluateTurn:
         names = {s.name for s in result.scores}
         assert names == {"helpfulness", "coherence"}
 
-    def test_good_scores_skip_behavior_failure(self) -> None:
-        # All scores >= 3 = 0.6*5
-        llm = _mock_llm(score=3)
+    def test_good_scores_still_run_behavior_failure(self) -> None:
+        llm = _mock_llm(score=5)
         result = evaluate_turn(llm, _turn_item())
+        assert result.turn_behavior_failure == "no failure"
+
+    def test_behavior_failure_runs_without_other_metrics(self) -> None:
+        llm = _mock_llm()
+        result = evaluate_turn(
+            llm, _turn_item(), metrics_to_run=["agent_behavior_failure"]
+        )
+        assert result.scores == []
+        assert result.turn_behavior_failure == "no failure"
+
+    def test_behavior_failure_not_selected_is_skipped(self) -> None:
+        llm = _mock_llm(score=1)
+        result = evaluate_turn(llm, _turn_item(), metrics_to_run=["helpfulness"])
         assert (
             result.turn_behavior_failure
             == EvaluationOutcomes.SKIPPED_GOOD_PERFORMANCE.value

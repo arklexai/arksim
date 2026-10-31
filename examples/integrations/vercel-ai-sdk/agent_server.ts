@@ -35,7 +35,7 @@ app.post("/v1/chat/completions", async (c) => {
   }
 
   const result = await generateText({
-    model: openai("gpt-4o"),
+    model: openai("gpt-6-luna"),
     messages: sessions[sessionKey],
   });
 

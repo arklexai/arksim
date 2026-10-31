@@ -38,7 +38,7 @@ qualitative_failure_labels:
   agent_behavior_failure: ["false information", "disobey user request"]
 
 # LLM model
-model: gpt-6-sol
+model: gpt-6-luna
 
 # LLM provider
 provider: openai

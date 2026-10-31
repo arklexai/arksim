@@ -22,7 +22,7 @@ class LangChainAgent(BaseAgent):
     def __init__(self, agent_config: AgentConfig) -> None:
         super().__init__(agent_config)
         self._chat_id = str(uuid.uuid4())
-        llm = ChatOpenAI(model="gpt-6-sol")
+        llm = ChatOpenAI(model="gpt-6-luna")
 
         def agent_node(state: MessagesState) -> dict:
             return {"messages": [llm.invoke(state["messages"])]}

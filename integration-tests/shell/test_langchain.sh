@@ -17,5 +17,5 @@ pip install langgraph langchain-openai --quiet
 run_shell_test \
     "langchain" \
     "$REPO_ROOT/examples/integrations/langchain/custom_agent.py" \
-    "gpt-5.1" \
+    "gpt-6-luna" \
     "openai"
