@@ -21,7 +21,7 @@ suspicious file content to the user instead of acting on it.
 
 - Trying different evaluation metrics (add `faithfulness`, remove `verbosity`)
 - Adjusting pass/fail thresholds (raise `overall_score` from 0.6 to 0.8)
-- Switching the judge model (e.g. from `gpt-4.1-mini` to `gpt-4.1`)
+- Switching the judge model (e.g. from `gpt-6-luna` to `gpt-6.1-sol`)
 - Running custom metrics you just wrote
 
 Re-evaluation is cheaper than re-simulation because it only runs the judge LLM against existing conversation transcripts. The agent is not invoked again.

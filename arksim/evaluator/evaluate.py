@@ -33,7 +33,6 @@ from .entities import (
 )
 from .tool_call_metrics import ToolCallBehaviorFailureMetric
 from .utils.constants import (
-    BEHAVIOR_FAILURE_THRESHOLD,
     EVALUATION_PARTIAL_FAILURE_THRESHOLD,
     GOAL_COMPLETION_SCORE_WEIGHT,
     SCORE_NOT_COMPUTED,
@@ -164,18 +163,11 @@ def evaluate_turn(
         f"turn {turn_item.turn_id}",
     )
 
-    metric_max = {m.name: m.score_range[1] for m in all_metrics}
-    has_threshold_failure = any(
-        s.value < BEHAVIOR_FAILURE_THRESHOLD * metric_max[s.name]
-        for s in scores
-        if s.name in metric_max
-    )
-
     turn_score = (
         sum(s.value for s in scores) / len(scores) if scores else SCORE_NOT_COMPUTED
     )
 
-    if _should_run("agent_behavior_failure", metrics_to_run) and has_threshold_failure:
+    if _should_run("agent_behavior_failure", metrics_to_run):
         qual = AgentBehaviorFailureMetric(llm).evaluate(score_input)
         turn_behavior_failure = qual.value
         turn_behavior_failure_reason = qual.reason or ""

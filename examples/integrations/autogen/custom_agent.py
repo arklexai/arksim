@@ -12,6 +12,7 @@ import uuid
 from autogen_agentchat.agents import AssistantAgent
 from autogen_agentchat.messages import TextMessage
 from autogen_core import CancellationToken
+from autogen_core.models import ModelFamily, ModelInfo
 from autogen_ext.models.openai import OpenAIChatCompletionClient
 
 from arksim.config import AgentConfig
@@ -28,7 +29,17 @@ class AutoGenAgent(BaseAgent):
     def __init__(self, agent_config: AgentConfig) -> None:
         super().__init__(agent_config)
         self._chat_id = str(uuid.uuid4())
-        model_client = OpenAIChatCompletionClient(model="gpt-4o")
+        # AutoGen needs model_info for models missing from its built-in list.
+        model_client = OpenAIChatCompletionClient(
+            model="gpt-6-luna",
+            model_info=ModelInfo(
+                vision=False,
+                function_calling=True,
+                json_output=True,
+                structured_output=True,
+                family=ModelFamily.UNKNOWN,
+            ),
+        )
         self._agent = AssistantAgent(
             name="assistant",
             system_message="You are a helpful assistant.",

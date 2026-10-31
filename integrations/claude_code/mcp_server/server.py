@@ -672,7 +672,7 @@ def simulate_evaluate(
 
     Executes ``arksim simulate-evaluate`` against the given config file.
     Use ``cli_overrides`` to pass additional CLI flags, for example
-    ``{"model": "gpt-4o", "num_workers": "5"}``. Pass ``cwd`` if the
+    ``{"model": "gpt-6-luna", "num_workers": "5"}``. Pass ``cwd`` if the
     config's relative paths assume a specific working directory.
 
     All path arguments must resolve inside the project root that the

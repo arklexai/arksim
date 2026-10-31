@@ -49,6 +49,6 @@ generate_html_report: true
 
 # ── SHARED SETTINGS ──────────────────────────────────────────────────────────
 
-model: gpt-6-sol
+model: gpt-6-luna
 provider: openai
 num_workers: 50

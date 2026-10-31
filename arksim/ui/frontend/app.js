@@ -45,7 +45,7 @@ function arksim() {
 
     // ── Defaults ──────────────────────────────
     _defaults: {
-      model: 'gpt-6-sol',
+      model: 'gpt-6-luna',
       provider: 'openai',
       outputFilePath: '',
       numConversations: 1,
@@ -57,7 +57,7 @@ function arksim() {
 
     // ── Form State ──────────────────────────────
     agentConfigFilePath: '',
-    model: 'gpt-6-sol',
+    model: 'gpt-6-luna',
     provider: 'openai',
     numConversations: 1,
     maxTurns: 5,
@@ -65,7 +65,7 @@ function arksim() {
     outputFilePath: '',
 
     evalAgentConfigFilePath: '',
-    evalModel: 'gpt-6-sol',
+    evalModel: 'gpt-6-luna',
     evalProvider: 'openai',
     evalInputSource: 'auto',
     evalSimulationFilePath: '',
@@ -87,8 +87,8 @@ function arksim() {
 
     // ── Model / Provider Mapping ────────────────
     providerModels: {
-      openai:  ['gpt-6-sol', 'gpt-6-luna', 'gpt-5.6-terra', 'gpt-5.6-sol', 'gpt-5.6-luna'],
-      azure:   ['gpt-6-sol', 'gpt-6-luna'],
+      openai:  ['gpt-6-luna', 'gpt-6.1-terra', 'gpt-6.1-sol'],
+      azure:   ['gpt-6-luna', 'gpt-6.1-terra', 'gpt-6.1-sol'],
       anthropic:  ['claude-sonnet-4-20250514', 'claude-haiku-4-5-20251001'],
       google:  ['gemini-2.5-flash', 'gemini-2.5-pro'],
     },

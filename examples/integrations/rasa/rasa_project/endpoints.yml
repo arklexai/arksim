@@ -2,7 +2,7 @@ model_groups:
   - id: openai_llm
     models:
       - provider: openai
-        model: gpt-4o
+        model: gpt-6-luna
         api_key: ${OPENAI_API_KEY}
 
   - id: openai_embeddings

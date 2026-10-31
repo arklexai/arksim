@@ -46,7 +46,7 @@ These combine into an **Overall Agent Score** per conversation:
 
 ## Behavior Failure Detection
 
-Beyond numeric scores, evaluation detects the type of failure in each underperforming turn:
+Beyond numeric scores, when `agent_behavior_failure` is in `metrics_to_run`, evaluation labels every turn with its type of failure, or `no failure`:
 
 | Failure type                       | Description                                              |
 | ---------------------------------- | -------------------------------------------------------- |
@@ -74,7 +74,7 @@ simulation_file_path: ./examples/path/to/simulation.json
 
 # Model
 provider: openai
-model: gpt-6-sol
+model: gpt-6-luna
 
 # Execution
 num_workers: 50
@@ -330,7 +330,7 @@ for convo in evaluator_output.conversations:
             simulation_file_path="./simulation.json",
             scenario_file_path="./scenarios.json",
             output_dir="./evaluation",
-            model="gpt-6-sol",
+            model="gpt-6-luna",
             provider="openai",
             num_workers=50,
             generate_html_report=True,
@@ -347,7 +347,7 @@ for convo in evaluator_output.conversations:
 
         evaluation_results = run_evaluation(EvaluationInput(
             output_dir="./evaluation",
-            model="gpt-6-sol",
+            model="gpt-6-luna",
             provider="openai",
             num_workers="auto",
             generate_html_report=True,

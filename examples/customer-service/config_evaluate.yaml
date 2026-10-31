@@ -35,7 +35,7 @@ qualitative_failure_labels:
   unauthorized_action: ["violated"]  # custom metric
 
 # LLM model
-model: gpt-4.1-mini
+model: gpt-6-luna
 
 # LLM provider
 provider: openai

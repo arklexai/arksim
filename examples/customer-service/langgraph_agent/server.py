@@ -79,7 +79,7 @@ from langchain_openai import ChatOpenAI  # noqa: E402
 
 store_tools.init_db()
 agent = create_agent(
-    ChatOpenAI(model="gpt-4.1-mini"),
+    ChatOpenAI(model="gpt-6-luna"),
     tools=TOOLS,
     system_prompt=store_tools.AGENT_INSTRUCTIONS,
 )
