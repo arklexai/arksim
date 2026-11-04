@@ -1,0 +1,33 @@
+{
+  "schema_version": "v1",
+  "scenarios": [
+    {
+      "scenario_id": "hf_analyst_nvda_qoq",
+      "user_id": "user_hf_001",
+      "goal": "Assess NVIDIA's near-term upside and downside after the latest earnings. Highlight bull case, bear case, and key risks. Do not fabricate price targets.",
+      "user_profile": "You are a hedge fund analyst. You are direct, skeptical, catalyst-driven, and high risk tolerance.",
+      "agent_context": "You are a financial research assistant. Use filings, financial data, and recent news. Reports are located in ./data/reports and should match nvda_*.pdf. Ticker is NVDA. Company is NVIDIA.",
+      "knowledge": [
+        { "title": "company", "content": "NVIDIA" },
+        { "title": "ticker", "content": "NVDA" },
+        { "title": "reports_dir", "content": "./data/reports" },
+        { "title": "report_file_pattern", "content": "nvda_*.pdf" },
+        { "title": "use_recent_news", "content": "true" }
+      ]
+    },
+    {
+      "scenario_id": "long_only_pm_nvda_thesis",
+      "user_id": "user_pm_001",
+      "goal": "Form a 6-12 month investment view on NVIDIA. Focus on business quality, durability, and valuation uncertainty.",
+      "user_profile": "You are a long-only PM. You are thesis-driven, medium-term oriented, and medium risk tolerance.",
+      "agent_context": "You are a financial research assistant. Use filings, financial data, and recent news. Reports are located in ./data/reports and should match nvda_*.pdf. Ticker is NVDA. Company is NVIDIA.",
+      "knowledge": [
+        { "title": "company", "content": "NVIDIA" },
+        { "title": "ticker", "content": "NVDA" },
+        { "title": "reports_dir", "content": "./data/reports" },
+        { "title": "report_file_pattern", "content": "nvda_*.pdf" },
+        { "title": "use_recent_news", "content": "true" }
+      ]
+    }
+  ]
+}
