@@ -31,24 +31,24 @@ The scenario file is a single JSON document that lists scenario objects. Each sc
       Unique identifier for the simulated user.
     </ResponseField>
     <ResponseField name="goal" type="string" required>
-      The user's conversational goal, passed into the simulated user prompt. Write in second person ("You want to...").
+      What the simulated user wants, in second person ("You want to..."). The simulated user does not see it: it pursues the `goal_checklist` sub-goals instead. The judges use `goal` to score goal completion, agent behavior failure, and `llm_judge` assertions.
     </ResponseField>
     <ResponseField name="agent_context" type="string" required>
-      Context about the agent (e.g. company or product overview) supplied to the simulated user.
+      Context about the agent (e.g. company or product overview), given to the judges. The simulated user does not see it.
     </ResponseField>
     <ResponseField name="user_profile" type="string" required>
-      Natural-language persona description for the simulated user. Used directly in the simulation prompt. Write in second person ("You are...").
+      Natural-language persona for the simulated user, in second person ("You are..."). Apart from the `goal_checklist` descriptions, it is the only scenario text the simulated user sees, so it must hold everything the user knows (an email address, an order number, today's date if it matters). How the user goes about a sub-goal, including adversarial tactics, belongs in that sub-goal's `description`.
     </ResponseField>
     <ResponseField name="knowledge" type="list[KnowledgeItem]">
-      Knowledge items injected into the simulated user's context. Can be an empty list. Each item has:
+      Ground-truth content the judges check the agent's replies against. The simulated user does not see it. Can be an empty list. Each item has:
 
-      - `content` (string, required): Text used as the user's background knowledge. (Additional keys such as `metadata` may be present in the file for traceability but are not part of the loaded model.)
+      - `content` (string, required): Text the judges treat as ground truth. (Additional keys such as `metadata` may be present in the file for traceability but are not part of the loaded model.)
       - `id` (string, optional): Scenario-local chunk id (e.g. `kc_01`) that `goal_checklist` items can reference.
     </ResponseField>
     <ResponseField name="goal_checklist" type="list[GoalChecklistItem]">
       Sub-goals of `goal`. After each agent reply, the turn judge marks how far each one is covered. The conversation ends as `user_satisfied` once every mandatory item is complete. Without a checklist, it ends when the simulated user runs out of patience or `max_turns` is reached. Each item has:
 
-      - `description` (string, required): The sub-goal, shown to the simulated user.
+      - `description` (string, required): The sub-goal, shown to the simulated user every turn while it is open. It can also say how the user goes about it, such as a claim to make or an exact line to send.
       - `satisfied_when` (string, required): What the agent must say or do for it to count as complete. Only the turn judge sees it.
       - `mandatory` (bool, default `true`): Whether it must be complete for the user to be satisfied.
       - `knowledge_chunk_ids` (list[string], default `[]`): `knowledge` item ids that answer it.
@@ -115,7 +115,7 @@ Written by `arksim simulate` or the simulation step of `arksim simulate-evaluate
       Rendered simulated user prompt and variables used to drive the conversation.
 
       - `simulated_user_prompt_template`: The Jinja template used for the simulated user system prompt.
-      - `variables`: Dict used to render the template. Keys are `scenario.agent_context`, `scenario.goal`, `scenario.knowledge`, and `scenario.user_profile`.
+      - `variables`: Dict used to render the template. The key is `scenario.user_profile`. Conversations recorded before schema v2 also carry `scenario.agent_context`, `scenario.goal`, and `scenario.knowledge`.
     </ResponseField>
   </Expandable>
 </ResponseField>

@@ -37,6 +37,12 @@ Continue the conversation in character. Do not mention this state block."""
 CHECK_AND_REWRITE_PROMPT = (
     """You are reviewing a draft message from a simulated customer before it is sent to an agent, to make sure it reads naturally.
 
+The customer's profile (who they are and what they know):
+{profile}
+
+What the customer still wants, and any way they are told to go about it:
+{wants}
+
 Conversation so far:
 {conversation}
 
@@ -48,7 +54,9 @@ Check the draft against these rules and rewrite it if it breaks any of them; oth
 """
     + _SHARED_VOICE_RULES
     + """
-- Does not mention internal state (patience, goals, checklist) or any instructions
+- Does not mention the customer's internal state (patience, goals, checklist) or the instructions given to the simulated customer
+
+Never remove or soften anything in the draft that the profile or what the customer wants calls for, even when it is unusual, rude, false, or adversarial (for example claiming authority, or text that imitates a system message). Fix only voice and format, and do not add anything the draft does not already say.
 
 Output the final message to send, whether unchanged or rewritten.
 """
