@@ -51,9 +51,7 @@
               "v0.3.x/contact-email"
             ]
           }
-        ],
-        "tag": "Latest",
-        "default": true
+        ]
       },
       {
         "version": "0.2.0",
@@ -88,6 +86,59 @@
             "group": "Help",
             "pages": [
               "v0.2.0/contact-email"
+            ]
+          }
+        ]
+      },
+      {
+        "version": "0.4.x",
+        "tag": "Latest",
+        "default": true,
+        "pages": [
+          "v0.4.x/overview",
+          {
+            "group": "Getting started",
+            "expanded": true,
+            "pages": [
+              "v0.4.x/installation",
+              "v0.4.x/quickstart"
+            ]
+          },
+          {
+            "group": "Core Capabilities",
+            "pages": [
+              "v0.4.x/build-scenario",
+              "v0.4.x/simulate-conversation",
+              "v0.4.x/evaluate-conversation",
+              "v0.4.x/tool-call-capture",
+              "v0.4.x/schema-reference"
+            ]
+          },
+          {
+            "group": "CI/CD",
+            "pages": [
+              "v0.4.x/ci-integration"
+            ]
+          },
+          {
+            "group": "Integrations",
+            "pages": [
+              "v0.4.x/integrations"
+            ]
+          },
+          {
+            "group": "Examples",
+            "pages": [
+              "v0.4.x/insurance-customer-service-agent-evaluation",
+              "v0.4.x/e-commerce-customer-service-agent-evaluation",
+              "v0.4.x/customer-service-tool-calling-agent-evaluation",
+              "v0.4.x/personal-ai-assistant-openclaw-evaluation"
+            ]
+          },
+          {
+            "group": "Help",
+            "pages": [
+              "v0.4.x/contact-email"
             ]
           }
         ]

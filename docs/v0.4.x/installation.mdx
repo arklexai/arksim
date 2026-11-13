@@ -1,0 +1,52 @@
+---
+description: "Install ArkSim and get ready to simulate and evaluate your AI agents."
+title: "Installation"
+---
+
+## Requirements
+
+- Python 3.10 or later (up to 3.13)
+- An API key from a supported LLM provider ([OpenAI](https://developers.openai.com/api/docs), [Anthropic](https://platform.claude.com/docs/en/home), or [Google](https://ai.google.dev/gemini-api/docs/api-key))
+
+## Install from PyPI
+
+```bash
+pip install arksim
+```
+
+### Optional provider extras
+
+ArkSim uses OpenAI by default. To use other providers, install the corresponding extra:
+
+```bash
+# Anthropic
+pip install "arksim[anthropic]"
+
+# Google
+pip install "arksim[google]"
+
+# All providers
+pip install "arksim[all]"
+```
+
+## Install from source
+
+```bash
+git clone https://github.com/arklexai/arksim.git
+cd arksim
+pip install -e ".[dev]"
+```
+
+This installs in editable mode with test dependencies (`pytest`, `pytest-asyncio`).
+
+## Verify installation
+
+```bash
+arksim --help
+```
+
+You should see the available commands: `simulate`, `evaluate`, `simulate-evaluate`, `show-prompts`, `examples`, and `ui`.
+
+<Check>
+  You're all set! Continue to the [Quickstart guide](./quickstart) to run your first simulation.
+</Check>
