@@ -9,7 +9,11 @@ depend on each other): draft, then check-and-rewrite.
    knowledge, satisfied_when, or a ###STOP### token, since termination
    is code-only.
 2. Check-and-rewrite: validates the draft against a fixed rubric,
-   rewriting it if needed.
+   rewriting it if needed. It sees the profile and the pending checklist
+   descriptions (never ``satisfied_when``), so it keeps what they script
+   (claimed authority, injected text, hostility) and fixes only voice and
+   format; without them, those read as unnatural and were rewritten away.
+   It never adds content the draft does not have.
 
 The directive is appended as an ephemeral message ahead of the real
 history, never persisted - the same technique the old per-turn knowledge
@@ -94,11 +98,17 @@ async def _generate_draft(
 async def _check_and_rewrite(
     llm: LLM,
     scenario: Scenario,
+    ledger: ConversationLedger,
     history: list[dict[str, Any]],
     draft: str,
     turn: int,
 ) -> str:
     prompt = CHECK_AND_REWRITE_PROMPT.format(
+        profile=scenario.user_profile,
+        wants="\n".join(
+            f"- {state.item.description}" for state in ledger.pending_checklist()
+        )
+        or "(none)",
         conversation=format_conversation_for_prompt(history),
         draft=draft,
     )
@@ -130,4 +140,4 @@ async def generate_utterance(
 ) -> str:
     """Generate the simulated user's next message: draft, then check & rewrite."""
     draft = await _generate_draft(llm, ledger, history, web_search)
-    return await _check_and_rewrite(llm, scenario, history, draft, turn)
+    return await _check_and_rewrite(llm, scenario, ledger, history, draft, turn)
