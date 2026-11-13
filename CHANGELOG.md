@@ -5,6 +5,13 @@ All notable changes to ArkSim will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.1](https://github.com/arklexai/arksim/compare/v0.4.0...v0.4.1) (2026-11-13)
+
+
+### Fixed
+
+* **simulator:** keep scripted user tactics in the rewrite step ([#200](https://github.com/arklexai/arksim/issues/200)) ([2faa6e4](https://github.com/arklexai/arksim/commit/2faa6e48977d4c08bb6f97a070663eb4233a6f10))
+
 ## [0.4.0](https://github.com/arklexai/arksim/compare/v0.3.8...v0.4.0) (2026-10-31)
 
 
